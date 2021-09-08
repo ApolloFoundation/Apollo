@@ -1,5 +1,5 @@
 /*
- *  Copyright © 2018-2019 Apollo Foundation
+ *  Copyright © 2018-2021 Apollo Foundation
  */
 
 package com.apollocurrency.aplwallet.apl.core.chainid;
@@ -62,8 +62,9 @@ public class BlockchainConfigTest {
         "Test",
         10000L, 2,
             //"data.json",
-        BLOCKCHAIN_PROPERTIES, new FeaturesHeightRequirement(100, 100, 100, 1, 200), Set.of(20, 21, 25, 26));
-    BlockchainConfig blockchainConfig  = new BlockchainConfig(chain, new PropertiesHolder());
+        BLOCKCHAIN_PROPERTIES, new FeaturesHeightRequirement(100, 100, 100, 1, 200), Set.of(20, 21, 25, 26), Set.of("1000", "18446744073709551615"));
+
+    BlockchainConfig blockchainConfig = new BlockchainConfig(chain, new PropertiesHolder());
     private BlockDao blockDao = mock(BlockDao.class);
     @Inject
     BlockchainConfigUpdater blockchainConfigUpdater;
@@ -74,7 +75,7 @@ public class BlockchainConfigTest {
     @WeldSetup
     private WeldInitiator weld =
       //WAS:
-      // WeldInitiator.from(BlockchainConfig.class, BlockchainConfigUpdater.class).addBeans(MockBean.of(blockDao, BlockDao.class)).build();
+//       WeldInitiator.from(BlockchainConfig.class, BlockchainConfigUpdater.class).addBeans(MockBean.of(blockDao, BlockDao.class)).build();
       WeldInitiator.from(BlockchainConfigUpdater.class)
               .addBeans(MockBean.of(blockDao, BlockDao.class))
               .addBeans(MockBean.of(blockchainConfig, BlockchainConfig.class))
@@ -127,6 +128,19 @@ public class BlockchainConfigTest {
         assertThrows(IllegalArgumentException.class, () -> new FeaturesHeightRequirement(100, 100, null, 1, 200));
 
         assertThrows(IllegalArgumentException.class, () -> new FeaturesHeightRequirement(100, 100, 200, 1, 100));
+    }
+
+    @Test
+    void testInitBlockchainConfigForCurrencySellTxs() {
+        blockchainConfig.updateChain(chain);
+
+        assertTrue(blockchainConfig.isTotalAmountOverflowTx(1000), "Transaction with id 1000 should be a currency sell tx");
+        assertTrue(blockchainConfig.isTotalAmountOverflowTx(-1), "Transaction with id -1 should be a currency sell tx");
+
+        chain.setTotalAmountOverflowTxs(null);
+
+        assertFalse(blockchainConfig.isTotalAmountOverflowTx(1000), "Transaction with id 1000 should not be a currency " +
+            "sell tx after chain sell tx cleanup");
     }
 
     @Test

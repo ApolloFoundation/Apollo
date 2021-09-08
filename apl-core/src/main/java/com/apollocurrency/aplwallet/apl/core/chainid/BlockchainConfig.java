@@ -174,6 +174,10 @@ public class BlockchainConfig {
         return chain.getCurrencyIssuanceHeights() != null && chain.getCurrencyIssuanceHeights().contains(height);
     }
 
+    public boolean isTotalAmountOverflowTx(long id) {
+        return chain.getTotalAmountOverflowTxs() != null && chain.getTotalAmountOverflowTxs().contains(Long.toUnsignedString(id));
+    }
+
     public Integer getDexPendingOrdersReopeningHeight() {
         if (chain.getFeaturesHeightRequirement() != null) {
             return chain.getFeaturesHeightRequirement().getDexReopenPendingOrdersHeight();

@@ -10,7 +10,6 @@ import com.apollocurrency.aplwallet.apl.core.entity.state.account.Account;
 import com.apollocurrency.aplwallet.apl.core.exception.AplAcceptableTransactionValidationException;
 import com.apollocurrency.aplwallet.apl.core.exception.AplUnacceptableTransactionValidationException;
 import com.apollocurrency.aplwallet.apl.core.model.Transaction;
-import com.apollocurrency.aplwallet.apl.core.model.TransactionImpl;
 import com.apollocurrency.aplwallet.apl.core.service.blockchain.Blockchain;
 import com.apollocurrency.aplwallet.apl.core.service.state.PhasingPollService;
 import com.apollocurrency.aplwallet.apl.core.service.state.account.AccountControlPhasingService;
@@ -29,7 +28,6 @@ import com.apollocurrency.aplwallet.apl.core.transaction.messages.AppendixValida
 import com.apollocurrency.aplwallet.apl.core.transaction.messages.Attachment;
 import com.apollocurrency.aplwallet.apl.core.transaction.messages.PrunableLoadingService;
 import com.apollocurrency.aplwallet.apl.crypto.Convert;
-import com.apollocurrency.aplwallet.apl.util.Convert2;
 import com.apollocurrency.aplwallet.apl.util.annotation.ParentChildSpecific;
 import com.apollocurrency.aplwallet.apl.util.annotation.ParentMarker;
 import com.apollocurrency.aplwallet.apl.util.exception.AplException;
@@ -39,6 +37,7 @@ import lombok.extern.slf4j.Slf4j;
 
 import javax.inject.Inject;
 import javax.inject.Singleton;
+import java.util.Optional;
 
 @Slf4j
 @Singleton
@@ -167,8 +166,8 @@ public class TransactionValidator {
         }
     }
 
-    public boolean isValidVersion(int transactionVersion) {
-        return transactionVersionValidator.isValidVersion(transactionVersion);
+    public boolean isValidVersion(int txVersion) {
+        return transactionVersionValidator.isValidVersion(txVersion);
     }
 
     public void validateSignatureWithTxFee(Transaction transaction) {
@@ -193,14 +192,17 @@ public class TransactionValidator {
             return false;
         }
         if (sender == null) {
-            log.trace("Sender account not found, senderId={}", transaction.getSenderId());
+            log.warn("Sender account not found, senderId={}", transaction.getSenderId());
         }
         @ParentChildSpecific(ParentMarker.MULTI_SIGNATURE)
         Credential signatureCredential;
-        SignatureVerifier signatureVerifier = SignatureToolFactory.selectValidator(transaction.getVersion()).orElseThrow(UnsupportedTransactionVersion::new);
-        if (log.isTraceEnabled()) {
-            log.trace("#MULTI_SIG# verify signature validator class={}", signatureVerifier.getClass().getName());
+        Optional<SignatureVerifier> signatureVerifierOptional = SignatureToolFactory.selectValidator(transaction.getVersion());
+        if (signatureVerifierOptional.isEmpty()) {
+            log.error("Unsupported version: '{}' of the transaction: '{}'", transaction.getVersion(), transaction.getStringId());
+            return false;
         }
+        SignatureVerifier signatureVerifier = signatureVerifierOptional.get();
+        log.trace("#MULTI_SIG# verify signature validator class={}", signatureVerifier.getClass().getName());
         if (sender != null && sender.isChild()) {
             //multi-signature
             if (transaction.getVersion() < 2) {
@@ -219,40 +221,26 @@ public class TransactionValidator {
                 signatureCredential = new MultiSigCredential(transaction.getSenderPublicKey());
             }
         }
-        if (log.isTraceEnabled()) {
-            log.trace("#MULTI_SIG# verify credential={}", signatureCredential);
-        }
+        log.trace("#MULTI_SIG# verify credential={}", signatureCredential);
         if (!signatureCredential.validateCredential(keyValidator)) {
-            log.trace("#MULTI_SIG# Credential verification failed, credential={}", signatureCredential);
+            log.error("#MULTI_SIG# Credential verification failed, credential={}", signatureCredential);
             return false;
         }
+        Result byteArrayTx = PayloadResult.createLittleEndianByteArrayResult();
+        txBContext.createSerializer(transaction.getVersion())
+            .serialize(TransactionWrapperHelper.createUnsignedTransaction(transaction), byteArrayTx);
 
-        if (transaction.getSignature() != null && transaction.getSignature().isVerified()) {
-            return true;
-        } else {
-            Result byteArrayTx = PayloadResult.createLittleEndianByteArrayResult();
-            txBContext.createSerializer(transaction.getVersion())
-                .serialize(TransactionWrapperHelper.createUnsignedTransaction(transaction), byteArrayTx);
+        log.trace("#MULTI_SIG# verify signature={} publicKey={} document={}",
+            Convert.toHexString(transaction.getSignature().bytes()),
+            signatureCredential,
+            Convert.toHexString(byteArrayTx.array()));
 
-            if (log.isTraceEnabled()) {
-                log.trace("#MULTI_SIG# verify signature={} publicKey={} document={}",
-                    Convert.toHexString(transaction.getSignature().bytes()),
-                    signatureCredential,
-                    Convert.toHexString(byteArrayTx.array()));
-            }
-
-            boolean verifiedOk = signatureVerifier.verify(
-                byteArrayTx.array(), transaction.getSignature(), signatureCredential
-            );
-            if (verifiedOk) {
-                ((TransactionImpl) transaction.getTransactionImpl()).withValidSignature(true);
-            }
-            return verifiedOk;
-        }
+        return signatureVerifier.verify(byteArrayTx.array(), transaction.getSignature(), signatureCredential);
     }
 
     public boolean verifySignature(Transaction transaction) {
-        return checkSignature(transaction) && accountPublicKeyService.setOrVerifyPublicKey(transaction.getSenderId(), transaction.getSenderPublicKey());
+        return checkSignature(transaction)
+            && accountPublicKeyService.setOrVerifyPublicKey(transaction.getSenderId(), transaction.getSenderPublicKey());
     }
 
     private void doAppendixLightValidationRethrowing(Transaction transaction, AbstractAppendix appendage, AppendixValidator<AbstractAppendix> validatorFor) {
@@ -265,7 +253,7 @@ public class TransactionValidator {
 
     private void checkSignatureThrowingEx(Transaction transaction, Account account) {
         if (!checkSignature(account, transaction)) {
-            throw new AplUnacceptableTransactionValidationException("Invalid signature for transaction " + transaction.getId(), transaction);
+            throw new AplUnacceptableTransactionValidationException("Invalid signature for transaction " + transaction.getStringId(), transaction);
         }
     }
 
@@ -307,10 +295,12 @@ public class TransactionValidator {
             feeATM = Math.addExact(feeATM, blockchainConfig.getUnconfirmedPoolDepositAtm());
         }
         if (account == null) {
-            throw new AplUnacceptableTransactionValidationException("Account with  id " + transaction.getSenderId() + " is not exist yet", transaction);
+            throw new AplUnacceptableTransactionValidationException("Sender's account '" +
+                Long.toUnsignedString(transaction.getSenderId()) + "' does not exist yet", transaction);
         }
         if (account.getUnconfirmedBalanceATM() < feeATM) {
-            throw new AplUnacceptableTransactionValidationException("Account balance " + account.getUnconfirmedBalanceATM() + " is not enough to pay tx fee " + feeATM, transaction);
+            throw new AplUnacceptableTransactionValidationException("Account '" + Long.toUnsignedString(transaction.getSenderId())
+                +"' balance " + account.getUnconfirmedBalanceATM() + " is not enough to pay tx fee " + feeATM, transaction);
         }
     }
 
@@ -337,7 +327,7 @@ public class TransactionValidator {
      */
     private void validateLightlyWithoutAppendages(Transaction transaction) {
         if (!transactionVersionValidator.isValidVersion(transaction)) {
-            throw new AplUnacceptableTransactionValidationException("Unsupported transaction version:" + transaction.getVersion() + " at height " + blockchain.getHeight(), transaction);
+            throw new AplUnacceptableTransactionValidationException("Unsupported transaction version " + transaction.getVersion() + " at height " + blockchain.getHeight(), transaction);
         }
         long maxBalanceAtm = blockchainConfig.getCurrentConfig().getMaxBalanceATM();
         short deadline = transaction.getDeadline();
@@ -345,12 +335,12 @@ public class TransactionValidator {
         long amountATM = transaction.getAmountATM();
         TransactionType type = transaction.getType();
         TransactionTypes.TransactionTypeSpec typeSpec = type.getSpec();
-        if (transaction.getTimestamp() == 0 ? (deadline != 0 || feeATM != 0) : (deadline < 1 || feeATM < 0)
+        if (typeSpec == null
+            || (transaction.getTimestamp() == 0 ? (deadline != 0 || feeATM != 0) : (deadline < 1 || feeATM < 0))
             || feeATM > maxBalanceAtm
             || amountATM < 0
-            || amountATM > maxBalanceAtm
-            || typeSpec == null) {
-            throw new AplUnacceptableTransactionValidationException("Invalid transaction parameters:\n type: " + type + ", timestamp: " + transaction.getTimestamp()
+            || amountATM > maxBalanceAtm) {
+            throw new AplUnacceptableTransactionValidationException("Invalid transaction parameters: type: " + type + ", timestamp: " + transaction.getTimestamp()
                 + ", deadline: " + deadline + ", fee: " + feeATM + ", amount: " + amountATM, transaction);
         }
         byte[] referencedTransactionFullHash = Convert.parseHexString(transaction.getReferencedTransactionFullHash());
@@ -394,7 +384,8 @@ public class TransactionValidator {
         if (sender != null && sender.isChild()) {
             Account recipient = accountService.getAccount(transaction.getRecipientId());
             if (recipient == null) {
-                throw new AplUnacceptableTransactionValidationException("Account " + transaction.getRecipientId() + " does not exist yet.", transaction);
+                throw new AplUnacceptableTransactionValidationException("Recipient's account " +
+                    "'" + Long.toUnsignedString(transaction.getRecipientId()) + "' does not exist yet", transaction);
             }
             @ParentChildSpecific(ParentMarker.ADDRESS_RESTRICTION)
             boolean rc;
@@ -407,21 +398,21 @@ public class TransactionValidator {
                     break;
                 case CUSTOM:
                 default:
-                    throw new AplUnacceptableTransactionValidationException("Unsupported value " +
+                    throw new AplUnacceptableTransactionValidationException("Unsupported value '" +
                         sender.getAddrScope().name() +
-                        " for sender address scope;" +
-                        "sender.Id=" + sender.getId(), transaction);
+                        "' for sender address scope;" +
+                        "sender.Id=" + Long.toUnsignedString(sender.getId()), transaction);
             }
             if (!rc) {
                 throw new AplUnacceptableTransactionValidationException("The parent account for sender and recipient must be the same;" +
-                    "sender.parentId=" + sender.getParentId() + ", recipient.parentId=" + recipient.getParentId(), transaction);
+                    "sender.parentId=" + Long.toUnsignedString(sender.getParentId()) + ", recipient.parentId=" + Long.toUnsignedString(recipient.getParentId()), transaction);
             }
         }
     }
 
     private void verifyAppendageVersion(Transaction transaction, AbstractAppendix appendage) {
         if (!appendage.verifyVersion()) {
-            throw new AplUnacceptableTransactionValidationException(appendage.getAppendixName() + " appendage version '" + appendage.getVersion() + " is not supported", transaction);
+            throw new AplUnacceptableTransactionValidationException(appendage.getAppendixName() + " appendage version '" + appendage.getVersion() + "' is not supported", transaction);
         }
     }
 
@@ -434,10 +425,9 @@ public class TransactionValidator {
 
         @Override
         public boolean validate(byte[] publicKey) {
-            if (log.isTraceEnabled()) {
-                log.trace("#MULTI_SIG# public key validation account={}", Convert2.rsAccount(AccountService.getId(publicKey)));
-            }
-            if (!accountPublicKeyService.setOrVerifyPublicKey(AccountService.getId(publicKey), publicKey)) {
+            long accountId = AccountService.getId(publicKey);
+            log.trace("#MULTI_SIG# public key validation account={}", Long.toUnsignedString(accountId));
+            if (!accountPublicKeyService.setOrVerifyPublicKey(accountId, publicKey)) {
                 log.error("Public Key Verification failed: pk={}", Convert.toHexString(publicKey));
                 return false;
             }

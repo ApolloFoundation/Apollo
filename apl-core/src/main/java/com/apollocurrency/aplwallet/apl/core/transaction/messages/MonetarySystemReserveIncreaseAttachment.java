@@ -5,6 +5,7 @@ package com.apollocurrency.aplwallet.apl.core.transaction.messages;
 
 import com.apollocurrency.aplwallet.apl.core.transaction.TransactionTypes;
 import com.apollocurrency.aplwallet.apl.crypto.Convert;
+import lombok.EqualsAndHashCode;
 import org.json.simple.JSONObject;
 
 import java.nio.ByteBuffer;
@@ -12,24 +13,25 @@ import java.nio.ByteBuffer;
 /**
  * @author al
  */
-public final class MonetarySystemReserveIncrease extends AbstractAttachment implements MonetarySystemAttachment {
+@EqualsAndHashCode(callSuper = true)
+public final class MonetarySystemReserveIncreaseAttachment extends AbstractAttachment implements MonetarySystemAttachment {
 
     final long currencyId;
     final long amountPerUnitATM;
 
-    public MonetarySystemReserveIncrease(ByteBuffer buffer) {
+    public MonetarySystemReserveIncreaseAttachment(ByteBuffer buffer) {
         super(buffer);
         this.currencyId = buffer.getLong();
         this.amountPerUnitATM = buffer.getLong();
     }
 
-    public MonetarySystemReserveIncrease(JSONObject attachmentData) {
+    public MonetarySystemReserveIncreaseAttachment(JSONObject attachmentData) {
         super(attachmentData);
         this.currencyId = Convert.parseUnsignedLong((String) attachmentData.get("currency"));
         this.amountPerUnitATM = Convert.parseLong(attachmentData.get("amountPerUnitATM"));
     }
 
-    public MonetarySystemReserveIncrease(long currencyId, long amountPerUnitATM) {
+    public MonetarySystemReserveIncreaseAttachment(long currencyId, long amountPerUnitATM) {
         this.currencyId = currencyId;
         this.amountPerUnitATM = amountPerUnitATM;
     }

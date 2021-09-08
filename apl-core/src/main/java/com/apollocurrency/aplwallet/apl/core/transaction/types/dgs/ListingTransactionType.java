@@ -1,5 +1,5 @@
 /*
- *  Copyright © 2018-2020 Apollo Foundation
+ *  Copyright © 2018-2021 Apollo Foundation
  */
 
 package com.apollocurrency.aplwallet.apl.core.transaction.types.dgs;
@@ -72,12 +72,17 @@ public class ListingTransactionType extends DigitalGoodsTransactionType {
     @Override
     public void doStateIndependentValidation(Transaction transaction) throws AplException.ValidationException {
         DigitalGoodsListing attachment = (DigitalGoodsListing) transaction.getAttachment();
-        if (attachment.getName().length() == 0 || attachment.getName().length() > Constants.MAX_DGS_LISTING_NAME_LENGTH || attachment.getDescription().length() > Constants.MAX_DGS_LISTING_DESCRIPTION_LENGTH || attachment.getTags().length() > Constants.MAX_DGS_LISTING_TAGS_LENGTH || attachment.getQuantity() < 0 || attachment.getQuantity() > Constants.MAX_DGS_LISTING_QUANTITY || attachment.getPriceATM() <= 0 || attachment.getPriceATM() > getBlockchainConfig().getCurrentConfig().getMaxBalanceATM()) {
+        if (attachment.getName().length() == 0 || attachment.getName().length() > Constants.MAX_DGS_LISTING_NAME_LENGTH
+            || attachment.getDescription().length() > Constants.MAX_DGS_LISTING_DESCRIPTION_LENGTH
+            || attachment.getTags().length() > Constants.MAX_DGS_LISTING_TAGS_LENGTH
+            || attachment.getQuantity() < 0
+            || attachment.getQuantity() > Constants.MAX_DGS_LISTING_QUANTITY
+            || attachment.getPriceATM() <= 0
+            || attachment.getPriceATM() > getBlockchainConfig().getCurrentConfig().getMaxBalanceATM()) {
             throw new AplException.NotValidException("Invalid digital goods listing: " + attachment.getJSONObject());
         }
         PrunablePlainMessageAppendix prunablePlainMessage = transaction.getPrunablePlainMessage();
         if (prunablePlainMessage != null) {
-//            prunableLoadingService.loadPrunable(transaction, prunablePlainMessage, false);
             byte[] image = prunablePlainMessage.getMessage();
             if (image != null) {
                 String mediaTypeName = Search.detectMimeType(image);
@@ -96,7 +101,7 @@ public class ListingTransactionType extends DigitalGoodsTransactionType {
     }
 
     @Override
-    public void doValidateAttachment(Transaction transaction) throws AplException.ValidationException {
+    public void doValidateAttachment(Transaction transaction) {
 
     }
 

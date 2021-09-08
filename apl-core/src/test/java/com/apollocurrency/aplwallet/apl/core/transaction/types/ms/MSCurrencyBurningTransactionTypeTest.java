@@ -71,11 +71,10 @@ class MSCurrencyBurningTransactionTypeTest {
     @Test
     void verifyFee() {
         doReturn(100L).when(blockchainConfig).getOneAPL();
-        HeightConfig heightConfig = mock(HeightConfig.class);
         doReturn(heightConfig).when(blockchainConfig).getCurrentConfig();
-        doReturn(BigDecimal.ONE).when(heightConfig).getBaseFee(TransactionTypes.TransactionTypeSpec.MS_CURRENCY_BURNING, BigDecimal.ONE);
+        doReturn(BigDecimal.valueOf(150)).when(heightConfig).getBaseFee(TransactionTypes.TransactionTypeSpec.MS_CURRENCY_BURNING, BigDecimal.ONE);
 
-        assertEquals(100, type.getBaselineFee(transaction).getFee(transaction, new MonetarySystemCurrencyBurningAttachment(1, 20)));
+        assertEquals(15000, type.getBaselineFee(transaction).getFee(transaction, new MonetarySystemCurrencyBurningAttachment(1, 20)));
     }
 
     @Test

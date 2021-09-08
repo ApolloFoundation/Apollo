@@ -1,30 +1,16 @@
 /*
- * Copyright (c)  2018-2020. Apollo Foundation.
+ *  Copyright © 2018-2021 Apollo Foundation
  */
 
-package com.apollocurrency.aplwallet.apl.core.app;
+package com.apollocurrency.aplwallet.apl.core.service.blockchain;
 
-import com.apollocurrency.aplwallet.apl.core.model.Transaction;
-import com.apollocurrency.aplwallet.apl.core.service.blockchain.TransactionBuilderFactory;
-import com.apollocurrency.aplwallet.apl.core.model.UnconfirmedTransaction;
 import com.apollocurrency.aplwallet.apl.core.chainid.BlockchainConfig;
-import com.apollocurrency.aplwallet.apl.core.config.NtpTimeConfig;
-import com.apollocurrency.aplwallet.apl.util.db.TransactionalDataSource;
-import com.apollocurrency.aplwallet.apl.core.peer.PeersService;
 import com.apollocurrency.aplwallet.apl.core.db.DatabaseManager;
+import com.apollocurrency.aplwallet.apl.core.model.Block;
+import com.apollocurrency.aplwallet.apl.core.model.Transaction;
+import com.apollocurrency.aplwallet.apl.core.model.UnconfirmedTransaction;
+import com.apollocurrency.aplwallet.apl.core.peer.PeersService;
 import com.apollocurrency.aplwallet.apl.core.service.appdata.TimeService;
-import com.apollocurrency.aplwallet.apl.core.service.appdata.impl.TimeServiceImpl;
-import com.apollocurrency.aplwallet.apl.core.service.blockchain.Blockchain;
-import com.apollocurrency.aplwallet.apl.core.service.blockchain.BlockchainImpl;
-import com.apollocurrency.aplwallet.apl.core.service.blockchain.BlockchainProcessor;
-import com.apollocurrency.aplwallet.apl.core.service.blockchain.BlockchainProcessorImpl;
-import com.apollocurrency.aplwallet.apl.core.service.blockchain.GlobalSync;
-import com.apollocurrency.aplwallet.apl.core.service.blockchain.MemPool;
-import com.apollocurrency.aplwallet.apl.core.service.blockchain.TransactionProcessor;
-import com.apollocurrency.aplwallet.apl.core.service.blockchain.TransactionProcessorImpl;
-import com.apollocurrency.aplwallet.apl.core.service.blockchain.UnconfirmedTransactionCreator;
-import com.apollocurrency.aplwallet.apl.core.service.blockchain.UnconfirmedTransactionProcessingService;
-import com.apollocurrency.aplwallet.apl.core.service.blockchain.UnconfirmedTxValidationResult;
 import com.apollocurrency.aplwallet.apl.core.service.fulltext.FullTextConfig;
 import com.apollocurrency.aplwallet.apl.core.service.fulltext.FullTextConfigImpl;
 import com.apollocurrency.aplwallet.apl.core.service.state.DerivedDbTablesRegistryImpl;
@@ -37,7 +23,7 @@ import com.apollocurrency.aplwallet.apl.core.transaction.TransactionValidator;
 import com.apollocurrency.aplwallet.apl.core.transaction.messages.PrunableLoadingService;
 import com.apollocurrency.aplwallet.apl.data.TransactionTestData;
 import com.apollocurrency.aplwallet.apl.util.Convert2;
-import com.apollocurrency.aplwallet.apl.util.NtpTime;
+import com.apollocurrency.aplwallet.apl.util.db.TransactionalDataSource;
 import com.apollocurrency.aplwallet.apl.util.exception.AplException;
 import com.apollocurrency.aplwallet.apl.util.injectable.PropertiesHolder;
 import com.apollocurrency.aplwallet.apl.util.service.TaskDispatchManager;
@@ -57,6 +43,8 @@ import javax.enterprise.util.AnnotationLiteral;
 import java.util.List;
 
 import static com.apollocurrency.aplwallet.apl.data.BlockTestData.BLOCK_5_HEIGHT;
+import static org.junit.jupiter.api.Assertions.assertNull;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyLong;
 import static org.mockito.ArgumentMatchers.eq;
@@ -64,6 +52,8 @@ import static org.mockito.Mockito.doReturn;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.verifyNoMoreInteractions;
+import static org.mockito.Mockito.when;
 
 @EnableWeld
 @ExtendWith(MockitoExtension.class)
@@ -73,8 +63,7 @@ class TransactionProcessorTest {
     private BlockchainConfig blockchainConfig = mock(BlockchainConfig.class);
     private BlockchainProcessor blockchainProcessor = mock(BlockchainProcessor.class);
     private PropertiesHolder propertiesHolder = mock(PropertiesHolder.class);
-    private NtpTimeConfig ntpTimeConfig = new NtpTimeConfig();
-    private TimeService timeService = new TimeServiceImpl(ntpTimeConfig.time());
+    private TimeService timeService = mock(TimeService.class);
     private PeersService peersService = mock(PeersService.class);
     private TransactionValidator transactionValidator = mock(TransactionValidator.class);
     private TransactionApplier transactionApplier = mock(TransactionApplier.class);
@@ -98,8 +87,6 @@ class TransactionProcessorTest {
         .addBeans(MockBean.of(propertiesHolder, PropertiesHolder.class))
         .addBeans(MockBean.of(mock(FullTextConfig.class), FullTextConfig.class, FullTextConfigImpl.class))
         .addBeans(MockBean.of(mock(DerivedTablesRegistry.class), DerivedTablesRegistry.class, DerivedDbTablesRegistryImpl.class))
-        .addBeans(MockBean.of(ntpTimeConfig, NtpTimeConfig.class))
-        .addBeans(MockBean.of(ntpTimeConfig.time(), NtpTime.class))
         .addBeans(MockBean.of(timeService, TimeService.class))
         .addBeans(MockBean.of(peersService, PeersService.class))
         .addBeans(MockBean.of(transactionValidator, TransactionValidator.class))
@@ -113,7 +100,7 @@ class TransactionProcessorTest {
         .addBeans(MockBean.of(unconfirmedTransactionCreator, UnconfirmedTransactionCreator.class))
         .build();
 
-    private TransactionProcessor service;
+    private TransactionProcessor processor;
     TransactionTestData td;
     @Mock
     private javax.enterprise.event.Event<List<Transaction>> listEvent;
@@ -126,7 +113,7 @@ class TransactionProcessorTest {
     @BeforeEach
     void setUp() {
         td = new TransactionTestData();
-        service = new TransactionProcessorImpl(transactionValidator,
+        processor = new TransactionProcessorImpl(transactionValidator,
             listEvent, databaseManager,
             globalSync, timeService, blockchainConfig, peersService, blockchain, transactionBuilderFactory, prunableLoadingService,
             processingService,
@@ -160,7 +147,7 @@ class TransactionProcessorTest {
         doReturn(eventType).when(listEvent).select(any(AnnotationLiteral.class));
 
         //WHEN
-        service.broadcast(transaction);
+        processor.broadcast(transaction);
 
         //THEN
         verify(blockchain, times(1)).hasTransaction(anyLong());
@@ -188,11 +175,30 @@ class TransactionProcessorTest {
         doReturn(mock(TransactionalDataSource.StartedConnection.class)).when(dataSource).beginTransactionIfNotStarted();
         doReturn(true).when(memPool).canAccept(1);
         //WHEN
-        service.processPeerTransactions(List.of(transaction));
+        processor.processPeerTransactions(List.of(transaction));
 
         //THEN
         verify(transactionValidator).validateSufficiently(transaction);
         verify(memPool).addPendingProcessing(unconfirmedTransaction);
+    }
+
+
+    @Test
+    void processLater() {
+        List<Transaction> txsToProcess = List.of(td.TRANSACTION_0, td.TRANSACTION_1);
+        when(timeService.systemTimeMillis()).thenReturn(1000L);
+        when(blockchain.hasTransaction(td.TRANSACTION_0.getId())).thenReturn(true);
+        UnconfirmedTransaction createdUnconfirmedTx = mock(UnconfirmedTransaction.class);
+        when(unconfirmedTransactionCreator.from(td.TRANSACTION_1, 1000)).thenReturn(createdUnconfirmedTx);
+        td.TRANSACTION_1.setBlock(mock(Block.class));
+        td.TRANSACTION_1.fail("Test error message");
+
+        processor.processLater(txsToProcess);
+
+        verify(memPool).processLater(createdUnconfirmedTx);
+        assertNull(td.TRANSACTION_1.getBlock(), "Block should be nullified for the tx, processed later");
+        assertTrue(td.TRANSACTION_1.getErrorMessage().isEmpty(), "Tx error message should be reseted after processLater operation");
+        verifyNoMoreInteractions(memPool);
     }
 
 }

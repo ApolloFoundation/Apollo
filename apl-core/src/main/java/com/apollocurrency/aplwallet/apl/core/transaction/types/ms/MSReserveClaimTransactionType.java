@@ -21,7 +21,7 @@ import javax.inject.Singleton;
 import java.nio.ByteBuffer;
 
 @Singleton
-public class MSReserveClaimTransactionType extends MonetarySystemTransactionType {
+public class MSReserveClaimTransactionType extends MSTransactionType {
     private final AccountCurrencyService accountCurrencyService;
 
     @Inject

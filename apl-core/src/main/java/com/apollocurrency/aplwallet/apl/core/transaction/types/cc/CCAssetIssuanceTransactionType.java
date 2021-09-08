@@ -1,5 +1,5 @@
 /*
- *  Copyright © 2018-2020 Apollo Foundation
+ *  Copyright © 2018-2021 Apollo Foundation
  */
 package com.apollocurrency.aplwallet.apl.core.transaction.types.cc;
 
@@ -31,7 +31,7 @@ import java.util.Map;
  * @author al
  */
 @Singleton
-public class CCAssetIssuanceTransactionType extends ColoredCoinsTransactionType {
+public class CCAssetIssuanceTransactionType extends CCTransactionType {
 
     private final AssetService assetService;
     private final AccountAssetService accountAssetService;

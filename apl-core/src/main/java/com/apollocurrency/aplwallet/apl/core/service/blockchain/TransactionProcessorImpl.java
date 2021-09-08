@@ -81,7 +81,7 @@ public class TransactionProcessorImpl implements TransactionProcessor {
     private final MemPool memPool;
     private final DatabaseManager databaseManager;
     private final UnconfirmedTransactionProcessingService processingService;
-    private final UnconfirmedTransactionCreator unconfirmedTransactionCreator;
+    private final UnconfirmedTransactionCreator unconfirmedTxCreator;
     private final MultiLock multiLock = new MultiLock(1000);
     private final ExecutorService executor = Executors.newSingleThreadExecutor(new NamedThreadFactory("AfterBlockPushTxRemovingPool"));
 
@@ -96,7 +96,7 @@ public class TransactionProcessorImpl implements TransactionProcessor {
                                     Blockchain blockchain, TransactionBuilderFactory transactionBuilderFactory,
                                     PrunableLoadingService prunableService,
                                     UnconfirmedTransactionProcessingService processingService,
-                                    UnconfirmedTransactionCreator unconfirmedTransactionCreator,
+                                    UnconfirmedTransactionCreator unconfirmedTxCreator,
                                     MemPool memPool) {
         this.transactionValidator = validator;
         this.txsEvent = Objects.requireNonNull(txEvent);
@@ -109,7 +109,7 @@ public class TransactionProcessorImpl implements TransactionProcessor {
         this.transactionBuilderFactory = transactionBuilderFactory;
         this.prunableService = prunableService;
         this.processingService = processingService;
-        this.unconfirmedTransactionCreator = unconfirmedTransactionCreator;
+        this.unconfirmedTxCreator = unconfirmedTxCreator;
         this.memPool = memPool;
     }
 
@@ -136,7 +136,7 @@ public class TransactionProcessorImpl implements TransactionProcessor {
             return;
         }
         transactionValidator.validateFully(transaction);
-        UnconfirmedTransaction unconfirmedTransaction = unconfirmedTransactionCreator.from(transaction, timeService.systemTimeMillis());
+        UnconfirmedTransaction unconfirmedTransaction = unconfirmedTxCreator.from(transaction, timeService.systemTimeMillis());
 
         UnconfirmedTxValidationResult validationResult = processingService.validateBeforeProcessing(unconfirmedTransaction);
         if (!validationResult.isOk()) {
@@ -221,7 +221,7 @@ public class TransactionProcessorImpl implements TransactionProcessor {
             memPool.markRemoved(transaction.getId());
         }
         if (block.getTransactions().size() > 0) {
-            log.debug("Marked removed [{}]", block.getTransactions().stream().map(Transaction::getId).map(String::valueOf).collect(Collectors.joining(",")));
+            log.debug("Marked removed [{}]", block.getTransactions().stream().map(Transaction::getStringId).collect(Collectors.joining(",")));
         }
         executor.submit(
             () -> DbTransactionHelper.executeInTransaction(databaseManager.getDataSource(),
@@ -230,24 +230,25 @@ public class TransactionProcessorImpl implements TransactionProcessor {
 
     @Override
     public void processLater(Collection<Transaction> transactions) {
+        log.debug("Process later transactions: {}", transactions.stream().map(Transaction::getStringId).collect(Collectors.joining(",")));
         long currentTime = timeService.systemTimeMillis();
         List<Transaction> toProcessLater = new ArrayList<>();
         for (Transaction transaction : transactions) {
             if (blockchain.hasTransaction(transaction.getId())) {
+                log.warn("Transaction {} is already in the blockchain, will not process later", transaction.getStringId());
                 continue;
             }
-            toProcessLater.add(transaction);
             log.trace("Process later tx {}", transaction.getId());
+            long arrivalTimestamp = Math.min(currentTime, Convert2.fromEpochTime(transaction.getTimestamp()));
             transaction.unsetBlock();
             transaction.resetFail();
-            memPool.addProcessLater(
-                unconfirmedTransactionCreator.from(
-                    transaction,
-                    Math.min(currentTime, Convert2.fromEpochTime(transaction.getTimestamp()))
-                )
-            );
+            UnconfirmedTransaction unconfirmedTx = unconfirmedTxCreator.from(transaction, arrivalTimestamp);
+            memPool.processLater(unconfirmedTx);
+            toProcessLater.add(transaction);
         }
-        log.info("Will process later [{}]", toProcessLater.stream().map(Transaction::getStringId).collect(Collectors.joining(",")));
+        if (!toProcessLater.isEmpty()) {
+            log.info("Will process later [{}]", toProcessLater.stream().map(Transaction::getStringId).collect(Collectors.joining(",")));
+        }
     }
 
     public void processPeerTransactions(List<Transaction> transactions) {
@@ -270,7 +271,7 @@ public class TransactionProcessorImpl implements TransactionProcessor {
             for (Transaction transaction : transactions) {
                 try {
                     receivedTransactions.add(transaction);
-                    UnconfirmedTransaction unconfirmedTransaction = unconfirmedTransactionCreator.from(transaction, arrivalTimestamp);
+                    UnconfirmedTransaction unconfirmedTransaction = unconfirmedTxCreator.from(transaction, arrivalTimestamp);
                     UnconfirmedTxValidationResult validationResult = processingService.validateBeforeProcessing(unconfirmedTransaction);
                     if (validationResult.isOk()) {
                         transactionValidator.validateSufficiently(transaction);

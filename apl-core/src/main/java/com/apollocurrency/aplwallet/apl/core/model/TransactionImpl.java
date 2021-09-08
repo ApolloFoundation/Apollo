@@ -314,14 +314,7 @@ public class TransactionImpl implements Transaction {
 
     @Override
     public boolean hasValidSignature() {
-        return signature != null && hasValidSignature;
-    }
-
-    public void withValidSignature(boolean verified) {
-        if (signature == null) {
-            throw new IllegalStateException("Transaction is not signed yet");
-        }
-        hasValidSignature = verified;
+        return signature != null && signature.isVerified();
     }
 
     @Override
