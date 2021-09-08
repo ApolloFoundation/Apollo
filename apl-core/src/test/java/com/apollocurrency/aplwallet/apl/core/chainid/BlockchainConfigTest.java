@@ -6,8 +6,8 @@ package com.apollocurrency.aplwallet.apl.core.chainid;
 
 import com.apollocurrency.aplwallet.apl.core.app.observer.events.BlockEventBinding;
 import com.apollocurrency.aplwallet.apl.core.app.observer.events.BlockEventType;
-import com.apollocurrency.aplwallet.apl.core.model.Block;
 import com.apollocurrency.aplwallet.apl.core.dao.blockchain.BlockDao;
+import com.apollocurrency.aplwallet.apl.core.model.Block;
 import com.apollocurrency.aplwallet.apl.util.env.config.BlockchainProperties;
 import com.apollocurrency.aplwallet.apl.util.env.config.Chain;
 import com.apollocurrency.aplwallet.apl.util.env.config.FeaturesHeightRequirement;
@@ -62,9 +62,9 @@ public class BlockchainConfigTest {
         "Test",
         10000L, 2,
             //"data.json",
-        BLOCKCHAIN_PROPERTIES, new FeaturesHeightRequirement(100, 100, 100), Set.of(20, 21, 25, 26), Set.of("1000", "18446744073709551615"));
-    @Inject
-    BlockchainConfig blockchainConfig;
+        BLOCKCHAIN_PROPERTIES, new FeaturesHeightRequirement(100, 100, 100, 1), Set.of(20, 21, 25, 26), Set.of("1000", "18446744073709551615"));
+
+    BlockchainConfig blockchainConfig = new BlockchainConfig();
     private BlockDao blockDao = mock(BlockDao.class);
     @Inject
     BlockchainConfigUpdater blockchainConfigUpdater;
@@ -75,7 +75,7 @@ public class BlockchainConfigTest {
     @WeldSetup
     private WeldInitiator weld =
       //WAS:
-      // WeldInitiator.from(BlockchainConfig.class, BlockchainConfigUpdater.class).addBeans(MockBean.of(blockDao, BlockDao.class)).build();
+//       WeldInitiator.from(BlockchainConfig.class, BlockchainConfigUpdater.class).addBeans(MockBean.of(blockDao, BlockDao.class)).build();
       WeldInitiator.from(BlockchainConfigUpdater.class)
               .addBeans(MockBean.of(blockDao, BlockDao.class))
               .addBeans(MockBean.of(blockchainConfig, BlockchainConfig.class))
