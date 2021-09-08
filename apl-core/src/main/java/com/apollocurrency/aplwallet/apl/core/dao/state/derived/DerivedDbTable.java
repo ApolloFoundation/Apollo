@@ -30,6 +30,7 @@ import com.apollocurrency.aplwallet.apl.core.dao.state.keyfactory.DbKey;
 import com.apollocurrency.aplwallet.apl.core.db.DatabaseManager;
 import com.apollocurrency.aplwallet.apl.core.entity.state.derived.DerivedEntity;
 import com.apollocurrency.aplwallet.apl.core.service.fulltext.FullTextOperationData;
+import com.apollocurrency.aplwallet.apl.util.StringUtils;
 import com.apollocurrency.aplwallet.apl.util.StringValidator;
 import com.apollocurrency.aplwallet.apl.util.annotation.DatabaseSpecificDml;
 import com.apollocurrency.aplwallet.apl.util.annotation.DmlMarker;
@@ -267,7 +268,7 @@ public abstract class DerivedDbTable<T extends DerivedEntity> implements Derived
     }
 
     public boolean isSearchable() {
-        return fullTextSearchColumns != null && !fullTextSearchColumns.isEmpty();
+        return !StringUtils.isBlank(this.fullTextSearchColumns);
     }
 
     public Event<FullTextOperationData> getFullTextOperationDataEvent() {

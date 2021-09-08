@@ -1,5 +1,5 @@
 /*
- *  Copyright © 2018-2019 Apollo Foundation
+ *  Copyright © 2018-2021 Apollo Foundation
  */
 
 package com.apollocurrency.aplwallet.apl.core.service.fulltext;
@@ -38,7 +38,7 @@ public class FullTextSearchUpdaterImpl implements TransactionCallback, FullTextS
      * Pending table updates
      * We collect index row updates and then commit or rollback it when db transaction was finished or rollbacked
      */
-    private Map<String, FullTextOperationData> pendingFTSIndexUpdates = new ConcurrentHashMap<>();
+    private final Map<String, FullTextOperationData> pendingFTSIndexUpdates = new ConcurrentHashMap<>();
     private final DatabaseManager databaseManager;
     private final FullTextSearchEngine fullTextSearchEngine;
     private final FullTextSearchService fullTextSearchService;
@@ -46,7 +46,7 @@ public class FullTextSearchUpdaterImpl implements TransactionCallback, FullTextS
     /**
      * Here we keep searchable table characteristics
      */
-    private Map<String, TableData> tableDataMap = new ConcurrentHashMap<>();
+    private final Map<String, TableData> tableDataMap = new ConcurrentHashMap<>();
 
     @Inject
     public FullTextSearchUpdaterImpl(DatabaseManager databaseManager,
