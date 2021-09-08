@@ -29,7 +29,7 @@ import com.apollocurrency.aplwallet.apl.core.service.fulltext.FullTextSearchUpda
 import com.apollocurrency.aplwallet.apl.core.service.state.account.AccountService;
 import com.apollocurrency.aplwallet.apl.core.transaction.messages.DigitalGoodsDelivery;
 import com.apollocurrency.aplwallet.apl.core.transaction.messages.DigitalGoodsListing;
-import com.apollocurrency.aplwallet.apl.core.transaction.messages.DigitalGoodsPurchase;
+import com.apollocurrency.aplwallet.apl.core.transaction.messages.DigitalGoodsPurchaseAttachment;
 import com.apollocurrency.aplwallet.apl.core.transaction.messages.EncryptedMessageAppendix;
 import com.apollocurrency.aplwallet.apl.core.transaction.messages.MessageAppendix;
 import com.apollocurrency.aplwallet.apl.core.utils.CollectionUtil;
@@ -345,7 +345,7 @@ public class DGSServiceImpl implements DGSService {
         }
     }
 
-    public void purchase(Transaction transaction, DigitalGoodsPurchase attachment) {
+    public void purchase(Transaction transaction, DigitalGoodsPurchaseAttachment attachment) {
         DGSGoods goods = goodsTable.get(attachment.getGoodsId());
         if (!goods.isDelisted()
             && attachment.getQuantity() <= goods.getQuantity()
@@ -488,7 +488,7 @@ public class DGSServiceImpl implements DGSService {
         int index = 0;
         try (ResultSet rs = fullTextSearchService.search("public", goodsTable.getTableName(), luceneQuery, Integer.MAX_VALUE, 0)) {
             while (rs.next()) {
-                Long DB_ID = rs.getLong(5);
+                Long DB_ID = rs.getLong("keys");
                 if (index == 0) {
                     inRange.append(DB_ID);
                 } else {

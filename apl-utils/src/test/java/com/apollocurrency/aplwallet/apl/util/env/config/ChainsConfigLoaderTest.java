@@ -1,5 +1,5 @@
 /*
- *  Copyright © 2018-2019 Apollo Foundation
+ *  Copyright © 2018-2021 Apollo Foundation
  */
 package com.apollocurrency.aplwallet.apl.util.env.config;
 
@@ -71,19 +71,19 @@ public class ChainsConfigLoaderTest {
         "NOT STABLE testnet for experiments. Don't use it if you don't know what is it", "Apollo",
         "APL", "Apollo",
         30000000000L, 8,
-        BLOCKCHAIN_PROPERTIES1, new FeaturesHeightRequirement(), Set.of(102,103,105));
+        BLOCKCHAIN_PROPERTIES1, new FeaturesHeightRequirement(), Set.of(102,103,105), Set.of("1000", "18446744073709551615"));
     private static UUID chainId2 = UUID.fromString("ff3bfa13-3711-4f23-8f7b-4fccaa87c4c1");
     private static final Chain CHAIN2 = new Chain(chainId2, Arrays.asList("51.15.0.1",
         "51.15.1.0"),
         "Gotham",
         "Batman's chain", "BTM",
         "BTM", "I am batman!",
-        10000000000L, 8,
-        BLOCKCHAIN_PROPERTIES2);
+        30000000000L, 8,
+         BLOCKCHAIN_PROPERTIES2);
     private static final Chain CHAIN3 = new Chain(chainId2, false, Arrays.asList("51.15.1.1",
         "51.15.0.0"), Collections.emptyList(), Collections.emptyList(), "1", "2", "3", "4", "5",
         30000000000L, 8,
-        BLOCKCHAIN_PROPERTIES1.subList(0, 3), new FeaturesHeightRequirement(150, 150, 150, null, null), Set.of());
+        BLOCKCHAIN_PROPERTIES1.subList(0, 3), new FeaturesHeightRequirement(150, 150, 150, null, null), Set.of(), null);
     private Path tempRootPath;
 
     @BeforeEach

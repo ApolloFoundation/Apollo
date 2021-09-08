@@ -74,7 +74,8 @@
   </appender>
 
   <logger name="com.apollocurrency.aplwallet.apl.core.service.appdata.TrimService" level="DEBUG"/>
-  <logger name="com.apollocurrency.aplwallet.apl.core.service.blockchain.TransactionProcessorImpl" level="debug"/>
+  <logger name="com.apollocurrency.aplwallet.apl.core.service.blockchain.TransactionProcessorImpl" level="DEBUG" additivity="true"/>
+  <logger name="com.apollocurrency.aplwallet.apl.core.service.blockchain.BlockchainProcessorImpl" level="DEBUG" additivity="true"/>
   <logger name="com.apollocurrency.aplwallet.apl" level="INFO"/>
   <!--Uncomment next line to enable trim duration logging-->
   <!--<logger name="com.apollocurrency.aplwallet.apl.db.VersionedDeletableEntityDbTable" level="trace"/>-->

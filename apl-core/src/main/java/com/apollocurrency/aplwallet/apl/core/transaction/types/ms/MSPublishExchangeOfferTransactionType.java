@@ -15,23 +15,22 @@ import com.apollocurrency.aplwallet.apl.core.service.state.currency.CurrencyServ
 import com.apollocurrency.aplwallet.apl.core.transaction.TransactionTypes;
 import com.apollocurrency.aplwallet.apl.core.transaction.TransactionValidator;
 import com.apollocurrency.aplwallet.apl.core.transaction.messages.MonetarySystemPublishExchangeOffer;
+import com.apollocurrency.aplwallet.apl.core.utils.MathUtils;
 import com.apollocurrency.aplwallet.apl.util.exception.AplException;
 import org.json.simple.JSONObject;
 
 import javax.inject.Inject;
 import javax.inject.Singleton;
 import java.nio.ByteBuffer;
-import lombok.extern.slf4j.Slf4j;
 
-@Slf4j
 @Singleton
-public class MSPublishExchangeOfferTransactiionType extends MonetarySystemTransactionType {
+public class MSPublishExchangeOfferTransactionType extends MSTransactionType {
     private final AccountCurrencyService accountCurrencyService;
     private final CurrencyExchangeOfferFacade exchangeOfferFacade;
     private final TransactionValidator transactionValidator;
 
     @Inject
-    public MSPublishExchangeOfferTransactiionType(BlockchainConfig blockchainConfig, AccountService accountService, CurrencyService currencyService, AccountCurrencyService accountCurrencyService, CurrencyExchangeOfferFacade exchangeOfferFacade, TransactionValidator transactionValidator) {
+    public MSPublishExchangeOfferTransactionType(BlockchainConfig blockchainConfig, AccountService accountService, CurrencyService currencyService, AccountCurrencyService accountCurrencyService, CurrencyExchangeOfferFacade exchangeOfferFacade, TransactionValidator transactionValidator) {
         super(blockchainConfig, accountService, currencyService);
         this.accountCurrencyService = accountCurrencyService;
         this.exchangeOfferFacade = exchangeOfferFacade;
@@ -94,25 +93,21 @@ public class MSPublishExchangeOfferTransactiionType extends MonetarySystemTransa
         if (attachment.getExpirationHeight() <= transactionValidator.getFinishValidationHeight(transaction, attachment)) {
             throw new AplException.NotCurrentlyValidException("Expiration height must be after transaction execution height");
         }
+        MathUtils.safeMultiply(attachment.getInitialBuySupply(), attachment.getBuyRateATM(), transaction);
     }
 
     @Override
     public boolean applyAttachmentUnconfirmed(Transaction transaction, Account senderAccount) {
         MonetarySystemPublishExchangeOffer attachment = (MonetarySystemPublishExchangeOffer) transaction.getAttachment();
-        try {
-            if (senderAccount.getUnconfirmedBalanceATM() >= Math.multiplyExact(attachment.getInitialBuySupply(), attachment.getBuyRateATM()) && accountCurrencyService.getUnconfirmedCurrencyUnits(senderAccount, attachment.getCurrencyId()) >= attachment.getInitialSellSupply()) {
-                getAccountService().addToUnconfirmedBalanceATM(senderAccount, getLedgerEvent(), transaction.getId(), -Math.multiplyExact(attachment.getInitialBuySupply(), attachment.getBuyRateATM()));
-                accountCurrencyService.addToUnconfirmedCurrencyUnits(senderAccount, getLedgerEvent(), transaction.getId(), attachment.getCurrencyId(), -attachment.getInitialSellSupply());
-                return true;
-            }
+        if (senderAccount.getUnconfirmedBalanceATM() >= Math.multiplyExact(attachment.getInitialBuySupply(), attachment.getBuyRateATM())
+            && accountCurrencyService.getUnconfirmedCurrencyUnits(senderAccount, attachment.getCurrencyId()) >= attachment.getInitialSellSupply()) {
+            getAccountService().addToUnconfirmedBalanceATM(senderAccount, getLedgerEvent(), transaction.getId(),
+                -Math.multiplyExact(attachment.getInitialBuySupply(), attachment.getBuyRateATM()));
+            accountCurrencyService.addToUnconfirmedCurrencyUnits(senderAccount, getLedgerEvent(), transaction.getId(),
+                attachment.getCurrencyId(), -attachment.getInitialSellSupply());
+            return true;
+        }
         return false;
-        }
-        catch (java.lang.ArithmeticException e)
-        {
-            log.error(e.getMessage());
-            log.error("Error: attachment = {}", attachment);
-            return false;
-        }
     }
 
     @Override

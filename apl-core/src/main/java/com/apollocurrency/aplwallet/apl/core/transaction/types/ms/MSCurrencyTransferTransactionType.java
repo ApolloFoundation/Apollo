@@ -23,7 +23,7 @@ import javax.inject.Singleton;
 import java.nio.ByteBuffer;
 
 @Singleton
-public class MSCurrencyTransferTransactionType extends MonetarySystemTransactionType {
+public class MSCurrencyTransferTransactionType extends MSTransactionType {
     private final AccountCurrencyService accountCurrencyService;
     private final CurrencyTransferService accountTransferService;
 
