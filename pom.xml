@@ -54,7 +54,7 @@
     <java.version>11</java.version>
     <maven.compiler.source>11</maven.compiler.source>
     <maven.compiler.target>11</maven.compiler.target>
-    <surefire-plugin.version>2.22.2</surefire-plugin.version>
+    <surefire-plugin.version>3.0.0-M5</surefire-plugin.version>
     <compile-plugin.version>3.8.1</compile-plugin.version>
     <!-- cross-platform zip distribution -->
     <zip-file-name>apollo-blockchain</zip-file-name>
