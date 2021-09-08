@@ -9,13 +9,13 @@ import lombok.EqualsAndHashCode;
 import lombok.Getter;
 import lombok.Setter;
 
-import java.util.HashSet;
+import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
 import java.util.stream.Collectors;
-import java.util.stream.Stream;
 
 /**
  * Failed transaction's verification container, consisting of fully verified and not verified transactions
@@ -28,53 +28,50 @@ import java.util.stream.Stream;
 @Getter
 @Setter
 public class TxsVerificationResult {
-    private final Map<Long, VerifiedTransaction> verified;
-    private final Map<Long, VerifiedTransaction> notVerified;
+    private final Map<Long, VerifiedTransaction> txs;
     private volatile int fromHeight;
     private volatile int toHeight;
 
 
 
     public TxsVerificationResult(Map<Long, VerifiedTransaction> failedTxs) {
-        this.verified = failedTxs.entrySet()
-            .stream()
-            .filter(e -> e.getValue().isVerified())
-            .collect(Collectors.toMap(Map.Entry::getKey, Map.Entry::getValue));
-        this.notVerified = failedTxs.entrySet()
-            .stream()
-            .filter(e -> !e.getValue().isVerified())
-            .collect(Collectors.toMap(Map.Entry::getKey, Map.Entry::getValue));
+        this.txs = failedTxs;
     }
 
     public boolean isVerified(long id) {
-        return this.verified.get(id) != null;
+        VerifiedTransaction tx = this.txs.get(id);
+        return tx != null && tx.isVerified();
     }
 
     public Set<Long> allVerifiedIds() {
-        return new HashSet<>(verified.keySet());
+        return txs.entrySet()
+            .stream()
+            .filter(e -> e.getValue().isVerified())
+            .map(Map.Entry::getKey)
+            .collect(Collectors.toSet());
     }
 
     public Set<Long> allNotVerifiedIds() {
-        return new HashSet<>(notVerified.keySet());
+        return txs.entrySet()
+            .stream()
+            .filter(e -> !e.getValue().isVerified())
+            .map(Map.Entry::getKey)
+            .collect(Collectors.toSet());
     }
 
     public List<VerifiedTransaction> all() {
-        return Stream.concat(verified.values().stream(), notVerified.values().stream()).collect(Collectors.toList());
+        return new ArrayList<>(txs.values());
     }
 
     public Optional<VerifiedTransaction> get(long id) {
-        if (verified.containsKey(id)) {
-            return Optional.of(verified.get(id));
-        }
-        return Optional.ofNullable(notVerified.get(id));
+        return Optional.ofNullable(txs.get(id));
     }
 
     public TxsVerificationResult() {
-        this.notVerified = Map.of();
-        this.verified = Map.of();
+        this.txs = new HashMap<>();
     }
 
     public boolean isEmpty() {
-        return verified.isEmpty() && notVerified.isEmpty();
+        return txs.isEmpty();
     }
 }

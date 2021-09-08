@@ -70,6 +70,7 @@
     <build-helper-maven-plugin.version>1.9.1</build-helper-maven-plugin.version>
     <jsonpath-maven-plugin.version>1.2.0</jsonpath-maven-plugin.version>
     <maven-shade-plugin.version>3.2.3</maven-shade-plugin.version>
+    <surefire.java.argLine>-Xmx1024m</surefire.java.argLine>
   </properties>
   <!-- We have following profiles: prod, dev, debug
        1. prod: profile for release with build of all zips and sha-256 sums
@@ -125,8 +126,7 @@
           <configuration>
             <useSystemClassLoader>false</useSystemClassLoader>
             <excludedGroups>${excludeTestTags}</excludedGroups>
-            <argLine>-Xmx1024m -Xint</argLine>
-
+            <argLine>${surefire.java.argLine}</argLine>
             <!--
                         <properties>
                           <includeTags>${includeTestTags}</includeTags>
