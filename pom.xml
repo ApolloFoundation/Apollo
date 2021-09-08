@@ -125,7 +125,7 @@
           <configuration>
             <useSystemClassLoader>false</useSystemClassLoader>
             <excludedGroups>${excludeTestTags}</excludedGroups>
-            <argLine>-Xmx1024m</argLine>
+            <argLine>-Xmx1024m -Xint</argLine>
 
             <!--
                         <properties>
