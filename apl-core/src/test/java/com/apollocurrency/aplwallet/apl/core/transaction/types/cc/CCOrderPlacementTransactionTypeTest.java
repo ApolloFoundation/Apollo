@@ -18,6 +18,7 @@ import com.apollocurrency.aplwallet.apl.core.transaction.messages.ColoredCoinsOr
 import com.apollocurrency.aplwallet.apl.util.annotation.FeeMarker;
 import com.apollocurrency.aplwallet.apl.util.annotation.TransactionFee;
 import com.apollocurrency.aplwallet.apl.util.exception.AplException;
+import lombok.SneakyThrows;
 import org.json.simple.JSONObject;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -34,6 +35,7 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.Mockito.doReturn;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.when;
 
 @ExtendWith(MockitoExtension.class)
 class CCOrderPlacementTransactionTypeTest {
@@ -136,6 +138,17 @@ class CCOrderPlacementTransactionTypeTest {
             "{\"priceATM\":10,\"quantityATU\":20,\"asset\":\"0\",\"version.TestCCOrderPlacement\":1}", ex.getMessage());
     }
 
+    @SneakyThrows
+    @Test
+    void doStateIndependentValidation_txIsInTheOverflowValidationSkipList_OK() {
+        mockAttachment(1, 20, 10);
+        doReturn(heightConfig).when(blockchainConfig).getCurrentConfig();
+        doReturn(10L).when(heightConfig).getMaxBalanceATM();
+        when(tx.getId()).thenReturn(1000L);
+        when(blockchainConfig.isTotalAmountOverflowTx(1000L)).thenReturn(true);
+
+        type.doStateIndependentValidation(tx);
+    }
     @Test
     void doStateIndependentValidation_orderTotalOverflow() {
         mockAttachment( 20, Long.MAX_VALUE / 19);

@@ -21,6 +21,7 @@
     "genesisLocation": "conf/data/genesisAccounts-testnet.json",
     "featuresHeightRequirement": {},
     "currencyIssuanceHeights": [102,103,105],
+    "totalAmountOverflowTxs": ["1000", "18446744073709551615"],
     "blockchainProperties": [
       {
         "height": 0,
