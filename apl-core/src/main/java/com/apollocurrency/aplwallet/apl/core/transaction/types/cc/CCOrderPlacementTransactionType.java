@@ -42,12 +42,14 @@ abstract class CCOrderPlacementTransactionType extends CCTransactionType {
             || attachment.getAssetId() == 0) {
             throw new AplException.NotValidException("Invalid asset order placement: " + attachment.getJSONObject());
         }
-        long orderTotalATM = MathUtils.safeMultiply(attachment.getQuantityATU(), attachment.getPriceATM(), transaction);
-        if (orderTotalATM > maxBalanceATM) {
-            throw new AplException.NotValidException("Order total in ATMs " + orderTotalATM
-                + " is greater than max allowed: " + maxBalanceATM
-                + ", asset=" + Long.toUnsignedString(attachment.getAssetId())  + ", quantity="
-                + attachment.getQuantityATU() + ", price=" + attachment.getPriceATM());
+        if (!getBlockchainConfig().isTotalAmountOverflowTx(transaction.getId())) {
+            long orderTotalATM = MathUtils.safeMultiply(attachment.getQuantityATU(), attachment.getPriceATM(), transaction);
+            if (orderTotalATM > maxBalanceATM) {
+                throw new AplException.NotValidException("Order total in ATMs " + orderTotalATM
+                    + " is greater than max allowed: " + maxBalanceATM
+                    + ", asset=" + Long.toUnsignedString(attachment.getAssetId()) + ", quantity="
+                    + attachment.getQuantityATU() + ", price=" + attachment.getPriceATM());
+            }
         }
     }
 
