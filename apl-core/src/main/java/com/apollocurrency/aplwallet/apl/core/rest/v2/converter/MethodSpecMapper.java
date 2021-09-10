@@ -8,7 +8,7 @@ import com.apollocurrency.aplwallet.api.v2.model.ArgSpec;
 import com.apollocurrency.aplwallet.api.v2.model.MethodSpec;
 import com.apollocurrency.aplwallet.api.v2.model.PropertySpec;
 import com.apollocurrency.aplwallet.apl.util.api.converter.Converter;
-import com.apollocurrency.smc.polyglot.lib.ContractSpec;
+import com.apollocurrency.smc.polyglot.language.ContractSpec;
 
 import javax.inject.Singleton;
 import java.util.Locale;

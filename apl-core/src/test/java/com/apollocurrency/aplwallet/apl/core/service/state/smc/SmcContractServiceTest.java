@@ -23,18 +23,20 @@ import com.apollocurrency.aplwallet.apl.core.utils.CollectionUtil;
 import com.apollocurrency.aplwallet.apl.crypto.Convert;
 import com.apollocurrency.aplwallet.apl.util.Convert2;
 import com.apollocurrency.smc.contract.AddressNotFoundException;
+import com.apollocurrency.smc.contract.ContractSource;
 import com.apollocurrency.smc.contract.ContractStatus;
 import com.apollocurrency.smc.contract.SmartContract;
-import com.apollocurrency.smc.contract.SmartSource;
 import com.apollocurrency.smc.contract.fuel.ContractFuel;
 import com.apollocurrency.smc.contract.fuel.Fuel;
 import com.apollocurrency.smc.data.type.Address;
-import com.apollocurrency.smc.polyglot.LanguageContext;
-import com.apollocurrency.smc.polyglot.Languages;
 import com.apollocurrency.smc.polyglot.SimpleVersion;
-import com.apollocurrency.smc.polyglot.lib.ContractSpec;
-import com.apollocurrency.smc.polyglot.lib.LibraryProvider;
-import com.apollocurrency.smc.polyglot.lib.ModuleSource;
+import com.apollocurrency.smc.polyglot.language.ContractSpec;
+import com.apollocurrency.smc.polyglot.language.LanguageContext;
+import com.apollocurrency.smc.polyglot.language.Languages;
+import com.apollocurrency.smc.polyglot.language.SmartSource;
+import com.apollocurrency.smc.polyglot.language.lib.LibraryProvider;
+import com.apollocurrency.smc.polyglot.language.lib.ModuleSource;
+import com.apollocurrency.smc.polyglot.language.preprocessor.Preprocessor;
 import lombok.SneakyThrows;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -53,7 +55,6 @@ import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
-import static org.mockito.MockitoAnnotations.initMocks;
 
 /**
  * @author andrew.zinchenko@gmail.com
@@ -66,7 +67,6 @@ class SmcContractServiceTest {
     static {
         Convert2.init("APL", 1739068987193023818L);
     }
-
 
     @Mock
     Blockchain blockchain;
@@ -84,6 +84,8 @@ class SmcContractServiceTest {
     @Mock
     LanguageContext languageContext;
     @Mock
+    Preprocessor preprocessor;
+    @Mock
     LibraryProvider libraryProvider;
 
     SmcPublishContractAttachment smcPublishContractAttachment;
@@ -96,12 +98,13 @@ class SmcContractServiceTest {
     AplAddress recipientAddress;
 
     SmcContractService contractService;
+    SmartSource smartSource;
 
     @BeforeEach
     void setUp() {
-        initMocks(this);
         when(smcConfig.createLanguageContext()).thenReturn(languageContext);
         when(languageContext.getLibraryProvider()).thenReturn(libraryProvider);
+        when(languageContext.getPreprocessor()).thenReturn(preprocessor);
         contractService = new SmcContractServiceImpl(blockchain,
             smcContractTable,
             smcContractStateTable,
@@ -135,20 +138,24 @@ class SmcContractServiceTest {
             .fuelPrice(BigInteger.valueOf(smcTxData.getFuelPrice()))
             .build();
 
+        smartSource = ContractSource.builder()
+            .sourceCode(smcPublishContractAttachment.getContractSource())
+            .name(smcPublishContractAttachment.getContractName())
+            .baseContract("Contract")
+            .languageName(smcPublishContractAttachment.getLanguageName())
+            .languageVersion(Languages.languageVersion(smcPublishContractAttachment.getContractSource()))
+            .build();
+
+        var src = new ContractSource(smartSource);
+        src.setParsedSourceCode(smcPublishContractAttachment.getContractSource());
+
         smartContract = SmartContract.builder()
             .address(contractAddress)
             .owner(senderAddress)
             .sender(senderAddress)
             .txId(new AplAddress(TX_ID))
-            .code(SmartSource.builder()
-                .sourceCode(smcPublishContractAttachment.getContractSource())
-                .name(smcPublishContractAttachment.getContractName())
-                .baseContract("Contract")
-                .args(smcPublishContractAttachment.getConstructorParams())
-                .languageName(smcPublishContractAttachment.getLanguageName())
-                .languageVersion(Languages.languageVersion(smcPublishContractAttachment.getContractSource()))
-                .build()
-            )
+            .args(smcPublishContractAttachment.getConstructorParams())
+            .code(src)
             .status(ContractStatus.CREATED)
             .fuel(new ContractFuel(contractAddress, smcPublishContractAttachment.getFuelLimit(), smcPublishContractAttachment.getFuelPrice()))
             .build();
@@ -235,14 +242,14 @@ class SmcContractServiceTest {
         when(smcTransaction.getRecipientId()).thenReturn(recipientAddress.getLongId());
         when(smcTransaction.getSenderId()).thenReturn(senderAddress.getLongId());
         when(smcTransaction.getId()).thenReturn(TX_ID);
-        when(libraryProvider.parseContractType(smcPublishContractAttachment.getContractSource())).thenReturn(new ContractSpec.Item("newName", "Contract"));
+        //when(preprocessor.parseContractType(smcPublishContractAttachment.getContractSource())).thenReturn(new ContractSpec.Item("newName", "Contract"));
+        when(preprocessor.process(any())).thenReturn(smartSource);
         //WHEN
         SmartContract newContract = contractService.createNewContract(smcTransaction);
 
         //THEN
         assertEquals(smartContract, newContract);
     }
-
     @Test
     void getContractDetails() {
         //GIVEN
@@ -310,7 +317,7 @@ class SmcContractServiceTest {
         var version = SimpleVersion.fromString("0.1.1");
         var moduleName = "APL20";
         when(libraryProvider.getLanguageName()).thenReturn(language);
-        when(libraryProvider.version()).thenReturn(version);
+        when(libraryProvider.getLanguageVersion()).thenReturn(version);
 
         //WHEN
         //THEN
