@@ -23,7 +23,8 @@ import java.sql.Statement;
 
 @Slf4j
 public class MariadbDatabaseAdministrator implements DatabaseAdministrator {
-    public static final String APOLLO_MARIADB_INSTALL_DIR="apollo-mariadb";
+//    public static final String APOLLO_MARIADB_INSTALL_DIR="apollo-mariadb";
+    public static final String APOLLO_MARIADB_INSTALL_DIR="/home/ylarin/temp_soft/ApolloWallet-1.48.3/apollo-mariadb";
 
     private final DirProvider dirProvider;
     private final DbProperties dbProperties;

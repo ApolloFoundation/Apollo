@@ -4,6 +4,7 @@
 
 package com.apollocurrency.aplwallet.apl.core.service.state.currency.impl;
 
+import com.apollocurrency.aplwallet.apl.core.app.observer.events.TrimEvent;
 import com.apollocurrency.aplwallet.apl.core.model.Transaction;
 import com.apollocurrency.aplwallet.apl.core.chainid.BlockchainConfig;
 import com.apollocurrency.aplwallet.apl.core.converter.rest.IteratorToStreamConverter;
@@ -49,6 +50,8 @@ import com.apollocurrency.aplwallet.apl.util.db.TransactionalDataSource;
 import com.apollocurrency.aplwallet.apl.util.exception.AplException;
 import lombok.extern.slf4j.Slf4j;
 
+import javax.enterprise.event.Event;
+import javax.enterprise.util.AnnotationLiteral;
 import javax.inject.Inject;
 import javax.inject.Singleton;
 import java.sql.Connection;
@@ -87,6 +90,7 @@ public class CurrencyServiceImpl implements CurrencyService {
     private final BlockchainConfig blockchainConfig;
     private final TransactionValidationHelper validationHelper;
     private final FullTextSearchUpdater fullTextSearchUpdater;
+    private final Event<FullTextOperationData> fullTextOperationDataEvent;
     private final FullTextSearchService fullTextSearchService;
 
     @Inject
@@ -105,6 +109,7 @@ public class CurrencyServiceImpl implements CurrencyService {
                                BlockchainConfig blockchainConfig,
                                TransactionValidationHelper transactionValidationHelper,
                                FullTextSearchUpdater fullTextSearchUpdater,
+                               Event<FullTextOperationData> fullTextOperationDataEvent,
                                FullTextSearchService fullTextSearchService
     ) {
         this.currencySupplyTable = currencySupplyTable;
@@ -123,6 +128,7 @@ public class CurrencyServiceImpl implements CurrencyService {
         this.shufflingService = shufflingService;
         this.blockchainConfig = blockchainConfig;
         this.fullTextSearchUpdater = fullTextSearchUpdater;
+        this.fullTextOperationDataEvent = fullTextOperationDataEvent;
         this.fullTextSearchService = fullTextSearchService;
     }
 
@@ -620,6 +626,7 @@ public class CurrencyServiceImpl implements CurrencyService {
         operationData.addColumnData(currency.getCode()).addColumnData(currency.getName()).addColumnData(currency.getDescription());
         // send data into Lucene index component
         log.trace("Put lucene index update data = {}", operationData);
-        fullTextSearchUpdater.putFullTextOperationData(operationData);
+//        fullTextSearchUpdater.putFullTextOperationData(operationData);
+        this.fullTextOperationDataEvent.select(new AnnotationLiteral<TrimEvent>() {}).fireAsync(operationData);
     }
 }

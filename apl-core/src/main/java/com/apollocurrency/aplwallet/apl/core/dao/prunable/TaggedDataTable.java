@@ -7,7 +7,7 @@ package com.apollocurrency.aplwallet.apl.core.dao.prunable;
 import com.apollocurrency.aplwallet.apl.core.chainid.BlockchainConfig;
 import com.apollocurrency.aplwallet.apl.core.converter.db.tagged.TaggedDataMapper;
 import com.apollocurrency.aplwallet.apl.core.dao.state.derived.PrunableDbTable;
-import com.apollocurrency.aplwallet.apl.core.dao.state.derived.SearchableTableInterface;
+import com.apollocurrency.aplwallet.apl.core.dao.state.derived.SearchableTableMarkerInterface;
 import com.apollocurrency.aplwallet.apl.core.dao.state.keyfactory.DbKey;
 import com.apollocurrency.aplwallet.apl.core.dao.state.keyfactory.LongKeyFactory;
 import com.apollocurrency.aplwallet.apl.core.service.fulltext.FullTextOperationData;
@@ -37,10 +37,11 @@ import java.util.Map;
  */
 @Singleton
 @DatabaseSpecificDml(DmlMarker.FULL_TEXT_SEARCH)
-public class TaggedDataTable extends PrunableDbTable<TaggedData> implements SearchableTableInterface<TaggedData> {
+public class TaggedDataTable extends PrunableDbTable<TaggedData> implements SearchableTableMarkerInterface<TaggedData> {
 
-    private static final String DB_TABLE = "tagged_data";
-    private static final String FULL_TEXT_SEARCH_COLUMNS = "name,description,tags";
+    public static final String TABLE_NAME = "tagged_data";
+    public static final String FULL_TEXT_SEARCH_COLUMNS = "name,description,tags";
+
     private static final LongKeyFactory<TaggedData> taggedDataKeyFactory = new LongKeyFactory<>("id") {
         @Override
         public DbKey newKey(TaggedData taggedData) {
@@ -57,7 +58,7 @@ public class TaggedDataTable extends PrunableDbTable<TaggedData> implements Sear
                            DatabaseManager databaseManager,
                            PropertiesHolder propertiesHolder,
                            Event<FullTextOperationData> fullTextOperationDataEvent) {
-        super(DB_TABLE, taggedDataKeyFactory, true,
+        super(TABLE_NAME, taggedDataKeyFactory, true,
             FULL_TEXT_SEARCH_COLUMNS, databaseManager, blockchainConfig,
             propertiesHolder, fullTextOperationDataEvent);
         this.dataTagDao = dataTagDao;
@@ -193,23 +194,6 @@ public class TaggedDataTable extends PrunableDbTable<TaggedData> implements Sear
         } catch (SQLException e) {
             throw new RuntimeException(e.toString(), e);
         }
-    }
-
-    public DbIterator<TaggedData> searchData(String query, String channel, long accountId, int from, int to) {
-//        return search(query, getDbClause(channel, accountId), from, to,
-//            " ORDER BY ft.score DESC, tagged_data.block_timestamp DESC, tagged_data.db_id DESC ");
-        throw new UnsupportedOperationException("Call service, should be implemented by service");
-    }
-
-    @Override
-    public final DbIterator<TaggedData> search(String query, DbClause dbClause, int from, int to) {
-//        return search(query, dbClause, from, to, " ORDER BY ft.score DESC ");
-        throw new UnsupportedOperationException("Call service, should be implemented by service");
-    }
-
-    @Override
-    public final DbIterator<TaggedData> search(String query, DbClause dbClause, int from, int to, String sort) {
-        throw new UnsupportedOperationException("Call service, should be implemented by service");
     }
 
 }

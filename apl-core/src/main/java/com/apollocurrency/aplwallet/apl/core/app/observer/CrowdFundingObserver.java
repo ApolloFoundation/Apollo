@@ -25,6 +25,7 @@ import com.apollocurrency.aplwallet.apl.core.service.state.currency.CurrencyServ
 import com.apollocurrency.aplwallet.apl.util.db.DbIterator;
 import lombok.extern.slf4j.Slf4j;
 
+import javax.enterprise.event.Event;
 import javax.enterprise.event.Observes;
 import javax.inject.Inject;
 import javax.inject.Singleton;
@@ -45,6 +46,7 @@ public class CrowdFundingObserver {
     private final BlockChainInfoService blockChainInfoService;
     private final CurrencySupplyTable currencySupplyTable;
     private final FullTextSearchUpdater fullTextSearchUpdater;
+    private final Event<FullTextOperationData> fullTextOperationDataEvent;
 
     @Inject
     public CrowdFundingObserver(AccountService accountService,
@@ -54,7 +56,8 @@ public class CrowdFundingObserver {
                                 CurrencyFounderService currencyFounderService,
                                 BlockChainInfoService blockChainInfoService,
                                 CurrencySupplyTable currencySupplyTable,
-                                FullTextSearchUpdater fullTextSearchUpdater
+                                FullTextSearchUpdater fullTextSearchUpdater,
+                                Event<FullTextOperationData> fullTextOperationDataEvent
     ) {
         this.accountService = accountService;
         this.accountCurrencyService = accountCurrencyService;
@@ -64,6 +67,7 @@ public class CrowdFundingObserver {
         this.blockChainInfoService = blockChainInfoService;
         this.currencySupplyTable = currencySupplyTable;
         this.fullTextSearchUpdater = fullTextSearchUpdater;
+        this.fullTextOperationDataEvent = fullTextOperationDataEvent;
     }
 
     public void onBlockApplied(@Observes @BlockEvent(BlockEventType.AFTER_BLOCK_APPLY) Block block) {
@@ -145,7 +149,9 @@ public class CrowdFundingObserver {
         operationData.setDbIdValue(currency.getDbId());
         operationData.addColumnData(currency.getName()).addColumnData(currency.getDescription());
         // send data into Lucene index component
-        log.trace("Put lucene index update data = {}", operationData);
+        log.debug("Put lucene index update data = {}", operationData);
         fullTextSearchUpdater.putFullTextOperationData(operationData);
+        // fire event to update FullTestSearch index for record deletion
+//        this.fullTextOperationDataEvent.select(new AnnotationLiteral<TrimEvent>() {}).fireAsync(operationData);
     }
 }

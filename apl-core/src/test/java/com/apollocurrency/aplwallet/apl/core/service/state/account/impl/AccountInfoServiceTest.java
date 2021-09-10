@@ -4,6 +4,7 @@
 
 package com.apollocurrency.aplwallet.apl.core.service.state.account.impl;
 
+import com.apollocurrency.aplwallet.apl.core.app.observer.events.TrimEvent;
 import com.apollocurrency.aplwallet.apl.core.dao.state.account.AccountInfoTable;
 import com.apollocurrency.aplwallet.apl.core.entity.state.account.AccountInfo;
 import com.apollocurrency.aplwallet.apl.core.service.blockchain.Blockchain;
@@ -26,6 +27,11 @@ import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.spy;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.when;
+
+import javax.enterprise.event.Event;
+import javax.enterprise.util.AnnotationLiteral;
+import java.util.concurrent.CompletableFuture;
 
 class AccountInfoServiceTest {
     AccountInfoService accountInfoService;
@@ -33,13 +39,18 @@ class AccountInfoServiceTest {
     private Blockchain blockchain = mock(BlockchainImpl.class);
     private AccountInfoTable accountInfoTable = mock(AccountInfoTable.class);
     private FullTextSearchUpdater fullTextSearchUpdater = mock(FullTextSearchUpdaterImpl.class);
+    private Event<FullTextOperationData> fullTextOperationDataEvent = mock(Event.class);
     private FullTextSearchService fullTextSearchService = mock(FullTextSearchService.class);
 
     @BeforeEach
     void setUp() {
         testData = new AccountTestData();
-        accountInfoService = spy(new AccountInfoServiceImpl(blockchain, accountInfoTable, fullTextSearchUpdater, fullTextSearchService));
+        accountInfoService = spy(new AccountInfoServiceImpl(blockchain, accountInfoTable,
+            fullTextSearchUpdater, fullTextOperationDataEvent, fullTextSearchService));
         doReturn("account_info").when(accountInfoTable).getTableName();
+        Event mockEvent = mock(Event.class);
+        when(fullTextOperationDataEvent.select(new AnnotationLiteral<TrimEvent>() {})).thenReturn(mockEvent);
+        when(mockEvent.fireAsync(any())).thenReturn(new CompletableFuture());
     }
 
     @Test
@@ -52,7 +63,8 @@ class AccountInfoServiceTest {
         verify(accountInfoService).update(testData.ACC_INFO_0);
         assertEquals(newName, testData.ACC_INFO_0.getName());
         assertEquals(newDescription, testData.ACC_INFO_0.getDescription());
-        verify(fullTextSearchUpdater).putFullTextOperationData(any(FullTextOperationData.class));
+//        verify(fullTextSearchUpdater).putFullTextOperationData(any(FullTextOperationData.class));
+        verify(fullTextOperationDataEvent).select(new AnnotationLiteral<TrimEvent>() {});
     }
 
     @Test
@@ -65,7 +77,8 @@ class AccountInfoServiceTest {
         doReturn(null).when(accountInfoTable).get(any());
         accountInfoService.updateAccountInfo(testData.ACC_1, newName, newDescription);
         verify(accountInfoService).update(expectedAccountInfo);
-        verify(fullTextSearchUpdater).putFullTextOperationData(any(FullTextOperationData.class));
+//        verify(fullTextSearchUpdater).putFullTextOperationData(any(FullTextOperationData.class));
+        verify(fullTextOperationDataEvent).select(new AnnotationLiteral<TrimEvent>() {});
     }
 
     @Test
@@ -76,7 +89,8 @@ class AccountInfoServiceTest {
         accountInfoService.update(newInfo);
         verify(accountInfoTable, times(1)).insert(newInfo);
         verify(accountInfoTable, never()).deleteAtHeight(any(AccountInfo.class), anyInt());
-        verify(fullTextSearchUpdater).putFullTextOperationData(any(FullTextOperationData.class));
+//        verify(fullTextSearchUpdater).putFullTextOperationData(any(FullTextOperationData.class));
+        verify(fullTextOperationDataEvent).select(new AnnotationLiteral<TrimEvent>() {});
     }
 
     @Test
@@ -86,6 +100,7 @@ class AccountInfoServiceTest {
         accountInfoService.update(deletedAccountInfo);
         verify(accountInfoTable, times(1)).deleteAtHeight(deletedAccountInfo, blockchain.getHeight());
         verify(accountInfoTable, never()).insert(any(AccountInfo.class));
-        verify(fullTextSearchUpdater).putFullTextOperationData(any(FullTextOperationData.class));
+//        verify(fullTextSearchUpdater).putFullTextOperationData(any(FullTextOperationData.class));
+        verify(fullTextOperationDataEvent).select(new AnnotationLiteral<TrimEvent>() {});
     }
 }

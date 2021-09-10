@@ -5,7 +5,6 @@
 package com.apollocurrency.aplwallet.apl.core.entity.state.derived;
 
 
-import com.apollocurrency.aplwallet.apl.core.dao.state.derived.Searchable;
 import com.apollocurrency.aplwallet.apl.core.dao.state.keyfactory.DbKey;
 import lombok.ToString;
 
@@ -14,7 +13,7 @@ import java.sql.SQLException;
 import java.util.Objects;
 
 @ToString
-public abstract class DerivedEntity implements Comparable<DerivedEntity>, Cloneable, Searchable {
+public abstract class DerivedEntity implements Comparable<DerivedEntity>, Cloneable {
     protected static final int DEFAULT_HEIGHT = -1;
     private static final long DEFAULT_DB_ID = 0L;
     private volatile DbKey dbKey;
@@ -91,4 +90,9 @@ public abstract class DerivedEntity implements Comparable<DerivedEntity>, Clonea
             throw new RuntimeException(getClass().getSimpleName() + " does not support Object.clone() operation");
         }
     }
+
+    public boolean isSearchable() {
+        return false;
+    }
+
 }

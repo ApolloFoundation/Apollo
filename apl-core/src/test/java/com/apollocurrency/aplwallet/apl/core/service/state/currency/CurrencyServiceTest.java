@@ -4,6 +4,7 @@
 
 package com.apollocurrency.aplwallet.apl.core.service.state.currency;
 
+import com.apollocurrency.aplwallet.apl.core.app.observer.events.TrimEvent;
 import com.apollocurrency.aplwallet.apl.core.chainid.BlockchainConfig;
 import com.apollocurrency.aplwallet.apl.core.chainid.HeightConfig;
 import com.apollocurrency.aplwallet.apl.core.converter.rest.IteratorToStreamConverter;
@@ -65,6 +66,7 @@ import org.mockito.junit.jupiter.MockitoExtension;
 
 import java.util.Collections;
 import java.util.List;
+import java.util.concurrent.CompletableFuture;
 import java.util.stream.Stream;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
@@ -78,6 +80,10 @@ import static org.mockito.Mockito.doReturn;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.when;
+
+import javax.enterprise.event.Event;
+import javax.enterprise.util.AnnotationLiteral;
 
 @EnableWeld
 @ExtendWith(MockitoExtension.class)
@@ -138,7 +144,8 @@ class CurrencyServiceTest {
     CurrencyMintTable currencyMintTable;
     @Mock
     private FullTextSearchService fullTextSearchService;
-
+    @Mock
+    private Event<FullTextOperationData> fullTextOperationDataEvent;
     @Mock
     TransactionValidationHelper transactionValidationHelper;
 
@@ -148,7 +155,7 @@ class CurrencyServiceTest {
         service = new CurrencyServiceImpl(currencySupplyTable, currencyTable, currencyMintTable, monetaryCurrencyMintingService, blockChainInfoService,
             accountService, accountCurrencyService, currencyExchangeOfferFacade, currencyFounderService,
             exchangeService, currencyTransferService, shufflingService, blockchainConfig,
-            transactionValidationHelper, fullTextSearchUpdater, fullTextSearchService);
+            transactionValidationHelper, fullTextSearchUpdater, fullTextOperationDataEvent, fullTextSearchService);
     }
 
     @Test
@@ -161,13 +168,17 @@ class CurrencyServiceTest {
         doReturn("ANY_NAME").when(attach).getName();
         doReturn(null).doReturn(null).when(currencyTable).getBy(any(DbClause.StringClause.class));
         doReturn("currency").when(currencyTable).getTableName();
+        Event mockEvent = mock(Event.class);
+        when(fullTextOperationDataEvent.select(new AnnotationLiteral<TrimEvent>() {})).thenReturn(mockEvent);
+        when(mockEvent.fireAsync(any())).thenReturn(new CompletableFuture());
 
         //WHEN
         service.addCurrency(LedgerEvent.CURRENCY_ISSUANCE, tr.getId(), tr, account, attach);
 
         //THEN
         verify(currencyTable).insert(any(Currency.class));
-        verify(fullTextSearchUpdater).putFullTextOperationData(any(FullTextOperationData.class));
+//        verify(fullTextSearchUpdater).putFullTextOperationData(any(FullTextOperationData.class));
+        verify(fullTextOperationDataEvent).select(new AnnotationLiteral<TrimEvent>() {});
     }
 
     @Test
@@ -338,6 +349,10 @@ class CurrencyServiceTest {
         doReturn(buyOffers).when(buyOfferService).getOffersStream(td.CURRENCY_3, 0, -1);
         doReturn(buyOfferService).when(currencyExchangeOfferFacade).getCurrencyBuyOfferService();
         doReturn("currency").when(currencyTable).getTableName();
+        Event mockEvent = mock(Event.class);
+        when(fullTextOperationDataEvent.select(new AnnotationLiteral<TrimEvent>() {})).thenReturn(mockEvent);
+        when(mockEvent.fireAsync(any())).thenReturn(new CompletableFuture());
+
         //WHEN
         service.delete(td.CURRENCY_3, LedgerEvent.CURRENCY_ISSUANCE, tr.getId(), account);
         //THEN
@@ -345,7 +360,8 @@ class CurrencyServiceTest {
         verify(accountCurrencyService).addToUnconfirmedCurrencyUnits(any(Account.class), any(LedgerEvent.class), anyLong(), anyLong(), anyLong());
         verify(accountCurrencyService).addToCurrencyUnits(any(Account.class), any(LedgerEvent.class), anyLong(), anyLong(), anyLong());
         verify(currencyTable).deleteAtHeight(any(Currency.class), anyInt());
-        verify(fullTextSearchUpdater).putFullTextOperationData(any(FullTextOperationData.class));
+//        verify(fullTextSearchUpdater).putFullTextOperationData(any(FullTextOperationData.class));
+        verify(fullTextOperationDataEvent).select(new AnnotationLiteral<TrimEvent>() {});
     }
 
     @Test

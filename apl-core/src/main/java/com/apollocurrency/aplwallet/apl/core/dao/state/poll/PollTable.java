@@ -24,7 +24,7 @@ import com.apollocurrency.aplwallet.apl.core.model.Transaction;
 import com.apollocurrency.aplwallet.apl.core.service.fulltext.FullTextOperationData;
 import com.apollocurrency.aplwallet.apl.util.db.TransactionalDataSource;
 import com.apollocurrency.aplwallet.apl.core.dao.state.derived.EntityDbTable;
-import com.apollocurrency.aplwallet.apl.core.dao.state.derived.SearchableTableInterface;
+import com.apollocurrency.aplwallet.apl.core.dao.state.derived.SearchableTableMarkerInterface;
 import com.apollocurrency.aplwallet.apl.core.dao.state.keyfactory.DbKey;
 import com.apollocurrency.aplwallet.apl.core.dao.state.keyfactory.LongKeyFactory;
 import com.apollocurrency.aplwallet.apl.util.db.DbClause;
@@ -56,7 +56,10 @@ import java.util.List;
 @DatabaseSpecificDml(DmlMarker.FULL_TEXT_SEARCH)
 @Singleton
 @Slf4j
-public class PollTable extends EntityDbTable<Poll> implements SearchableTableInterface<Poll> {
+public class PollTable extends EntityDbTable<Poll> implements SearchableTableMarkerInterface<Poll> {
+    public static final String TABLE_NAME = "poll";
+    public static final String FULL_TEXT_SEARCH_COLUMNS = "name,description";
+
     public static final String FINISH_HEIGHT = "finish_height";
 
     private static final LongKeyFactory<Poll> POLL_LONG_KEY_FACTORY = new LongKeyFactory<>("id") {
@@ -69,7 +72,7 @@ public class PollTable extends EntityDbTable<Poll> implements SearchableTableInt
     @Inject
     public PollTable(DatabaseManager databaseManager,
                      Event<FullTextOperationData> fullTextOperationDataEvent) {
-        super("poll", POLL_LONG_KEY_FACTORY, false, "name,description",
+        super(TABLE_NAME, POLL_LONG_KEY_FACTORY, false, FULL_TEXT_SEARCH_COLUMNS,
                 databaseManager, fullTextOperationDataEvent);
     }
 
@@ -193,13 +196,6 @@ public class PollTable extends EntityDbTable<Poll> implements SearchableTableInt
         }
     }
 
-    public DbIterator<Poll> searchPolls(String query, boolean includeFinished, int from, int to, int height) {
-//        DbClause dbClause = includeFinished ? DbClause.EMPTY_CLAUSE : new DbClause.IntClause(FINISH_HEIGHT,
-//            DbClause.Op.GT, height);
-//        return search(query, dbClause, from, to, " ORDER BY ft.score DESC, poll.height DESC, poll.db_id DESC ");
-        throw new UnsupportedOperationException("Call service, should be implemented by service");
-    }
-
     public int getCount() {
         return getCount();
     }
@@ -221,14 +217,4 @@ public class PollTable extends EntityDbTable<Poll> implements SearchableTableInt
         return POLL_LONG_KEY_FACTORY.newKey(poll);
     }
 
-    @Override
-    public final DbIterator<Poll> search(String query, DbClause dbClause, int from, int to) {
-//        return search(query, dbClause, from, to, " ORDER BY ft.score DESC ");
-        throw new UnsupportedOperationException("Call service, should be implemented by service");
-    }
-
-    @Override
-    public final DbIterator<Poll> search(String query, DbClause dbClause, int from, int to, String sort) {
-        throw new UnsupportedOperationException("Call service, should be implemented by service");
-    }
 }

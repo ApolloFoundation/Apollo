@@ -4,6 +4,8 @@
 
 package com.apollocurrency.aplwallet.apl.core.service.fulltext;
 
+import static com.apollocurrency.aplwallet.apl.core.service.fulltext.FullTextSearchServiceImpl.FTL_INDEXES_TABLE;
+
 import com.apollocurrency.aplwallet.apl.util.StringValidator;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -49,7 +51,7 @@ public class DbUtils {
     private static List<Integer> getIndexColumns(Connection con, List<String> columnNames, List<Integer> columnTypes, String schema, String table) {
         List<Integer> indexColumns = new ArrayList<>();
         try (ResultSet rs = con.createStatement().executeQuery(String.format(
-            "SELECT columns FROM ftl_indexes WHERE `table` = '%s'", table.toLowerCase()))) {
+            "SELECT columns FROM " + FTL_INDEXES_TABLE + " WHERE `table` = '%s'", table.toLowerCase()))) {
             if (rs.next()) {
                 String[] columns = rs.getString(1).trim().split(",");
                 for (String column : columns) {

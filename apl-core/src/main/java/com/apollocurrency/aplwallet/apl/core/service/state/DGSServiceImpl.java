@@ -4,6 +4,7 @@
 
 package com.apollocurrency.aplwallet.apl.core.service.state;
 
+import com.apollocurrency.aplwallet.apl.core.app.observer.events.TrimEvent;
 import com.apollocurrency.aplwallet.apl.core.model.Block;
 import com.apollocurrency.aplwallet.apl.core.model.Transaction;
 import com.apollocurrency.aplwallet.apl.core.dao.state.dgs.DGSFeedbackTable;
@@ -45,6 +46,8 @@ import com.apollocurrency.aplwallet.apl.util.db.DbUtils;
 import com.apollocurrency.aplwallet.apl.util.db.TransactionalDataSource;
 import lombok.extern.slf4j.Slf4j;
 
+import javax.enterprise.event.Event;
+import javax.enterprise.util.AnnotationLiteral;
 import javax.inject.Inject;
 import javax.inject.Singleton;
 import java.sql.Connection;
@@ -72,6 +75,7 @@ public class DGSServiceImpl implements DGSService {
     private final DGSTagTable tagTable;
     private final AccountService accountService;
     private final FullTextSearchUpdater fullTextSearchUpdater;
+    private final Event<FullTextOperationData> fullTextOperationDataEvent;
     private final FullTextSearchService fullTextSearchService;
 
     @Inject
@@ -83,6 +87,7 @@ public class DGSServiceImpl implements DGSService {
                           DGSTagTable tagTable,
                           AccountService accountService,
                           FullTextSearchUpdater fullTextSearchUpdater,
+                          Event<FullTextOperationData> fullTextOperationDataEvent,
                           FullTextSearchService fullTextSearchService) {
         this.publicFeedbackTable = publicFeedbackTable;
         this.purchaseTable = purchaseTable;
@@ -92,6 +97,7 @@ public class DGSServiceImpl implements DGSService {
         this.tagTable = tagTable;
         this.accountService = accountService;
         this.fullTextSearchUpdater = fullTextSearchUpdater;
+        this.fullTextOperationDataEvent = fullTextOperationDataEvent;
         this.fullTextSearchService = fullTextSearchService;
     }
 
@@ -561,7 +567,8 @@ public class DGSServiceImpl implements DGSService {
         operationData.addColumnData(goods.getName()).addColumnData(goods.getDescription()).addColumnData(goods.getTags());
         // send data into Lucene index component
         log.trace("Put lucene index update data = {}", operationData);
-        fullTextSearchUpdater.putFullTextOperationData(operationData);
+//        fullTextSearchUpdater.putFullTextOperationData(operationData);
+        this.fullTextOperationDataEvent.select(new AnnotationLiteral<TrimEvent>() {}).fireAsync(operationData);
     }
 
 }

@@ -4,6 +4,7 @@
 
 package com.apollocurrency.aplwallet.apl.core.service.state;
 
+import com.apollocurrency.aplwallet.apl.core.app.observer.events.TrimEvent;
 import com.apollocurrency.aplwallet.apl.core.model.Transaction;
 import com.apollocurrency.aplwallet.apl.core.converter.rest.IteratorToStreamConverter;
 import com.apollocurrency.aplwallet.apl.core.dao.state.keyfactory.DbKey;
@@ -28,6 +29,8 @@ import com.apollocurrency.aplwallet.apl.util.db.TransactionalDataSource;
 import com.apollocurrency.aplwallet.apl.util.exception.AplException;
 import lombok.extern.slf4j.Slf4j;
 
+import javax.enterprise.event.Event;
+import javax.enterprise.util.AnnotationLiteral;
 import javax.inject.Inject;
 import javax.inject.Singleton;
 import java.sql.Connection;
@@ -52,6 +55,7 @@ public class PollServiceImpl implements PollService {
     private final VoteTable voteTable;
     private final BlockchainImpl blockchain;
     private final FullTextSearchUpdater fullTextSearchUpdater;
+    private final Event<FullTextOperationData> fullTextOperationDataEvent;
     private final FullTextSearchService fullTextSearchService;
 
     /**
@@ -72,6 +76,7 @@ public class PollServiceImpl implements PollService {
         final VoteTable voteTable,
         BlockchainImpl blockchain,
         FullTextSearchUpdater fullTextSearchUpdater,
+        Event<FullTextOperationData> fullTextOperationDataEvent,
         FullTextSearchService fullTextSearchService
     ) {
         this.blockChainInfoService = blockChainInfoService;
@@ -82,6 +87,7 @@ public class PollServiceImpl implements PollService {
         this.voteTable = voteTable;
         this.blockchain = blockchain;
         this.fullTextSearchUpdater = fullTextSearchUpdater;
+        this.fullTextOperationDataEvent = fullTextOperationDataEvent;
         this.fullTextSearchService = fullTextSearchService;
     }
 
@@ -93,7 +99,8 @@ public class PollServiceImpl implements PollService {
         final PollOptionResultService pollOptionResultService,
         final VoteTable voteTable,
         final BlockchainImpl blockchain,
-        final FullTextSearchUpdater fullTextSearchUpdater,
+        FullTextSearchUpdater fullTextSearchUpdater,
+        final Event<FullTextOperationData> fullTextOperationDataEvent,
         final FullTextSearchService fullTextSearchService
     ) {
         this.blockChainInfoService = blockChainInfoService;
@@ -104,6 +111,7 @@ public class PollServiceImpl implements PollService {
         this.voteTable = voteTable;
         this.blockchain = blockchain;
         this.fullTextSearchUpdater = fullTextSearchUpdater;
+        this.fullTextOperationDataEvent = fullTextOperationDataEvent;
         this.fullTextSearchService = fullTextSearchService;
     }
 
@@ -293,7 +301,8 @@ public class PollServiceImpl implements PollService {
         operationData.addColumnData(poll.getName()).addColumnData(poll.getDescription());
         // send data into Lucene index component
         log.trace("Put lucene index update data = {}", operationData);
-        fullTextSearchUpdater.putFullTextOperationData(operationData);
+//        fullTextSearchUpdater.putFullTextOperationData(operationData);
+        this.fullTextOperationDataEvent.select(new AnnotationLiteral<TrimEvent>() {}).fireAsync(operationData);
     }
 
 }

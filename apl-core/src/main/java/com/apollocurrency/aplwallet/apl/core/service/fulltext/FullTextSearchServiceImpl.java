@@ -4,11 +4,13 @@
 
 package com.apollocurrency.aplwallet.apl.core.service.fulltext;
 
+import com.apollocurrency.aplwallet.apl.core.dao.state.poll.PollTable;
 import com.apollocurrency.aplwallet.apl.core.db.DatabaseManager;
 import com.apollocurrency.aplwallet.apl.util.annotation.DatabaseSpecificDml;
 import com.apollocurrency.aplwallet.apl.util.annotation.DmlMarker;
 import lombok.extern.slf4j.Slf4j;
 
+import javax.annotation.PostConstruct;
 import javax.inject.Inject;
 import javax.inject.Named;
 import javax.inject.Singleton;
@@ -89,6 +91,7 @@ public class FullTextSearchServiceImpl implements FullTextSearchService {
      * This method should be called from AplDbVersion when performing the database version update
      * that enables fulltext search support
      */
+    @PostConstruct
     public void init() {
         try {
             this.isIndexFolderEmpty = fullTextSearchEngine.isIndexFolderEmpty(); // first check if index is deleted manually
@@ -98,7 +101,7 @@ public class FullTextSearchServiceImpl implements FullTextSearchService {
             throw new RuntimeException("Unable to init fulltext engine", e);
         }
         // store lucene indexed data: table + schema + columns
-        log.debug("fullTextTableName = {}", FTL_INDEXES_TABLE);
+        log.debug("Check if exists meta-info table = '{}'", FTL_INDEXES_TABLE);
         try (Connection conn = databaseManager.getDataSource().getConnection();
              Statement stmt = conn.createStatement();
              Statement qstmt = conn.createStatement()) {
@@ -134,7 +137,7 @@ public class FullTextSearchServiceImpl implements FullTextSearchService {
             //
             boolean createResult = stmt.execute("CREATE TABLE IF NOT EXISTS " + FTL_INDEXES_TABLE + " "
                 + "(`schema` VARCHAR(20), `table` VARCHAR(100), columns VARCHAR(200), PRIMARY KEY(`schema`, `table`))");
-            log.info("fulltext table is created = '{}'", createResult);
+            log.debug("The fullTextSearch meta-info table is created = '{}'", createResult);
             //
             // Drop existing triggers and create our triggers.  H2 will initialize the trigger
             // when it is created.  H2 has already initialized the existing triggers and they
@@ -145,6 +148,7 @@ public class FullTextSearchServiceImpl implements FullTextSearchService {
             try (ResultSet rs = qstmt.executeQuery("SELECT count(*) as count FROM " + FTL_INDEXES_TABLE)) {
                 while (rs.next()) {
                     recordCount = rs.getLong("count");
+                    log.debug("Created db records for fullTextSearch meta-info = [{}]", recordCount);
                 }
             }
 
@@ -246,7 +250,7 @@ public class FullTextSearchServiceImpl implements FullTextSearchService {
             sb.append(", ").append(tableData.getColumnNames().get(index));
         }
         sb.append(" FROM ").append(tableName);
-        if (!tableName.equalsIgnoreCase("poll")) { // TODO: hardcoded value, better solution is needed
+        if (!tableName.equalsIgnoreCase(PollTable.TABLE_NAME)) { // only 'poll' table doesn't have 'latest' column
             sb.append(" WHERE latest = TRUE");
         }
 
@@ -336,8 +340,8 @@ public class FullTextSearchServiceImpl implements FullTextSearchService {
         final String table,
         final String fullTextSearchColumns
     ) throws SQLException {
-        if (fullTextSearchColumns != null) {
-            log.debug("Creating search index on {} ({})", table, fullTextSearchColumns);
+        if (fullTextSearchColumns != null && !fullTextSearchColumns.isEmpty()) {
+            log.debug("Creating meta-info db record about searched table '{}' (columns = {})", table, fullTextSearchColumns);
             String table1 = table.toLowerCase();
             String upperSchema = schemaName.toLowerCase();
             //
@@ -372,8 +376,6 @@ public class FullTextSearchServiceImpl implements FullTextSearchService {
                     throw new SQLException(UNABLE_TO_CREATE_LUCENE_SEARCH_INDEX_FOR_TABLE_MSG + table1, exc);
                 }
             }
-        } else {
-            log.warn("No columns for FTS index recreation !");
         }
     }
 

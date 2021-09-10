@@ -4,6 +4,7 @@
 package com.apollocurrency.aplwallet.apl.core.service.state;
 
 import com.apollocurrency.aplwallet.apl.core.app.VoteWeighting;
+import com.apollocurrency.aplwallet.apl.core.app.observer.events.TrimEvent;
 import com.apollocurrency.aplwallet.apl.core.converter.rest.IteratorToStreamConverter;
 import com.apollocurrency.aplwallet.apl.core.dao.state.poll.PollResultTable;
 import com.apollocurrency.aplwallet.apl.core.dao.state.poll.PollTable;
@@ -30,6 +31,7 @@ import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.util.Iterator;
 import java.util.List;
+import java.util.concurrent.CompletableFuture;
 import java.util.stream.Stream;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
@@ -39,6 +41,9 @@ import static org.mockito.Mockito.doReturn;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
+
+import javax.enterprise.event.Event;
+import javax.enterprise.util.AnnotationLiteral;
 
 /**
  * @author silaev-firstbridge on 6/12/2020
@@ -67,6 +72,8 @@ class PollServiceImplTest {
     @Mock
     private FullTextSearchUpdater fullTextSearchUpdater;
     @Mock
+    private Event<FullTextOperationData> fullTextOperationDataEvent;
+    @Mock
     private FullTextSearchService fullTextSearchService;
 
     private PollServiceImpl pollService;
@@ -82,6 +89,7 @@ class PollServiceImplTest {
             voteTable,
             blockchain,
             fullTextSearchUpdater,
+            fullTextOperationDataEvent,
             fullTextSearchService
         );
     }
@@ -280,13 +288,17 @@ class PollServiceImplTest {
         Poll poll = mock(Poll.class);
         doReturn(10L).when(poll).getDbId();
         doReturn(poll).when(pollTable).addPoll(transaction, attachment, timestamp, height);
+        Event mockEvent = mock(Event.class);
+        when(fullTextOperationDataEvent.select(new AnnotationLiteral<TrimEvent>() {})).thenReturn(mockEvent);
+        when(mockEvent.fireAsync(any())).thenReturn(new CompletableFuture());
 
         //WHEN
         pollService.addPoll(transaction, attachment);
 
         //THEN
         verify(pollTable).addPoll(transaction, attachment, timestamp, height);
-        verify(fullTextSearchUpdater).putFullTextOperationData(any(FullTextOperationData.class));
+//        verify(fullTextSearchUpdater).putFullTextOperationData(any(FullTextOperationData.class));
+        verify(fullTextOperationDataEvent).select(new AnnotationLiteral<TrimEvent>() {});
     }
 
     @ParameterizedTest

@@ -4,6 +4,7 @@
 
 package com.apollocurrency.aplwallet.apl.core.service.state.asset.impl;
 
+import com.apollocurrency.aplwallet.apl.core.app.observer.events.TrimEvent;
 import com.apollocurrency.aplwallet.apl.core.converter.rest.IteratorToStreamConverter;
 import com.apollocurrency.aplwallet.apl.core.dao.state.asset.AssetTable;
 import com.apollocurrency.aplwallet.apl.core.dao.state.keyfactory.DbKey;
@@ -28,6 +29,7 @@ import org.mockito.junit.jupiter.MockitoExtension;
 
 import java.sql.ResultSet;
 import java.sql.SQLException;
+import java.util.concurrent.CompletableFuture;
 import java.util.stream.Stream;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
@@ -39,6 +41,10 @@ import static org.mockito.Mockito.doReturn;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.when;
+
+import javax.enterprise.event.Event;
+import javax.enterprise.util.AnnotationLiteral;
 
 @ExtendWith(MockitoExtension.class)
 class AssetServiceTest {
@@ -54,7 +60,9 @@ class AssetServiceTest {
     @Mock
     private IteratorToStreamConverter<Asset> assetIteratorToStreamConverter;
     @Mock
-    private FullTextSearchUpdater fullTextSearchUpdater;
+    FullTextSearchUpdater fullTextSearchUpdater;
+    @Mock
+    private Event<FullTextOperationData> fullTextOperationDataEvent;
     @Mock
     private FullTextSearchService fullTextSearchService;
 
@@ -62,7 +70,7 @@ class AssetServiceTest {
     void setUp() {
         td = new AssetTestData();
         service = new AssetServiceImpl(assetTable, blockChainInfoService, assetDeleteService,
-            assetIteratorToStreamConverter, fullTextSearchUpdater, fullTextSearchService);
+            assetIteratorToStreamConverter, fullTextSearchUpdater, fullTextOperationDataEvent, fullTextSearchService);
     }
 
     @Test
@@ -153,7 +161,6 @@ class AssetServiceTest {
         assertNotNull(result);
 
         //THEN
-        verify(assetTable, never()).search(any(String.class), any(DbClause.class), eq(0), eq(10), any(String.class));
         verify(assetIteratorToStreamConverter, never()).apply(dbIt);
         verify(fullTextSearchService).search("public", "asset", "searchQuery", Integer.MAX_VALUE, 0);
     }
@@ -165,13 +172,17 @@ class AssetServiceTest {
         ColoredCoinsAssetIssuance attach = mock(ColoredCoinsAssetIssuance.class);
         doNothing().when(assetTable).insert(any(Asset.class));
         doReturn("asset").when(assetTable).getTableName();
+        Event mockEvent = mock(Event.class);
+        when(fullTextOperationDataEvent.select(new AnnotationLiteral<TrimEvent>() {})).thenReturn(mockEvent);
+        when(mockEvent.fireAsync(any())).thenReturn(new CompletableFuture());
 
         //WHEN
         service.addAsset(tr, attach);
 
         //THEN
         verify(assetTable).insert(any(Asset.class));
-        verify(fullTextSearchUpdater).putFullTextOperationData(any(FullTextOperationData.class));
+//        verify(fullTextSearchUpdater).putFullTextOperationData(any(FullTextOperationData.class));
+        verify(fullTextOperationDataEvent).select(new AnnotationLiteral<TrimEvent>() {});
     }
 
     @Test
@@ -184,6 +195,9 @@ class AssetServiceTest {
         doReturn(assetDelete).when(assetDeleteService).addAssetDelete(tr, td.ASSET_0.getId(), 10);
         doReturn(100).when(blockChainInfoService).getHeight();
         doReturn("asset").when(assetTable).getTableName();
+        Event mockEvent = mock(Event.class);
+        when(fullTextOperationDataEvent.select(new AnnotationLiteral<TrimEvent>() {})).thenReturn(mockEvent);
+        when(mockEvent.fireAsync(any())).thenReturn(new CompletableFuture());
 
         //WHEN
         service.deleteAsset(tr, td.ASSET_0.getId(), 10L);
@@ -192,6 +206,7 @@ class AssetServiceTest {
         verify(assetTable).get(any(DbKey.class));
         verify(assetTable).insert(any(Asset.class));
         verify(assetDeleteService).addAssetDelete(tr, td.ASSET_0.getId(), 10);
-        verify(fullTextSearchUpdater).putFullTextOperationData(any(FullTextOperationData.class));
+//        verify(fullTextSearchUpdater).putFullTextOperationData(any(FullTextOperationData.class));
+        verify(fullTextOperationDataEvent).select(new AnnotationLiteral<TrimEvent>() {});
     }
 }

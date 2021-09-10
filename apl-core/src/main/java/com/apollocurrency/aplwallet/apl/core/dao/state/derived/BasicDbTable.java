@@ -4,27 +4,21 @@
 
 package com.apollocurrency.aplwallet.apl.core.dao.state.derived;
 
-import static com.apollocurrency.aplwallet.apl.core.service.fulltext.FullTextConfig.DEFAULT_SCHEMA;
-
-import com.apollocurrency.aplwallet.apl.core.app.observer.events.TrimEvent;
 import com.apollocurrency.aplwallet.apl.core.dao.state.keyfactory.DbKey;
 import com.apollocurrency.aplwallet.apl.core.dao.state.keyfactory.KeyFactory;
 import com.apollocurrency.aplwallet.apl.core.db.DatabaseManager;
 import com.apollocurrency.aplwallet.apl.core.entity.state.derived.DerivedEntity;
 import com.apollocurrency.aplwallet.apl.core.service.fulltext.FullTextOperationData;
 import com.apollocurrency.aplwallet.apl.core.shard.ShardConstants;
-import com.apollocurrency.aplwallet.apl.core.shard.observer.DeleteOnTrimData;
 import com.apollocurrency.aplwallet.apl.util.db.TransactionalDataSource;
 import lombok.extern.slf4j.Slf4j;
 
 import javax.enterprise.event.Event;
-import javax.enterprise.util.AnnotationLiteral;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
@@ -80,7 +74,9 @@ public abstract class BasicDbTable<T extends DerivedEntity> extends DerivedDbTab
              PreparedStatement pstmtSelectToDelete = con.prepareStatement("SELECT DISTINCT " + keyFactory.getPKColumns()
                  + " FROM " + table + " WHERE height > ?");
              PreparedStatement pstmtDelete = con.prepareStatement("DELETE FROM " + table
-                 + " WHERE height > ? RETURNING db_id"); // delete records and return their 'db_id' values
+                 + " WHERE height > ?");
+             // select records to deleted in FTS by 'db_id' values
+             PreparedStatement pstmtSelectDeletedIds = con.prepareStatement("SELECT DB_ID FROM " + table + " WHERE height > ?");
              PreparedStatement pstmtSetLatest = con.prepareStatement(sql)) {
             pstmtSelectToDelete.setInt(1, height);
             List<DbKey> dbKeys = new ArrayList<>();
@@ -93,24 +89,10 @@ public abstract class BasicDbTable<T extends DerivedEntity> extends DerivedDbTab
                 log.trace("Rollback table {} found {} records to update to latest", table, dbKeys.size());
             }
 
-            pstmtDelete.setInt(1, height);
-            ResultSet deletedIds = pstmtDelete.executeQuery(); // returns deleted db_ids
+            // select deleted DB_IDs and fire FTS events for searchable tables to remove data from FTS
+            deletedRecordsCount = super.getDeletedRecordsSendFtsDeleteEvent(
+                height, deletedRecordsCount, pstmtDelete, pstmtSelectDeletedIds);
 
-            if (this.isSearchable() /* instanceof SearchableTableInterface */ ) {
-                FullTextOperationData operationData = new FullTextOperationData(
-                    DEFAULT_SCHEMA, this.table, Thread.currentThread().getName());
-                operationData.setOperationType(FullTextOperationData.OperationType.DELETE);
-                while (deletedIds.next()) {
-                    Long deleted_db_id = deletedIds.getLong("db_id");
-                    operationData.setDbIdValue(deleted_db_id);
-                    // send data into Lucene index component
-                    super.getFullTextOperationDataEvent().select(new AnnotationLiteral<TrimEvent>() {})
-                        .fireAsync(operationData);// fire event to update FullTestSearch index for record deletion
-                    ++deletedRecordsCount;
-                    log.trace("Update lucene index for '{}' at height = {}, deletedRecordsCount = {} by data :\n{}",
-                        this.table, height, deletedRecordsCount, operationData);
-                }
-            }
             if (deletedRecordsCount > 0) {
                 log.trace("Rollback table {} deleting {} records", table, deletedRecordsCount);
             }

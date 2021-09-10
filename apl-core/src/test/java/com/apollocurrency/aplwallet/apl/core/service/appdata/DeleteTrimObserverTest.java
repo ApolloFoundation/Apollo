@@ -5,6 +5,7 @@ package com.apollocurrency.aplwallet.apl.core.service.appdata;
 
 import com.apollocurrency.aplwallet.apl.core.app.observer.events.TrimEvent;
 import com.apollocurrency.aplwallet.apl.core.db.DatabaseManager;
+import com.apollocurrency.aplwallet.apl.core.service.fulltext.FullTextOperationData;
 import com.apollocurrency.aplwallet.apl.util.db.TransactionalDataSource;
 import com.apollocurrency.aplwallet.apl.core.shard.observer.DeleteOnTrimData;
 import com.apollocurrency.aplwallet.apl.util.ThreadUtils;
@@ -52,6 +53,8 @@ class DeleteTrimObserverTest {
     Event<DeleteOnTrimData> trimEvent;
     @Inject
     DeleteTrimObserver observer;
+    @Inject
+    Event<FullTextOperationData> fullTextOperationDataEvent;
 
     @BeforeEach
     void setUp() {
@@ -106,7 +109,7 @@ class DeleteTrimObserverTest {
         PreparedStatement preparedStatement = mock(PreparedStatement.class);
         doReturn(preparedStatement).when(con).prepareStatement(anyString());
         doNothing().doNothing().when(preparedStatement).setLong(anyInt(), anyLong());
-        observer = new DeleteTrimObserver(databaseManager, propertiesHolder);
+        observer = new DeleteTrimObserver(databaseManager, propertiesHolder, fullTextOperationDataEvent);
 
         DeleteOnTrimData delete = new DeleteOnTrimData(true, Set.of(1739068987193023818L, 9211698109297098287L), "account");
         observer.performOneTableDelete(delete);

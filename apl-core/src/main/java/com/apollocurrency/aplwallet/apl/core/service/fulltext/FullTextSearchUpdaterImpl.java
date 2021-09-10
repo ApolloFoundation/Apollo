@@ -4,6 +4,8 @@
 
 package com.apollocurrency.aplwallet.apl.core.service.fulltext;
 
+import static com.apollocurrency.aplwallet.apl.core.service.fulltext.FullTextSearchServiceImpl.FTL_INDEXES_TABLE;
+
 import com.apollocurrency.aplwallet.apl.core.app.observer.events.TrimEvent;
 import com.apollocurrency.aplwallet.apl.core.db.DatabaseManager;
 import com.apollocurrency.aplwallet.apl.util.annotation.DatabaseSpecificDml;
@@ -12,7 +14,6 @@ import com.apollocurrency.aplwallet.apl.util.db.TransactionCallback;
 import com.apollocurrency.aplwallet.apl.util.db.TransactionalDataSource;
 import lombok.extern.slf4j.Slf4j;
 
-import javax.annotation.PostConstruct;
 import javax.enterprise.event.ObservesAsync;
 import javax.inject.Inject;
 import javax.inject.Singleton;
@@ -63,7 +64,6 @@ public class FullTextSearchUpdaterImpl implements TransactionCallback, FullTextS
     /**
      * Initialize some data.
      */
-    @PostConstruct
     public void init() {
         TransactionalDataSource dataSource = databaseManager.getDataSource();
         log.debug("init = (isInTransaction = {})", dataSource.isInTransaction());
@@ -71,7 +71,7 @@ public class FullTextSearchUpdaterImpl implements TransactionCallback, FullTextS
 
         fullTextSearchService.init(); // tables and their indexed columns should be in DB after init() call
         try (Connection con = dataSource.getConnection();
-             ResultSet rs = con.createStatement().executeQuery("SELECT `table` FROM ftl_indexes")) {
+             ResultSet rs = con.createStatement().executeQuery("SELECT `table` FROM " + FTL_INDEXES_TABLE)) {
             while (rs.next()) {
                 String tableName = rs.getString("table");
                 try { // initialize map structure for future use

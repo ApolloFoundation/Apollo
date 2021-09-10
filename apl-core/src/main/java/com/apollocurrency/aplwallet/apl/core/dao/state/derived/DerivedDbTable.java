@@ -15,7 +15,7 @@
  */
 
 /*
- * Copyright © 2018-2019 Apollo Foundation
+ * Copyright © 2018-2021 Apollo Foundation
  */
 
 package com.apollocurrency.aplwallet.apl.core.dao.state.derived;
@@ -82,39 +82,60 @@ public abstract class DerivedDbTable<T extends DerivedEntity> implements Derived
         if (!dataSource.isInTransaction()) {
             throw new IllegalStateException("Not in transaction");
         }
-        int rc;
         int deletedRecordsCount = 0;
         try (Connection con = dataSource.getConnection();
              // delete records and return their 'db_id' values
-             PreparedStatement pstmtDelete = con.prepareStatement("DELETE FROM " + table + " WHERE height > ? RETURNING db_id")) {
-            pstmtDelete.setInt(1, height);
-            ResultSet deletedIds = pstmtDelete.executeQuery();
-            if (this.isSearchable() /* instanceof SearchableTableInterface */ ) {
+             PreparedStatement pstmtDelete = con.prepareStatement("DELETE FROM " + table + " WHERE height > ?");
+             PreparedStatement pstmtSelectDeletedIds = con.prepareStatement("SELECT DB_ID FROM " + table + " WHERE height > ?")) {
+
+            deletedRecordsCount = getDeletedRecordsSendFtsDeleteEvent(height, deletedRecordsCount, pstmtDelete, pstmtSelectDeletedIds);
+
+        } catch (SQLException e) {
+            throw new RuntimeException(e.toString(), e);
+        }
+        return deletedRecordsCount;
+    }
+
+    /**
+     * Select DB_IDs, check if 'searchable' and fire data into FTS to delete
+     * @param height target height
+     * @param deletedRecordsCount number of deleted records
+     * @param pstmtDelete sql for deleting records (the same records are selected db_id below)
+     * @param pstmtSelectDeletedIds sql for selecting DB_ID records to deleted by previous sql
+     * @return affected number
+     * @throws SQLException error
+     */
+    public int getDeletedRecordsSendFtsDeleteEvent(
+        int height, int deletedRecordsCount,
+        PreparedStatement pstmtDelete,
+        PreparedStatement pstmtSelectDeletedIds) throws SQLException {
+        if (this.isSearchable() /* instanceof SearchableTableInterface */ ) {
+            pstmtSelectDeletedIds.setInt(1, height);
+            // do select DB_IDs first
+            try (ResultSet deletedIds = pstmtSelectDeletedIds.executeQuery())  {
                 FullTextOperationData operationData = new FullTextOperationData(
                     DEFAULT_SCHEMA, this.table, Thread.currentThread().getName());
                 operationData.setOperationType(FullTextOperationData.OperationType.DELETE);
-
+                // take one DB_ID and fire Event to FTS with data
                 while (deletedIds.next()) {
-                    Long deleted_db_id = deletedIds.getLong("db_id");
+                    Long deleted_db_id = deletedIds.getLong("DB_ID");
                     operationData.setDbIdValue(deleted_db_id);
-
+                    // fire event to update FullTestSearch index for record deletion
                     fullTextOperationDataEvent.select(new AnnotationLiteral<TrimEvent>() {})
-                        .fireAsync(operationData);// fire event to update FullTestSearch index for record deletion
+                        .fireAsync(operationData);
                     ++deletedRecordsCount;
                     log.trace("Update lucene index for '{}' at height = {}, deletedRecordsCount = {} by data :\n{}",
                         this.table, height, deletedRecordsCount, operationData);
                 }
-            } else {
-                while (deletedIds.next()) {
-                    Long deleted_db_id = deletedIds.getLong("db_id");
-                    log.trace("Deleted '{}' at height = {}, db_id = {}", this.table, height, deleted_db_id);
-                    ++deletedRecordsCount;
-                }
-                log.debug("Deleted '{}' at height = {}, deletedRecordsCount = {}",
-                    this.table, height, deletedRecordsCount);
+            } catch (SQLException e) {
+                log.error("Error on selecting DB_ID to be deleted in FTS", e);
+                throw new RuntimeException(e.toString(), e);
             }
-        } catch (SQLException e) {
-            throw new RuntimeException(e.toString(), e);
+        } else {
+            pstmtDelete.setInt(1, height);
+            deletedRecordsCount = pstmtDelete.executeUpdate();
+            log.trace("Deleted '{}' at height = {}, deletedCount = {}",
+                this.table, height, deletedRecordsCount);
         }
         return deletedRecordsCount;
     }
