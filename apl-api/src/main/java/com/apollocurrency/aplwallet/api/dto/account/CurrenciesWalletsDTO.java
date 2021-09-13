@@ -1,14 +1,13 @@
 /*
- * Copyright © 2018-2019 Apollo Foundation.
+ * Copyright © 2018-2021 Apollo Foundation.
  */
 
 package com.apollocurrency.aplwallet.api.dto.account;
 
-import com.apollocurrency.aplwallet.api.dto.AplWalletDTO;
 import com.apollocurrency.aplwallet.api.dto.BaseDTO;
-import com.apollocurrency.aplwallet.api.dto.EthWalletKeyDTO;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonInclude;
+import lombok.EqualsAndHashCode;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
@@ -26,16 +25,13 @@ import java.util.List;
 @JsonIgnoreProperties(ignoreUnknown = true)
 @Getter
 @Setter
-public class WalletKeysInfoDTO extends BaseDTO {
-    private String account;
-    private String accountRS;
-    private String publicKey;
+@EqualsAndHashCode
+public class CurrenciesWalletsDTO extends BaseDTO {
     private String passphrase;
-    private AplWalletDTO apl;
-    private List<EthWalletKeyDTO> eth = new ArrayList<>();
+    private List<CurrencyWalletsDTO> currencies = new ArrayList<>();
 
-    public void addEthWalletKey(EthWalletKeyDTO dto) {
-        eth.add(dto);
+    public void addWallet(CurrencyWalletsDTO dto) {
+        currencies.add(dto);
     }
 
 }
