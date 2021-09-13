@@ -161,6 +161,7 @@ public abstract class BasicDbTableTest<T extends DerivedEntity> extends DerivedD
 
     @Test
     public void testRollbackForThreeUpdatedRecords() throws SQLException {
+        // fired FTS event(s) : fullTextOperationDataEvent.select(new AnnotationLiteral<TrimEvent>() {}).fireAsync(operationData);
         if (table.isMultiversion()) {
             int height = sortByHeightDesc(getEntryWithListOfSize(getAll(), table.getDbKeyFactory(), 3, true).getValue()).get(0).getHeight() - 1;
             testOrdinaryOrMultiversionRollback(height);
@@ -177,6 +178,7 @@ public abstract class BasicDbTableTest<T extends DerivedEntity> extends DerivedD
 
     @Test
     public void testRollbackEntirelyForTwoRecords() throws SQLException {
+        // fired FTS event(s) : fullTextOperationDataEvent.select(new AnnotationLiteral<TrimEvent>() {}).fireAsync(operationData);
         if (table.isMultiversion()) {
             int height = sortByHeightDesc(getEntryWithListOfSize(getAll(), table.getDbKeyFactory(), 2, true).getValue()).get(1).getHeight() - 1;
             testOrdinaryOrMultiversionRollback(height);

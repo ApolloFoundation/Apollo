@@ -131,7 +131,14 @@ public abstract class DerivedDbTable<T extends DerivedEntity> implements Derived
                 log.error("Error on selecting DB_ID to be deleted in FTS", e);
                 throw new RuntimeException(e.toString(), e);
             }
+            // actual records delete for 'Searchable'
+            pstmtDelete.setInt(1, height);
+            int deletedResult = pstmtDelete.executeUpdate();
+            log.trace("Deleted '{}' at height = {}, deletedCount = {}, deletedResult = {}",
+                this.table, height, deletedRecordsCount, deletedResult);
+            assert deletedResult == deletedRecordsCount; // check in debug mode only
         } else {
+            // actual records delete for NOT 'Searchable'
             pstmtDelete.setInt(1, height);
             deletedRecordsCount = pstmtDelete.executeUpdate();
             log.trace("Deleted '{}' at height = {}, deletedCount = {}",
