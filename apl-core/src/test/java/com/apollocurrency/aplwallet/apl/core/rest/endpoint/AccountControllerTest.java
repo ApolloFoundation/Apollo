@@ -1,5 +1,5 @@
 /*
- * Copyright © 2018-2020 Apollo Foundation
+ * Copyright © 2018-2021 Apollo Foundation
  */
 
 package com.apollocurrency.aplwallet.apl.core.rest.endpoint;
@@ -7,6 +7,8 @@ package com.apollocurrency.aplwallet.apl.core.rest.endpoint;
 import com.apollocurrency.aplwallet.api.dto.account.AccountDTO;
 import com.apollocurrency.aplwallet.api.dto.account.AccountEffectiveBalanceDto;
 import com.apollocurrency.aplwallet.api.dto.account.AccountsCountDto;
+import com.apollocurrency.aplwallet.api.dto.account.CurrenciesWalletsDTO;
+import com.apollocurrency.aplwallet.api.dto.account.CurrencyWalletsDTO;
 import com.apollocurrency.aplwallet.api.dto.auth.Status2FA;
 import com.apollocurrency.aplwallet.api.dto.auth.TwoFactorAuthParameters;
 import com.apollocurrency.aplwallet.apl.core.model.Block;
@@ -100,7 +102,9 @@ import static org.jboss.resteasy.mock.MockHttpRequest.post;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.junit.jupiter.api.Assertions.fail;
 import static org.mockito.Mockito.doReturn;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.times;
@@ -262,11 +266,27 @@ class AccountControllerTest extends AbstractEndpointTest {
         assertEquals(Response.Status.OK.getStatusCode(), response.getStatus());
         String content = response.getContentAsString();
         print(content);
-        Map result = mapper.readValue(content, Map.class);
-        assertFalse(result.containsKey("newErrorCode"), "Unexpected error code:" + result.get("newErrorCode"));
-        assertNotNull(result.get("account"));
-        assertNotNull(result.get("accountRS"));
-        assertNotNull(result.get("publicKey"));
+        CurrenciesWalletsDTO dto = mapper.readValue(content, CurrenciesWalletsDTO.class);
+//        assertFalse(result.containsKey("newErrorCode"), "Unexpected error code:" + result.get("newErrorCode"));
+        assertEquals(2, dto.getCurrencies().size(), "After  successful vault wallet creation, two " +
+            "currency wallets should be created: apl and eth");
+        CurrencyWalletsDTO aplWallet = dto.getCurrencies().get(0);
+        assertEquals("apl", aplWallet.getCurrency(), "First currency in the wallet should be apl");
+        CurrencyWalletsDTO ethWallet = dto.getCurrencies().get(1);
+        assertEquals("eth", ethWallet.getCurrency(), "Second currency in the wallet should be eth");
+        assertEquals(1, aplWallet.getWallets().size(), "There should be one generated apl wallet");
+        assertEquals(1, ethWallet.getWallets().size(), "There should be one generated eth wallet");
+        Object receivedPass = dto.getPassphrase();
+        if (pass != null) {
+            assertNull(receivedPass, "Passphrase should not be present in the response, when specified by the " +
+                "sender, but got ''" + receivedPass + "'");
+        } else {
+            try {
+                UUID.fromString((String) receivedPass);
+            } catch (RuntimeException e) {
+                fail("Expected UUID passphrase in the response, but got " + receivedPass, e);
+            }
+        }
         //verify
         verify(account2FAService, times(1)).generateUserWallet(pass);
     }

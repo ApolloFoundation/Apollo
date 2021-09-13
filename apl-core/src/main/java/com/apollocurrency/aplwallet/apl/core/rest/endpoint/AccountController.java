@@ -1,5 +1,5 @@
 /*
- * Copyright © 2018-2020 Apollo Foundation
+ * Copyright © 2018-2021 Apollo Foundation
  */
 
 package com.apollocurrency.aplwallet.apl.core.rest.endpoint;
@@ -11,7 +11,7 @@ import com.apollocurrency.aplwallet.api.dto.account.AccountCurrencyDTO;
 import com.apollocurrency.aplwallet.api.dto.account.AccountDTO;
 import com.apollocurrency.aplwallet.api.dto.account.AccountKeyDTO;
 import com.apollocurrency.aplwallet.api.dto.account.AccountsCountDto;
-import com.apollocurrency.aplwallet.api.dto.account.WalletKeysInfoDTO;
+import com.apollocurrency.aplwallet.api.dto.account.CurrenciesWalletsDTO;
 import com.apollocurrency.aplwallet.api.dto.auth.TwoFactorAuthParameters;
 import com.apollocurrency.aplwallet.api.response.AccountAssetsCountResponse;
 import com.apollocurrency.aplwallet.api.response.AccountAssetsResponse;
@@ -22,12 +22,12 @@ import com.apollocurrency.aplwallet.api.response.AccountCurrencyResponse;
 import com.apollocurrency.aplwallet.api.response.AccountCurrentAskOrderIdsResponse;
 import com.apollocurrency.aplwallet.api.response.AccountNotFoundResponse;
 import com.apollocurrency.aplwallet.api.response.BlocksResponse;
-import com.apollocurrency.aplwallet.apl.core.model.Block;
 import com.apollocurrency.aplwallet.apl.core.entity.state.account.Account;
 import com.apollocurrency.aplwallet.apl.core.entity.state.account.AccountAsset;
 import com.apollocurrency.aplwallet.apl.core.entity.state.account.AccountCurrency;
 import com.apollocurrency.aplwallet.apl.core.entity.state.account.PublicKey;
 import com.apollocurrency.aplwallet.apl.core.entity.state.order.AskOrder;
+import com.apollocurrency.aplwallet.apl.core.model.Block;
 import com.apollocurrency.aplwallet.apl.core.rest.converter.Account2FAConverter;
 import com.apollocurrency.aplwallet.apl.core.rest.converter.Account2FADetailsConverter;
 import com.apollocurrency.aplwallet.apl.core.rest.converter.AccountAssetConverter;
@@ -249,7 +249,7 @@ public class AccountController {
         responses = {
             @ApiResponse(responseCode = "200", description = "Successful execution",
                 content = @Content(mediaType = "text/html",
-                    schema = @Schema(implementation = WalletKeysInfoDTO.class)))
+                    schema = @Schema(implementation = CurrenciesWalletsDTO.class)))
         })
     @PermitAll
     public Response generateAccount(@Parameter(description = "The passphrase") @FormParam("passphrase") String passphrase) {
@@ -262,7 +262,7 @@ public class AccountController {
             return response.error(ApiErrors.ACCOUNT_GENERATION_ERROR).build();
         }
 
-        WalletKeysInfoDTO dto = walletKeysConverter.convert(walletKeysInfo);
+        CurrenciesWalletsDTO dto = walletKeysConverter.convert(walletKeysInfo);
         if (StringUtils.isBlank(passphrase)) {
             dto.setPassphrase(walletKeysInfo.getPassphrase());
         }

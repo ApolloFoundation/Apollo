@@ -50,47 +50,7 @@
         }
       },
       {
-        "height": 3000,
-        "maxNumberOfTransactions": 255,
-        "maxArbitraryMessageLength": 160,
-        "maxNumberOfChildAccounts": 10,
-        "blockTime": 2,
-        "maxBlockTimeLimit": 3,
-        "minBlockTimeLimit": 1,
-        "maxBalance": 30000000000,
-        "consensusSettings": {
-          "adaptiveForgingSettings": {
-            "enabled": "true",
-            "adaptiveBlockTime": 10
-          }
-        },
-        "transactionFeeSettings": {
-          "feeRates": [
-            {
-              "type": 1,
-              "subType": 1,
-              "baseFee": "1000"
-            },
-            {
-              "type": 1,
-              "subType": 6,
-              "baseFee": "5"
-            },
-            {
-              "type": 1,
-              "subType": 7,
-              "baseFee": "5"
-            },
-            {
-              "type": 1,
-              "subType": 8,
-              "baseFee": "5"
-            }
-          ]
-        }
-      },
-      {
-        "height": 186000,
+        "height": 10000,
         "maxNumberOfTransactions": 255,
         "maxArbitraryMessageLength": 160,
         "maxNumberOfChildAccounts": 10,
@@ -107,50 +67,6 @@
         "shardingSettings": {
           "enabled": true,
           "frequency": 2000
-        },
-        "transactionFeeSettings": {
-          "feeRates": [
-            {
-              "type": 1,
-              "subType": 1,
-              "baseFee": "1000"
-            },
-            {
-              "type": 1,
-              "subType": 6,
-              "baseFee": "5"
-            },
-            {
-              "type": 1,
-              "subType": 7,
-              "baseFee": "5"
-            },
-            {
-              "type": 1,
-              "subType": 8,
-              "baseFee": "5"
-            }
-          ]
-        }
-      },
-      {
-        "height": 135000,
-        "maxNumberOfTransactions": 255,
-        "maxArbitraryMessageLength": 160,
-        "maxNumberOfChildAccounts": 10,
-        "blockTime": 2,
-        "maxBlockTimeLimit": 3,
-        "minBlockTimeLimit": 1,
-        "maxBalance": 30000000000,
-        "consensusSettings": {
-          "adaptiveForgingSettings": {
-            "enabled": "true",
-            "adaptiveBlockTime": 10
-          }
-        },
-        "shardingSettings": {
-          "enabled": true,
-          "frequency": 800
         },
         "transactionFeeSettings": {
           "feeRates": [
