@@ -96,7 +96,7 @@ public class TransactionApplier {
             accountService.addToBalanceATM(senderAccount, transaction.getType().getLedgerEvent(), transaction.getId(), 0, -transaction.getFeeATM());
         }
         for (AbstractAppendix appendage : transaction.getAppendages()) {
-            if (!appendage.isPhased(transaction)) {
+            if (!transaction.isFailed() && !appendage.isPhased(transaction)) {
                 prunableService.loadPrunable(transaction, appendage, false);
                 executeAppendage(transaction, senderAccount, recipientAccount, appendage);
             }
@@ -107,7 +107,7 @@ public class TransactionApplier {
         Account senderAccount = accountService.getAccount(transaction.getSenderId());
         Account recipientAccount = transaction.getRecipientId() == 0 ? null : accountService.getAccount(transaction.getRecipientId());
         transaction.getAppendages().forEach(appendage -> {
-            if (appendage.isPhasable()) {
+            if (!transaction.isFailed() && appendage.isPhasable()) {
                 executeAppendage(transaction, senderAccount, recipientAccount, appendage);
             }
         });

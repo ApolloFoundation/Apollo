@@ -135,7 +135,7 @@ public final class HttpParameterParserUtil {
     protected static AdminPasswordVerifier apw;
     protected static ElGamalEncryptor elGamal;
     protected static TimeService timeService;
-    private static AliasService ALIAS_SERVICE;// = CDI.current().select(AliasService.class).get();
+    private static AliasService aliasService;// = CDI.current().select(AliasService.class).get();
     private static BlockchainConfig blockchainConfig;
     private static Blockchain blockchain;
     private static AccountService accountService;
@@ -1157,11 +1157,29 @@ public final class HttpParameterParserUtil {
 
     }
 
+    public static void resetCDIComponents() {
+        apw = null;
+        elGamal = null;
+        timeService = null;
+        aliasService = null;
+        blockchainConfig = null;
+        blockchain = null;
+        accountService = null;
+        accountPublicKeyService = null;
+        assetService = null;
+        POLL_SERVICE = null;
+        currencyExchangeOfferFacade = null;
+        currencyService = null;
+        shufflingService = null;
+        transactionBuilderFactory = null;
+        KMSService = null;
+    }
+
     private static AliasService lookupAliasService() {
-        if (ALIAS_SERVICE == null) {
-            ALIAS_SERVICE = CDI.current().select(AliasService.class).get();
+        if (aliasService == null) {
+            aliasService = CDI.current().select(AliasService.class).get();
         }
-        return ALIAS_SERVICE;
+        return aliasService;
     }
 
     private static AdminPasswordVerifier lookupAdminPasswordVerifier() {

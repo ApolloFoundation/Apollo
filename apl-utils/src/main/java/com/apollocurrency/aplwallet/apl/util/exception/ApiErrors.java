@@ -61,9 +61,9 @@ public enum ApiErrors implements ApiErrorInfo {
     CONTRACT_SYNTAX_VALIDATION_ERROR(-1, 3106, "Contract syntax validation error: {0}."),
     CONTRACT_SPEC_NOT_FOUND(-1, 3107, "Contract specification for ASR module {0} not found.");
 
-    private int oldErrorCode;
-    private int errorCode;
-    private String errorDescription;
+    private final int oldErrorCode;
+    private final int errorCode;
+    private final String errorDescription;
 
     ApiErrors(int oldErrorCode, int errorCode, String errorDescription) {
         this.oldErrorCode = oldErrorCode;

@@ -42,6 +42,7 @@ import com.apollocurrency.aplwallet.apl.core.service.fulltext.FullTextConfigImpl
 import com.apollocurrency.aplwallet.apl.core.service.prunable.PrunableMessageService;
 import com.apollocurrency.aplwallet.apl.core.service.prunable.impl.PrunableMessageServiceImpl;
 import com.apollocurrency.aplwallet.apl.core.service.state.DerivedDbTablesRegistryImpl;
+import com.apollocurrency.aplwallet.apl.core.service.state.account.AccountPublicKeyService;
 import com.apollocurrency.aplwallet.apl.core.service.state.account.AccountService;
 import com.apollocurrency.aplwallet.apl.core.service.state.account.PublicKeyDao;
 import com.apollocurrency.aplwallet.apl.core.service.state.account.impl.AccountServiceImpl;
@@ -50,6 +51,7 @@ import com.apollocurrency.aplwallet.apl.core.service.state.PhasingPollServiceImp
 import com.apollocurrency.aplwallet.apl.core.shard.BlockIndexService;
 import com.apollocurrency.aplwallet.apl.core.shard.BlockIndexServiceImpl;
 import com.apollocurrency.aplwallet.apl.core.shard.ShardDbExplorerImpl;
+import com.apollocurrency.aplwallet.apl.core.transaction.TransactionApplier;
 import com.apollocurrency.aplwallet.apl.core.transaction.TransactionTypeFactory;
 import com.apollocurrency.aplwallet.apl.core.transaction.messages.AppendixApplierRegistry;
 import com.apollocurrency.aplwallet.apl.core.transaction.messages.AppendixValidatorRegistry;
@@ -94,6 +96,7 @@ class ReferencedTransactionDaoTest extends DbContainerBaseTest {
     private PropertiesHolder propertiesHolder = mock(PropertiesHolder.class);
     private NtpTimeConfig ntpTimeConfig = new NtpTimeConfig();
     private TimeService timeService = new TimeServiceImpl(ntpTimeConfig.time());
+    private AccountPublicKeyService publicKeyService = mock(AccountPublicKeyService.class);
     TransactionTestData td = new TransactionTestData();
 
     @WeldSetup
@@ -103,7 +106,7 @@ class ReferencedTransactionDaoTest extends DbContainerBaseTest {
         TransactionServiceImpl.class, ShardDbExplorerImpl.class,
         TransactionEntityRowMapper.class, TransactionEntityRowMapper.class, TxReceiptRowMapper.class, PrunableTxRowMapper.class,
         TransactionModelToEntityConverter.class, TransactionEntityToModelConverter.class,
-        TransactionBuilderFactory.class,
+        TransactionBuilderFactory.class, TransactionApplier.class,
         GlobalSyncImpl.class,
         AppendixApplierRegistry.class,
         AppendixValidatorRegistry.class,
@@ -130,6 +133,7 @@ class ReferencedTransactionDaoTest extends DbContainerBaseTest {
         .addBeans(MockBean.of(mock(PrunableLoadingService.class), PrunableLoadingService.class))
         .addBeans(MockBean.of(td.getTransactionTypeFactory(), TransactionTypeFactory.class))
         .addBeans(MockBean.of(mock(BlockchainConfig.class), BlockchainConfig.class))
+        .addBeans(MockBean.of(publicKeyService, AccountPublicKeyService.class))
         .build();
 
     @Inject

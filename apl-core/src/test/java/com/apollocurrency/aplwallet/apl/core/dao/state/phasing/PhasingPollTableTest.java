@@ -205,7 +205,9 @@ public class PhasingPollTableTest extends EntityDbTableTest<PhasingPoll> {
     void testGetFinishingTransactions() {
         List<TransactionEntity> finishingTransactions = table.getFinishingTransactions(ptd.POLL_2.getFinishHeight());
 
-        assertEquals(Collections.singletonList(txToEntityConverter.apply(ttd.TRANSACTION_7)), finishingTransactions);
+        TransactionEntity expectedEntity = txToEntityConverter.apply(ttd.TRANSACTION_7);
+        expectedEntity.setDbId(2500L);
+        assertEquals(Collections.singletonList(expectedEntity), finishingTransactions);
     }
 
 
@@ -276,7 +278,9 @@ public class PhasingPollTableTest extends EntityDbTableTest<PhasingPoll> {
     void testGetByHoldingId() throws SQLException {
         List<TransactionEntity> transactions = table.getHoldingPhasedTransactions(ptd.POLL_5.getVoteWeighting().getHoldingId(), VoteWeighting.VotingModel.ASSET, 0, false, 0, 100, ptd.POLL_5.getHeight());
 
-        assertEquals(List.of(txToEntityConverter.apply(ttd.TRANSACTION_13)), transactions);
+        TransactionEntity expectedEntity = txToEntityConverter.apply(ttd.TRANSACTION_13);
+        expectedEntity.setDbId(6000);
+        assertEquals(List.of(expectedEntity), transactions);
     }
 
     @Test
@@ -317,13 +321,20 @@ public class PhasingPollTableTest extends EntityDbTableTest<PhasingPoll> {
     @Test
     void testGetAccountPhasedTransactionsWithPaginationSkipFirstAtGenesisBlockHeight() {
         List<TransactionEntity> transactions = table.getAccountPhasedTransactions(ptd.POLL_0.getAccountId(), 1, 2, 0);
-        assertEquals(txToEntityConverter.convert(List.of(ttd.TRANSACTION_12, ttd.TRANSACTION_11)), transactions);
+        List<TransactionEntity> expectedEntities = txToEntityConverter.convert(List.of(ttd.TRANSACTION_12, ttd.TRANSACTION_11));
+        expectedEntities.get(0).setDbId(5000L);
+        expectedEntities.get(1).setDbId(4500L);
+        assertEquals(expectedEntities, transactions);
     }
 
     @Test
     void testGetAllAccountPhasedTransactionsWithPagination() {
         List<TransactionEntity> transactions = table.getAccountPhasedTransactions(ptd.POLL_0.getAccountId(), 0, 100, 0);
-        assertEquals(txToEntityConverter.convert(List.of(ttd.TRANSACTION_13, ttd.TRANSACTION_12, ttd.TRANSACTION_11)), transactions);
+        List<TransactionEntity> expectedEntities = txToEntityConverter.convert(List.of(ttd.TRANSACTION_13, ttd.TRANSACTION_12, ttd.TRANSACTION_11));
+        expectedEntities.get(0).setDbId(6000);
+        expectedEntities.get(1).setDbId(5000);
+        expectedEntities.get(2).setDbId(4500);
+        assertEquals(expectedEntities, transactions);
     }
 
     @Test
