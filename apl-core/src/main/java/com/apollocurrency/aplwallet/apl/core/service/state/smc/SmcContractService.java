@@ -7,11 +7,13 @@ package com.apollocurrency.aplwallet.apl.core.service.state.smc;
 import com.apollocurrency.aplwallet.api.v2.model.ContractDetails;
 import com.apollocurrency.aplwallet.apl.core.model.Transaction;
 import com.apollocurrency.aplwallet.apl.core.model.smc.AplContractSpec;
+import com.apollocurrency.aplwallet.apl.core.transaction.messages.SmcPublishContractAttachment;
 import com.apollocurrency.smc.contract.ContractStatus;
 import com.apollocurrency.smc.contract.SmartContract;
 import com.apollocurrency.smc.contract.fuel.Fuel;
 import com.apollocurrency.smc.data.type.Address;
 import com.apollocurrency.smc.polyglot.Version;
+import com.apollocurrency.smc.polyglot.language.SmartSource;
 
 import java.util.List;
 
@@ -19,6 +21,8 @@ import java.util.List;
  * @author andrew.zinchenko@gmail.com
  */
 public interface SmcContractService {
+
+    boolean validateContractSource(SmartSource source);
 
     /**
      * Save the published contract
@@ -57,6 +61,8 @@ public interface SmcContractService {
     String loadSerializedContract(Address address);
 
     void saveSerializedContract(SmartContract contract, String serializedObject);
+
+    SmartSource createSmartSource(SmcPublishContractAttachment attachment);
 
     /**
      * Creates a new smart contract instance. That one is not persisted in the blockchain.

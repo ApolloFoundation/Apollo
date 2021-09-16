@@ -39,6 +39,7 @@ import com.apollocurrency.smc.polyglot.language.Languages;
 import com.apollocurrency.smc.polyglot.language.SmartSource;
 import com.apollocurrency.smc.polyglot.language.lib.LibraryProvider;
 import com.apollocurrency.smc.polyglot.language.preprocessor.Preprocessor;
+import com.apollocurrency.smc.polyglot.language.validator.Matcher;
 import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
 
@@ -66,6 +67,7 @@ public class SmcContractServiceImpl implements SmcContractService {
     private final HashSumProvider hashSumProvider;
     private final LibraryProvider libraryProvider;
     private final Preprocessor preprocessor;
+    private final Matcher codeMatcher;
 
     @Inject
     public SmcContractServiceImpl(Blockchain blockchain, SmcContractTable smcContractTable, SmcContractStateTable smcContractStateTable, ContractModelToEntityConverter contractModelToEntityConverter, ContractModelToStateEntityConverter contractModelToStateConverter, SmcConfig smcConfig) {
@@ -79,6 +81,15 @@ public class SmcContractServiceImpl implements SmcContractService {
         final LanguageContext languageContext = smcConfig.createLanguageContext();
         this.libraryProvider = languageContext.getLibraryProvider();
         this.preprocessor = languageContext.getPreprocessor();
+        this.codeMatcher = languageContext.getCodeMatcher();
+    }
+
+    @Override
+    public boolean validateContractSource(SmartSource source) {
+        //validate, match the source code with template by RegExp
+        var rc = codeMatcher.match(source.getSourceCode());
+        log.debug("Validate smart contract source at height {}, rc={}, smc={}", blockchain.getHeight(), rc, source.getSourceCode());
+        return rc;
     }
 
     @Override
@@ -194,6 +205,21 @@ public class SmcContractServiceImpl implements SmcContractService {
     }
 
     @Override
+    public SmartSource createSmartSource(SmcPublishContractAttachment attachment) {
+
+        final SmartSource smartSource = ContractSource.builder()
+            .sourceCode(attachment.getContractSource())
+            .name(attachment.getContractName())
+            .languageName(attachment.getLanguageName())
+            .languageVersion(Languages.languageVersion(attachment.getContractSource()))
+            .build();
+
+        log.debug("smartSource={}", smartSource);
+
+        return smartSource;
+    }
+
+    @Override
     public SmartContract createNewContract(Transaction smcTransaction) {
         if (smcTransaction.getAttachment().getTransactionTypeSpec() != TransactionTypes.TransactionTypeSpec.SMC_PUBLISH) {
             throw new AplCoreContractViolationException("Invalid transaction attachment: " + smcTransaction.getAttachment().getTransactionTypeSpec()
@@ -205,12 +231,7 @@ public class SmcContractServiceImpl implements SmcContractService {
         final Address sender = new AplAddress(smcTransaction.getSenderId());
         final Address txId = new AplAddress(smcTransaction.getId());
 
-        final SmartSource smartSource = ContractSource.builder()
-            .sourceCode(attachment.getContractSource())
-            .name(attachment.getContractName())
-            .languageName(attachment.getLanguageName())
-            .languageVersion(Languages.languageVersion(attachment.getContractSource()))
-            .build();
+        final SmartSource smartSource = createSmartSource(attachment);
 
         var processedSrc = preprocessor.process(smartSource);
 
