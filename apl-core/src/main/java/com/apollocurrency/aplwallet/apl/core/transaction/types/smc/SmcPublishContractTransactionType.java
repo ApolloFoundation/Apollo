@@ -112,6 +112,9 @@ public class SmcPublishContractTransactionType extends AbstractSmcTransactionTyp
             throw new AplUnacceptableTransactionValidationException("Empty contract language name.", transaction);
         }
         SmartContract smartContract = contractService.createNewContract(transaction);
+        if (!contractService.validateContractSource(smartContract.getCode())) {
+            throw new AplUnacceptableTransactionValidationException("The contract source code doesn't match the contract template code.", transaction);
+        }
         BigInteger calculatedFuel = publishContractFee.calcFuel(smartContract);
         if (!smartContract.getFuel().tryToCharge(calculatedFuel)) {
             log.error("Needed fuel={} but actual={}", calculatedFuel, smartContract.getFuel());

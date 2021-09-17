@@ -64,7 +64,7 @@ import com.apollocurrency.smc.contract.vm.ResultValue;
 import com.apollocurrency.smc.data.type.Address;
 import com.apollocurrency.smc.polyglot.SimpleVersion;
 import com.apollocurrency.smc.polyglot.Version;
-import com.apollocurrency.smc.polyglot.lib.ContractSpec;
+import com.apollocurrency.smc.polyglot.language.ContractSpec;
 import com.google.common.base.Strings;
 import lombok.extern.slf4j.Slf4j;
 

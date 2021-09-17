@@ -5,7 +5,7 @@
 package com.apollocurrency.aplwallet.apl.core.model.smc;
 
 import com.apollocurrency.smc.polyglot.Version;
-import com.apollocurrency.smc.polyglot.lib.ContractSpec;
+import com.apollocurrency.smc.polyglot.language.ContractSpec;
 import lombok.Builder;
 import lombok.Data;
 

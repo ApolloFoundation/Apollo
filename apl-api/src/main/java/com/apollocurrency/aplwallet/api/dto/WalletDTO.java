@@ -1,5 +1,5 @@
 /*
- * Copyright © 2018-2019 Apollo Foundation.
+ * Copyright © 2018-2021 Apollo Foundation.
  */
 
 package com.apollocurrency.aplwallet.api.dto;
@@ -7,6 +7,7 @@ package com.apollocurrency.aplwallet.api.dto;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import lombok.AllArgsConstructor;
+import lombok.EqualsAndHashCode;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
@@ -22,7 +23,8 @@ import lombok.ToString;
 @JsonIgnoreProperties(ignoreUnknown = true)
 @Getter
 @Setter
-public class EthWalletKeyDTO {
+@EqualsAndHashCode
+public class WalletDTO {
     private String address;
     private String publicKey;
 }

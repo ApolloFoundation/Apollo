@@ -197,7 +197,7 @@ class TransactionDaoTest extends DbContainerBaseTest {
     @Test
     void getTransactionsFromAccount() {
         int count = dao.getTransactionCount(9211698109297098287L, (byte) 0, (byte) 0);
-        assertEquals(9, count);
+        assertEquals(8, count);
     }
 
     @Test
@@ -284,7 +284,7 @@ class TransactionDaoTest extends DbContainerBaseTest {
     @Test
     void testGetTransactionsByAccountId() {
         List<TransactionEntity> transactions = dao.getTransactions(extension.getDatabaseManager().getDataSource(), td.TRANSACTION_1.getSenderId(), (byte) 8, (byte) -1, 0, false, false, false, 0, Integer.MAX_VALUE, false, true, Integer.MAX_VALUE, 0, false, false);
-        assertEquals(List.of(td.TRANSACTION_12, td.TRANSACTION_11), toModelConverter.convert(transactions));
+        assertEquals(List.of(td.TRANSACTION_12, td.TRANSACTION_11, td.TRANSACTION_7), toModelConverter.convert(transactions));
     }
 
     @Test
@@ -313,7 +313,7 @@ class TransactionDaoTest extends DbContainerBaseTest {
     void testGetExecutedOnlyTransactions() {
         List<TransactionEntity> transactions = dao.getTransactions(extension.getDatabaseManager().getDataSource(), td.TRANSACTION_1.getSenderId(), (byte) 0, (byte) 0, td.TRANSACTION_3.getBlockTimestamp() + 1, false, false, false, 0, Integer.MAX_VALUE, true, false, Integer.MAX_VALUE, 0, false, false);
 
-        assertEquals(List.of(td.TRANSACTION_9, td.TRANSACTION_8, td.TRANSACTION_7, td.TRANSACTION_6, td.TRANSACTION_5, td.TRANSACTION_4), toModelConverter.convert(transactions));
+        assertEquals(List.of(td.TRANSACTION_9, td.TRANSACTION_8, td.TRANSACTION_6, td.TRANSACTION_5, td.TRANSACTION_4), toModelConverter.convert(transactions));
     }
 
     @Test
@@ -366,20 +366,20 @@ class TransactionDaoTest extends DbContainerBaseTest {
     @Test
     void testGetTransactionsByType() {
         List<TransactionEntity> transactions = dao.getTransactions((byte) 8, (byte) -1, 0, Integer.MAX_VALUE);
-        assertEquals(List.of(td.TRANSACTION_12, td.TRANSACTION_11), toModelConverter.convert(transactions));
+        assertEquals(List.of(td.TRANSACTION_12, td.TRANSACTION_11, td.TRANSACTION_7), toModelConverter.convert(transactions));
     }
 
     @Test
     void testGetTransactionsByTypeAndSubtypeWithPagination() {
         List<TransactionEntity> transactions = dao.getTransactions((byte) 0, (byte) 0, 3, 5);
-        assertEquals(List.of(td.TRANSACTION_8, td.TRANSACTION_7, td.TRANSACTION_6), toModelConverter.convert(transactions));
+        assertEquals(List.of(td.TRANSACTION_8, td.TRANSACTION_6, td.TRANSACTION_5), toModelConverter.convert(transactions));
     }
 
     @Test
     void testGetTransactionCountForAccountInDataSource() {
         int count = dao.getTransactionCountByFilter(extension.getDatabaseManager().getDataSource(), td.TRANSACTION_1.getSenderId(), (byte) 0, (byte) 0, td.TRANSACTION_3.getBlockTimestamp() + 1, false, false, false, true, false, Integer.MAX_VALUE, 0, false, false);
 
-        assertEquals(6, count);
+        assertEquals(5, count);
     }
 
     @Test

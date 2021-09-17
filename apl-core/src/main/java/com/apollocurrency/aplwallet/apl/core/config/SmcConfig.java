@@ -9,16 +9,15 @@ import com.apollocurrency.aplwallet.apl.crypto.Crypto;
 import com.apollocurrency.smc.blockchain.crypt.Digest;
 import com.apollocurrency.smc.blockchain.crypt.DigestWrapper;
 import com.apollocurrency.smc.blockchain.crypt.HashSumProvider;
-import com.apollocurrency.smc.polyglot.LanguageContext;
-import com.apollocurrency.smc.polyglot.LanguageContextFactory;
 import com.apollocurrency.smc.polyglot.config.JsLimitsConfig;
 import com.apollocurrency.smc.polyglot.engine.ExecutionEnv;
 import com.apollocurrency.smc.polyglot.engine.ExecutionModeHelper;
+import com.apollocurrency.smc.polyglot.language.LanguageContext;
+import com.apollocurrency.smc.polyglot.language.LanguageContextFactory;
 import com.apollocurrency.smc.polyglot.security.AllowFullHostAccessPolicy;
 import com.apollocurrency.smc.polyglot.security.AllowHostClassLoadingPolicy;
 import com.apollocurrency.smc.polyglot.security.DenyGlobalObjectsPolicy;
 
-import javax.enterprise.context.ApplicationScoped;
 import javax.enterprise.inject.Produces;
 import javax.inject.Singleton;
 
@@ -47,7 +46,7 @@ public class SmcConfig {
     }
 
     @Produces
-    @ApplicationScoped
+    @Singleton
     public HashSumProvider createHashSumProvider() {
         return new HashSumProvider() {
             @Override

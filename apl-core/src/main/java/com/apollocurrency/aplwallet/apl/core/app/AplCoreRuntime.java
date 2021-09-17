@@ -65,11 +65,11 @@ public class AplCoreRuntime {
         return dbConfig;
     }
 
-    @Produces @ApplicationScoped
+    @Produces @Singleton
     public DirProvider getDirProvider() {
         return dirProvider;
     }
-    @Produces   @ApplicationScoped
+    @Produces @Singleton
     public ConfigDirProvider configDirProvider() {
         return ConfigDirProviderFactory.getConfigDirProvider();
     }
