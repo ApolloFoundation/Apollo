@@ -18,7 +18,6 @@ import com.apollocurrency.smc.polyglot.security.AllowFullHostAccessPolicy;
 import com.apollocurrency.smc.polyglot.security.AllowHostClassLoadingPolicy;
 import com.apollocurrency.smc.polyglot.security.DenyGlobalObjectsPolicy;
 
-import javax.enterprise.context.ApplicationScoped;
 import javax.enterprise.inject.Produces;
 import javax.inject.Singleton;
 
@@ -47,7 +46,7 @@ public class SmcConfig {
     }
 
     @Produces
-    @ApplicationScoped
+    @Singleton
     public HashSumProvider createHashSumProvider() {
         return new HashSumProvider() {
             @Override
