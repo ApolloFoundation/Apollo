@@ -330,6 +330,7 @@ public class SmcContractServiceImpl implements SmcContractService {
             .args(entity.getArgs())
             .code(ContractSource.builder()
                 .sourceCode(entity.getData())
+                .parsedSourceCode(entity.getData())
                 .name(entity.getContractName())
                 .baseContract(entity.getBaseContract())
                 .languageName(entity.getLanguageName())
