@@ -48,6 +48,9 @@ import com.apollocurrency.aplwallet.apl.core.entity.state.account.AccountControl
 import com.apollocurrency.aplwallet.apl.core.entity.state.phasing.PhasingPoll;
 import com.apollocurrency.aplwallet.apl.core.entity.state.phasing.PhasingPollResult;
 import com.apollocurrency.aplwallet.apl.core.exception.AplAcceptableTransactionValidationException;
+import com.apollocurrency.aplwallet.apl.core.exception.AplBlockException;
+import com.apollocurrency.aplwallet.apl.core.exception.AplBlockPayloadSizeMismatchException;
+import com.apollocurrency.aplwallet.apl.core.exception.AplBlockTotalAmountMismatchException;
 import com.apollocurrency.aplwallet.apl.core.exception.AplTransactionValidationException;
 import com.apollocurrency.aplwallet.apl.core.exception.AplUnacceptableTransactionValidationException;
 import com.apollocurrency.aplwallet.apl.core.files.shards.ShardsDownloadService;
@@ -370,7 +373,7 @@ public class BlockchainProcessorImpl implements BlockchainProcessor {
                         pushBlock(peerBlock);
                         transactionProcessor.processLater(lastBlock.getTransactions());
                         log.info("Last block {} was replaced by {} at height {}", lastBlock.getStringId(), peerBlock.getStringId(), blockchain.getHeight());
-                    } catch (BlockNotAcceptedException e) {
+                    } catch (BlockNotAcceptedException | AplBlockException e) {
                         log.info("Replacement block failed to be accepted, pushing back our last block");
                         pushBlock(lastBlock);
                         transactionProcessor.processLater(peerBlock.getTransactions());
@@ -486,6 +489,7 @@ public class BlockchainProcessorImpl implements BlockchainProcessor {
      * a real exception cause, this type of exceptions is rare and usually should not be handled, since something wrong
      * with the running environment: database deadlocks, timeout locking table, too many connections and so on
      * @throws com.apollocurrency.aplwallet.apl.core.service.blockchain.BlockchainProcessor.BlockNotAcceptedException in case of the block validation failure
+     * @throws AplBlockException same as above, but preferred
      */
     @Override
     public void pushBlock(final Block block) throws BlockNotAcceptedException {
@@ -536,7 +540,8 @@ public class BlockchainProcessorImpl implements BlockchainProcessor {
                     log.trace("committed block on = {}, id = '{}'", block.getHeight(), block.getId());
                 });
             } catch (DbTransactionHelper.DbTransactionExecutionException e) {
-                log.error("PushBlock, error:", e);
+                log.warn("PushBlock, error: {}", e.getMessage()); // is not an error anymore, because may
+                // throw AplBlockPayloadSizeException and APlBlockTotalAmountException during block generation
                 try {
                     popOffToCommonBlock(previousLastBlock); // do in current transaction
                 } catch (Exception ex) {
@@ -545,9 +550,12 @@ public class BlockchainProcessorImpl implements BlockchainProcessor {
                     // Need to do so even in case of popOff failure or transaction rollback fatal error (SYS table lock, connection closed, etc)
                     blockchain.setLastBlock(previousLastBlock);
                 }
-                Throwable realEx = e.getCause();
+                Throwable realEx = e.getCause(); // try to throw real exception, but only if they are properly defined and expected
                 if (realEx instanceof BlockNotAcceptedException) {
                     throw (BlockNotAcceptedException) realEx;
+                }
+                if (realEx instanceof AplBlockException) {
+                    throw (AplBlockException) realEx;
                 }
                 throw e;
             }
@@ -814,27 +822,42 @@ public class BlockchainProcessorImpl implements BlockchainProcessor {
         digest.update(previousBlock.getGenerationSignature());
         final byte[] publicKey = Crypto.getPublicKey(keySeed);
         byte[] generationSignature = digest.digest(publicKey);
-//        blockchain.getOrLoadTransactions(previousBlock); // load transactions
         byte[] previousBlockHash = Crypto.sha256().digest(((BlockImpl) previousBlock).bytes());
         long baseTarget = blockchainConfig.getCurrentConfig().getInitialBaseTarget();
-        Block block = new BlockImpl(blockVersion, blockTimestamp, previousBlock.getId(), totalAmountATM, totalFeeATM, payloadLength,
-            payloadHash, publicKey, generationSignature, previousBlockHash, timeout, blockTransactions, keySeed, baseTarget);
-
-        try {
-            pushBlock(block);
-            blockEvent.select(literal(BlockEventType.BLOCK_GENERATED)).fire(block);
-            log.debug("Account " + Long.toUnsignedString(block.getGeneratorId()) + " generated block " + block.getStringId()
-                + " at height " + block.getHeight() + " timestamp " + block.getTimestamp() + " fee " + ((float) block.getTotalFeeATM()) / blockchainConfig.getOneAPL());
-        } catch (TransactionNotAcceptedException e) {
-            log.debug("Generate block failed: " + e.getMessage());
-            Transaction transaction = e.getTransaction();
-            log.debug("Removing invalid transaction: " + transaction.getStringId());
-            transactionProcessor.removeUnconfirmedTransaction(transaction);
-            throw e;
-        } catch (BlockNotAcceptedException e) {
-            log.debug("Generate block failed: " + e.getMessage());
-            throw e;
+        int generationFailCounter = 3;
+        AplBlockException lastException = null; // last actual payload/amount calculation exception
+        // TODO Replace by a separate block generation strategy without exception control flow
+        while (generationFailCounter-- > 0) { // try at most 3 times (max allowed number of block acceptance failures
+            // by payload size or amount = 2)
+            Block block = new BlockImpl(blockVersion, blockTimestamp, previousBlock.getId(), totalAmountATM, totalFeeATM, payloadLength,
+                payloadHash, publicKey, generationSignature, previousBlockHash, timeout, blockTransactions, keySeed, baseTarget);
+            try {
+                pushBlock(block);
+                blockEvent.select(literal(BlockEventType.BLOCK_GENERATED)).fire(block);
+                log.info("Account " + Long.toUnsignedString(block.getGeneratorId()) + " generated block " + block.getStringId()
+                    + " at height " + block.getHeight() + " timestamp " + block.getTimestamp() + " fee " + ((float) block.getTotalFeeATM()) / blockchainConfig.getOneAPL());
+                return;
+            } catch (TransactionNotAcceptedException e) {
+                log.debug("Generate block failed: " + e.getMessage());
+                Transaction transaction = e.getTransaction();
+                log.debug("Removing invalid transaction: " + transaction.getStringId());
+                transactionProcessor.removeUnconfirmedTransaction(transaction);
+                throw e;
+            } catch (BlockNotAcceptedException e) {
+                log.debug("Generate block failed: " + e.getMessage());
+                throw e;
+            } catch (AplBlockPayloadSizeMismatchException e) {
+                log.debug("Block payload mismatch, will try again with new value: " + e.getMessage());
+                payloadLength = e.getCalculatedPayloadLength(); // next generation attempt with updated payloadLength
+                lastException = e;
+            } catch (AplBlockTotalAmountMismatchException e) {
+                log.debug("Block total amount mismatch, will try again with new value: " + e.getMessage());
+                totalAmountATM = e.getCalculatedAmount(); // next generation attempt with updated totalAmount
+                lastException = e;
+            }
+            blockTransactions.forEach(Transaction::resetFail); // reset failed state after processing
         }
+        throw lastException; // throw last caught exception, when unable to generate block for 3 iterations
     }
 
     @Override
@@ -1563,16 +1586,20 @@ public class BlockchainProcessorImpl implements BlockchainProcessor {
      * failed transactions were properly counted
      * @param block block, which transactions should be validated
      * @param hasPrunedTransactions flag, indicating that at least one block transaction was pruned
-     * @throws BlockNotAcceptedException when total block amount doesn't match to the calculated amount from not
-     * failed transactions, and when payload length for the block doesn't match to the calculated payload for both executed
+     * @throws AplBlockTotalAmountMismatchException when total block amount doesn't match to the calculated amount from not
+     * failed transactions
+     * @throws AplBlockPayloadSizeMismatchException when payload length for the block doesn't match to the calculated payload for both executed
      * and failed transactions
      */
-    private void validateAfterExecution(Block block, boolean hasPrunedTransactions) throws BlockNotAcceptedException {
-        long calculatedBlockAmount = block.getTransactions().stream().filter(transaction -> !transaction.isFailed()).mapToLong(Transaction::getAmountATM).sum();
+    private void validateAfterExecution(Block block, boolean hasPrunedTransactions) {
+        long calculatedBlockAmount = block.getTransactions()
+            .stream()
+            .filter(transaction -> !transaction.isFailed())
+            .mapToLong(Transaction::getAmountATM)
+            .sum();
 
         if (calculatedBlockAmount != block.getTotalAmountATM()) {
-            throw new BlockNotAcceptedException(
-                "Total amount doesn't match transaction totals", blockSerializer.getJSONObject(block));
+            throw new AplBlockTotalAmountMismatchException(block, calculatedBlockAmount);
         }
         int calculatedPayloadLength = block.getTransactions()
             .stream()
@@ -1583,9 +1610,7 @@ public class BlockchainProcessorImpl implements BlockchainProcessor {
             }).sum();
 
         if (hasPrunedTransactions ? calculatedPayloadLength > block.getPayloadLength() : calculatedPayloadLength != block.getPayloadLength()) {
-            throw new BlockNotAcceptedException(
-                "Transaction payload length " + calculatedPayloadLength + " does not match block payload length "
-                    + block.getPayloadLength(), blockSerializer.getJSONObject(block));
+            throw new AplBlockPayloadSizeMismatchException(block, calculatedPayloadLength);
         }
     }
 
