@@ -540,7 +540,8 @@ public class BlockchainProcessorImpl implements BlockchainProcessor {
                     log.trace("committed block on = {}, id = '{}'", block.getHeight(), block.getId());
                 });
             } catch (DbTransactionHelper.DbTransactionExecutionException e) {
-                log.error("PushBlock, error:", e);
+                log.warn("PushBlock, error: {}", e.getMessage()); // is not an error anymore, because may
+                // throw AplBlockPayloadSizeException and APlBlockTotalAmountException during block generation
                 try {
                     popOffToCommonBlock(previousLastBlock); // do in current transaction
                 } catch (Exception ex) {
@@ -835,7 +836,7 @@ public class BlockchainProcessorImpl implements BlockchainProcessor {
                 blockEvent.select(literal(BlockEventType.BLOCK_GENERATED)).fire(block);
                 log.info("Account " + Long.toUnsignedString(block.getGeneratorId()) + " generated block " + block.getStringId()
                     + " at height " + block.getHeight() + " timestamp " + block.getTimestamp() + " fee " + ((float) block.getTotalFeeATM()) / blockchainConfig.getOneAPL());
-                break;
+                return;
             } catch (TransactionNotAcceptedException e) {
                 log.debug("Generate block failed: " + e.getMessage());
                 Transaction transaction = e.getTransaction();
@@ -856,9 +857,7 @@ public class BlockchainProcessorImpl implements BlockchainProcessor {
             }
             blockTransactions.forEach(Transaction::resetFail); // reset failed state after processing
         }
-        if (lastException != null) {
-            throw lastException;
-        }
+        throw lastException; // throw last caught exception, when unable to generate block for 3 iterations
     }
 
     @Override
