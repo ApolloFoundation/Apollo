@@ -4,6 +4,7 @@
 
 package com.apollocurrency.aplwallet.apl.core.model.smc;
 
+import com.apollocurrency.aplwallet.apl.crypto.Convert;
 import com.apollocurrency.aplwallet.apl.util.Convert2;
 import com.apollocurrency.smc.data.type.Address;
 import com.apollocurrency.smc.util.HexUtils;
@@ -29,9 +30,13 @@ public class AplAddress implements Address {
         this.id = new BigInteger(address.get()).longValueExact();
     }
 
-    public AplAddress(String address) {
-        byte[] bytes = HexUtils.parseHex(address);
-        this.id = new BigInteger(bytes).longValueExact();
+    public static Address valueOf(String address) {
+        if (HexUtils.isHex(address)) {
+            byte[] bytes = HexUtils.parseHex(address);
+            return new AplAddress(new BigInteger(bytes).longValueExact());
+        } else {
+            return new AplAddress(Convert.parseAccountId(address));
+        }
     }
 
     public long getLongId() {

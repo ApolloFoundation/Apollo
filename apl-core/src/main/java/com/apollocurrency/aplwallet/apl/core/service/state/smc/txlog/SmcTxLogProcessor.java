@@ -4,6 +4,7 @@
 
 package com.apollocurrency.aplwallet.apl.core.service.state.smc.txlog;
 
+import com.apollocurrency.aplwallet.apl.core.model.smc.AplContractEvent;
 import com.apollocurrency.aplwallet.apl.core.service.state.account.AccountService;
 import com.apollocurrency.aplwallet.apl.core.service.state.smc.SmcContractEventService;
 import com.apollocurrency.smc.txlog.Record;
@@ -74,8 +75,10 @@ public class SmcTxLogProcessor implements TxLogProcessor {
 
     private RecordProcessor<EventLogRecord> createEventLogRecordProcessor() {
         return (header, data) -> {
-            contractEventService.saveEvent(data.getEvent());
-            log.debug("Apply the firing event command, contract={} event={}", header.getContract(), data.getEvent());
+            final AplContractEvent event = data.getEvent();
+            contractEventService.saveEvent(event);
+            contractEventService.fireCdiEvent(event);
+            log.debug("Apply the firing event command, contract={} event={}", header.getContract(), event);
         };
     }
 

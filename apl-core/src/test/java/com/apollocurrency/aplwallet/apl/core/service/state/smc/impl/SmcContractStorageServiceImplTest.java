@@ -57,7 +57,7 @@ class SmcContractStorageServiceImplTest {
         //GIVEN
         String json = "{}";
         String name = "mapping";
-        Key key = new AplAddress("0x0102030405");
+        Key key = AplAddress.valueOf("0x0102030405");
         SmcContractMappingEntity smcContractMappingEntity = SmcContractMappingEntity.builder()
             .address(contractAddress.getLongId())
             .key(key.key())
@@ -76,7 +76,7 @@ class SmcContractStorageServiceImplTest {
         //GIVEN
         String json = "{}";
         String name = "mapping";
-        Key key = new AplAddress("0x0102030405");
+        Key key = AplAddress.valueOf("0x0102030405");
         SmcContractMappingEntity smcContractMappingEntity = SmcContractMappingEntity.builder()
             .address(contractAddress.getLongId())
             .key(key.key())
@@ -96,7 +96,7 @@ class SmcContractStorageServiceImplTest {
         //GIVEN
         String json = "{}";
         String name = "mapping";
-        Key key = new AplAddress("0x0102030405");
+        Key key = AplAddress.valueOf("0x0102030405");
         SmcContractMappingEntity smcContractMappingEntity = SmcContractMappingEntity.builder()
             .address(contractAddress.getLongId())
             .key(key.key())
@@ -117,7 +117,7 @@ class SmcContractStorageServiceImplTest {
     @Test
     void deleteEntry_False() {
         //GIVEN
-        Key key = new AplAddress("0x0102030405");
+        Key key = AplAddress.valueOf("0x0102030405");
         String name = "mapping";
         when(smcContractMappingTable.get(SmcContractMappingTable.KEY_FACTORY.newKey(contractAddress.getLongId(), name, key.key())))
             .thenReturn(null);

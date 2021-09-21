@@ -18,4 +18,11 @@ public interface SmcContractEventService {
      * @param event the emitted event
      */
     void saveEvent(AplContractEvent event);
+
+    /**
+     * Fire the CDI event
+     *
+     * @param event the nested contract event
+     */
+    void fireCdiEvent(AplContractEvent event);
 }

@@ -33,6 +33,8 @@ import com.apollocurrency.aplwallet.apl.core.rest.filters.ApiSplitFilter;
 import com.apollocurrency.aplwallet.apl.core.rest.filters.CharsetRequestFilter;
 import com.apollocurrency.aplwallet.apl.core.rest.filters.Secured2FAInterceptor;
 import com.apollocurrency.aplwallet.apl.core.rest.filters.SecurityInterceptor;
+import com.apollocurrency.aplwallet.apl.smc.ws.SmcEventServer;
+import com.apollocurrency.aplwallet.apl.smc.ws.SmcEventSocketCreator;
 import com.apollocurrency.aplwallet.apl.util.Constants;
 import com.apollocurrency.aplwallet.apl.util.UPnP;
 import com.apollocurrency.aplwallet.apl.util.api.converter.ByteArrayConverterProvider;
@@ -42,6 +44,7 @@ import com.apollocurrency.aplwallet.apl.util.exception.RestParameterExceptionMap
 import com.apollocurrency.aplwallet.apl.util.injectable.PropertiesHolder;
 import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
+import org.eclipse.jetty.http.pathmap.UriTemplatePathSpec;
 import org.eclipse.jetty.security.ConstraintMapping;
 import org.eclipse.jetty.security.ConstraintSecurityHandler;
 import org.eclipse.jetty.security.SecurityHandler;
@@ -60,6 +63,8 @@ import org.eclipse.jetty.servlet.ServletHolder;
 import org.eclipse.jetty.servlets.CrossOriginFilter;
 import org.eclipse.jetty.util.security.Constraint;
 import org.eclipse.jetty.util.thread.QueuedThreadPool;
+import org.eclipse.jetty.websocket.server.NativeWebSocketServletContainerInitializer;
+import org.eclipse.jetty.websocket.server.WebSocketUpgradeFilter;
 import org.jboss.resteasy.plugins.server.servlet.HttpServletDispatcher;
 import org.jboss.resteasy.plugins.server.servlet.ResteasyContextParameters;
 import org.jboss.weld.environment.servlet.Listener;
@@ -68,6 +73,7 @@ import org.slf4j.Logger;
 import javax.inject.Inject;
 import javax.inject.Singleton;
 import javax.servlet.MultipartConfigElement;
+import javax.servlet.ServletException;
 import java.math.BigInteger;
 import java.net.InetAddress;
 import java.net.URI;
@@ -121,12 +127,14 @@ public final class API {
     final boolean enableSSL;
     private final UPnP upnp;
     private final JettyConnectorCreator jettyConnectorCreator;
+    private final SmcEventServer smcEventServer;
 
     @Inject
-    public API(PropertiesHolder propertiesHolder, UPnP upnp, JettyConnectorCreator jettyConnectorCreator) {
+    public API(PropertiesHolder propertiesHolder, UPnP upnp, JettyConnectorCreator jettyConnectorCreator, SmcEventServer smcEventServer) {
         this.propertiesHolder = propertiesHolder;
         this.upnp = upnp;
         this.jettyConnectorCreator = jettyConnectorCreator;
+        this.smcEventServer = smcEventServer;
         maxRecords = propertiesHolder.getIntProperty("apl.maxAPIRecords");
         enableAPIUPnP = propertiesHolder.getBooleanProperty("apl.enableAPIUPnP");
         apiServerIdleTimeout = propertiesHolder.getIntProperty("apl.apiServerIdleTimeout");
@@ -189,7 +197,7 @@ public final class API {
         if (Files.exists(webUiPath)
             && Files.isDirectory(webUiPath)
             && Files.exists(webUiPath.resolve(INDEX_HTML))) {
-            log.debug("Web UI index.html foind in: {}.", webUiPath.toString());
+            log.debug("Web UI index.html found in: {}.", webUiPath.toString());
             res = true;
         }
         return res;
@@ -323,6 +331,9 @@ public final class API {
 
             apiHandler.addServlet(BlockEventSourceServlet.class, "/blocks").setAsyncSupported(true);
 
+            //ADD Smart-contract Event server
+            setupSmcEventServer(apiHandler, smcEventServer);
+
 //TODO: do we need it at all?
 //            apiHandler.addServlet(DbShellServlet.class, "/dbshell");
             apiHandler.addEventListener(new ApiContextListener());
@@ -345,55 +356,11 @@ public final class API {
             }
             disableHttpMethods(apiHandler);
 
-            // --------- ADD REST support servlet (RESTEasy)
-            ServletHolder restEasyServletHolder = new ServletHolder(new HttpServletDispatcher());
-            restEasyServletHolder.setInitParameter("resteasy.servlet.mapping.prefix", "/rest");
-            restEasyServletHolder.setInitParameter("resteasy.injector.factory", "org.jboss.resteasy.cdi.CdiInjectorFactory");
-            //restEasyServletHolder.setInitParameter("resteasy.role.based.security", "true");
+            //ADD REST support servlet (RESTEasy)
+            setupRESTEasy(apiHandler);
 
-            restEasyServletHolder.setInitParameter(ResteasyContextParameters.RESTEASY_PROVIDERS,
-                new StringJoiner(",")
-                    .add(ConstraintViolationExceptionMapper.class.getName())
-                    .add(ClientErrorExceptionMapper.class.getName())
-                    .add(ParameterExceptionMapper.class.getName())
-                    .add(LegacyParameterExceptionMapper.class.getName())
-                    .add(SecurityInterceptor.class.getName())
-                    .add(Secured2FAInterceptor.class.getName())
-                    .add(RestParameterExceptionMapper.class.getName())
-                    .add(DefaultGlobalExceptionMapper.class.getName())
-                    .add(CharsetRequestFilter.class.getName())
-                    .add(IllegalArgumentExceptionMapper.class.getName())
-                    .add(PlatformSpecConverterProvider.class.getName())
-                    .add(ByteArrayConverterProvider.class.getName())
-                    .add(AplCoreLogicExceptionMapper.class.getName())
-                    .add(TransactionValidationExceptionMapper.class.getName())
-                    .toString()
-            );
-
-            String restEasyAppClassName = RestEasyApplication.class.getName();
-            restEasyServletHolder.setInitParameter("javax.ws.rs.Application", restEasyAppClassName);
-            apiHandler.addServlet(restEasyServletHolder, "/rest/*");
-            // init Weld here
-            apiHandler.addEventListener(new org.jboss.weld.module.web.servlet.WeldInitialListener());
-            //need this listener to support scopes properly
-            apiHandler.addEventListener(new org.jboss.weld.environment.servlet.Listener());
-
-            //--------- ADD swagger/openApi generated docs and API test page
-            // Set the path to our static (Swagger UI) resources
-            URL su = API.class.getResource("/swaggerui");
-            if (su != null) {
-                LOG.info("Swagger UI html/js resources base path= {}", su.toURI().toString());
-                String resourceBasePath = su.toExternalForm();
-                ContextHandler contextHandler = new ContextHandler("/swagger");
-                ResourceHandler swFileHandler = new ResourceHandler();
-                swFileHandler.setDirectoriesListed(false);
-                swFileHandler.setWelcomeFiles(new String[]{INDEX_HTML});
-                swFileHandler.setResourceBase(resourceBasePath);
-                contextHandler.setHandler(swFileHandler);
-                apiHandlers.addHandler(contextHandler);
-            } else {
-                LOG.warn("Swagger html/js resources not found, swagger UI is off.");
-            }
+            //ADD swagger/openApi generated docs and API test page
+            setupSwaggerUI(apiHandlers);
 
             apiHandlers.addHandler(apiHandler);
             apiHandlers.addHandler(new DefaultHandler());
@@ -434,6 +401,78 @@ public final class API {
             LOG.info("API server not enabled");
         }
 
+    }
+
+    private void setupRESTEasy(ServletContextHandler apiHandler) {
+        ServletHolder restEasyServletHolder = new ServletHolder(new HttpServletDispatcher());
+        restEasyServletHolder.setInitParameter("resteasy.servlet.mapping.prefix", "/rest");
+        restEasyServletHolder.setInitParameter("resteasy.injector.factory", "org.jboss.resteasy.cdi.CdiInjectorFactory");
+        //restEasyServletHolder.setInitParameter("resteasy.role.based.security", "true");
+
+        restEasyServletHolder.setInitParameter(ResteasyContextParameters.RESTEASY_PROVIDERS,
+            new StringJoiner(",")
+                .add(ConstraintViolationExceptionMapper.class.getName())
+                .add(ClientErrorExceptionMapper.class.getName())
+                .add(ParameterExceptionMapper.class.getName())
+                .add(LegacyParameterExceptionMapper.class.getName())
+                .add(SecurityInterceptor.class.getName())
+                .add(Secured2FAInterceptor.class.getName())
+                .add(RestParameterExceptionMapper.class.getName())
+                .add(DefaultGlobalExceptionMapper.class.getName())
+                .add(CharsetRequestFilter.class.getName())
+                .add(IllegalArgumentExceptionMapper.class.getName())
+                .add(PlatformSpecConverterProvider.class.getName())
+                .add(ByteArrayConverterProvider.class.getName())
+                .add(AplCoreLogicExceptionMapper.class.getName())
+                .add(TransactionValidationExceptionMapper.class.getName())
+                .toString()
+        );
+
+        String restEasyAppClassName = RestEasyApplication.class.getName();
+        restEasyServletHolder.setInitParameter("javax.ws.rs.Application", restEasyAppClassName);
+        apiHandler.addServlet(restEasyServletHolder, "/rest/*");
+        // init Weld here
+        apiHandler.addEventListener(new org.jboss.weld.module.web.servlet.WeldInitialListener());
+        //need this listener to support scopes properly
+        apiHandler.addEventListener(new Listener());
+    }
+
+    private void setupSwaggerUI(HandlerList apiHandlers) throws URISyntaxException {
+        // Set the path to our static (Swagger UI) resources
+        URL su = API.class.getResource("/swaggerui");
+        if (su != null) {
+            LOG.info("Swagger UI html/js resources base path= {}", su.toURI());
+            String resourceBasePath = su.toExternalForm();
+            ContextHandler contextHandler = new ContextHandler("/swagger");
+            ResourceHandler swFileHandler = new ResourceHandler();
+            swFileHandler.setDirectoriesListed(false);
+            swFileHandler.setWelcomeFiles(new String[]{INDEX_HTML});
+            swFileHandler.setResourceBase(resourceBasePath);
+            contextHandler.setHandler(swFileHandler);
+            apiHandlers.addHandler(contextHandler);
+        } else {
+            LOG.warn("Swagger html/js resources not found, swagger UI is off.");
+        }
+    }
+
+    private void setupSmcEventServer(ServletContextHandler apiHandler, final SmcEventServer server) throws ServletException {
+        if (propertiesHolder.getBooleanProperty("apl.smc.enableEventSubscriptionServer", true)) {
+            LOG.info("Smart-contract Event server is enabled");
+            String path = propertiesHolder.getStringProperty("apl.smc.event.path");
+            final UriTemplatePathSpec pathSpec = new UriTemplatePathSpec(path);
+            NativeWebSocketServletContainerInitializer.configure(apiHandler,
+                (servletContext, nativeWebSocketConfiguration) -> {
+                    // Configure default max size
+                    nativeWebSocketConfiguration.getPolicy().setMaxTextMessageBufferSize(65535);
+                    // Add websockets
+                    nativeWebSocketConfiguration.addMapping(pathSpec, new SmcEventSocketCreator(server));
+                    LOG.info("Smart-contract Event subscription path = {}", pathSpec);
+                });
+            // Add generic filter that will accept WebSocket upgrade.
+            WebSocketUpgradeFilter.configure(apiHandler);
+        } else {
+            LOG.info("Smart-contract Event server is disabled.");
+        }
     }
 
     private QueuedThreadPool getQueuedThreadPool() {

@@ -35,7 +35,7 @@ public class ApiProtectionFilter implements Filter {
         String addr = rq.getRemoteAddr();
         String host = rq.getRemoteHost();
         if (isProtected(path) && !isLocal(host, addr)) {
-            resp.sendError(Response.Status.FORBIDDEN.getStatusCode(), "Assess is allowed from localhost only!");
+            resp.sendError(Response.Status.FORBIDDEN.getStatusCode(), "Access is allowed from localhost only!");
         }
         chain.doFilter(request, resp);
     }
