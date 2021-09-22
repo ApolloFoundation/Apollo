@@ -8,6 +8,7 @@ import com.apollocurrency.aplwallet.apl.core.exception.AplBlockTxErrorResultsMis
 import com.apollocurrency.aplwallet.apl.crypto.AplIdGenerator;
 import com.apollocurrency.aplwallet.apl.crypto.Convert;
 import com.apollocurrency.aplwallet.apl.crypto.Crypto;
+import lombok.extern.slf4j.Slf4j;
 
 import java.math.BigInteger;
 import java.nio.ByteBuffer;
@@ -18,6 +19,7 @@ import java.util.List;
 import java.util.stream.Collectors;
 
 //TODO RawBlock impl (without consensus data)
+@Slf4j
 public final class BlockImpl implements Block {
     private final int version;
     private final int timestamp;
@@ -294,7 +296,7 @@ public final class BlockImpl implements Block {
         if (bytes == null) {
             ByteBuffer buffer =
                 ByteBuffer.allocate(4 + 4 + 8 + 4 + 8 + 8 + 4 + 32 + 32 + 32 + 32 +
-                    (requireTimeout(version) ? 4 : 0)  + (40 * txErrorHashes.size())+ + (blockSignature != null ? 64 :
+                    (requireTimeout(version) ? 4 : 0)  + (40 * txErrorHashes.size()) + (blockSignature != null ? 64 :
                     0));
             buffer.order(ByteOrder.LITTLE_ENDIAN);
             buffer.putInt(version);
@@ -319,6 +321,7 @@ public final class BlockImpl implements Block {
                 buffer.put(blockSignature);
             }
             bytes = buffer.array();
+            log.debug("Calculated block bytes {}, id {}", Convert.toHexString(bytes), AplIdGenerator.BLOCK.getId(bytes));
         }
         return bytes;
     }
