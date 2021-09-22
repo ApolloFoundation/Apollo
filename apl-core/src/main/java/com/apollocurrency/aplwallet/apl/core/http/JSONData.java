@@ -608,6 +608,17 @@ public final class JSONData {
                 }
             json.put("executedPhasedTransactions", phasedTransactions);
         }
+        JSONArray txErrorHashesArray = new JSONArray();
+        json.put("numberOfFailedTxs", block.getTxErrorHashes().size());
+        block.getTxErrorHashes().forEach(e-> {
+            JSONObject txErrorHash = new JSONObject();
+            txErrorHash.put("id", Long.toUnsignedString(e.getId()));
+            txErrorHash.put("errorHash", Convert.toHexString(e.getErrorHash()));
+            txErrorHash.put("error", e.getError());
+            txErrorHashesArray.add(txErrorHash);
+        });
+        json.put("txErrorHashes", txErrorHashesArray);
+
         return json;
     }
 
