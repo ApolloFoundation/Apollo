@@ -4,7 +4,6 @@
 
 package com.apollocurrency.aplwallet.apl.smc.ws;
 
-import com.apollocurrency.aplwallet.apl.smc.model.AplAddress;
 import com.apollocurrency.smc.data.type.Address;
 import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
@@ -23,8 +22,8 @@ public class SmcEventSocket extends WebSocketAdapter {
     private final SmcEventSocketListener listener;
     private final HttpServletRequest request;
 
-    public SmcEventSocket(String address, HttpServletRequest request, SmcEventSocketListener listener) {
-        this.contract = AplAddress.valueOf(Objects.requireNonNull(address, "contractAddress"));
+    public SmcEventSocket(Address address, HttpServletRequest request, SmcEventSocketListener listener) {
+        this.contract = Objects.requireNonNull(address, "contractAddress");
         this.listener = Objects.requireNonNull(listener, "SmcEventSocketListener");
         this.request = Objects.requireNonNull(request, "request");
         log.trace("Created socket for contract address={}", contract);

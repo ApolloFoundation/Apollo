@@ -33,6 +33,7 @@ import com.apollocurrency.aplwallet.apl.core.rest.filters.ApiSplitFilter;
 import com.apollocurrency.aplwallet.apl.core.rest.filters.CharsetRequestFilter;
 import com.apollocurrency.aplwallet.apl.core.rest.filters.Secured2FAInterceptor;
 import com.apollocurrency.aplwallet.apl.core.rest.filters.SecurityInterceptor;
+import com.apollocurrency.aplwallet.apl.smc.ws.SmcEventService;
 import com.apollocurrency.aplwallet.apl.smc.ws.SmcEventSocketCreator;
 import com.apollocurrency.aplwallet.apl.smc.ws.SmcEventSocketListener;
 import com.apollocurrency.aplwallet.apl.util.Constants;
@@ -128,13 +129,15 @@ public final class API {
     private final UPnP upnp;
     private final JettyConnectorCreator jettyConnectorCreator;
     private final SmcEventSocketListener smcEventServer;
+    private final SmcEventService smcEventService;
 
     @Inject
-    public API(PropertiesHolder propertiesHolder, UPnP upnp, JettyConnectorCreator jettyConnectorCreator, SmcEventSocketListener smcEventServer) {
+    public API(PropertiesHolder propertiesHolder, UPnP upnp, JettyConnectorCreator jettyConnectorCreator, SmcEventSocketListener smcEventServer, SmcEventService service) {
         this.propertiesHolder = propertiesHolder;
         this.upnp = upnp;
         this.jettyConnectorCreator = jettyConnectorCreator;
         this.smcEventServer = smcEventServer;
+        this.smcEventService = service;
         maxRecords = propertiesHolder.getIntProperty("apl.maxAPIRecords");
         enableAPIUPnP = propertiesHolder.getBooleanProperty("apl.enableAPIUPnP");
         apiServerIdleTimeout = propertiesHolder.getIntProperty("apl.apiServerIdleTimeout");
@@ -332,7 +335,7 @@ public final class API {
             apiHandler.addServlet(BlockEventSourceServlet.class, "/blocks").setAsyncSupported(true);
 
             //ADD Smart-contract Event server
-            setupSmcEventServer(apiHandler, smcEventServer);
+            setupSmcEventServer(apiHandler, smcEventServer, smcEventService);
 
 //TODO: do we need it at all?
 //            apiHandler.addServlet(DbShellServlet.class, "/dbshell");
@@ -455,7 +458,7 @@ public final class API {
         }
     }
 
-    private void setupSmcEventServer(ServletContextHandler apiHandler, final SmcEventSocketListener server) throws ServletException {
+    private void setupSmcEventServer(ServletContextHandler apiHandler, final SmcEventSocketListener server, final SmcEventService service) throws ServletException {
         if (propertiesHolder.getBooleanProperty("apl.smc.enableEventSubscriptionServer", true)) {
             LOG.info("Smart-contract Event server is enabled");
             String path = propertiesHolder.getStringProperty("apl.smc.event.path");
@@ -465,7 +468,7 @@ public final class API {
                     // Configure default max size
                     nativeWebSocketConfiguration.getPolicy().setMaxTextMessageBufferSize(65535);
                     // Add websockets
-                    nativeWebSocketConfiguration.addMapping(pathSpec, new SmcEventSocketCreator(server));
+                    nativeWebSocketConfiguration.addMapping(pathSpec, new SmcEventSocketCreator(server, service));
                     LOG.info("Smart-contract Event subscription path = {}", pathSpec);
                 });
             // Add generic filter that will accept WebSocket upgrade.
