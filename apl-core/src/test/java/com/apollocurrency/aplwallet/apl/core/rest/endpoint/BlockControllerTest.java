@@ -6,6 +6,7 @@ package com.apollocurrency.aplwallet.apl.core.rest.endpoint;
 import com.apollocurrency.aplwallet.api.dto.BlockDTO;
 import com.apollocurrency.aplwallet.api.dto.ECBlockDTO;
 import com.apollocurrency.aplwallet.api.dto.TransactionDTO;
+import com.apollocurrency.aplwallet.api.dto.TxErrorHashDTO;
 import com.apollocurrency.aplwallet.api.response.BlocksResponse;
 import com.apollocurrency.aplwallet.apl.core.model.Block;
 import com.apollocurrency.aplwallet.apl.core.model.EcBlockData;
@@ -35,8 +36,8 @@ import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.Mockito.doReturn;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
@@ -82,7 +83,7 @@ class BlockControllerTest extends AbstractEndpointTest {
         assertEquals(Response.Status.OK.getStatusCode(), response.getStatus());
         String respondJson = response.getContentAsString();
         assertNotNull(respondJson);
-        assertFalse(respondJson.contains("Error"), "Error from API : " + respondJson);
+        assertTrue(respondJson.contains("\"block\""), "Error from API : " + respondJson);
 
         BlockDTO dtoResult = mapper.readValue(respondJson, new TypeReference<>(){});
         assertNotNull(dtoResult);
@@ -103,12 +104,10 @@ class BlockControllerTest extends AbstractEndpointTest {
         assertEquals(Response.Status.OK.getStatusCode(), response.getStatus());
         String respondJson = response.getContentAsString();
         assertNotNull(respondJson);
-        assertFalse(respondJson.contains("Error"), "Error from API : " + respondJson);
+        assertTrue(respondJson.contains("\"block\""), "Error from API : " + respondJson);
 
         BlockDTO dtoResult = mapper.readValue(respondJson, new TypeReference<>(){});
-        assertNotNull(dtoResult);
-        assertEquals(btd.BLOCK_10.getHeight(), dtoResult.getHeight());
-        assertEquals(btd.BLOCK_10.getTransactions().size(), dtoResult.getTransactions().size());
+        assertBlock10Result(dtoResult);
         //verify
         verify(blockConverter, times(1)).convert(btd.BLOCK_10);
         verify(blockchain, times(1)).getBlock(btd.BLOCK_10.getId());
@@ -125,12 +124,10 @@ class BlockControllerTest extends AbstractEndpointTest {
         assertEquals(Response.Status.OK.getStatusCode(), response.getStatus());
         String respondJson = response.getContentAsString();
         assertNotNull(respondJson);
-        assertFalse(respondJson.contains("Error"), "Error from API : " + respondJson);
+        assertTrue(respondJson.contains("\"block\""), "Error from API : " + respondJson);
 
         BlockDTO dtoResult = mapper.readValue(respondJson, new TypeReference<>(){});
-        assertNotNull(dtoResult);
-        assertEquals(btd.BLOCK_10.getHeight(), dtoResult.getHeight());
-        assertEquals(btd.BLOCK_10.getTransactions().size(), dtoResult.getTransactions().size());
+        assertBlock10Result(dtoResult);
         //verify
         verify(blockConverter, times(1)).convert(btd.BLOCK_10);
         verify(blockchain, times(1)).getBlockAtHeight(btd.BLOCK_10.getHeight());
@@ -147,12 +144,10 @@ class BlockControllerTest extends AbstractEndpointTest {
         assertEquals(Response.Status.OK.getStatusCode(), response.getStatus());
         String respondJson = response.getContentAsString();
         assertNotNull(respondJson);
-        assertFalse(respondJson.contains("Error"), "Error from API : " + respondJson);
+        assertTrue(respondJson.contains("\"block\""), "Error from API : " + respondJson);
 
         BlockDTO dtoResult = mapper.readValue(respondJson, new TypeReference<>(){});
-        assertNotNull(dtoResult);
-        assertEquals(btd.BLOCK_10.getTimestamp(), dtoResult.getTimestamp());
-        assertEquals(btd.BLOCK_10.getTransactions().size(), dtoResult.getTransactions().size());
+        assertBlock10Result(dtoResult);
         //verify
         verify(blockConverter, times(1)).convert(btd.BLOCK_10);
         verify(blockchain, times(1)).getLastBlock(btd.BLOCK_10.getTimestamp());
@@ -167,7 +162,7 @@ class BlockControllerTest extends AbstractEndpointTest {
         assertEquals(Response.Status.OK.getStatusCode(), response.getStatus());
         String respondJson = response.getContentAsString();
         assertNotNull(respondJson);
-        assertFalse(respondJson.contains("Error"), "Error from API : " + respondJson);
+        assertTrue(respondJson.contains("\"block\""), "Error from API : " + respondJson);
 
         BlockDTO dtoResult = mapper.readValue(respondJson, new TypeReference<>(){});
         assertNotNull(dtoResult);
@@ -209,7 +204,7 @@ class BlockControllerTest extends AbstractEndpointTest {
         assertEquals(Response.Status.OK.getStatusCode(), response.getStatus());
         String respondJson = response.getContentAsString();
         assertNotNull(respondJson);
-        assertFalse(respondJson.contains("Error"), "Error from API : " + respondJson);
+        assertTrue(respondJson.contains("\"block\""), "Error from API : " + respondJson);
 
         BlocksResponse dtoResult = mapper.readValue(respondJson, new TypeReference<>(){});
         assertNotNull(dtoResult);
@@ -229,7 +224,7 @@ class BlockControllerTest extends AbstractEndpointTest {
         assertEquals(Response.Status.OK.getStatusCode(), response.getStatus());
         String respondJson = response.getContentAsString();
         assertNotNull(respondJson);
-        assertFalse(respondJson.contains("Error"), "Error from API : " + respondJson);
+        assertTrue(respondJson.contains("\"id\""), "Error from API : " + respondJson);
 
         ECBlockDTO dtoResult = mapper.readValue(respondJson, new TypeReference<>(){});
         assertNotNull(dtoResult);
@@ -249,7 +244,7 @@ class BlockControllerTest extends AbstractEndpointTest {
         assertEquals(Response.Status.OK.getStatusCode(), response.getStatus());
         String respondJson = response.getContentAsString();
         assertNotNull(respondJson);
-        assertFalse(respondJson.contains("Error"), "Error from API : " + respondJson);
+        assertTrue(respondJson.contains("\"id\""), "Error from API : " + respondJson);
 
         ECBlockDTO dtoResult = mapper.readValue(respondJson, new TypeReference<>(){});
         assertNotNull(dtoResult);
@@ -295,6 +290,10 @@ class BlockControllerTest extends AbstractEndpointTest {
         }
         dto.setTotalAmountATM(String.valueOf(
             model.getTransactions().stream().mapToLong(Transaction::getAmountATM).sum()));
+        dto.setNumberOfFailedTxs(model.getTxErrorHashes().size());
+        model.getTxErrorHashes().forEach(e->
+            dto.getTxErrorHashes().add(new TxErrorHashDTO(Long.toUnsignedString(e.getId()),
+            Convert.toHexString(e.getErrorHash()), e.getError())));
         return dto;
     }
 
@@ -306,5 +305,16 @@ class BlockControllerTest extends AbstractEndpointTest {
             result.add(dto);
         }
         return result;
+    }
+
+    private void assertBlock10Result(BlockDTO dtoResult) {
+        assertNotNull(dtoResult);
+        assertEquals(btd.BLOCK_10.getHeight(), dtoResult.getHeight());
+        assertEquals(btd.BLOCK_10.getTransactions().size(), dtoResult.getTransactions().size());
+        assertEquals(2, dtoResult.getNumberOfFailedTxs());
+        assertEquals(List.of(
+            new TxErrorHashDTO("9145605905642517648", "589985a3eb90ee4eb56ffb83f1d0e068171d1fa6d8be766e5953e30992398345", "Transaction  #10 error message"),
+            new TxErrorHashDTO("16909767887484625916", "a603f3773430a7cc9f20f111a8fd3edd930bade6a4e7d4e05ebaee2a1b77172c", "Transaction  #11 error message")),
+            dtoResult.getTxErrorHashes());
     }
 }

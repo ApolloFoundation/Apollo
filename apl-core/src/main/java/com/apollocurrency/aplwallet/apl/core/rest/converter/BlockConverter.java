@@ -6,6 +6,7 @@ package com.apollocurrency.aplwallet.apl.core.rest.converter;
 
 import com.apollocurrency.aplwallet.api.dto.BlockDTO;
 import com.apollocurrency.aplwallet.api.dto.TransactionDTO;
+import com.apollocurrency.aplwallet.api.dto.TxErrorHashDTO;
 import com.apollocurrency.aplwallet.apl.core.model.Block;
 import com.apollocurrency.aplwallet.apl.core.service.blockchain.Blockchain;
 import com.apollocurrency.aplwallet.apl.core.service.state.PhasingPollService;
@@ -73,6 +74,8 @@ public class BlockConverter implements Converter<Block, BlockDTO> {
         if (this.isAddPhasedTransactions) {
             this.addPhasedTransactions(dto, model);
         }
+        dto.setNumberOfFailedTxs(model.getTxErrorHashes().size());
+        model.getTxErrorHashes().forEach(e-> dto.getTxErrorHashes().add(new TxErrorHashDTO(Long.toUnsignedString(e.getId()), Convert.toHexString(e.getErrorHash()), e.getError())));
         return dto;
     }
 

@@ -55,6 +55,7 @@ import com.apollocurrency.aplwallet.apl.core.exception.AplTransactionValidationE
 import com.apollocurrency.aplwallet.apl.core.exception.AplUnacceptableTransactionValidationException;
 import com.apollocurrency.aplwallet.apl.core.files.shards.ShardsDownloadService;
 import com.apollocurrency.aplwallet.apl.core.files.statcheck.FileDownloadDecision;
+import com.apollocurrency.aplwallet.apl.core.exception.AplBlockTxErrorResultsMismatchException;
 import com.apollocurrency.aplwallet.apl.core.model.Block;
 import com.apollocurrency.aplwallet.apl.core.model.BlockImpl;
 import com.apollocurrency.aplwallet.apl.core.model.BlockchainProcessorState;
@@ -109,6 +110,7 @@ import com.apollocurrency.aplwallet.apl.util.task.NamedThreadFactory;
 import com.apollocurrency.aplwallet.apl.util.task.Task;
 import com.apollocurrency.aplwallet.apl.util.task.TaskDispatcher;
 import com.apollocurrency.aplwallet.apl.util.task.Tasks;
+import lombok.Getter;
 import lombok.extern.slf4j.Slf4j;
 import org.jboss.weld.environment.se.WeldContainer;
 import org.json.simple.JSONObject;
@@ -802,35 +804,22 @@ public class BlockchainProcessorImpl implements BlockchainProcessor {
         SortedSet<UnconfirmedTransaction> sortedTransactions = getUnconfirmedTransactions(previousBlock, blockTimestamp, Integer.MAX_VALUE);
         log.debug("Selected txs to generate block with [{}]", sortedTransactions.stream().map(Transaction::getId).map(String::valueOf).collect(Collectors.joining(",")));
         verifyTxSufficiency(sortedTransactions, blockVersion);
-
-        List<Transaction> blockTransactions = new ArrayList<>();
-        MessageDigest digest = Crypto.sha256();
-        long totalAmountATM = 0;
-        long totalFeeATM = 0;
-        int payloadLength = 0;
-        for (UnconfirmedTransaction unconfirmedTransaction : sortedTransactions) {
-            Transaction transaction = unconfirmedTransaction.getTransactionImpl();
-            blockTransactions.add(transaction);
-            Result signedTxBytes = PayloadResult.createLittleEndianByteArrayResult();
-            txBContext.createSerializer(transaction.getVersion()).serialize(transaction, signedTxBytes);
-            digest.update(signedTxBytes.array());
-            totalAmountATM += transaction.getAmountATM();
-            totalFeeATM += transaction.getFeeATM();
-            payloadLength += TransactionUtils.calculateFullSize(transaction, signedTxBytes.size());
-        }
+        List<Transaction> blockTransactions = sortedTransactions.stream().map(Transaction::getTransactionImpl).collect(Collectors.toList());
+        BlockTotals totals = new BlockTotals(blockTransactions);
+        MessageDigest digest = totals.getDigest();
         byte[] payloadHash = digest.digest();
         digest.update(previousBlock.getGenerationSignature());
         final byte[] publicKey = Crypto.getPublicKey(keySeed);
         byte[] generationSignature = digest.digest(publicKey);
         byte[] previousBlockHash = Crypto.sha256().digest(((BlockImpl) previousBlock).bytes());
         long baseTarget = blockchainConfig.getCurrentConfig().getInitialBaseTarget();
-        int generationFailCounter = 3;
-        AplBlockException lastException = null; // last actual payload/amount calculation exception
+        int generationFailCounter = 2;
+        AplBlockException lastException = null; // last actual after execution validation error
         // TODO Replace by a separate block generation strategy without exception control flow
-        while (generationFailCounter-- > 0) { // try at most 3 times (max allowed number of block acceptance failures
-            // by payload size or amount = 2)
-            Block block = new BlockImpl(blockVersion, blockTimestamp, previousBlock.getId(), totalAmountATM, totalFeeATM, payloadLength,
+        while (generationFailCounter-- > 0) { // try at most 2 times
+            Block block = new BlockImpl(blockVersion, blockTimestamp, previousBlock.getId(), totals.getTotalAmount(), totals.getTotalFee(), totals.getPayloadLength(),
                 payloadHash, publicKey, generationSignature, previousBlockHash, timeout, blockTransactions, keySeed, baseTarget);
+            block.getTransactions().forEach(Transaction::resetFail); // reset failed status to obtain new
             try {
                 pushBlock(block);
                 blockEvent.select(literal(BlockEventType.BLOCK_GENERATED)).fire(block);
@@ -838,26 +827,22 @@ public class BlockchainProcessorImpl implements BlockchainProcessor {
                     + " at height " + block.getHeight() + " timestamp " + block.getTimestamp() + " fee " + ((float) block.getTotalFeeATM()) / blockchainConfig.getOneAPL());
                 return;
             } catch (TransactionNotAcceptedException e) {
-                log.debug("Generate block failed: " + e.getMessage());
+                log.error("Generate block failed: " + e.getMessage());
                 Transaction transaction = e.getTransaction();
-                log.debug("Removing invalid transaction: " + transaction.getStringId());
+                log.info("Removing invalid transaction: " + transaction.getStringId());
                 transactionProcessor.removeUnconfirmedTransaction(transaction);
                 throw e;
             } catch (BlockNotAcceptedException e) {
-                log.debug("Generate block failed: " + e.getMessage());
+                log.error("Generate block failed: " + e.getMessage());
                 throw e;
-            } catch (AplBlockPayloadSizeMismatchException e) {
-                log.debug("Block payload mismatch, will try again with new value: " + e.getMessage());
-                payloadLength = e.getCalculatedPayloadLength(); // next generation attempt with updated payloadLength
-                lastException = e;
-            } catch (AplBlockTotalAmountMismatchException e) {
-                log.debug("Block total amount mismatch, will try again with new value: " + e.getMessage());
-                totalAmountATM = e.getCalculatedAmount(); // next generation attempt with updated totalAmount
+            } catch (AplBlockPayloadSizeMismatchException | AplBlockTxErrorResultsMismatchException | AplBlockTotalAmountMismatchException e) {
+                log.info("There are new failed txs in the block, will try generate block with them: " + e.getMessage());
                 lastException = e;
             }
-            blockTransactions.forEach(Transaction::resetFail); // reset failed state after processing
+            // recalculate total amount and payload length for a changed set of failed transactions
+            totals = new BlockTotals(block.getTransactions());
         }
-        throw lastException; // throw last caught exception, when unable to generate block for 3 iterations
+        throw lastException; // throw last caught exception, when unable to generate block for 2 iterations
     }
 
     @Override
@@ -1146,7 +1131,6 @@ public class BlockchainProcessorImpl implements BlockchainProcessor {
             log.info("Revert back unconfirmed changes for the txs: {}", txsToString(txsToRevert));
             txsToRevert.forEach(e-> {
                 transactionApplier.undoUnconfirmed(e);
-                e.resetFail();
                 reverted.add(e);
             });
         } catch (RuntimeException e) {
@@ -1590,8 +1574,11 @@ public class BlockchainProcessorImpl implements BlockchainProcessor {
      * failed transactions
      * @throws AplBlockPayloadSizeMismatchException when payload length for the block doesn't match to the calculated payload for both executed
      * and failed transactions
+     * @throws AplBlockTxErrorResultsMismatchException when declared failed txs inside the block
+     * differs from the failed txs obtained by the node during execution
      */
     private void validateAfterExecution(Block block, boolean hasPrunedTransactions) {
+        block.checkFailedTxsExecution();
         long calculatedBlockAmount = block.getTransactions()
             .stream()
             .filter(transaction -> !transaction.isFailed())
@@ -1672,4 +1659,24 @@ public class BlockchainProcessorImpl implements BlockchainProcessor {
             dispatcher.schedule(moreBlocksTask);
         }
     }
+
+    @Getter
+    private class BlockTotals {
+        private int payloadLength;
+        private long totalAmount;
+        private long totalFee;
+        private final MessageDigest digest = Crypto.sha256();
+
+        public BlockTotals(List<Transaction> transactions) {
+            for (Transaction transaction : transactions) {
+                Result signedTxBytes = PayloadResult.createLittleEndianByteArrayResult();
+                txBContext.createSerializer(transaction.getVersion()).serialize(transaction, signedTxBytes);
+                digest.update(signedTxBytes.array());
+                totalAmount += transaction.isFailed() ? 0 : transaction.getAmountATM();
+                totalFee += transaction.getFeeATM();
+                payloadLength += transaction.isFailed() ? signedTxBytes.size() : TransactionUtils.calculateFullSize(transaction, signedTxBytes.size());
+            }
+        }
+    }
+
 }

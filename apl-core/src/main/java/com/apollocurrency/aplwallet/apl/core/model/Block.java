@@ -27,6 +27,11 @@ public interface Block {
 
     long getGeneratorId();
 
+    /**
+     * @return hashed failed tx statuses if any
+     */
+    List<TxErrorHash> getTxErrorHashes();
+
     byte[] getGeneratorPublicKey();
 
     boolean hasGeneratorPublicKey();
@@ -64,6 +69,14 @@ public interface Block {
     byte[] getBytes();
 
     boolean checkSignature();
+
+    /**
+     * Verify that declared failed txs with their statuses are the same as obtained by the node transaction
+     * execution. Assuming that transaction execution status was not inherited from the declared block data
+     * @throws com.apollocurrency.aplwallet.apl.core.exception.AplBlockTxErrorResultsMismatchException when
+     * declared tx execution status is not equal to the obtained result
+     */
+    void checkFailedTxsExecution();
 
     boolean hasLoadedData();
 
