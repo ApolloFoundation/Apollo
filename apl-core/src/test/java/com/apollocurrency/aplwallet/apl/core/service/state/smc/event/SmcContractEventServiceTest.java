@@ -8,11 +8,11 @@ import com.apollocurrency.aplwallet.apl.core.converter.db.smc.ContractEventLogMo
 import com.apollocurrency.aplwallet.apl.core.converter.db.smc.ContractEventModelToEntityConverter;
 import com.apollocurrency.aplwallet.apl.core.dao.state.smc.SmcContractEventLogTable;
 import com.apollocurrency.aplwallet.apl.core.dao.state.smc.SmcContractEventTable;
-import com.apollocurrency.aplwallet.apl.core.model.smc.AplContractEvent;
 import com.apollocurrency.aplwallet.apl.core.service.blockchain.Blockchain;
-import com.apollocurrency.aplwallet.apl.core.service.state.smc.SmcContractEventService;
 import com.apollocurrency.aplwallet.apl.core.service.state.smc.impl.SmcContractEventServiceImpl;
-import com.apollocurrency.aplwallet.apl.smc.event.SmcEventType;
+import com.apollocurrency.aplwallet.apl.smc.events.SmcEventType;
+import com.apollocurrency.aplwallet.apl.smc.model.AplContractEvent;
+import com.apollocurrency.aplwallet.apl.smc.service.SmcContractEventService;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -21,7 +21,7 @@ import org.mockito.junit.jupiter.MockitoExtension;
 
 import javax.enterprise.event.Event;
 
-import static com.apollocurrency.aplwallet.apl.smc.event.SmcEventBinding.literal;
+import static com.apollocurrency.aplwallet.apl.smc.events.SmcEventBinding.literal;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;

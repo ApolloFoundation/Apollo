@@ -45,6 +45,7 @@
     <module>apl-db-updater</module>
     <module>apl-dex</module>
     <module>apl-vault-wallet</module>
+      <module>apl-smc</module>
   </modules>
 
   <properties>
@@ -60,9 +61,8 @@
     <zip-file-name>apollo-blockchain</zip-file-name>
     <zip-format>zip</zip-format>
     <!--Dependency Versions-->
-
     <antifraud.version>1.1.3</antifraud.version>
-
+    <smc-lib.version>0.1.30</smc-lib.version>
     <!-- We have to define this property and change it accordingly for correct version of packages -->
     <apl-bom-ext.version>1.0.8</apl-bom-ext.version>
     <base-dist-dir>ApolloWallet/apollo-blockchain</base-dist-dir>

@@ -6,6 +6,8 @@ package com.apollocurrency.aplwallet.apl.core.config;
 
 import com.apollocurrency.aplwallet.apl.crypto.Convert;
 import com.apollocurrency.aplwallet.apl.crypto.Crypto;
+import com.apollocurrency.aplwallet.apl.smc.SmcContext;
+import com.apollocurrency.smc.blockchain.BlockchainIntegrator;
 import com.apollocurrency.smc.blockchain.crypt.Digest;
 import com.apollocurrency.smc.blockchain.crypt.DigestWrapper;
 import com.apollocurrency.smc.blockchain.crypt.HashSumProvider;
@@ -29,20 +31,12 @@ public class SmcConfig {
 
     @Produces
     public LanguageContext createLanguageContext() {
-        return LanguageContextFactory.createJSContext(
-            new DenyGlobalObjectsPolicy(),
-            new AllowFullHostAccessPolicy(),
-            new AllowHostClassLoadingPolicy());
+        return getLanguageContext();
     }
 
     @Produces
     public ExecutionEnv createExecutionEnv() {
-        return ExecutionEnv.builder()
-            .mode(ExecutionModeHelper.createProdExecutionMode())
-            //TODO: set price
-            //.price( ... )
-            .config(new JsLimitsConfig())
-            .build();
+        return getExecutionEnv();
     }
 
     @Produces
@@ -80,4 +74,40 @@ public class SmcConfig {
             }
         };
     }
+
+    public static SmcContext asContext(BlockchainIntegrator integrator) {
+        return new SmcContext() {
+            @Override
+            public BlockchainIntegrator getIntegrator() {
+                return integrator;
+            }
+
+            @Override
+            public ExecutionEnv getExecutionEnv() {
+                return SmcConfig.getExecutionEnv();
+            }
+
+            @Override
+            public LanguageContext getLanguageContext() {
+                return SmcConfig.getLanguageContext();
+            }
+        };
+    }
+
+    private static LanguageContext getLanguageContext() {
+        return LanguageContextFactory.createJSContext(
+            new DenyGlobalObjectsPolicy(),
+            new AllowFullHostAccessPolicy(),
+            new AllowHostClassLoadingPolicy());
+    }
+
+    private static ExecutionEnv getExecutionEnv() {
+        return ExecutionEnv.builder()
+            .mode(ExecutionModeHelper.createProdExecutionMode())
+            //TODO: set price
+            //.price( ... )
+            .config(new JsLimitsConfig())
+            .build();
+    }
+
 }

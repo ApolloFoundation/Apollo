@@ -4,10 +4,10 @@
 
 package com.apollocurrency.aplwallet.apl.core.service.state.smc.event;
 
-import com.apollocurrency.aplwallet.apl.core.model.smc.AplAddress;
-import com.apollocurrency.aplwallet.apl.core.model.smc.AplContractEvent;
 import com.apollocurrency.aplwallet.apl.core.service.state.smc.txlog.EventLogRecord;
 import com.apollocurrency.aplwallet.apl.crypto.AplIdGenerator;
+import com.apollocurrency.aplwallet.apl.smc.model.AplAddress;
+import com.apollocurrency.aplwallet.apl.smc.model.AplContractEvent;
 import com.apollocurrency.smc.blockchain.crypt.HashSumProvider;
 import com.apollocurrency.smc.contract.vm.event.SmcContractEventManager;
 import com.apollocurrency.smc.data.type.Address;

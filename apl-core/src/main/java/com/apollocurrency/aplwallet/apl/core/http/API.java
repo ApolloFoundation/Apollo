@@ -33,8 +33,8 @@ import com.apollocurrency.aplwallet.apl.core.rest.filters.ApiSplitFilter;
 import com.apollocurrency.aplwallet.apl.core.rest.filters.CharsetRequestFilter;
 import com.apollocurrency.aplwallet.apl.core.rest.filters.Secured2FAInterceptor;
 import com.apollocurrency.aplwallet.apl.core.rest.filters.SecurityInterceptor;
-import com.apollocurrency.aplwallet.apl.smc.ws.SmcEventServer;
 import com.apollocurrency.aplwallet.apl.smc.ws.SmcEventSocketCreator;
+import com.apollocurrency.aplwallet.apl.smc.ws.SmcEventSocketListener;
 import com.apollocurrency.aplwallet.apl.util.Constants;
 import com.apollocurrency.aplwallet.apl.util.UPnP;
 import com.apollocurrency.aplwallet.apl.util.api.converter.ByteArrayConverterProvider;
@@ -127,10 +127,10 @@ public final class API {
     final boolean enableSSL;
     private final UPnP upnp;
     private final JettyConnectorCreator jettyConnectorCreator;
-    private final SmcEventServer smcEventServer;
+    private final SmcEventSocketListener smcEventServer;
 
     @Inject
-    public API(PropertiesHolder propertiesHolder, UPnP upnp, JettyConnectorCreator jettyConnectorCreator, SmcEventServer smcEventServer) {
+    public API(PropertiesHolder propertiesHolder, UPnP upnp, JettyConnectorCreator jettyConnectorCreator, SmcEventSocketListener smcEventServer) {
         this.propertiesHolder = propertiesHolder;
         this.upnp = upnp;
         this.jettyConnectorCreator = jettyConnectorCreator;
@@ -455,7 +455,7 @@ public final class API {
         }
     }
 
-    private void setupSmcEventServer(ServletContextHandler apiHandler, final SmcEventServer server) throws ServletException {
+    private void setupSmcEventServer(ServletContextHandler apiHandler, final SmcEventSocketListener server) throws ServletException {
         if (propertiesHolder.getBooleanProperty("apl.smc.enableEventSubscriptionServer", true)) {
             LOG.info("Smart-contract Event server is enabled");
             String path = propertiesHolder.getStringProperty("apl.smc.event.path");

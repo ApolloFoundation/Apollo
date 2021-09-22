@@ -1,7 +1,7 @@
 package com.apollocurrency.aplwallet.apl.core.converter.db.smc;
 
 import com.apollocurrency.aplwallet.apl.core.entity.state.smc.SmcContractEventEntity;
-import com.apollocurrency.aplwallet.apl.core.model.smc.AplContractEvent;
+import com.apollocurrency.aplwallet.apl.smc.model.AplContractEvent;
 import com.apollocurrency.aplwallet.apl.util.api.converter.Converter;
 
 import javax.inject.Singleton;

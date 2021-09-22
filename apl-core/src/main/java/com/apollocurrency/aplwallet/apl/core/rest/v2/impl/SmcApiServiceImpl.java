@@ -27,7 +27,6 @@ import com.apollocurrency.aplwallet.apl.core.config.SmcConfig;
 import com.apollocurrency.aplwallet.apl.core.entity.state.account.Account;
 import com.apollocurrency.aplwallet.apl.core.model.CreateTransactionRequest;
 import com.apollocurrency.aplwallet.apl.core.model.Transaction;
-import com.apollocurrency.aplwallet.apl.core.model.smc.AplAddress;
 import com.apollocurrency.aplwallet.apl.core.rest.TransactionCreator;
 import com.apollocurrency.aplwallet.apl.core.rest.v2.ResponseBuilderV2;
 import com.apollocurrency.aplwallet.apl.core.rest.v2.converter.CallMethodResultMapper;
@@ -35,25 +34,25 @@ import com.apollocurrency.aplwallet.apl.core.rest.v2.converter.MethodSpecMapper;
 import com.apollocurrency.aplwallet.apl.core.rest.v2.converter.SmartMethodMapper;
 import com.apollocurrency.aplwallet.apl.core.service.state.account.AccountService;
 import com.apollocurrency.aplwallet.apl.core.service.state.smc.SmcContractService;
-import com.apollocurrency.aplwallet.apl.core.service.state.smc.SmcContractTxBatchProcessor;
-import com.apollocurrency.aplwallet.apl.core.service.state.smc.SmcContractTxProcessor;
 import com.apollocurrency.aplwallet.apl.core.service.state.smc.impl.SmcBlockchainIntegratorFactory;
-import com.apollocurrency.aplwallet.apl.core.service.state.smc.internal.CallMethodTxValidator;
-import com.apollocurrency.aplwallet.apl.core.service.state.smc.internal.CallViewMethodTxProcessor;
-import com.apollocurrency.aplwallet.apl.core.service.state.smc.internal.PublishContractTxValidator;
 import com.apollocurrency.aplwallet.apl.core.signature.MultiSigCredential;
 import com.apollocurrency.aplwallet.apl.core.transaction.common.TxBContext;
 import com.apollocurrency.aplwallet.apl.core.transaction.messages.SmcCallMethodAttachment;
 import com.apollocurrency.aplwallet.apl.core.transaction.messages.SmcPublishContractAttachment;
 import com.apollocurrency.aplwallet.apl.crypto.Convert;
 import com.apollocurrency.aplwallet.apl.crypto.Crypto;
+import com.apollocurrency.aplwallet.apl.smc.model.AplAddress;
+import com.apollocurrency.aplwallet.apl.smc.service.SmcContractTxBatchProcessor;
+import com.apollocurrency.aplwallet.apl.smc.service.SmcContractTxProcessor;
+import com.apollocurrency.aplwallet.apl.smc.service.tx.CallMethodTxValidator;
+import com.apollocurrency.aplwallet.apl.smc.service.tx.CallViewMethodTxProcessor;
+import com.apollocurrency.aplwallet.apl.smc.service.tx.PublishContractTxValidator;
 import com.apollocurrency.aplwallet.apl.util.Convert2;
 import com.apollocurrency.aplwallet.apl.util.api.parameter.FirstLastIndexBeanParam;
 import com.apollocurrency.aplwallet.apl.util.cdi.config.Property;
 import com.apollocurrency.aplwallet.apl.util.exception.ApiErrors;
 import com.apollocurrency.aplwallet.apl.util.io.PayloadResult;
 import com.apollocurrency.aplwallet.apl.util.io.Result;
-import com.apollocurrency.smc.blockchain.BlockchainIntegrator;
 import com.apollocurrency.smc.contract.AddressNotFoundException;
 import com.apollocurrency.smc.contract.ContractStatus;
 import com.apollocurrency.smc.contract.SmartContract;
@@ -231,10 +230,9 @@ public class SmcApiServiceImpl implements SmcApiService {
             return builder.build();
         }
         SmartContract smartContract = contractService.createNewContract(transaction);
-
+        var context = SmcConfig.asContext(integratorFactory.createMockProcessor(transaction.getId()));
         //syntactical and semantic validation
-        BlockchainIntegrator integrator = integratorFactory.createMockProcessor(transaction.getId());
-        SmcContractTxProcessor processor = new PublishContractTxValidator(smartContract, integrator, smcConfig);
+        SmcContractTxProcessor processor = new PublishContractTxValidator(smartContract, context);
 
         BigInteger calculatedFuel = processor.getExecutionEnv().getPrice().forContractPublishing().calc(smartContract);
         if (!smartContract.getFuel().tryToCharge(calculatedFuel)) {
@@ -450,19 +448,12 @@ public class SmcApiServiceImpl implements SmcApiService {
             contractAddress,
             new ContractFuel(contractAddress, BigInteger.ZERO, BigInteger.ONE)
         );
-        //smartContract.setSender(new AplAddress(transaction.getSenderId()));
-
         var methods = methodMapper.convert(members);
-        SmcContractTxBatchProcessor processor = new CallViewMethodTxProcessor(
-            smartContract,
-            methods,
-            integratorFactory.createReadonlyProcessor(contractAddress),
-            smcConfig
-        );
+        var context = SmcConfig.asContext(integratorFactory.createReadonlyProcessor(contractAddress));
 
-        var result = processor.batchProcess(executionLog);
+        SmcContractTxBatchProcessor processor = new CallViewMethodTxProcessor(smartContract, methods, context);
 
-        return result;
+        return processor.batchProcess(executionLog);
     }
 
     @Override
@@ -500,12 +491,13 @@ public class SmcApiServiceImpl implements SmcApiService {
             .args(attachment.getMethodParams())
             .value(BigInteger.valueOf(transaction.getAmountATM()))
             .build();
+        var context = SmcConfig.asContext(integratorFactory.createMockProcessor(transaction.getId()));
+
         //syntactical and semantic validation
         SmcContractTxProcessor processor = new CallMethodTxValidator(
             smartContract,
             smartMethod,
-            integratorFactory.createMockProcessor(transaction.getId()),
-            smcConfig
+            context
         );
 
         BigInteger calculatedFuel = processor.getExecutionEnv().getPrice().forMethodCalling(smartMethod.getValue()).calc(smartMethod);

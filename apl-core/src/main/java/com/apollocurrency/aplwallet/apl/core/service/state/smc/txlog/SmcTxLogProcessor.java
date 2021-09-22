@@ -4,9 +4,9 @@
 
 package com.apollocurrency.aplwallet.apl.core.service.state.smc.txlog;
 
-import com.apollocurrency.aplwallet.apl.core.model.smc.AplContractEvent;
 import com.apollocurrency.aplwallet.apl.core.service.state.account.AccountService;
-import com.apollocurrency.aplwallet.apl.core.service.state.smc.SmcContractEventService;
+import com.apollocurrency.aplwallet.apl.smc.model.AplContractEvent;
+import com.apollocurrency.aplwallet.apl.smc.service.SmcContractEventService;
 import com.apollocurrency.smc.txlog.Record;
 import com.apollocurrency.smc.txlog.RecordProcessor;
 import com.apollocurrency.smc.txlog.RecordType;

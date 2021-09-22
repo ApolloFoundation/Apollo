@@ -8,10 +8,10 @@ import com.apollocurrency.aplwallet.apl.core.converter.db.smc.ContractEventLogMo
 import com.apollocurrency.aplwallet.apl.core.converter.db.smc.ContractEventModelToEntityConverter;
 import com.apollocurrency.aplwallet.apl.core.dao.state.smc.SmcContractEventLogTable;
 import com.apollocurrency.aplwallet.apl.core.dao.state.smc.SmcContractEventTable;
-import com.apollocurrency.aplwallet.apl.core.model.smc.AplContractEvent;
 import com.apollocurrency.aplwallet.apl.core.service.blockchain.Blockchain;
-import com.apollocurrency.aplwallet.apl.core.service.state.smc.SmcContractEventService;
-import com.apollocurrency.aplwallet.apl.smc.event.SmcEventType;
+import com.apollocurrency.aplwallet.apl.smc.events.SmcEventType;
+import com.apollocurrency.aplwallet.apl.smc.model.AplContractEvent;
+import com.apollocurrency.aplwallet.apl.smc.service.SmcContractEventService;
 import com.apollocurrency.aplwallet.apl.util.cdi.Transactional;
 import com.apollocurrency.smc.blockchain.crypt.HashSumProvider;
 import lombok.extern.slf4j.Slf4j;
@@ -20,7 +20,7 @@ import javax.enterprise.event.Event;
 import javax.inject.Inject;
 import javax.inject.Singleton;
 
-import static com.apollocurrency.aplwallet.apl.smc.event.SmcEventBinding.literal;
+import static com.apollocurrency.aplwallet.apl.smc.events.SmcEventBinding.literal;
 import static com.apollocurrency.smc.util.HexUtils.toHex;
 
 /**

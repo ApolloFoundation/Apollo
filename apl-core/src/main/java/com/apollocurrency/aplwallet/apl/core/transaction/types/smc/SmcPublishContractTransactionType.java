@@ -11,19 +11,18 @@ import com.apollocurrency.aplwallet.apl.core.entity.state.account.LedgerEvent;
 import com.apollocurrency.aplwallet.apl.core.exception.AplAcceptableTransactionValidationException;
 import com.apollocurrency.aplwallet.apl.core.exception.AplUnacceptableTransactionValidationException;
 import com.apollocurrency.aplwallet.apl.core.model.Transaction;
-import com.apollocurrency.aplwallet.apl.core.model.smc.AplAddress;
 import com.apollocurrency.aplwallet.apl.core.service.state.account.AccountService;
 import com.apollocurrency.aplwallet.apl.core.service.state.smc.SmcContractService;
-import com.apollocurrency.aplwallet.apl.core.service.state.smc.SmcContractTxProcessor;
 import com.apollocurrency.aplwallet.apl.core.service.state.smc.impl.SmcBlockchainIntegratorFactory;
-import com.apollocurrency.aplwallet.apl.core.service.state.smc.internal.PublishContractTxProcessor;
-import com.apollocurrency.aplwallet.apl.core.service.state.smc.internal.PublishContractTxValidator;
 import com.apollocurrency.aplwallet.apl.core.transaction.TransactionTypes;
 import com.apollocurrency.aplwallet.apl.core.transaction.messages.AbstractAttachment;
 import com.apollocurrency.aplwallet.apl.core.transaction.messages.AbstractSmcAttachment;
 import com.apollocurrency.aplwallet.apl.core.transaction.messages.SmcPublishContractAttachment;
+import com.apollocurrency.aplwallet.apl.smc.model.AplAddress;
+import com.apollocurrency.aplwallet.apl.smc.service.SmcContractTxProcessor;
+import com.apollocurrency.aplwallet.apl.smc.service.tx.PublishContractTxProcessor;
+import com.apollocurrency.aplwallet.apl.smc.service.tx.PublishContractTxValidator;
 import com.apollocurrency.aplwallet.apl.util.rlp.RlpReader;
-import com.apollocurrency.smc.blockchain.BlockchainIntegrator;
 import com.apollocurrency.smc.contract.SmartContract;
 import com.apollocurrency.smc.contract.fuel.FuelValidator;
 import com.apollocurrency.smc.contract.vm.ExecutionLog;
@@ -120,9 +119,9 @@ public class SmcPublishContractTransactionType extends AbstractSmcTransactionTyp
             log.error("Needed fuel={} but actual={}", calculatedFuel, smartContract.getFuel());
             throw new AplUnacceptableTransactionValidationException("Not enough fuel to execute this transaction, expected=" + calculatedFuel + " but actual=" + smartContract.getFuel(), transaction);
         }
+        var context = SmcConfig.asContext(integratorFactory.createMockProcessor(transaction.getId()));
         //syntactical and semantic validation
-        BlockchainIntegrator integrator = integratorFactory.createMockProcessor(transaction.getId());
-        SmcContractTxProcessor processor = new PublishContractTxValidator(smartContract, integrator, smcConfig);
+        SmcContractTxProcessor processor = new PublishContractTxValidator(smartContract, context);
         var executionLog = new ExecutionLog();
         processor.process(executionLog);
         if (executionLog.hasError()) {
@@ -137,9 +136,11 @@ public class SmcPublishContractTransactionType extends AbstractSmcTransactionTyp
         log.debug("SMC: applyAttachment: publish smart contract and call constructor.");
         SmartContract smartContract = contractService.createNewContract(transaction);
         SmcPublishContractAttachment attachment = (SmcPublishContractAttachment) transaction.getAttachment();
-        BlockchainIntegrator integrator = integratorFactory.createProcessor(transaction, smartContract.getAddress(), attachment, senderAccount, recipientAccount, getLedgerEvent());
+        var context = SmcConfig.asContext(
+            integratorFactory.createProcessor(transaction,
+                smartContract.getAddress(), attachment, senderAccount, recipientAccount, getLedgerEvent()));
         log.debug("Before processing Address={} Fuel={}", smartContract.getAddress(), smartContract.getFuel());
-        SmcContractTxProcessor processor = new PublishContractTxProcessor(smartContract, integrator, smcConfig);
+        SmcContractTxProcessor processor = new PublishContractTxProcessor(smartContract, context);
 
         executeContract(transaction, senderAccount, smartContract, processor);
 
