@@ -31,7 +31,9 @@ import com.apollocurrency.aplwallet.apl.core.chainid.BlockchainConfig;
 import com.apollocurrency.aplwallet.apl.core.http.API;
 import com.apollocurrency.aplwallet.apl.core.http.APIEnum;
 import com.apollocurrency.aplwallet.apl.core.rest.converter.BlockConverter;
+import com.apollocurrency.aplwallet.apl.core.rest.converter.BlockConverterCreator;
 import com.apollocurrency.aplwallet.apl.core.rest.converter.UnconfirmedTransactionConverter;
+import com.apollocurrency.aplwallet.apl.core.rest.converter.UnconfirmedTransactionConverterCreator;
 import com.apollocurrency.aplwallet.apl.core.service.appdata.TimeService;
 import com.apollocurrency.aplwallet.apl.core.service.blockchain.Blockchain;
 import com.apollocurrency.aplwallet.apl.core.service.blockchain.BlockchainProcessor;
@@ -159,7 +161,7 @@ public class PeersService {
     private JSONStreamAware myPeerInfoRequest;
     private volatile JSONStreamAware myPeerInfoResponse;
     private BlockchainProcessor blockchainProcessor;
-    private volatile TimeService timeService;
+    private final TimeService timeService;
     private final UnconfirmedTransactionConverter transactionConverter;
     private final BlockConverter blockConverter;
 //    private final ExecutorService txSendingDispatcher;
@@ -174,8 +176,8 @@ public class PeersService {
                         PeerHttpServer peerHttpServer,
                         TimeLimiterService timeLimiterService,
                         AccountService accountService,
-                        UnconfirmedTransactionConverter txConverter,
-                        BlockConverter blockConverter,
+                        UnconfirmedTransactionConverterCreator txConverterCreator,
+                        BlockConverterCreator blockConverterCreator,
                         PeerDb peerDb) {
         this.propertiesHolder = propertiesHolder;
         this.blockchainConfig = blockchainConfig;
@@ -185,11 +187,8 @@ public class PeersService {
         this.peerHttpServer = peerHttpServer;
         this.timeLimiterService = timeLimiterService;
         this.accountService = accountService;
-        this.transactionConverter = txConverter;
-        this.transactionConverter.setPriv(false);
-        this.blockConverter = blockConverter;
-        this.blockConverter.setPriv(false);
-        this.blockConverter.setAddTransactions(true);
+        this.transactionConverter = txConverterCreator.create(false);
+        this.blockConverter = blockConverterCreator.create(true, false, false);
         this.peerDb = peerDb;
         int asyncTxSendingPoolSize = propertiesHolder.getIntProperty("apl.maxAsyncPeerSendingPoolSize", 30);
 //        this.txSendingDispatcher = new ThreadPoolExecutor(5, asyncTxSendingPoolSize, 10_000, TimeUnit.MILLISECONDS, new ArrayBlockingQueue<>(asyncTxSendingPoolSize), new NamedThreadFactory("P2PTxSendingPool", true));

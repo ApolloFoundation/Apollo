@@ -11,6 +11,7 @@ import com.apollocurrency.aplwallet.apl.core.entity.state.account.Account;
 import com.apollocurrency.aplwallet.apl.core.entity.state.account.PublicKey;
 import com.apollocurrency.aplwallet.apl.core.rest.TransactionCreator;
 import com.apollocurrency.aplwallet.apl.core.rest.converter.UnconfirmedTransactionConverter;
+import com.apollocurrency.aplwallet.apl.core.rest.converter.UnconfirmedTransactionConverterCreator;
 import com.apollocurrency.aplwallet.apl.core.service.state.account.AccountControlPhasingService;
 import com.apollocurrency.aplwallet.apl.core.service.state.account.AccountService;
 import com.apollocurrency.aplwallet.apl.core.transaction.messages.PrunableLoadingService;
@@ -42,6 +43,7 @@ import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.when;
 
 @ExtendWith(MockitoExtension.class)
 class AccountControlControllerTest extends AbstractEndpointTest {
@@ -76,12 +78,16 @@ class AccountControlControllerTest extends AbstractEndpointTest {
     HttpServletRequest req;
     @Mock
     PrunableLoadingService loadingService;
+    @Mock
+    UnconfirmedTransactionConverterCreator converterCreator;
 
     @BeforeEach
     void setUp() {
         super.setUp();
+        UnconfirmedTransactionConverter converter = new UnconfirmedTransactionConverter(loadingService);
+        when(converterCreator.create(true)).thenReturn(converter);
         endpoint = new AccountControlController(
-                accountControlPhasingService, blockchainConfig, txCreator, accountService, new UnconfirmedTransactionConverter(loadingService), 100);
+                accountControlPhasingService, blockchainConfig, txCreator, accountService, converterCreator, 100);
         dispatcher.getRegistry().addSingletonResource(endpoint);
         dispatcher.getDefaultContextObjects().put(HttpServletRequest.class, req);
         actd = new AccountControlPhasingTestData();
