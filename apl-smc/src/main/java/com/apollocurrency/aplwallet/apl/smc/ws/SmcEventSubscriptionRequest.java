@@ -26,26 +26,21 @@ import java.util.List;
 @Setter
 @ToString
 @EqualsAndHashCode
-public class SmcEventRequest {
+public class SmcEventSubscriptionRequest {
     public enum Operation {
-        SUBSCRIBE("subscribe"),
-        UNSUBSCRIBE("unsubscribe");
-
-        private final String name;
-
-        Operation(String name) {
-            this.name = name;
-        }
-
-        public static Operation from(String name) {
-            return SUBSCRIBE;
-        }
+        SUBSCRIBE,
+        UNSUBSCRIBE;
     }
+
+    private Operation operation;
+    private String requestId;
+    private List<Event> events;
 
     @JsonCreator
     @Builder
-    public SmcEventRequest(@JsonProperty("operation") Operation operation, @JsonProperty("events") List<Event> events) {
+    public SmcEventSubscriptionRequest(@JsonProperty("operation") Operation operation, @JsonProperty("requestId") String requestId, @JsonProperty("events") List<Event> events) {
         this.operation = operation;
+        this.requestId = requestId;
         this.events = events;
     }
 
@@ -82,8 +77,4 @@ public class SmcEventRequest {
             this.value = value;
         }
     }
-
-    private Operation operation;
-    private List<Event> events;
-
 }

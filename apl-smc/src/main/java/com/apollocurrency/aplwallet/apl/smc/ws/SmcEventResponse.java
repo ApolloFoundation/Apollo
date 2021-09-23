@@ -6,31 +6,27 @@ package com.apollocurrency.aplwallet.apl.smc.ws;
 
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonInclude;
-import lombok.Builder;
+import lombok.AllArgsConstructor;
 import lombok.EqualsAndHashCode;
 import lombok.Getter;
-import lombok.Setter;
 import lombok.ToString;
 
 /**
  * @author andrew.zinchenko@gmail.com
  */
-@Builder
 @JsonInclude(JsonInclude.Include.NON_NULL)
 @JsonIgnoreProperties(ignoreUnknown = true)
 @Getter
-@Setter
 @ToString
 @EqualsAndHashCode
+@AllArgsConstructor
 public class SmcEventResponse {
+    enum Type {
+        RECEIPT,
+        EVENT
+    }
+
     private Integer errorCode;
     private String errorDescription;
-    private String data;
-    private String name;
-    private String signature;
-    private int transactionIndex;
-    private String transactionHash;
-    private String blockHash;
-    private long blockNumber;
-    private String address;
+    private Type type;
 }

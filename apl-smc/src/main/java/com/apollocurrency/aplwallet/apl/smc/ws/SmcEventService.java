@@ -16,5 +16,5 @@ public interface SmcEventService {
      * @param contract the given contract address
      * @return true if the given contract already stored into the blockchain
      */
-    boolean isExist(Address contract);
+    boolean isContractExist(Address contract);
 }

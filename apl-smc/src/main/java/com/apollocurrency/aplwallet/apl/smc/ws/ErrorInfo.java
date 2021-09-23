@@ -7,9 +7,8 @@ package com.apollocurrency.aplwallet.apl.smc.ws;
 /**
  * @author andrew.zinchenko@gmail.com
  */
-public interface Message {
+public interface ErrorInfo {
+    int getErrorCode();
 
-    String toJson();
-
-    <T> T fromJson(Class<T> clazz);
+    String getErrorDescription();
 }

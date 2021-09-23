@@ -4,13 +4,18 @@
 
 package com.apollocurrency.aplwallet.apl.smc.ws;
 
+import com.apollocurrency.aplwallet.apl.smc.model.AplAddress;
 import com.apollocurrency.smc.data.type.Address;
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.MapperFeature;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
 import org.eclipse.jetty.websocket.api.Session;
+import org.eclipse.jetty.websocket.api.StatusCode;
 import org.eclipse.jetty.websocket.api.WebSocketAdapter;
 
-import javax.servlet.http.HttpServletRequest;
+import java.util.Locale;
 import java.util.Objects;
 
 /**
@@ -18,14 +23,21 @@ import java.util.Objects;
  */
 @Slf4j
 public class SmcEventSocket extends WebSocketAdapter {
+    private static final String INVALID_REQUEST_FORMAT_RESPONSE;
+
+    private static final ObjectMapper MAPPER = new ObjectMapper();
+
+    static {
+        MAPPER.enable(MapperFeature.ACCEPT_CASE_INSENSITIVE_ENUMS);
+        INVALID_REQUEST_FORMAT_RESPONSE = serializeMessage(SmcErrorReceipt.error(SmcEventServerErrors.WRONG_REQUEST_STRUCTURE));
+    }
+
     private final Address contract;
     private final SmcEventSocketListener listener;
-    private final HttpServletRequest request;
 
-    public SmcEventSocket(Address address, HttpServletRequest request, SmcEventSocketListener listener) {
-        this.contract = Objects.requireNonNull(address, "contractAddress");
+    public SmcEventSocket(String address, SmcEventSocketListener listener) {
+        this.contract = AplAddress.valueOf(Objects.requireNonNull(address, "contractAddress"));
         this.listener = Objects.requireNonNull(listener, "SmcEventSocketListener");
-        this.request = Objects.requireNonNull(request, "request");
         log.trace("Created socket for contract address={}", contract);
     }
 
@@ -39,13 +51,23 @@ public class SmcEventSocket extends WebSocketAdapter {
     @SneakyThrows
     @Override
     public void onWebSocketText(String message) {
-        log.info("Received TEXT message: {}", message);
-        listener.onMessage(this, message);
+        log.debug("Received TEXT message: {}", message);
+        if (message.toLowerCase(Locale.US).equals("exit")) {
+            getSession().close(StatusCode.NORMAL, "Thanks");
+        } else {
+            try {
+                var request = deserializeMessage(message);
+                listener.onMessage(this, request);
+
+            } catch (JsonProcessingException e) {
+                sendWebSocketText(INVALID_REQUEST_FORMAT_RESPONSE);
+            }
+        }
     }
 
     @Override
     public void onWebSocketClose(int statusCode, String reason) {
-        log.info("Socket Closed: [{}] {}", statusCode, reason);
+        log.debug("Socket Closed: [{}] {}", statusCode, reason);
         listener.onClose(this, statusCode, reason);
     }
 
@@ -60,5 +82,18 @@ public class SmcEventSocket extends WebSocketAdapter {
 
     public void sendWebSocketText(String message) {
         getRemote().sendStringByFuture(message);
+    }
+
+    protected static SmcEventSubscriptionRequest deserializeMessage(String json) throws JsonProcessingException {
+        return MAPPER.readValue(json, SmcEventSubscriptionRequest.class);
+    }
+
+    @SneakyThrows
+    protected static String serializeMessage(Object response) {
+        return MAPPER.writeValueAsString(response);
+    }
+
+    public void sendWebSocket(SmcEventResponse response) {
+        sendWebSocketText(serializeMessage(response));
     }
 }

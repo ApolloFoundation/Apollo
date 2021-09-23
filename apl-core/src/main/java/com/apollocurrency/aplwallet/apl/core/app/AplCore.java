@@ -23,12 +23,12 @@ package com.apollocurrency.aplwallet.apl.core.app;
 
 import com.apollocurrency.aplwallet.apl.core.addons.AddOns;
 import com.apollocurrency.aplwallet.apl.core.chainid.BlockchainConfigUpdater;
+import com.apollocurrency.aplwallet.apl.core.db.DatabaseManager;
 import com.apollocurrency.aplwallet.apl.core.http.API;
 import com.apollocurrency.aplwallet.apl.core.http.APIProxy;
 import com.apollocurrency.aplwallet.apl.core.peer.PeersService;
 import com.apollocurrency.aplwallet.apl.core.rest.filters.ApiSplitFilter;
 import com.apollocurrency.aplwallet.apl.core.rest.service.TransportInteractionService;
-import com.apollocurrency.aplwallet.apl.core.db.DatabaseManager;
 import com.apollocurrency.aplwallet.apl.core.service.appdata.TimeService;
 import com.apollocurrency.aplwallet.apl.core.service.blockchain.AbstractBlockValidator;
 import com.apollocurrency.aplwallet.apl.core.service.blockchain.Blockchain;
@@ -201,7 +201,6 @@ public final class AplCore {
             apiServer = CDI.current().select(API.class).get();
             apiServer.start();
             aplAppStatus.durableTaskUpdate(initCoreTaskID, 5.0, "API initialization done");
-
 
             transportInteractionService = CDI.current().select(TransportInteractionService.class).get();
             transportInteractionService.start();

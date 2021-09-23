@@ -9,6 +9,6 @@ package com.apollocurrency.aplwallet.apl.smc.ws;
  */
 public abstract class SmcEventRequestHandler {
 
-    public abstract SmcEventResponse process(SmcEventRequest request);
+    public abstract SmcEventResponse process(SmcEventSubscriptionRequest request);
 
 }

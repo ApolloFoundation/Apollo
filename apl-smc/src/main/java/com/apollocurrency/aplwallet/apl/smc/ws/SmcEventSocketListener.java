@@ -12,5 +12,5 @@ public interface SmcEventSocketListener {
 
     void onOpen(SmcEventSocket socket);
 
-    void onMessage(SmcEventSocket socket, String message);
+    void onMessage(SmcEventSocket socket, SmcEventSubscriptionRequest message);
 }
