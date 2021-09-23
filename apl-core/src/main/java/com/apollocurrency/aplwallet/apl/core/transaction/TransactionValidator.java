@@ -192,7 +192,8 @@ public class TransactionValidator {
             return false;
         }
         if (sender == null) {
-            log.warn("Sender account not found, senderId={}", transaction.getSenderId());
+            log.debug("Sender account is null, senderId={}, tx={}", Long.toUnsignedString(transaction.getSenderId()),
+                transaction.getStringId());
         }
         @ParentChildSpecific(ParentMarker.MULTI_SIGNATURE)
         Credential signatureCredential;

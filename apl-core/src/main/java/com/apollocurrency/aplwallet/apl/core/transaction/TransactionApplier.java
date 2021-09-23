@@ -64,6 +64,10 @@ public class TransactionApplier {
                 return false;
             }
             transaction.fail("Double spending");
+            if (transaction.getBlock() != null) { // update accepted transaction
+                log.info("Update tx {} with state {} when applyUnconfirmed failed, height {}", transaction.getStringId(),  transaction.getErrorMessage().orElse(null), blockchain.getHeight());
+                blockchain.updateTransaction(transaction);
+            }
         }
         return true;
     }

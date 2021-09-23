@@ -12,6 +12,7 @@ import com.apollocurrency.aplwallet.apl.core.entity.state.account.LedgerEvent;
 import com.apollocurrency.aplwallet.apl.core.exception.AplTransactionExecutionException;
 import com.apollocurrency.aplwallet.apl.core.exception.AplTransactionExecutionFailureNotSupportedException;
 import com.apollocurrency.aplwallet.apl.core.exception.AplTransactionFeatureNotEnabledException;
+import com.apollocurrency.aplwallet.apl.core.model.Block;
 import com.apollocurrency.aplwallet.apl.core.model.Transaction;
 import com.apollocurrency.aplwallet.apl.core.service.blockchain.Blockchain;
 import com.apollocurrency.aplwallet.apl.core.service.state.account.AccountPublicKeyService;
@@ -151,6 +152,24 @@ class TransactionApplierTest {
             .orElseThrow(()-> new IllegalStateException("Previously not failed transaction should be failed after fallback to applyUncofirmedFailed")));
         verify(accountService, times(2)).getAccount(td.TRANSACTION_2.getSenderId());
         verify(accountService).addToUnconfirmedBalanceATM(sender, LedgerEvent.FAILED_VALIDATION_TRANSACTION_FEE, td.TRANSACTION_2.getId(), 0, -100_000_000L);
+    }
+
+    @Test
+    void applyUnconfirmed_notFailedTx_doubleSpending_failedTxsAcceptanceEnabled_atBlockAcceptance_OK() {
+        Account sender = new Account(td.TRANSACTION_2.getSenderId(), 200000000000000000L,100_000_000L, 0, 0, 0);
+        doReturn(sender).when(accountService).getAccount(td.TRANSACTION_2.getSenderId());
+        doReturn(true).when(blockchainConfig).isFailedTransactionsAcceptanceActiveAtHeight(0);
+        Block block = mock(Block.class);
+        td.TRANSACTION_2.setBlock(block); // simulate that transaction was accepted in the block
+
+        boolean applied = applier.applyUnconfirmed(td.TRANSACTION_2);
+
+        assertTrue(applied, "Transaction #2 with id " + td.TRANSACTION_2.getId() + " should be appliedUnconfirmed successfully, when failed txs acceptance is enabled");
+        assertEquals("Double spending", td.TRANSACTION_2.getErrorMessage()
+            .orElseThrow(()-> new IllegalStateException("Previously not failed transaction should be failed after fallback to applyUnconfirmedFailed")));
+        verify(accountService, times(2)).getAccount(td.TRANSACTION_2.getSenderId());
+        verify(accountService).addToUnconfirmedBalanceATM(sender, LedgerEvent.FAILED_VALIDATION_TRANSACTION_FEE, td.TRANSACTION_2.getId(), 0, -100_000_000L);
+        verify(blockchain).updateTransaction(td.TRANSACTION_2);
     }
 
     @Test
