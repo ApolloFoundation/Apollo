@@ -10,8 +10,8 @@ package com.apollocurrency.aplwallet.apl.smc.ws.expr;
  */
 public abstract class BaseTerm implements Term {
 
-    final String field;
-    final String value;
+    protected final String field;
+    protected final String value;
 
     protected BaseTerm(String field, String value) {
         this.field = field;

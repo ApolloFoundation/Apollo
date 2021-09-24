@@ -19,9 +19,9 @@ public class EqTerm extends BaseTerm {
 
     @Override
     public boolean test(Map<String, String> json) {
-        if (json.containsKey(field)) {
-            var v = json.get(field);
-            return Objects.equals(value, v);
+        if (json.containsKey(super.field)) {
+            var v = json.get(super.field);
+            return Objects.equals(super.value, v);
         }
         return false;
     }

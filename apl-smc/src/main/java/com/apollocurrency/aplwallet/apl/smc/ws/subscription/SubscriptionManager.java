@@ -2,8 +2,10 @@
  * Copyright (c) 2020-2021. Apollo Foundation.
  */
 
-package com.apollocurrency.aplwallet.apl.smc.ws;
+package com.apollocurrency.aplwallet.apl.smc.ws.subscription;
 
+import com.apollocurrency.aplwallet.apl.smc.ws.SmcEventSocket;
+import com.apollocurrency.aplwallet.apl.smc.ws.dto.SmcEventMessage;
 import com.apollocurrency.smc.contract.vm.event.SmcContractEvent;
 import com.apollocurrency.smc.data.type.Address;
 import com.google.common.collect.HashMultimap;
@@ -18,7 +20,7 @@ import static com.apollocurrency.smc.util.HexUtils.toHex;
 /**
  * @author andrew.zinchenko@gmail.com
  */
-class SubscriptionManager {
+public class SubscriptionManager {
     private static final int MAX_SIZE = 200;
     private final Multimap<Address, SmcEventSocket> multimap;
 

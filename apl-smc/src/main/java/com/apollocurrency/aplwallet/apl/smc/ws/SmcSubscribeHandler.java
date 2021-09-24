@@ -4,6 +4,9 @@
 
 package com.apollocurrency.aplwallet.apl.smc.ws;
 
+import com.apollocurrency.aplwallet.apl.smc.ws.dto.SmcEventResponse;
+import com.apollocurrency.aplwallet.apl.smc.ws.dto.SmcEventSubscriptionRequest;
+
 /**
  * @author andrew.zinchenko@gmail.com
  */

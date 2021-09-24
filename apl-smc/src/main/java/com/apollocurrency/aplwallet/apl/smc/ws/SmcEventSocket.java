@@ -5,6 +5,8 @@
 package com.apollocurrency.aplwallet.apl.smc.ws;
 
 import com.apollocurrency.aplwallet.apl.smc.model.AplAddress;
+import com.apollocurrency.aplwallet.apl.smc.ws.dto.SmcEventResponse;
+import com.apollocurrency.aplwallet.apl.smc.ws.dto.SmcEventSubscriptionRequest;
 import com.apollocurrency.smc.data.type.Address;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.MapperFeature;
@@ -57,8 +59,12 @@ public class SmcEventSocket extends WebSocketAdapter {
         } else {
             try {
                 var request = deserializeMessage(message);
-                listener.onMessage(this, request);
-
+                if (request.getEvents().isEmpty()) {
+                    sendWebSocketText(serializeMessage(SmcErrorReceipt.error(request.getRequestId(),
+                        SmcEventServerErrors.INVALID_REQUEST_ARGUMENTS)));
+                } else {
+                    listener.onMessage(this, request);
+                }
             } catch (JsonProcessingException e) {
                 sendWebSocketText(INVALID_REQUEST_FORMAT_RESPONSE);
             }

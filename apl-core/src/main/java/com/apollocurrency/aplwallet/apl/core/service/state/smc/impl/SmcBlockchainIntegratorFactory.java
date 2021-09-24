@@ -328,6 +328,7 @@ public class SmcBlockchainIntegratorFactory {
                 block.getCumulativeDifficulty(),
                 BigInteger.ZERO,//TODO: block fuel limit - is not implemented yet
                 block.getHeight(),
+
                 (int) (Convert2.fromEpochTime(block.getTimestamp()) / 1000)
             );
         }

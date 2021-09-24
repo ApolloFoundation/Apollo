@@ -8,5 +8,6 @@ package com.apollocurrency.aplwallet.apl.smc.events;
  * @author andrew.zinchenko@gmail.com
  */
 public enum SmcEventType {
-    EMIT_EVENT
+    EMIT_EVENT,
+    TEST_EVENT
 }

@@ -9,8 +9,8 @@ package com.apollocurrency.aplwallet.apl.smc.ws;
  */
 public enum SmcEventServerErrors implements ErrorInfo {
     UNSUPPORTED_OPERATION(1, "Unsupported operation "),
-    WRONG_REQUEST_STRUCTURE(2, "Wrong request structure."),
-    INVALID_REQUEST_ARGUMENTS(3, "Invalid request arguments."),
+    WRONG_REQUEST_STRUCTURE(2, "Wrong request structure."),//can't deserialize request
+    INVALID_REQUEST_ARGUMENTS(3, "Invalid request arguments."),//inconsistency parameters
     ;
 
     private final int errorCode;

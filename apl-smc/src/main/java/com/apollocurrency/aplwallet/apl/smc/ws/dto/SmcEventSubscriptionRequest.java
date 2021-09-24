@@ -2,7 +2,7 @@
  * Copyright (c) 2020-2021. Apollo Foundation.
  */
 
-package com.apollocurrency.aplwallet.apl.smc.ws;
+package com.apollocurrency.aplwallet.apl.smc.ws.dto;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
@@ -29,7 +29,8 @@ import java.util.List;
 public class SmcEventSubscriptionRequest {
     public enum Operation {
         SUBSCRIBE,
-        UNSUBSCRIBE;
+        UNSUBSCRIBE,
+        SUBSCRIBE_TEST;
     }
 
     private Operation operation;
@@ -48,6 +49,7 @@ public class SmcEventSubscriptionRequest {
     @ToString
     @EqualsAndHashCode
     public static class Event {
+        private String subscriptionId;//the subscription Identifier
         private String name;
         private String signature;
         private String fromBlock;
@@ -55,7 +57,8 @@ public class SmcEventSubscriptionRequest {
 
         @JsonCreator
         @Builder
-        public Event(@JsonProperty("name") String name, @JsonProperty("signature") String signature, @JsonProperty("fromBlock") String fromBlock, @JsonProperty("filter") List<Filter> filter) {
+        public Event(@JsonProperty("subscriptionId") String subscriptionId, @JsonProperty("name") String name, @JsonProperty("signature") String signature, @JsonProperty("fromBlock") String fromBlock, @JsonProperty("filter") List<Filter> filter) {
+            this.subscriptionId = subscriptionId;
             this.name = name;
             this.signature = signature;
             this.fromBlock = fromBlock;

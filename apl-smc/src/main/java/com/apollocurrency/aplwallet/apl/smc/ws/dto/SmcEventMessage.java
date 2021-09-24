@@ -2,7 +2,7 @@
  * Copyright (c) 2020-2021. Apollo Foundation.
  */
 
-package com.apollocurrency.aplwallet.apl.smc.ws;
+package com.apollocurrency.aplwallet.apl.smc.ws.dto;
 
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonInclude;
@@ -23,6 +23,7 @@ import lombok.ToString;
 @EqualsAndHashCode(callSuper = true)
 public class SmcEventMessage extends SmcEventResponse {
     private String address;//contract address
+    private String subscriptionId;//the subscription Identifier
     private String data;
     private String name;
     private String signature;
@@ -32,8 +33,10 @@ public class SmcEventMessage extends SmcEventResponse {
     private long blockNumber;// - ?
 
     @Builder
-    public SmcEventMessage(Integer errorCode, String errorDescription, String data, String name, String signature, int transactionIndex, String transaction, String blockHash, long blockNumber, String address) {
+    public SmcEventMessage(Integer errorCode, String errorDescription, String address, String subscriptionId, String data, String name, String signature, int transactionIndex, String transaction, String blockHash, long blockNumber) {
         super(errorCode, errorDescription, Type.EVENT);
+        this.address = address;
+        this.subscriptionId = subscriptionId;
         this.data = data;
         this.name = name;
         this.signature = signature;
@@ -41,6 +44,5 @@ public class SmcEventMessage extends SmcEventResponse {
         this.transaction = transaction;
         this.blockHash = blockHash;
         this.blockNumber = blockNumber;
-        this.address = address;
     }
 }

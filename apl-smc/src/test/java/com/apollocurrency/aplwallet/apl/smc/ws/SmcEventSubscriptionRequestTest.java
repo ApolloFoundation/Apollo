@@ -4,6 +4,7 @@
 
 package com.apollocurrency.aplwallet.apl.smc.ws;
 
+import com.apollocurrency.aplwallet.apl.smc.ws.dto.SmcEventSubscriptionRequest;
 import lombok.SneakyThrows;
 import org.junit.jupiter.api.Test;
 
@@ -12,7 +13,7 @@ import java.util.UUID;
 
 import static com.apollocurrency.aplwallet.apl.smc.ws.SmcEventSocket.deserializeMessage;
 import static com.apollocurrency.aplwallet.apl.smc.ws.SmcEventSocket.serializeMessage;
-import static com.apollocurrency.aplwallet.apl.smc.ws.SmcEventSubscriptionRequest.Operation.SUBSCRIBE;
+import static com.apollocurrency.aplwallet.apl.smc.ws.dto.SmcEventSubscriptionRequest.Operation.SUBSCRIBE;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 

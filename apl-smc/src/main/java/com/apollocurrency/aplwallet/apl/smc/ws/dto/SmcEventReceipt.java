@@ -2,7 +2,7 @@
  * Copyright (c) 2020-2021. Apollo Foundation.
  */
 
-package com.apollocurrency.aplwallet.apl.smc.ws;
+package com.apollocurrency.aplwallet.apl.smc.ws.dto;
 
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonInclude;
@@ -24,7 +24,7 @@ import lombok.ToString;
 public class SmcEventReceipt extends SmcEventResponse {
     public static final SmcEventReceipt OK = new SmcEventReceipt(Status.OK);
 
-    enum Status {
+    public enum Status {
         OK,
         ERROR
     }
