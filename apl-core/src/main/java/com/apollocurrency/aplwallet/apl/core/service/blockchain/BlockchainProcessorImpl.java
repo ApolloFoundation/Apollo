@@ -819,6 +819,9 @@ public class BlockchainProcessorImpl implements BlockchainProcessor {
         while (generationFailCounter-- > 0) { // try at most 2 times
             Block block = new BlockImpl(blockVersion, blockTimestamp, previousBlock.getId(), totals.getTotalAmount(), totals.getTotalFee(), totals.getPayloadLength(),
                 payloadHash, publicKey, generationSignature, previousBlockHash, timeout, blockTransactions, keySeed, baseTarget);
+            log.info("Generation attempt #{}, Try generate block with bytes {}, id {} at height {}, prevBlock {}, txErrors: {}", (Math.abs(2 - generationFailCounter)), Convert.toHexString(block.getBytes()),
+                block.getStringId(), blockchain.getHeight(), blockchain.getLastBlock().getStringId(),
+                block.getTxErrorHashes().stream().map(e-> Long.toUnsignedString(e.getId()) + ":" + e.getError()).collect(Collectors.joining(",")));
             block.getTransactions().forEach(Transaction::resetFail); // reset failed status to obtain new
             try {
                 pushBlock(block);
