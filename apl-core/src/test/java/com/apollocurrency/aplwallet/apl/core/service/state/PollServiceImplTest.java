@@ -297,7 +297,6 @@ class PollServiceImplTest {
 
         //THEN
         verify(pollTable).addPoll(transaction, attachment, timestamp, height);
-//        verify(fullTextSearchUpdater).putFullTextOperationData(any(FullTextOperationData.class));
         verify(fullTextOperationDataEvent).select(new AnnotationLiteral<TrimEvent>() {});
     }
 

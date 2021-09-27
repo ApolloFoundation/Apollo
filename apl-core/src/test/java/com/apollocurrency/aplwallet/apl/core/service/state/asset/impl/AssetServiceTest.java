@@ -181,7 +181,6 @@ class AssetServiceTest {
 
         //THEN
         verify(assetTable).insert(any(Asset.class));
-//        verify(fullTextSearchUpdater).putFullTextOperationData(any(FullTextOperationData.class));
         verify(fullTextOperationDataEvent).select(new AnnotationLiteral<TrimEvent>() {});
     }
 
@@ -206,7 +205,6 @@ class AssetServiceTest {
         verify(assetTable).get(any(DbKey.class));
         verify(assetTable).insert(any(Asset.class));
         verify(assetDeleteService).addAssetDelete(tr, td.ASSET_0.getId(), 10);
-//        verify(fullTextSearchUpdater).putFullTextOperationData(any(FullTextOperationData.class));
         verify(fullTextOperationDataEvent).select(new AnnotationLiteral<TrimEvent>() {});
     }
 }

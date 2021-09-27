@@ -177,7 +177,6 @@ class CurrencyServiceTest {
 
         //THEN
         verify(currencyTable).insert(any(Currency.class));
-//        verify(fullTextSearchUpdater).putFullTextOperationData(any(FullTextOperationData.class));
         verify(fullTextOperationDataEvent).select(new AnnotationLiteral<TrimEvent>() {});
     }
 
@@ -360,7 +359,6 @@ class CurrencyServiceTest {
         verify(accountCurrencyService).addToUnconfirmedCurrencyUnits(any(Account.class), any(LedgerEvent.class), anyLong(), anyLong(), anyLong());
         verify(accountCurrencyService).addToCurrencyUnits(any(Account.class), any(LedgerEvent.class), anyLong(), anyLong(), anyLong());
         verify(currencyTable).deleteAtHeight(any(Currency.class), anyInt());
-//        verify(fullTextSearchUpdater).putFullTextOperationData(any(FullTextOperationData.class));
         verify(fullTextOperationDataEvent).select(new AnnotationLiteral<TrimEvent>() {});
     }
 
