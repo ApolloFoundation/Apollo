@@ -7,6 +7,7 @@ package com.apollocurrency.aplwallet.apl.util.db;
 import com.apollocurrency.aplwallet.apl.util.injectable.DbProperties;
 import com.apollocurrency.aplwallet.apl.util.injectable.PropertiesHolder;
 import lombok.Data;
+import lombok.Getter;
 import net.sf.log4jdbc.ConnectionSpy;
 import org.slf4j.Logger;
 
@@ -246,7 +247,7 @@ public class TransactionalDataSource extends DataSourceWrapper implements Transa
     }
 
     /**
-     * Used by FullTestSearch triggers
+     * Used by FullTextSearch triggers
      *
      * @param callback will be called later
      */
@@ -280,6 +281,7 @@ public class TransactionalDataSource extends DataSourceWrapper implements Transa
     }
     @Data
     public static class StartedConnection {
+        @Getter
         private final Connection connection;
         private final boolean alreadyStarted;
     }

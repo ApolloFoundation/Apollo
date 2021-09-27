@@ -39,8 +39,4 @@ public final class AccountInfo extends VersionedDeletableEntity {
         setDbKey(dbKey);
     }
 
-    @Override
-    public boolean isSearchable() {
-        return true;
-    }
 }

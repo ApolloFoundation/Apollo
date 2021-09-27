@@ -77,8 +77,4 @@ public final class Poll extends AbstractPoll {
         this.timestamp = rs.getInt("timestamp");
     }
 
-    @Override
-    public boolean isSearchable() {
-        return true;
-    }
 }

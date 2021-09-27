@@ -46,7 +46,6 @@ public class CrowdFundingObserver {
     private final BlockChainInfoService blockChainInfoService;
     private final CurrencySupplyTable currencySupplyTable;
     private final FullTextSearchUpdater fullTextSearchUpdater;
-    private final Event<FullTextOperationData> fullTextOperationDataEvent;
 
     @Inject
     public CrowdFundingObserver(AccountService accountService,
@@ -56,8 +55,7 @@ public class CrowdFundingObserver {
                                 CurrencyFounderService currencyFounderService,
                                 BlockChainInfoService blockChainInfoService,
                                 CurrencySupplyTable currencySupplyTable,
-                                FullTextSearchUpdater fullTextSearchUpdater,
-                                Event<FullTextOperationData> fullTextOperationDataEvent
+                                FullTextSearchUpdater fullTextSearchUpdater
     ) {
         this.accountService = accountService;
         this.accountCurrencyService = accountCurrencyService;
@@ -67,7 +65,6 @@ public class CrowdFundingObserver {
         this.blockChainInfoService = blockChainInfoService;
         this.currencySupplyTable = currencySupplyTable;
         this.fullTextSearchUpdater = fullTextSearchUpdater;
-        this.fullTextOperationDataEvent = fullTextOperationDataEvent;
     }
 
     public void onBlockApplied(@Observes @BlockEvent(BlockEventType.AFTER_BLOCK_APPLY) Block block) {
@@ -150,8 +147,7 @@ public class CrowdFundingObserver {
         operationData.addColumnData(currency.getName()).addColumnData(currency.getDescription());
         // send data into Lucene index component
         log.debug("Put lucene index update data = {}", operationData);
+        // call to update FullTextSearch index for record deletion (as we are in separate event loop thread)
         fullTextSearchUpdater.putFullTextOperationData(operationData);
-        // fire event to update FullTestSearch index for record deletion
-//        this.fullTextOperationDataEvent.select(new AnnotationLiteral<TrimEvent>() {}).fireAsync(operationData);
     }
 }

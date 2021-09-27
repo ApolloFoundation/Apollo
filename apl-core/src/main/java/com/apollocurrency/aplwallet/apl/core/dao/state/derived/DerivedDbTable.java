@@ -109,24 +109,11 @@ public abstract class DerivedDbTable<T extends DerivedEntity> implements Derived
         int height, int deletedRecordsCount,
         PreparedStatement pstmtDelete,
         PreparedStatement pstmtSelectDeletedIds) throws SQLException {
-        if (this.isSearchable() /* instanceof SearchableTableInterface */ ) {
+        if (this.isSearchable()) {
             pstmtSelectDeletedIds.setInt(1, height);
             // do select DB_IDs first
             try (ResultSet deletedIds = pstmtSelectDeletedIds.executeQuery())  {
-                FullTextOperationData operationData = new FullTextOperationData(
-                    DEFAULT_SCHEMA, this.table, Thread.currentThread().getName());
-                operationData.setOperationType(FullTextOperationData.OperationType.DELETE);
-                // take one DB_ID and fire Event to FTS with data
-                while (deletedIds.next()) {
-                    Long deleted_db_id = deletedIds.getLong("DB_ID");
-                    operationData.setDbIdValue(deleted_db_id);
-                    // fire event to update FullTestSearch index for record deletion
-                    fullTextOperationDataEvent.select(new AnnotationLiteral<TrimEvent>() {})
-                        .fireAsync(operationData);
-                    ++deletedRecordsCount;
-                    log.trace("Update lucene index for '{}' at height = {}, deletedRecordsCount = {} by data :\n{}",
-                        this.table, height, deletedRecordsCount, operationData);
-                }
+                deletedRecordsCount = fireEventsForDeletedIds(height, deletedRecordsCount, deletedIds);
             } catch (SQLException e) {
                 log.error("Error on selecting DB_ID to be deleted in FTS", e);
                 throw new RuntimeException(e.toString(), e);
@@ -143,6 +130,24 @@ public abstract class DerivedDbTable<T extends DerivedEntity> implements Derived
             deletedRecordsCount = pstmtDelete.executeUpdate();
             log.trace("Deleted '{}' at height = {}, deletedCount = {}",
                 this.table, height, deletedRecordsCount);
+        }
+        return deletedRecordsCount;
+    }
+
+    private int fireEventsForDeletedIds(int height, int deletedRecordsCount, ResultSet deletedIds) throws SQLException {
+        FullTextOperationData operationData = new FullTextOperationData(
+            DEFAULT_SCHEMA, this.table, Thread.currentThread().getName());
+        operationData.setOperationType(FullTextOperationData.OperationType.DELETE);
+        // take one DB_ID and fire Event to FTS with data
+        while (deletedIds.next()) {
+            Long deleted_db_id = deletedIds.getLong("DB_ID");
+            operationData.setDbIdValue(deleted_db_id);
+            // fire event to update FullTextSearch index for record deletion
+            fullTextOperationDataEvent.select(new AnnotationLiteral<TrimEvent>() {})
+                .fireAsync(operationData);
+            ++deletedRecordsCount;
+            log.trace("Update lucene index for '{}' at height = {}, deletedRecordsCount = {} by data :\n{}",
+                this.table, height, deletedRecordsCount, operationData);
         }
         return deletedRecordsCount;
     }
@@ -299,7 +304,4 @@ public abstract class DerivedDbTable<T extends DerivedEntity> implements Derived
         return !StringUtils.isBlank(this.fullTextSearchColumns);
     }
 
-    public Event<FullTextOperationData> getFullTextOperationDataEvent() {
-        return fullTextOperationDataEvent;
-    }
 }

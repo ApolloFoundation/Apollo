@@ -604,15 +604,15 @@ public class UtilsController {
         }
     )
     @RolesAllowed("admin")
-    public Response reindexFullTestSearch() {
+    public Response reindexFullTextSearch() {
         ResponseBuilder response = ResponseBuilder.startTiming();
-        log.debug("Started reindexFullTestSearch");
+        log.debug("Started reindexFullTextSearch");
         TransactionalDataSource dataSource = databaseManager.getDataSource();
         DbTransactionHelper.executeInTransaction(dataSource, () -> {
             try (Connection con = dataSource.getConnection()) {
                 // recreate Lucene search indexes
                 this.fullTextSearchService.reindexAll(con);
-                log.debug("reindexFullTestSearch result : OK");
+                log.debug("reindexFullTextSearch result : OK");
             } catch (Exception e) {
                 String error = "Error on FTS Reindexing";
                 log.error(error, e);

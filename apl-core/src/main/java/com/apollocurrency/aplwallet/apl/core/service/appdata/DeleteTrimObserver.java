@@ -43,7 +43,7 @@ import static com.apollocurrency.aplwallet.apl.core.service.fulltext.FullTextCon
 import static com.apollocurrency.aplwallet.apl.util.Constants.LONG_TIME_FIVE_SECONDS;
 
 @Slf4j
-@Singleton
+@Deprecated
 public class DeleteTrimObserver {
 
     private final Object lock = new Object();

@@ -148,8 +148,4 @@ public class Currency extends VersionedDeletableEntity {
             '}';
     }
 
-    @Override
-    public boolean isSearchable() {
-        return true;
-    }
 }

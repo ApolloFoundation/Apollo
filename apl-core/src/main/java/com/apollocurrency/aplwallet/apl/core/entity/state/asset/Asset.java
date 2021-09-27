@@ -67,8 +67,4 @@ public class Asset extends VersionedDerivedEntity {
         this.decimals = rs.getByte("decimals");
     }
 
-    @Override
-    public boolean isSearchable() {
-        return true;
-    }
 }

@@ -13,6 +13,7 @@ import com.apollocurrency.aplwallet.api.dto.utils.RsConvertDto;
 import com.apollocurrency.aplwallet.apl.core.chainid.BlockchainConfig;
 import com.apollocurrency.aplwallet.apl.core.db.DatabaseManager;
 import com.apollocurrency.aplwallet.apl.core.service.fulltext.FullTextSearchService;
+import com.apollocurrency.aplwallet.apl.util.db.TransactionalDataSource;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.jboss.resteasy.mock.MockDispatcherFactory;
@@ -27,13 +28,17 @@ import org.mockito.Mockito;
 import javax.ws.rs.core.MediaType;
 import java.io.IOException;
 import java.net.URISyntaxException;
+import java.sql.Connection;
+import java.sql.SQLException;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.mockito.Mockito.doNothing;
 import static org.mockito.Mockito.doReturn;
 import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.when;
 
 class UtilsControllerTest {
     private static ObjectMapper mapper = new ObjectMapper();
@@ -44,15 +49,18 @@ class UtilsControllerTest {
     private static String longConvertUri = "/utils/convert/long";
     private static String rcConvertUri = "/utils/convert/rs";
     private static String hashUri = "/utils/hash";
+    private static String reindexFtsUri = "/utils/fts/reindex";
     @Mock
     private BlockchainConfig blockchainConfig = Mockito.mock(BlockchainConfig.class);
     private Dispatcher dispatcher;
+    DatabaseManager databaseManager = mock(DatabaseManager.class);
+    FullTextSearchService fullTextSearchService = mock(FullTextSearchService.class);
 
     @BeforeEach
     void setup() {
         dispatcher = MockDispatcherFactory.createDispatcher();
         UtilsController controller = new UtilsController(blockchainConfig,
-            mock(DatabaseManager.class), mock(FullTextSearchService.class));
+            databaseManager, fullTextSearchService);
         dispatcher.getRegistry().addSingletonResource(controller);
         doReturn("APL").when(blockchainConfig).getAccountPrefix();
     }
@@ -563,6 +571,27 @@ class UtilsControllerTest {
         Error error = mapper.readValue(respondJson, new TypeReference<>() {
         });
         assertNotNull(error.getErrorDescription());
+    }
+
+    @Test
+    void reindexFts_SUCCESS() throws URISyntaxException, SQLException {
+        final TransactionalDataSource dataSource = mock(TransactionalDataSource.class);
+        when(databaseManager.getDataSource()).thenReturn(dataSource);
+        when(dataSource.isInTransaction()).thenReturn(true);
+        TransactionalDataSource.StartedConnection connection = mock(TransactionalDataSource.StartedConnection.class);
+        Connection internalConnection = mock(Connection.class);
+        when(connection.getConnection()).thenReturn(internalConnection);
+        when(dataSource.getConnection()).thenReturn(internalConnection);
+        when(dataSource.beginTransactionIfNotStarted()).thenReturn(connection);
+        when(databaseManager.getDataSource()).thenReturn(dataSource);
+        doNothing().when(fullTextSearchService).reindexAll(internalConnection);
+
+        MockHttpRequest request = MockHttpRequest.post(reindexFtsUri)
+            .contentType(MediaType.APPLICATION_FORM_URLENCODED_TYPE);
+        MockHttpResponse response = new MockHttpResponse();
+        dispatcher.invoke(request, response);
+
+        assertEquals(200, response.getStatus());
     }
 
 }

@@ -160,8 +160,4 @@ public class DGSGoods extends VersionedDerivedEntity {
             '}';
     }
 
-    @Override
-    public boolean isSearchable() {
-        return true;
-    }
 }

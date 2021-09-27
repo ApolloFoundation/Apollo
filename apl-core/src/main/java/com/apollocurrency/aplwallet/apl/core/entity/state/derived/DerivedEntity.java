@@ -91,8 +91,4 @@ public abstract class DerivedEntity implements Comparable<DerivedEntity>, Clonea
         }
     }
 
-    public boolean isSearchable() {
-        return false;
-    }
-
 }
