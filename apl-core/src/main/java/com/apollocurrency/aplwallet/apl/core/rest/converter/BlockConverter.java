@@ -84,7 +84,7 @@ public class BlockConverter implements Converter<Block, BlockDTO> {
             List<TransactionDTO> transactionDTOList = model.getTransactions().stream().map(transactionConverter).collect(Collectors.toList());
             o.setNumberOfTransactions((long) model.getTransactions().size());
             // we cant use here original block.totalAmountATM because of private transactions
-            o.setTotalAmountATM(String.valueOf(transactionDTOList.stream().filter(e-> e.getErrorMessage() != null).map(TransactionDTO::getAmountATM).mapToLong(Long::parseLong).sum()));
+            o.setTotalAmountATM(String.valueOf(transactionDTOList.stream().filter(e-> e.getErrorMessage() == null).map(TransactionDTO::getAmountATM).mapToLong(Long::parseLong).sum()));
             if (this.isAddTransactions) {
                 o.setTransactions(transactionDTOList);
             }
