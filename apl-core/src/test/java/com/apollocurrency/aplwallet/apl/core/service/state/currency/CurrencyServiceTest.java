@@ -155,7 +155,7 @@ class CurrencyServiceTest {
         service = new CurrencyServiceImpl(currencySupplyTable, currencyTable, currencyMintTable, monetaryCurrencyMintingService, blockChainInfoService,
             accountService, accountCurrencyService, currencyExchangeOfferFacade, currencyFounderService,
             exchangeService, currencyTransferService, shufflingService, blockchainConfig,
-            transactionValidationHelper, fullTextSearchUpdater, fullTextOperationDataEvent, fullTextSearchService);
+            transactionValidationHelper, fullTextOperationDataEvent, fullTextSearchService);
     }
 
     @Test

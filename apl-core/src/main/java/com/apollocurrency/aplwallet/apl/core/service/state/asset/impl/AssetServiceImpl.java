@@ -12,7 +12,6 @@ import com.apollocurrency.aplwallet.apl.core.dao.state.keyfactory.DbKey;
 import com.apollocurrency.aplwallet.apl.core.entity.state.asset.Asset;
 import com.apollocurrency.aplwallet.apl.core.service.fulltext.FullTextOperationData;
 import com.apollocurrency.aplwallet.apl.core.service.fulltext.FullTextSearchService;
-import com.apollocurrency.aplwallet.apl.core.service.fulltext.FullTextSearchUpdater;
 import com.apollocurrency.aplwallet.apl.core.service.state.BlockChainInfoService;
 import com.apollocurrency.aplwallet.apl.core.service.state.asset.AssetDeleteService;
 import com.apollocurrency.aplwallet.apl.core.service.state.asset.AssetService;
@@ -47,7 +46,6 @@ public class AssetServiceImpl implements AssetService {
     private final BlockChainInfoService blockChainInfoService;
     private final AssetDeleteService assetDeleteService;
     private IteratorToStreamConverter<Asset> assetIteratorToStreamConverter;
-    private final FullTextSearchUpdater fullTextSearchUpdater;
     private final Event<FullTextOperationData> fullTextOperationDataEvent;
     private final FullTextSearchService fullTextSearchService;
 
@@ -55,7 +53,6 @@ public class AssetServiceImpl implements AssetService {
     public AssetServiceImpl(AssetTable assetTable,
                             BlockChainInfoService blockChainInfoService,
                             AssetDeleteService assetDeleteService,
-                            FullTextSearchUpdater fullTextSearchUpdater,
                             Event<FullTextOperationData> fullTextOperationDataEvent,
                             FullTextSearchService fullTextSearchService
     ) {
@@ -63,7 +60,6 @@ public class AssetServiceImpl implements AssetService {
         this.blockChainInfoService = blockChainInfoService;
         this.assetDeleteService = assetDeleteService;
         this.assetIteratorToStreamConverter = new IteratorToStreamConverter<>();
-        this.fullTextSearchUpdater = fullTextSearchUpdater;
         this.fullTextOperationDataEvent = fullTextOperationDataEvent;
         this.fullTextSearchService = fullTextSearchService;
     }
@@ -75,7 +71,6 @@ public class AssetServiceImpl implements AssetService {
                             BlockChainInfoService blockChainInfoService,
                             AssetDeleteService assetDeleteService,
                             IteratorToStreamConverter<Asset> assetIteratorToStreamConverter, // for unit tests mostly
-                            FullTextSearchUpdater fullTextSearchUpdater,
                             Event<FullTextOperationData> fullTextOperationDataEvent,
                             FullTextSearchService fullTextSearchService
     ) {
@@ -87,7 +82,6 @@ public class AssetServiceImpl implements AssetService {
         } else {
             this.assetIteratorToStreamConverter = new IteratorToStreamConverter<>();
         }
-        this.fullTextSearchUpdater = fullTextSearchUpdater;
         this.fullTextOperationDataEvent = fullTextOperationDataEvent;
         this.fullTextSearchService = fullTextSearchService;
     }
@@ -253,7 +247,6 @@ public class AssetServiceImpl implements AssetService {
         operationData.addColumnData(asset.getName()).addColumnData(asset.getDescription());
         // send data into Lucene index component
         log.trace("Put lucene index update data = {}", operationData);
-//        fullTextSearchUpdater.putFullTextOperationData(operationData);
         this.fullTextOperationDataEvent.select(new AnnotationLiteral<TrimEvent>() {}).fireAsync(operationData);
     }
 

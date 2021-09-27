@@ -8,7 +8,6 @@ import com.apollocurrency.aplwallet.apl.core.app.observer.events.TrimEvent;
 import com.apollocurrency.aplwallet.apl.core.converter.rest.IteratorToStreamConverter;
 import com.apollocurrency.aplwallet.apl.core.dao.state.asset.AssetTable;
 import com.apollocurrency.aplwallet.apl.core.dao.state.keyfactory.DbKey;
-import com.apollocurrency.aplwallet.apl.core.service.fulltext.FullTextSearchUpdater;
 import com.apollocurrency.aplwallet.apl.util.db.DbClause;
 import com.apollocurrency.aplwallet.apl.util.db.DbIterator;
 import com.apollocurrency.aplwallet.apl.core.model.Transaction;
@@ -60,8 +59,6 @@ class AssetServiceTest {
     @Mock
     private IteratorToStreamConverter<Asset> assetIteratorToStreamConverter;
     @Mock
-    FullTextSearchUpdater fullTextSearchUpdater;
-    @Mock
     private Event<FullTextOperationData> fullTextOperationDataEvent;
     @Mock
     private FullTextSearchService fullTextSearchService;
@@ -70,7 +67,7 @@ class AssetServiceTest {
     void setUp() {
         td = new AssetTestData();
         service = new AssetServiceImpl(assetTable, blockChainInfoService, assetDeleteService,
-            assetIteratorToStreamConverter, fullTextSearchUpdater, fullTextOperationDataEvent, fullTextSearchService);
+            assetIteratorToStreamConverter, fullTextOperationDataEvent, fullTextSearchService);
     }
 
     @Test

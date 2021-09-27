@@ -54,7 +54,6 @@ public class PollServiceImpl implements PollService {
     private final PollOptionResultService pollOptionResultService;
     private final VoteTable voteTable;
     private final BlockchainImpl blockchain;
-    private final FullTextSearchUpdater fullTextSearchUpdater;
     private final Event<FullTextOperationData> fullTextOperationDataEvent;
     private final FullTextSearchService fullTextSearchService;
 
@@ -75,7 +74,6 @@ public class PollServiceImpl implements PollService {
         final PollOptionResultService pollOptionResultService,
         final VoteTable voteTable,
         BlockchainImpl blockchain,
-        FullTextSearchUpdater fullTextSearchUpdater,
         Event<FullTextOperationData> fullTextOperationDataEvent,
         FullTextSearchService fullTextSearchService
     ) {
@@ -86,7 +84,6 @@ public class PollServiceImpl implements PollService {
         this.pollOptionResultService = pollOptionResultService;
         this.voteTable = voteTable;
         this.blockchain = blockchain;
-        this.fullTextSearchUpdater = fullTextSearchUpdater;
         this.fullTextOperationDataEvent = fullTextOperationDataEvent;
         this.fullTextSearchService = fullTextSearchService;
     }
@@ -110,7 +107,6 @@ public class PollServiceImpl implements PollService {
         this.pollOptionResultService = pollOptionResultService;
         this.voteTable = voteTable;
         this.blockchain = blockchain;
-        this.fullTextSearchUpdater = fullTextSearchUpdater;
         this.fullTextOperationDataEvent = fullTextOperationDataEvent;
         this.fullTextSearchService = fullTextSearchService;
     }
@@ -301,7 +297,6 @@ public class PollServiceImpl implements PollService {
         operationData.addColumnData(poll.getName()).addColumnData(poll.getDescription());
         // send data into Lucene index component
         log.trace("Put lucene index update data = {}", operationData);
-//        fullTextSearchUpdater.putFullTextOperationData(operationData);
         this.fullTextOperationDataEvent.select(new AnnotationLiteral<TrimEvent>() {}).fireAsync(operationData);
     }
 

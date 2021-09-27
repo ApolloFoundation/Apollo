@@ -23,7 +23,6 @@ import com.apollocurrency.aplwallet.apl.core.service.appdata.TimeService;
 import com.apollocurrency.aplwallet.apl.core.service.blockchain.Blockchain;
 import com.apollocurrency.aplwallet.apl.core.service.fulltext.FullTextOperationData;
 import com.apollocurrency.aplwallet.apl.core.service.fulltext.FullTextSearchService;
-import com.apollocurrency.aplwallet.apl.core.service.fulltext.FullTextSearchUpdater;
 import com.apollocurrency.aplwallet.apl.core.transaction.messages.TaggedDataExtendAttachment;
 import com.apollocurrency.aplwallet.apl.core.transaction.messages.TaggedDataUploadAttachment;
 import com.apollocurrency.aplwallet.apl.util.annotation.DatabaseSpecificDml;
@@ -65,7 +64,6 @@ public class TaggedDataServiceImpl implements TaggedDataService {
     private final TaggedDataTimestampDao taggedDataTimestampDao;
     private final TaggedDataExtendDao taggedDataExtendDao;
     private final TimeService timeService;
-    private final FullTextSearchUpdater fullTextSearchUpdater;
     private final Event<FullTextOperationData> fullTextOperationDataEvent;
     private final FullTextSearchService fullTextSearchService;
 
@@ -77,7 +75,6 @@ public class TaggedDataServiceImpl implements TaggedDataService {
                                  TaggedDataTimestampDao taggedDataTimestampDao,
                                  TaggedDataExtendDao taggedDataExtendDao,
                                  TimeService timeService,
-                                 FullTextSearchUpdater fullTextSearchUpdater,
                                  Event<FullTextOperationData> fullTextOperationDataEvent,
                                  FullTextSearchService fullTextSearchService) {
         this.taggedDataTable = taggedDataTable;
@@ -87,7 +84,6 @@ public class TaggedDataServiceImpl implements TaggedDataService {
         this.blockchain = blockchain;
         this.taggedDataTimestampDao = taggedDataTimestampDao;
         this.taggedDataExtendDao = taggedDataExtendDao;
-        this.fullTextSearchUpdater = fullTextSearchUpdater;
         this.fullTextOperationDataEvent = fullTextOperationDataEvent;
         this.fullTextSearchService = fullTextSearchService;
     }
@@ -331,7 +327,6 @@ public class TaggedDataServiceImpl implements TaggedDataService {
         operationData.addColumnData(taggedData.getName()).addColumnData(taggedData.getDescription()).addColumnData(taggedData.getTags());
         // send data into Lucene index component
         log.trace("Put lucene index update data = {}", operationData);
-//        fullTextSearchUpdater.putFullTextOperationData(operationData);
         this.fullTextOperationDataEvent.select(new AnnotationLiteral<TrimEvent>() {}).fireAsync(operationData);
     }
 

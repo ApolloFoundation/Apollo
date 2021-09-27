@@ -5,7 +5,6 @@
 package com.apollocurrency.aplwallet.apl.core.service.state.account.impl;
 
 import com.apollocurrency.aplwallet.apl.core.app.observer.events.TrimEvent;
-import com.apollocurrency.aplwallet.apl.core.service.fulltext.FullTextSearchUpdater;
 import com.apollocurrency.aplwallet.apl.util.db.TransactionalDataSource;
 import com.apollocurrency.aplwallet.apl.core.dao.state.account.AccountInfoTable;
 import com.apollocurrency.aplwallet.apl.core.dao.state.account.AccountTableInterface;
@@ -47,19 +46,16 @@ public class AccountInfoServiceImpl implements AccountInfoService {
 
     private final Blockchain blockchain;
     private final AccountInfoTable accountInfoTable;
-    private final FullTextSearchUpdater fullTextSearchUpdater;
     private final Event<FullTextOperationData> fullTextOperationDataEvent;
     private final FullTextSearchService fullTextSearchService;
 
     @Inject
     public AccountInfoServiceImpl(Blockchain blockchain,
                                   AccountInfoTable accountInfoTable,
-                                  FullTextSearchUpdater fullTextSearchUpdater,
                                   Event<FullTextOperationData> fullTextOperationDataEvent,
                                   FullTextSearchService fullTextSearchService) {
         this.blockchain = blockchain;
         this.accountInfoTable = accountInfoTable;
-        this.fullTextSearchUpdater = fullTextSearchUpdater;
         this.fullTextOperationDataEvent = fullTextOperationDataEvent;
         this.fullTextSearchService = fullTextSearchService;
     }
@@ -86,7 +82,6 @@ public class AccountInfoServiceImpl implements AccountInfoService {
         }
         // send data into Lucene index component
         log.trace("Put lucene index update data = {}", operationData);
-//        fullTextSearchUpdater.putFullTextOperationData(operationData);
         this.fullTextOperationDataEvent.select(new AnnotationLiteral<TrimEvent>() {}).fireAsync(operationData);
     }
 

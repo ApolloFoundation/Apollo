@@ -9,7 +9,6 @@ import com.apollocurrency.aplwallet.apl.core.converter.rest.IteratorToStreamConv
 import com.apollocurrency.aplwallet.apl.core.dao.state.poll.PollResultTable;
 import com.apollocurrency.aplwallet.apl.core.dao.state.poll.PollTable;
 import com.apollocurrency.aplwallet.apl.core.dao.state.poll.VoteTable;
-import com.apollocurrency.aplwallet.apl.core.service.fulltext.FullTextSearchUpdater;
 import com.apollocurrency.aplwallet.apl.util.db.DbIterator;
 import com.apollocurrency.aplwallet.apl.core.model.Transaction;
 import com.apollocurrency.aplwallet.apl.core.entity.state.poll.Poll;
@@ -70,8 +69,6 @@ class PollServiceImplTest {
     @Mock
     private BlockchainImpl blockchain;
     @Mock
-    private FullTextSearchUpdater fullTextSearchUpdater;
-    @Mock
     private Event<FullTextOperationData> fullTextOperationDataEvent;
     @Mock
     private FullTextSearchService fullTextSearchService;
@@ -88,7 +85,6 @@ class PollServiceImplTest {
             pollOptionResultService,
             voteTable,
             blockchain,
-            fullTextSearchUpdater,
             fullTextOperationDataEvent,
             fullTextSearchService
         );

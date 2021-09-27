@@ -26,7 +26,6 @@ import com.apollocurrency.aplwallet.apl.core.entity.state.dgs.DGSTag;
 import com.apollocurrency.aplwallet.apl.core.service.blockchain.Blockchain;
 import com.apollocurrency.aplwallet.apl.core.service.fulltext.FullTextOperationData;
 import com.apollocurrency.aplwallet.apl.core.service.fulltext.FullTextSearchService;
-import com.apollocurrency.aplwallet.apl.core.service.fulltext.FullTextSearchUpdater;
 import com.apollocurrency.aplwallet.apl.core.service.state.account.AccountService;
 import com.apollocurrency.aplwallet.apl.core.transaction.messages.DigitalGoodsDelivery;
 import com.apollocurrency.aplwallet.apl.core.transaction.messages.DigitalGoodsListing;
@@ -74,7 +73,6 @@ public class DGSServiceImpl implements DGSService {
     private final DGSGoodsTable goodsTable;
     private final DGSTagTable tagTable;
     private final AccountService accountService;
-    private final FullTextSearchUpdater fullTextSearchUpdater;
     private final Event<FullTextOperationData> fullTextOperationDataEvent;
     private final FullTextSearchService fullTextSearchService;
 
@@ -86,7 +84,6 @@ public class DGSServiceImpl implements DGSService {
                           DGSGoodsTable goodsTable,
                           DGSTagTable tagTable,
                           AccountService accountService,
-                          FullTextSearchUpdater fullTextSearchUpdater,
                           Event<FullTextOperationData> fullTextOperationDataEvent,
                           FullTextSearchService fullTextSearchService) {
         this.publicFeedbackTable = publicFeedbackTable;
@@ -96,7 +93,6 @@ public class DGSServiceImpl implements DGSService {
         this.goodsTable = goodsTable;
         this.tagTable = tagTable;
         this.accountService = accountService;
-        this.fullTextSearchUpdater = fullTextSearchUpdater;
         this.fullTextOperationDataEvent = fullTextOperationDataEvent;
         this.fullTextSearchService = fullTextSearchService;
     }
@@ -567,7 +563,6 @@ public class DGSServiceImpl implements DGSService {
         operationData.addColumnData(goods.getName()).addColumnData(goods.getDescription()).addColumnData(goods.getTags());
         // send data into Lucene index component
         log.trace("Put lucene index update data = {}", operationData);
-//        fullTextSearchUpdater.putFullTextOperationData(operationData);
         this.fullTextOperationDataEvent.select(new AnnotationLiteral<TrimEvent>() {}).fireAsync(operationData);
     }
 
