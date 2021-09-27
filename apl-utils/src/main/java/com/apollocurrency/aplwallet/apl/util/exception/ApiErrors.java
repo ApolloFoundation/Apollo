@@ -53,9 +53,9 @@ public enum ApiErrors implements ApiErrorInfo {
     NOT_FOUND_ETH_ACCOUNT(0, 2203, "Incorrect ethereum address"),
     ;
 
-    private int oldErrorCode;
-    private int errorCode;
-    private String errorDescription;
+    private final int oldErrorCode;
+    private final int errorCode;
+    private final String errorDescription;
 
     ApiErrors(int oldErrorCode, int errorCode, String errorDescription) {
         this.oldErrorCode = oldErrorCode;

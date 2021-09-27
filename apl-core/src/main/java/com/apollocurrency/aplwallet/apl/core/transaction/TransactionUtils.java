@@ -78,7 +78,10 @@ public class TransactionUtils {
      */
     public static int calculateFullSize(Transaction tx, int txStandardByteSize) {
         //byteLength acts here as tx size with appendices default size, to get tx size with appendices full size we need to substract default size and add full size
-        return txStandardByteSize + tx.getAppendages().stream().mapToInt(app-> app.getFullSize() - app.getSize()).sum();
+        return txStandardByteSize + tx.getAppendages()
+            .stream()
+            .mapToInt(app-> app.getFullSize() - app.getSize())
+            .sum();
     }
 
 

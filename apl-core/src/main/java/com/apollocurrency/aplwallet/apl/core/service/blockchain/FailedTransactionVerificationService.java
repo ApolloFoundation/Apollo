@@ -39,7 +39,7 @@ public interface FailedTransactionVerificationService {
 
     /**
      * Launch batch failed transactions verification
-     * @return
+     * @return verification result
      */
     Optional<TxsVerificationResult> verifyTransactions();
 }

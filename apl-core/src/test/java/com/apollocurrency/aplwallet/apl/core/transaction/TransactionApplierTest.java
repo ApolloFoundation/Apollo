@@ -12,6 +12,7 @@ import com.apollocurrency.aplwallet.apl.core.entity.state.account.LedgerEvent;
 import com.apollocurrency.aplwallet.apl.core.exception.AplTransactionExecutionException;
 import com.apollocurrency.aplwallet.apl.core.exception.AplTransactionExecutionFailureNotSupportedException;
 import com.apollocurrency.aplwallet.apl.core.exception.AplTransactionFeatureNotEnabledException;
+import com.apollocurrency.aplwallet.apl.core.model.Block;
 import com.apollocurrency.aplwallet.apl.core.model.Transaction;
 import com.apollocurrency.aplwallet.apl.core.service.blockchain.Blockchain;
 import com.apollocurrency.aplwallet.apl.core.service.state.account.AccountPublicKeyService;
@@ -30,7 +31,6 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
-import java.util.ArrayList;
 import java.util.List;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
@@ -42,16 +42,20 @@ import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyBoolean;
 import static org.mockito.ArgumentMatchers.anyLong;
 import static org.mockito.ArgumentMatchers.anyString;
+import static org.mockito.Mockito.doAnswer;
 import static org.mockito.Mockito.doReturn;
 import static org.mockito.Mockito.doThrow;
+import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.verifyNoMoreInteractions;
+import static org.mockito.Mockito.when;
 
 @ExtendWith(MockitoExtension.class)
 class TransactionApplierTest {
     public static final long SENDER_ID = 1L;
+    public static final long RECIPIENT_ID = 2L;
     @Mock BlockchainConfig blockchainConfig;
     @Mock ReferencedTransactionDao referencedTransactionDao;
     @Mock AccountPublicKeyService accountPublicKeyService;
@@ -62,6 +66,7 @@ class TransactionApplierTest {
 
     @Mock Transaction tx;
     @Mock AbstractAttachment attachment;
+    @Mock AbstractAppendix appendix;
     @Mock TransactionType type;
 
 
@@ -150,6 +155,24 @@ class TransactionApplierTest {
     }
 
     @Test
+    void applyUnconfirmed_notFailedTx_doubleSpending_failedTxsAcceptanceEnabled_atBlockAcceptance_OK() {
+        Account sender = new Account(td.TRANSACTION_2.getSenderId(), 200000000000000000L,100_000_000L, 0, 0, 0);
+        doReturn(sender).when(accountService).getAccount(td.TRANSACTION_2.getSenderId());
+        doReturn(true).when(blockchainConfig).isFailedTransactionsAcceptanceActiveAtHeight(0);
+        Block block = mock(Block.class);
+        td.TRANSACTION_2.setBlock(block); // simulate that transaction was accepted in the block
+
+        boolean applied = applier.applyUnconfirmed(td.TRANSACTION_2);
+
+        assertTrue(applied, "Transaction #2 with id " + td.TRANSACTION_2.getId() + " should be appliedUnconfirmed successfully, when failed txs acceptance is enabled");
+        assertEquals("Double spending", td.TRANSACTION_2.getErrorMessage()
+            .orElseThrow(()-> new IllegalStateException("Previously not failed transaction should be failed after fallback to applyUnconfirmedFailed")));
+        verify(accountService, times(2)).getAccount(td.TRANSACTION_2.getSenderId());
+        verify(accountService).addToUnconfirmedBalanceATM(sender, LedgerEvent.FAILED_VALIDATION_TRANSACTION_FEE, td.TRANSACTION_2.getId(), 0, -100_000_000L);
+        verify(blockchain).updateTransaction(td.TRANSACTION_2);
+    }
+
+    @Test
     void applyUnconfirmed_notFailedTx_doubleSpending_failedTxsAcceptanceEnabled_notOK() {
         Account sender = new Account(td.TRANSACTION_2.getSenderId(), 200000000000000000L,10_000_000L, 0, 0, 0);
         doReturn(sender).when(accountService).getAccount(td.TRANSACTION_2.getSenderId());
@@ -181,21 +204,46 @@ class TransactionApplierTest {
     }
 
     @Test
-    void apply_failedDuringExecution_OK() {
+    void apply_failedDuringExecution_noFurtherAppendixExecution_OK() {
         Account sender = new Account(SENDER_ID, 200000000000000000L,10_000_000L, 0, 0, 0);
         doReturn(SENDER_ID).when(tx).getSenderId();
         doReturn(10L).when(tx).getFeeATM();
-        doReturn(List.of(attachment)).when(tx).getAppendages();
+        doReturn(List.of(attachment, appendix)).when(tx).getAppendages();
         doReturn(sender).when(accountService).getAccount(SENDER_ID);
         doReturn(true).when(tx).canFailDuringExecution();
         doThrow(new AplTransactionExecutionException("Test tx execution error", td.TRANSACTION_4)).when(attachment).apply(tx, sender, null);
         doReturn(true).when(blockchainConfig).isFailedTransactionsAcceptanceActiveAtHeight(0);
+        doAnswer(invocation -> {
+            when(tx.isFailed()).thenReturn(true);
+            return null;
+        }).when(tx).fail("Test tx execution error");
 
         applier.apply(tx);
 
         verify(tx).fail("Test tx execution error");
+        verify(prunableService, never()).loadPrunable(tx, appendix, false);
+        verify(applierRegistry, never()).getFor(appendix);
         verify(blockchain).updateTransaction(tx);
         verify(accountService).addToBalanceAndUnconfirmedBalanceATM(sender, LedgerEvent.FAILED_EXECUTION_TRANSACTION_FEE, 0, 0, -10);
+    }
+
+
+
+    @Test
+    void apply_withRecipient_OK() {
+        Account sender = new Account(SENDER_ID, 200000000000000000L,10_000_000L, 0, 0, 0);
+        doReturn(SENDER_ID).when(tx).getSenderId();
+        when(tx.getRecipientId()).thenReturn(RECIPIENT_ID);
+        Account recipient = mock(Account.class);
+        when(accountService.getAccount(RECIPIENT_ID)).thenReturn(recipient);
+        doReturn(List.of(attachment, appendix)).when(tx).getAppendages();
+        doReturn(sender).when(accountService).getAccount(SENDER_ID);
+
+        applier.apply(tx);
+
+        verify(tx, never()).fail(anyString());
+        verify(attachment).apply(tx, sender, recipient);
+        verify(appendix).apply(tx, sender, recipient);
     }
 
     @Test
@@ -267,22 +315,26 @@ class TransactionApplierTest {
     }
 
     @Test
-    void applyPhasingFailed() {
+    void applyPhasingFailed_noFurtherAppendixExecution_OK() {
         Account sender = new Account(SENDER_ID, 200000000000000000L,10_000_000L, 0, 0, 0);
         doReturn(10L).when(tx).getFeeATM();
-        List<AbstractAppendix> appendages = new ArrayList<>();
-        appendages.add(attachment);
-        doReturn(appendages).when(tx).getAppendages();
+        doReturn(List.of(attachment, appendix)).when(tx).getAppendages();
         doReturn(sender).when(accountService).getAccount(SENDER_ID);
         doReturn(true).when(tx).canFailDuringExecution();
         doReturn(SENDER_ID).when(tx).getSenderId();
         doThrow(new AplTransactionExecutionException("Test phasing tx execution error", tx)).when(attachment).apply(tx, sender, null);
         doReturn(true).when(blockchainConfig).isFailedTransactionsAcceptanceActiveAtHeight(0);
         doReturn(true).when(attachment).isPhasable();
+        doAnswer(invocation -> {
+            when(tx.isFailed()).thenReturn(true);
+            return null;
+        }).when(tx).fail("Test phasing tx execution error");
 
         applier.applyPhasing(tx);
 
         verify(tx).fail("Test phasing tx execution error");
+        verify(prunableService, never()).loadPrunable(tx, appendix, false);
+        verify(applierRegistry, never()).getFor(appendix);
         verify(blockchain).updateTransaction(tx);
         verify(accountService).addToUnconfirmedBalanceATM(sender, LedgerEvent.FAILED_EXECUTION_TRANSACTION_FEE, 0, 0, -10);
     }
@@ -290,17 +342,20 @@ class TransactionApplierTest {
     @Test
     void applyPhasingOK() {
         Account sender = new Account(SENDER_ID, 200000000000000000L,10_000_000L, 0, 0, 0);
-        List<AbstractAppendix> appendages = new ArrayList<>();
-        appendages.add(attachment);
-        doReturn(appendages).when(tx).getAppendages();
+        doReturn(List.of(attachment, appendix)).when(tx).getAppendages();
         doReturn(sender).when(accountService).getAccount(SENDER_ID);
+        when(tx.getRecipientId()).thenReturn(RECIPIENT_ID);
+        Account recipientAccount = mock(Account.class);
+        when(accountService.getAccount(RECIPIENT_ID)).thenReturn(recipientAccount);
         doReturn(SENDER_ID).when(tx).getSenderId();
         doReturn(true).when(attachment).isPhasable();
+        doReturn(false).when(appendix).isPhasable();
 
         applier.applyPhasing(tx);
 
         verify(tx, never()).fail(any(String.class));
-        verify(attachment).apply(tx, sender, null);
+        verify(attachment).apply(tx, sender, recipientAccount);
+        verify(appendix, never()).apply(tx, sender, recipientAccount);
     }
 
     @Test

@@ -116,6 +116,9 @@ public interface Transaction {
 
     boolean hasPrunableEncryptedMessage();
 
+    /**
+     * @return list of all transaction appendages, tx type attachment is first in the list
+     */
     List<AbstractAppendix> getAppendages();
 
     int getECBlockHeight();

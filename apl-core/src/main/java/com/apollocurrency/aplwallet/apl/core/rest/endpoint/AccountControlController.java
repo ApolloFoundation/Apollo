@@ -15,6 +15,7 @@ import com.apollocurrency.aplwallet.apl.core.model.Transaction;
 import com.apollocurrency.aplwallet.apl.core.entity.state.account.Account;
 import com.apollocurrency.aplwallet.apl.core.entity.state.account.AccountControlPhasing;
 import com.apollocurrency.aplwallet.apl.core.http.ParameterException;
+import com.apollocurrency.aplwallet.apl.core.rest.converter.UnconfirmedTransactionConverterCreator;
 import com.apollocurrency.aplwallet.apl.util.io.PayloadResult;
 import com.apollocurrency.aplwallet.apl.util.io.Result;
 import com.apollocurrency.aplwallet.apl.core.model.CreateTransactionRequest;
@@ -96,12 +97,12 @@ public class AccountControlController {
         BlockchainConfig blockchainConfig,
         TransactionCreator txCreator,
         AccountService accountService,
-        UnconfirmedTransactionConverter unconfirmedTransactionConverter,
+        UnconfirmedTransactionConverterCreator unconfirmedTransactionConverterCreator,
         @Property(name = "apl.maxAPIRecords", defaultValue = "100") int maxAPIrecords) {
         this.accountControlPhasingService = accountControlPhasingService;
         this.blockchainConfig = blockchainConfig;
         this.txCreator = txCreator;
-        this.unconfirmedTransactionConverter = unconfirmedTransactionConverter;
+        this.unconfirmedTransactionConverter = unconfirmedTransactionConverterCreator.create(true);
         this.accountService = accountService;
         this.txBContext = TxBContext.newInstance(blockchainConfig.getChain());
         maxAPIFetchRecords = maxAPIrecords;

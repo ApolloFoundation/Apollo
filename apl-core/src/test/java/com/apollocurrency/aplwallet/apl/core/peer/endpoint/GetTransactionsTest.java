@@ -10,8 +10,9 @@ import com.apollocurrency.aplwallet.api.p2p.response.GetTransactionsResponse;
 import com.apollocurrency.aplwallet.apl.core.peer.Peer;
 import com.apollocurrency.aplwallet.apl.core.peer.parser.GetTransactionsRequestParser;
 import com.apollocurrency.aplwallet.apl.core.peer.parser.GetTransactionsResponseParser;
-import com.apollocurrency.aplwallet.apl.core.rest.converter.TransactionConverter;
+import com.apollocurrency.aplwallet.apl.core.rest.converter.TransactionConverterCreator;
 import com.apollocurrency.aplwallet.apl.core.rest.converter.UnconfirmedTransactionConverter;
+import com.apollocurrency.aplwallet.apl.core.rest.converter.UnconfirmedTransactionConverterCreator;
 import com.apollocurrency.aplwallet.apl.core.service.blockchain.Blockchain;
 import com.apollocurrency.aplwallet.apl.core.transaction.messages.PrunableLoadingService;
 import com.apollocurrency.aplwallet.apl.data.TransactionTestData;
@@ -46,7 +47,8 @@ class GetTransactionsTest {
     Blockchain blockchain;
     @Mock
     Peer peer;
-    TransactionConverter converter;
+    @Mock
+    PrunableLoadingService prunableLoadingService;
 
     GetTransactions endpoint;
 
@@ -54,8 +56,10 @@ class GetTransactionsTest {
 
     @BeforeEach
     void setUp() {
-        converter = new TransactionConverter(blockchain, new UnconfirmedTransactionConverter(mock(PrunableLoadingService.class)));
-        endpoint = new GetTransactions(blockchain, converter, new GetTransactionsRequestParser());
+        UnconfirmedTransactionConverterCreator unconfirmedTxConverterCreator = mock(UnconfirmedTransactionConverterCreator.class);
+        doReturn(new UnconfirmedTransactionConverter(prunableLoadingService)).when(unconfirmedTxConverterCreator).create(false);
+        endpoint = new GetTransactions(blockchain,
+            new TransactionConverterCreator(blockchain, unconfirmedTxConverterCreator), new GetTransactionsRequestParser());
         td = new TransactionTestData();
         Convert2.init("APL", 0);
     }

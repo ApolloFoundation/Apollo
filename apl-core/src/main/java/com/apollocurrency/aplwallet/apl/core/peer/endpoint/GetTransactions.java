@@ -27,6 +27,7 @@ import com.apollocurrency.aplwallet.apl.core.model.Transaction;
 import com.apollocurrency.aplwallet.apl.core.peer.Peer;
 import com.apollocurrency.aplwallet.apl.core.peer.parser.GetTransactionsRequestParser;
 import com.apollocurrency.aplwallet.apl.core.rest.converter.TransactionConverter;
+import com.apollocurrency.aplwallet.apl.core.rest.converter.TransactionConverterCreator;
 import com.apollocurrency.aplwallet.apl.core.service.blockchain.Blockchain;
 import com.apollocurrency.aplwallet.apl.util.JSON;
 import lombok.extern.slf4j.Slf4j;
@@ -49,10 +50,9 @@ public class GetTransactions extends PeerRequestHandler {
     private final Blockchain blockchain;
 
     @Inject
-    public GetTransactions(Blockchain blockchain, TransactionConverter converter, GetTransactionsRequestParser requestParser) {
-        this.converter = converter;
+    public GetTransactions(Blockchain blockchain, TransactionConverterCreator converterCreator, GetTransactionsRequestParser requestParser) {
+        this.converter = converterCreator.create(false);
         this.requestParser = requestParser;
-        this.converter.setPriv(false);
         this.blockchain = blockchain;
     }
 

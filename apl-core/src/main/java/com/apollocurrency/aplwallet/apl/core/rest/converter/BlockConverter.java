@@ -6,6 +6,7 @@ package com.apollocurrency.aplwallet.apl.core.rest.converter;
 
 import com.apollocurrency.aplwallet.api.dto.BlockDTO;
 import com.apollocurrency.aplwallet.api.dto.TransactionDTO;
+import com.apollocurrency.aplwallet.api.dto.TxErrorHashDTO;
 import com.apollocurrency.aplwallet.apl.core.model.Block;
 import com.apollocurrency.aplwallet.apl.core.service.blockchain.Blockchain;
 import com.apollocurrency.aplwallet.apl.core.service.state.PhasingPollService;
@@ -13,7 +14,7 @@ import com.apollocurrency.aplwallet.apl.crypto.Convert;
 import com.apollocurrency.aplwallet.apl.util.Convert2;
 import com.apollocurrency.aplwallet.apl.util.api.converter.Converter;
 
-import javax.inject.Inject;
+import javax.enterprise.inject.Vetoed;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
@@ -25,6 +26,7 @@ import java.util.stream.Collectors;
  * <br>
  * Each caller should instantiate new instance or just use CDI default Dependant Scope</p>
  */
+@Vetoed
 public class BlockConverter implements Converter<Block, BlockDTO> {
 
     private final Blockchain blockchain;
@@ -33,7 +35,6 @@ public class BlockConverter implements Converter<Block, BlockDTO> {
     private volatile boolean isAddTransactions = false;
     private volatile boolean isAddPhasedTransactions = false;
 
-    @Inject
     public BlockConverter(Blockchain blockchain, TransactionConverter transactionConverter,
                           PhasingPollService phasingPollService) {
         this.blockchain = blockchain;
@@ -73,6 +74,8 @@ public class BlockConverter implements Converter<Block, BlockDTO> {
         if (this.isAddPhasedTransactions) {
             this.addPhasedTransactions(dto, model);
         }
+        dto.setNumberOfFailedTxs(model.getTxErrorHashes().size());
+        model.getTxErrorHashes().forEach(e-> dto.getTxErrorHashes().add(new TxErrorHashDTO(Long.toUnsignedString(e.getId()), Convert.toHexString(e.getErrorHash()), e.getError())));
         return dto;
     }
 
