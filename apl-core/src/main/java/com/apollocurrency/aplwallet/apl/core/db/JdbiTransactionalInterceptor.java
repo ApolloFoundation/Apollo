@@ -1,6 +1,11 @@
-package com.apollocurrency.aplwallet.apl.util.cdi.transaction;
+/*
+ *  Copyright © 2018-2021 Apollo Foundation
+ */
+
+package com.apollocurrency.aplwallet.apl.core.db;
 
 import com.apollocurrency.aplwallet.apl.util.cdi.Transactional;
+import com.apollocurrency.aplwallet.apl.util.cdi.transaction.JdbiHandleFactory;
 import org.slf4j.Logger;
 
 import javax.inject.Inject;

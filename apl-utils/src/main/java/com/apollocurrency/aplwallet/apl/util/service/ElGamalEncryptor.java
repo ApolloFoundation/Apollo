@@ -8,14 +8,9 @@ import com.apollocurrency.aplwallet.apl.crypto.Crypto;
 import com.apollocurrency.aplwallet.apl.util.task.Task;
 import io.firstbridge.cryptolib.ElGamalKeyPair;
 
-import javax.annotation.PostConstruct;
-import javax.inject.Inject;
-import javax.inject.Singleton;
-
 /**
  * @author alukin@gmail.com
  */
-@Singleton
 public class ElGamalEncryptor {
 
     private byte[] privateKey;
@@ -23,12 +18,10 @@ public class ElGamalEncryptor {
     private ElGamalKeyPair elGamalKeyPair;
     private final TaskDispatchManager taskDispatchManager;
 
-    @Inject
     public ElGamalEncryptor(TaskDispatchManager dispatchManager) {
         taskDispatchManager = dispatchManager;
     }
 
-    @PostConstruct
     public final void init() {
         taskDispatchManager.newBackgroundDispatcher("KeyGenerator")
             .schedule(Task.builder()

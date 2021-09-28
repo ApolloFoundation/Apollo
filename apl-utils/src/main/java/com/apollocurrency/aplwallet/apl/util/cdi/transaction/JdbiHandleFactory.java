@@ -3,13 +3,9 @@ package com.apollocurrency.aplwallet.apl.util.cdi.transaction;
 import org.jdbi.v3.core.Handle;
 import org.jdbi.v3.core.Jdbi;
 
-import javax.inject.Inject;
-import javax.inject.Singleton;
-
 /**
  * Holds opened connection {@link Handle} for current thread.
  */
-@Singleton
 public class JdbiHandleFactory {
 
     private final static ThreadLocal<Handle> currentHandleThreadLocal = new ThreadLocal<>();
@@ -20,7 +16,6 @@ public class JdbiHandleFactory {
         this.jdbi = jdbi;
     }
 
-    @Inject
     public JdbiHandleFactory(Jdbi jdbi) {
         this.jdbi = jdbi;
     }
@@ -80,7 +75,7 @@ public class JdbiHandleFactory {
         }
     }
 
-    protected boolean currentHandleOpened() {
+    public boolean currentHandleOpened() {
         return getCurrentHandle() != null;
     }
 

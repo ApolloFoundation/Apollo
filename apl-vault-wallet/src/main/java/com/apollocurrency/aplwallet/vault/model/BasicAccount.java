@@ -1,8 +1,8 @@
 /*
- * Copyright © 2018 Apollo Foundation
+ *  Copyright © 2018-2021 Apollo Foundation
  */
 
-package com.apollocurrency.aplwallet.apl.util.model.account;
+package com.apollocurrency.aplwallet.vault.model;
 
 import com.apollocurrency.aplwallet.apl.crypto.Convert;
 import com.apollocurrency.aplwallet.apl.util.Convert2;
