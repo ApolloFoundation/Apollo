@@ -27,6 +27,8 @@ public class ElGamalEncryptorProducer {
     @Produces
     @Singleton
     public ElGamalEncryptor elGamalEncryptor() {
-        return new ElGamalEncryptor(dispatchManager);
+        ElGamalEncryptor encryptor = new ElGamalEncryptor(dispatchManager);
+        encryptor.init();
+        return encryptor;
     }
 }
