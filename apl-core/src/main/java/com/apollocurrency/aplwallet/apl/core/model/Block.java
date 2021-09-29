@@ -84,4 +84,5 @@ public interface Block {
 
     void assignBlockData(List<Transaction> txs, byte[] generatorPublicKey);
 
+    void assignTransactionsIndex();
 }

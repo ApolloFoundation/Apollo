@@ -531,6 +531,7 @@ public class BlockchainProcessorImpl implements BlockchainProcessor {
                     // put three latest blocks into array TODO: YL optimize to fetch three blocks later
                     fillInBlockArray(previousLastBlock, lastShard, currentHeight);
                     consensusManager.setPrevious(block, threeLatestBlocksArray, config, lastShard, shardInitialBlock.getHeight());
+                    block.assignTransactionsIndex(); // IMPORTANT step !!!
                     log.trace("fire block on = {}, id = '{}', '{}'", block.getHeight(), block.getId(), BlockEventType.BEFORE_BLOCK_ACCEPT.name());
                     blockEvent.select(literal(BlockEventType.BEFORE_BLOCK_ACCEPT)).fire(block);
                     addBlock(block);
