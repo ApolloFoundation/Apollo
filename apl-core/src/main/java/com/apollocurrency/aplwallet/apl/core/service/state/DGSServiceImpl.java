@@ -563,7 +563,7 @@ public class DGSServiceImpl implements DGSService {
         operationData.addColumnData(goods.getName()).addColumnData(goods.getDescription()).addColumnData(goods.getTags());
         // send data into Lucene index component
         log.trace("Put lucene index update data = {}", operationData);
-        this.fullTextOperationDataEvent.select(new AnnotationLiteral<TrimEvent>() {}).fireAsync(operationData);
+        this.fullTextOperationDataEvent.select(new AnnotationLiteral<TrimEvent>() {}).fire(operationData);
     }
 
 }

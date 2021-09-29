@@ -14,7 +14,7 @@ import com.apollocurrency.aplwallet.apl.util.db.TransactionCallback;
 import com.apollocurrency.aplwallet.apl.util.db.TransactionalDataSource;
 import lombok.extern.slf4j.Slf4j;
 
-import javax.enterprise.event.ObservesAsync;
+import javax.enterprise.event.Observes;
 import javax.inject.Inject;
 import javax.inject.Singleton;
 import java.sql.Connection;
@@ -91,8 +91,8 @@ public class FullTextSearchUpdaterImpl implements TransactionCallback, FullTextS
         return DbUtils.getTableData(connection, tableName, schema);
     }
 
-    public void onPutFullTextOperationData(@ObservesAsync @TrimEvent FullTextOperationData operationData) {
-        log.debug("Received ASYNC operationData = {}", operationData);
+    public void onPutFullTextOperationData(@Observes @TrimEvent FullTextOperationData operationData) {
+        log.debug("Received SYNC operationData = {}", operationData);
         this.putFullTextOperationData(operationData);
     }
 

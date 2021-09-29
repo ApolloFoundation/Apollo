@@ -1,5 +1,5 @@
 /*
- *  Copyright © 2018-2019 Apollo Foundation
+ *  Copyright © 2018-2021 Apollo Foundation
  */
 
 package com.apollocurrency.aplwallet.apl.core.dao.state.derived;
@@ -90,7 +90,7 @@ public abstract class BasicDbTable<T extends DerivedEntity> extends DerivedDbTab
             }
 
             // select deleted DB_IDs and fire FTS events for searchable tables to remove data from FTS
-            deletedRecordsCount = super.getDeletedRecordsSendFtsDeleteEvent(
+            deletedRecordsCount = super.getDeletedRecordsSendFtsEvent(
                 height, deletedRecordsCount, pstmtDelete, pstmtSelectDeletedIds);
 
             if (deletedRecordsCount > 0) {

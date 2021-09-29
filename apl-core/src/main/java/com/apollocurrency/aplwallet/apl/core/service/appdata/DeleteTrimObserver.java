@@ -22,9 +22,9 @@ import javax.annotation.PostConstruct;
 import javax.annotation.PreDestroy;
 import javax.enterprise.event.Event;
 import javax.enterprise.event.ObservesAsync;
+import javax.enterprise.inject.Vetoed;
 import javax.enterprise.util.AnnotationLiteral;
 import javax.inject.Inject;
-import javax.inject.Singleton;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.SQLException;
@@ -43,7 +43,8 @@ import static com.apollocurrency.aplwallet.apl.core.service.fulltext.FullTextCon
 import static com.apollocurrency.aplwallet.apl.util.Constants.LONG_TIME_FIVE_SECONDS;
 
 @Slf4j
-@Deprecated
+@Deprecated // remove later
+@Vetoed
 public class DeleteTrimObserver {
 
     private final Object lock = new Object();
@@ -167,7 +168,7 @@ public class DeleteTrimObserver {
                         operationData.setDbIdValue(id);
                         operationData.setOperationType(FullTextOperationData.OperationType.DELETE);
                         log.trace("Put lucene index update data = {}", operationData);
-                        this.fullTextOperationDataEvent.select(new AnnotationLiteral<TrimEvent>() {}).fireAsync(operationData);
+                        this.fullTextOperationDataEvent.select(new AnnotationLiteral<TrimEvent>() {}).fire(operationData);
                     }
                     deleted += deleteResult;
 //                    addDeleteToBatch(pstmtDeleteById, id);

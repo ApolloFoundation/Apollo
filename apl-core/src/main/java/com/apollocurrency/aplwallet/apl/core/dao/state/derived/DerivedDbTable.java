@@ -23,9 +23,7 @@ package com.apollocurrency.aplwallet.apl.core.dao.state.derived;
 import static com.apollocurrency.aplwallet.apl.core.service.fulltext.FullTextConfig.DEFAULT_SCHEMA;
 
 import javax.enterprise.event.Event;
-import javax.enterprise.util.AnnotationLiteral;
 
-import com.apollocurrency.aplwallet.apl.core.app.observer.events.TrimEvent;
 import com.apollocurrency.aplwallet.apl.core.dao.state.keyfactory.DbKey;
 import com.apollocurrency.aplwallet.apl.core.db.DatabaseManager;
 import com.apollocurrency.aplwallet.apl.core.entity.state.derived.DerivedEntity;
@@ -55,7 +53,7 @@ public abstract class DerivedDbTable<T extends DerivedEntity> implements Derived
     protected final DatabaseManager databaseManager;
     @Getter
     private final String fullTextSearchColumns;
-    private final Event<FullTextOperationData> fullTextOperationDataEvent;
+    private FtsEventSender ftsEventSender;
 
     protected DerivedDbTable(String table,
                              DatabaseManager databaseManager,
@@ -64,7 +62,7 @@ public abstract class DerivedDbTable<T extends DerivedEntity> implements Derived
         StringValidator.requireNonBlank(table, "Table name");
         this.table = table;
         this.databaseManager = Objects.requireNonNull(databaseManager, "databaseManager is NULL");
-        this.fullTextOperationDataEvent = fullTextOperationDataEvent;
+        this.ftsEventSender = new FtsEventSender(fullTextOperationDataEvent);
         this.fullTextSearchColumns = fullTextSearchColumns;
     }
 
@@ -88,7 +86,7 @@ public abstract class DerivedDbTable<T extends DerivedEntity> implements Derived
              PreparedStatement pstmtDelete = con.prepareStatement("DELETE FROM " + table + " WHERE height > ?");
              PreparedStatement pstmtSelectDeletedIds = con.prepareStatement("SELECT DB_ID FROM " + table + " WHERE height > ?")) {
 
-            deletedRecordsCount = getDeletedRecordsSendFtsDeleteEvent(height, deletedRecordsCount, pstmtDelete, pstmtSelectDeletedIds);
+            deletedRecordsCount = getDeletedRecordsSendFtsEvent(height, deletedRecordsCount, pstmtDelete, pstmtSelectDeletedIds);
 
         } catch (SQLException e) {
             throw new RuntimeException(e.toString(), e);
@@ -105,27 +103,32 @@ public abstract class DerivedDbTable<T extends DerivedEntity> implements Derived
      * @return affected number
      * @throws SQLException error
      */
-    public int getDeletedRecordsSendFtsDeleteEvent(
-        int height, int deletedRecordsCount,
+    public int getDeletedRecordsSendFtsEvent(
+        int height, Integer deletedRecordsCount,
         PreparedStatement pstmtDelete,
         PreparedStatement pstmtSelectDeletedIds) throws SQLException {
         if (this.isSearchable()) {
             pstmtSelectDeletedIds.setInt(1, height);
-            // do select DB_IDs first
+            // do select DB_IDs first and sent FTS events
             try (ResultSet deletedIds = pstmtSelectDeletedIds.executeQuery())  {
-                deletedRecordsCount = fireEventsForDeletedIds(height, deletedRecordsCount, deletedIds);
+                // operation data for current table
+                FullTextOperationData operationData = new FullTextOperationData(
+                    DEFAULT_SCHEMA, this.table, Thread.currentThread().getName(),
+                    FullTextOperationData.OperationType.DELETE);
+                deletedRecordsCount = ftsEventSender.fireEventsForDeletedIds(
+                    operationData, deletedIds, height, deletedRecordsCount);
             } catch (SQLException e) {
                 log.error("Error on selecting DB_ID to be deleted in FTS", e);
                 throw new RuntimeException(e.toString(), e);
             }
-            // actual records delete for 'Searchable'
+            // deleting actual records for 'Searchable' entities
             pstmtDelete.setInt(1, height);
             int deletedResult = pstmtDelete.executeUpdate();
             log.trace("Deleted '{}' at height = {}, deletedCount = {}, deletedResult = {}",
                 this.table, height, deletedRecordsCount, deletedResult);
             assert deletedResult == deletedRecordsCount; // check in debug mode only
         } else {
-            // actual records delete for NOT 'Searchable'
+            //  deleting actual records for 'NOT Searchable' entities
             pstmtDelete.setInt(1, height);
             deletedRecordsCount = pstmtDelete.executeUpdate();
             log.trace("Deleted '{}' at height = {}, deletedCount = {}",
@@ -134,23 +137,6 @@ public abstract class DerivedDbTable<T extends DerivedEntity> implements Derived
         return deletedRecordsCount;
     }
 
-    private int fireEventsForDeletedIds(int height, int deletedRecordsCount, ResultSet deletedIds) throws SQLException {
-        FullTextOperationData operationData = new FullTextOperationData(
-            DEFAULT_SCHEMA, this.table, Thread.currentThread().getName());
-        operationData.setOperationType(FullTextOperationData.OperationType.DELETE);
-        // take one DB_ID and fire Event to FTS with data
-        while (deletedIds.next()) {
-            Long deleted_db_id = deletedIds.getLong("DB_ID");
-            operationData.setDbIdValue(deleted_db_id);
-            // fire event to update FullTextSearch index for record deletion
-            fullTextOperationDataEvent.select(new AnnotationLiteral<TrimEvent>() {})
-                .fireAsync(operationData);
-            ++deletedRecordsCount;
-            log.trace("Update lucene index for '{}' at height = {}, deletedRecordsCount = {} by data :\n{}",
-                this.table, height, deletedRecordsCount, operationData);
-        }
-        return deletedRecordsCount;
-    }
 
     @Override
     public boolean deleteAtHeight(T t, int height) {

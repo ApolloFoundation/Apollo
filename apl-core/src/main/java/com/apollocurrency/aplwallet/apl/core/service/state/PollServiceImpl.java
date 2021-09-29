@@ -297,7 +297,7 @@ public class PollServiceImpl implements PollService {
         operationData.addColumnData(poll.getName()).addColumnData(poll.getDescription());
         // send data into Lucene index component
         log.trace("Put lucene index update data = {}", operationData);
-        this.fullTextOperationDataEvent.select(new AnnotationLiteral<TrimEvent>() {}).fireAsync(operationData);
+        this.fullTextOperationDataEvent.select(new AnnotationLiteral<TrimEvent>() {}).fire(operationData);
     }
 
 }

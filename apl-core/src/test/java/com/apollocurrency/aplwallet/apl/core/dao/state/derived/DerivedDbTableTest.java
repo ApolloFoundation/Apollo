@@ -104,7 +104,7 @@ public abstract class DerivedDbTableTest<T extends DerivedEntity> extends DbCont
 
     @Test
     public void testRollbackToNegativeHeight() throws SQLException {
-        // fired FTS event(s) : fullTextOperationDataEvent.select(new AnnotationLiteral<TrimEvent>() {}).fireAsync(operationData);
+        // fired FTS event(s) : fullTextOperationDataEvent.select(new AnnotationLiteral<TrimEvent>() {}).fire(operationData);
         testRollback(0);
     }
 
