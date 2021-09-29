@@ -70,14 +70,18 @@ public class TaggedDataExtendTransactionType extends DataTransactionType {
         if (taggedData != null && taggedData.getTransactionTimestamp() > timeService.getEpochTime() + 6 * blockchainConfig.getMinPrunableLifetime()) {
             throw new AplException.NotCurrentlyValidException("Data already extended, timestamp is " + taggedData.getTransactionTimestamp());
         }
+        // Transaction is validated and not failed, so that data should be present for at least a minPrunableLifetime
+        if (transaction.getBlock() != null) {
+            validateDataExistence(transaction, attachment);
+        }
     }
 
     @Override
     public void doStateIndependentValidation(Transaction transaction) throws AplException.ValidationException {
         TaggedDataExtendAttachment attachment = (TaggedDataExtendAttachment) transaction.getAttachment();
-        BlockchainConfig blockchainConfig = getBlockchainConfig();
-        if ((attachment.jsonIsPruned() || attachment.getData() == null) && timeService.getEpochTime() - transaction.getTimestamp() < blockchainConfig.getMinPrunableLifetime()) {
-            throw new AplException.NotCurrentlyValidException("Data has been pruned prematurely");
+        // validate data existence early for a mempool transaction
+        if (transaction.getBlock() == null) {
+            validateDataExistence(transaction, attachment);
         }
     }
 
@@ -96,5 +100,11 @@ public class TaggedDataExtendTransactionType extends DataTransactionType {
     @Override
     public boolean isPruned(long transactionId) {
         return false;
+    }
+
+    private void validateDataExistence(Transaction transaction, TaggedDataExtendAttachment attachment) throws AplException.NotCurrentlyValidException {
+        if ((attachment.jsonIsPruned() || attachment.getData() == null) && timeService.getEpochTime() - transaction.getTimestamp() < getBlockchainConfig().getMinPrunableLifetime()) {
+            throw new AplException.NotCurrentlyValidException("Data has been pruned prematurely");
+        }
     }
 }

@@ -64,9 +64,6 @@ public class TaggedDataUploadTransactionType extends DataTransactionType {
     @Override
     public void doStateIndependentValidation(Transaction transaction) throws AplException.ValidationException {
         TaggedDataUploadAttachment attachment = (TaggedDataUploadAttachment) transaction.getAttachment();
-        if (attachment.getData() == null && timeService.getEpochTime() - transaction.getTimestamp() < getBlockchainConfig().getMinPrunableLifetime()) {
-            throw new AplException.NotCurrentlyValidException("Data has been pruned prematurely");
-        }
         if (attachment.getData() != null) {
             if (attachment.getName().length() == 0 || attachment.getName().length() > Constants.MAX_TAGGED_DATA_NAME_LENGTH) {
                 throw new AplException.NotValidException("Invalid name length: " + attachment.getName().length());
@@ -89,6 +86,10 @@ public class TaggedDataUploadTransactionType extends DataTransactionType {
             if (attachment.getData().length == 0 || attachment.getData().length > Constants.MAX_TAGGED_DATA_DATA_LENGTH) {
                 throw new AplException.NotValidException("Invalid data length: " + attachment.getData().length);
             }
+        }
+        // validate at the end of validation cycle to ensure, that transaction is not failed and data should be present for minPrunableLifetime
+        if (attachment.getData() == null && timeService.getEpochTime() - transaction.getTimestamp() < getBlockchainConfig().getMinPrunableLifetime()) {
+            throw new AplException.NotCurrentlyValidException("Data has been pruned prematurely");
         }
     }
 

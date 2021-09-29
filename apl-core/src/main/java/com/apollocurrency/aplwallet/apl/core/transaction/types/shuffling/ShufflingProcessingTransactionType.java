@@ -123,14 +123,22 @@ public class ShufflingProcessingTransactionType extends ShufflingTransactionType
                 }
             }
         }
+        // validate prunable data existence when state-dependent validation was completed (transaction is not failed)
+        // and data should be present for a min prunable lifetime
+        if (transaction.getBlock() != null) {
+            validateDataExistence(transaction, data);
+        }
     }
 
     @Override
     public void doStateIndependentValidation(Transaction transaction) throws AplException.ValidationException {
         ShufflingProcessingAttachment attachment = (ShufflingProcessingAttachment) transaction.getAttachment();
         byte[][] data = attachment.getData();
-        if (data == null && timeService.getEpochTime() - transaction.getTimestamp() < getBlockchainConfig().getMinPrunableLifetime()) {
-            throw new AplException.NotCurrentlyValidException("Data has been pruned prematurely");
+        // skip validation here for block transaction to let the possible failed transaction to be validated entirely
+        // without the data included, cause failed transaction may not contain prunable data (during blockchain downloading),
+        // but contain during block processing via p2p processBlock API
+        if (transaction.getBlock() == null) {
+            validateDataExistence(transaction, data);
         }
         if (data != null) {
             byte[] previous = null;
@@ -177,6 +185,12 @@ public class ShufflingProcessingTransactionType extends ShufflingTransactionType
 
         ShufflingProcessingAttachment attachment = (ShufflingProcessingAttachment) transaction.getAttachment();
         return shufflingService.getData(attachment.getShufflingId(), transaction.getSenderId()) == null;
+    }
+
+    private void validateDataExistence(Transaction transaction, byte[][] data) throws AplException.NotCurrentlyValidException {
+        if (data == null && timeService.getEpochTime() - transaction.getTimestamp() < getBlockchainConfig().getMinPrunableLifetime()) {
+            throw new AplException.NotCurrentlyValidException("Data has been pruned prematurely");
+        }
     }
 
 }

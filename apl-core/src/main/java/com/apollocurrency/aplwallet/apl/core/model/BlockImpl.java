@@ -373,6 +373,7 @@ public final class BlockImpl implements Block {
     @Override
     public void assignBlockData(List<Transaction> txs, byte[] generatorPublicKey) {
         this.blockTransactions = Collections.unmodifiableList(txs);
+        assignTransactionsIndex();
         this.txErrorHashes = obtainTxErrorHashes(txs);
         this.generatorPublicKey = generatorPublicKey;
         if (generatorPublicKey != null) {
@@ -381,8 +382,7 @@ public final class BlockImpl implements Block {
         this.hasLoadedData = true;
     }
 
-    @Override
-    public void assignTransactionsIndex() {
+    private void assignTransactionsIndex() {
         // important !!! assign transaction index value
         short index = 0;
         for (Transaction transaction : this.blockTransactions) {
