@@ -72,7 +72,6 @@ class ShardPrunableZipHashCalculatorTest extends DbContainerBaseTest {
     WeldInitiator weld = WeldInitiator.from(PrunableMessageTable.class,
         Event.class,
         ShardPrunableZipHashCalculator.class,
-        PropertiesHolder.class,
         FullTextConfigImpl.class,
         CsvEscaperImpl.class)
         .addBeans(MockBean.of(blockchainConfig, BlockchainConfig.class))

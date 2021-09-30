@@ -56,8 +56,7 @@ class PrunableMessageTableTest extends DbContainerBaseTest {
     WeldInitiator weld = WeldInitiator.from(
         PrunableMessageTable.class,
         DerivedDbTablesRegistryImpl.class,
-        FullTextConfigImpl.class,
-        PropertiesHolder.class)
+        FullTextConfigImpl.class)
         .addBeans(MockBean.of(extension.getDatabaseManager(), DatabaseManager.class))
         .addBeans(MockBean.of(propertiesHolder, PropertiesHolder.class))
         .addBeans(MockBean.of(ntpTimeConfig, NtpTimeConfig.class))

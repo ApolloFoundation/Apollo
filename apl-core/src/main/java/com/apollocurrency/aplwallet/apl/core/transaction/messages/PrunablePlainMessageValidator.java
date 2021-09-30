@@ -25,7 +25,7 @@ public class PrunablePlainMessageValidator extends AbstractAppendixValidator<Pru
     }
 
     @Override
-    public void validateStateDependent(Transaction transaction, PrunablePlainMessageAppendix appendix, int validationHeight) throws AplException.ValidationException {
+    public void validateStateDependent(Transaction transaction, PrunablePlainMessageAppendix appendix, int validationHeight) {
     }
 
     @Override
