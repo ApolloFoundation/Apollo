@@ -23,11 +23,11 @@ public interface ShufflingService {
 
     byte[][] getData(long shufflingId, long accountId);
 
-    void restoreData(long shufflingId, long accountId, byte[][] data, int timestamp, int height);
+    byte[][] getData(long transactionId);
 
-    void setData(ShufflingParticipant participants, byte[][] data, int timestamp);
+    void restoreData(long transactionId, long shufflingId, long accountId, byte[][] data, int timestamp, int height);
 
-
+    void setData(Transaction tx, ShufflingParticipant participant, byte[][] data);
 
     List<ShufflingParticipant> getParticipants(long shufflingId);
 

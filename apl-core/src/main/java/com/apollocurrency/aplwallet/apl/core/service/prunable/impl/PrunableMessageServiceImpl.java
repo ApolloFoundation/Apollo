@@ -24,9 +24,9 @@ import java.util.List;
 
 @Singleton
 public class PrunableMessageServiceImpl implements PrunableMessageService {
-    private PrunableMessageTable table;
-    private Blockchain blockchain;
-    private AccountPublicKeyService accountPublicKeyService;
+    private final PrunableMessageTable table;
+    private final Blockchain blockchain;
+    private final AccountPublicKeyService accountPublicKeyService;
 
     @Inject
     public PrunableMessageServiceImpl(PrunableMessageTable table, Blockchain blockchain, AccountPublicKeyService accountPublicKeyService) {
