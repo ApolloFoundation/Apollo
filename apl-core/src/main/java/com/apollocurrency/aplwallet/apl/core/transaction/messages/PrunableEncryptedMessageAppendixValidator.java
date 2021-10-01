@@ -26,7 +26,11 @@ public class PrunableEncryptedMessageAppendixValidator extends AbstractAppendixV
     }
 
     @Override
-    public void validateStateDependent(Transaction transaction, PrunableEncryptedMessageAppendix appendix, int validationHeight) {
+    public void validateStateDependent(Transaction transaction, PrunableEncryptedMessageAppendix appendix, int validationHeight) throws AplException.NotCurrentlyValidException {
+        EncryptedData ed = appendix.getEncryptedData();
+        // validate here at the end of validation cycle to ensure, that transaction is not failed and data
+        // should be present for at least a minimum prunable lifetime
+        validateDataExistence(transaction, ed);
     }
 
     @Override
@@ -48,7 +52,6 @@ public class PrunableEncryptedMessageAppendixValidator extends AbstractAppendixV
         if (transaction.getRecipientId() == 0) {
             throw new AplException.NotValidException("Encrypted messages cannot be attached to transactions with no recipient");
         }
-        validateDataExistence(transaction, ed);
     }
 
     private void validateDataExistence(Transaction transaction, EncryptedData ed) throws AplException.NotCurrentlyValidException {
