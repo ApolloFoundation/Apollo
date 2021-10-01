@@ -60,7 +60,9 @@ public abstract class BasicDbTable<T extends DerivedEntity> extends DerivedDbTab
 
     private int doMultiversionRollback(int height) {
         log.trace("doMultiversionRollback(), height={}", height);
-        int deletedRecordsCount = 0;
+        int deletedRecordsCount = 0; // count for selected db_ids (only Searchable tables)
+        int deletedResult; // count for deleted db_ids (any table)
+
         TransactionalDataSource dataSource = databaseManager.getDataSource();
         if (!dataSource.isInTransaction()) {
             throw new IllegalStateException("Not in transaction");
@@ -89,11 +91,20 @@ public abstract class BasicDbTable<T extends DerivedEntity> extends DerivedDbTab
                 log.trace("Rollback table {} found {} records to update to latest", table, dbKeys.size());
             }
 
-            // select deleted DB_IDs and fire FTS events for searchable tables to remove data from FTS
-            deletedRecordsCount = super.getDeletedRecordsSendFtsEvent(
-                height, deletedRecordsCount, pstmtDelete, pstmtSelectDeletedIds);
+            pstmtSelectDeletedIds.setInt(1, height); // set height to select DB_IDs to be deleted
+            pstmtDelete.setInt(1, height); // set height to delete records
 
-            if (deletedRecordsCount > 0) {
+            // select deleted DB_IDs and fire FTS events for searchable tables to remove data from FTS
+            deletedRecordsCount = super.selectSearchableRecordsSendFtsEvent(deletedRecordsCount, pstmtSelectDeletedIds);
+            // deleting actual records for entity
+            deletedResult = pstmtDelete.executeUpdate();
+            if (this.isSearchable()) {
+                assert deletedResult == deletedRecordsCount; // check in debug mode only
+            }
+            log.trace("Deleted '{}' at height = {}, deletedCount = {}, deletedResult = {}",
+                this.table, height, deletedRecordsCount, deletedResult);
+
+            if (deletedResult > 0) {
                 log.trace("Rollback table {} deleting {} records", table, deletedRecordsCount);
             }
 
@@ -129,7 +140,7 @@ public abstract class BasicDbTable<T extends DerivedEntity> extends DerivedDbTab
             throw new RuntimeException(e.toString(), e);
         }
         log.trace("Rollback for table {} took {} ms", table, System.currentTimeMillis() - startTime);
-        return deletedRecordsCount;
+        return deletedResult;
     }
 
 

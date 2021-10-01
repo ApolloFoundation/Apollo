@@ -80,13 +80,25 @@ public abstract class DerivedDbTable<T extends DerivedEntity> implements Derived
         if (!dataSource.isInTransaction()) {
             throw new IllegalStateException("Not in transaction");
         }
-        int deletedRecordsCount = 0;
+        int deletedRecordsCount = 0; // count for selected db_ids (only Searchable tables)
+        int deletedResult = 0; // count for deleted db_ids (any table)
         try (Connection con = dataSource.getConnection();
              // delete records and return their 'db_id' values
              PreparedStatement pstmtDelete = con.prepareStatement("DELETE FROM " + table + " WHERE height > ?");
              PreparedStatement pstmtSelectDeletedIds = con.prepareStatement("SELECT DB_ID FROM " + table + " WHERE height > ?")) {
 
-            deletedRecordsCount = getDeletedRecordsSendFtsEvent(height, deletedRecordsCount, pstmtDelete, pstmtSelectDeletedIds);
+            pstmtSelectDeletedIds.setInt(1, height); // set height to select DB_IDs to be deleted
+            pstmtDelete.setInt(1, height); // set height to delete records
+
+            // select deleted DB_IDs and fire FTS events for searchable tables to remove data from FTS
+            deletedRecordsCount = selectSearchableRecordsSendFtsEvent(deletedRecordsCount, pstmtSelectDeletedIds);
+            // deleting actual records for entity
+            deletedResult = pstmtDelete.executeUpdate();
+            if (this.isSearchable()) {
+                assert deletedResult == deletedRecordsCount; // check in debug mode only
+            }
+            log.trace("Deleted '{}' at height = {}, deletedCount = {}, deletedResult = {}",
+                this.table, height, deletedRecordsCount, deletedResult);
 
         } catch (SQLException e) {
             throw new RuntimeException(e.toString(), e);
@@ -96,19 +108,16 @@ public abstract class DerivedDbTable<T extends DerivedEntity> implements Derived
 
     /**
      * Select DB_IDs, check if 'searchable' and fire data into FTS to delete
-     * @param height target height
      * @param deletedRecordsCount number of deleted records
-     * @param pstmtDelete sql for deleting records (the same records are selected db_id below)
      * @param pstmtSelectDeletedIds sql for selecting DB_ID records to deleted by previous sql
      * @return affected number
      * @throws SQLException error
      */
-    public int getDeletedRecordsSendFtsEvent(
-        int height, Integer deletedRecordsCount,
-        PreparedStatement pstmtDelete,
+    protected int selectSearchableRecordsSendFtsEvent(
+        Integer deletedRecordsCount,
         PreparedStatement pstmtSelectDeletedIds) throws SQLException {
+        // process only 'searchable'
         if (this.isSearchable()) {
-            pstmtSelectDeletedIds.setInt(1, height);
             // do select DB_IDs first and sent FTS events
             try (ResultSet deletedIds = pstmtSelectDeletedIds.executeQuery())  {
                 // operation data for current table
@@ -116,23 +125,11 @@ public abstract class DerivedDbTable<T extends DerivedEntity> implements Derived
                     DEFAULT_SCHEMA, this.table, Thread.currentThread().getName(),
                     FullTextOperationData.OperationType.DELETE);
                 deletedRecordsCount = ftsEventSender.fireEventsForDeletedIds(
-                    operationData, deletedIds, height, deletedRecordsCount);
+                    operationData, deletedIds, deletedRecordsCount);
             } catch (SQLException e) {
                 log.error("Error on selecting DB_ID to be deleted in FTS", e);
                 throw new RuntimeException(e.toString(), e);
             }
-            // deleting actual records for 'Searchable' entities
-            pstmtDelete.setInt(1, height);
-            int deletedResult = pstmtDelete.executeUpdate();
-            log.trace("Deleted '{}' at height = {}, deletedCount = {}, deletedResult = {}",
-                this.table, height, deletedRecordsCount, deletedResult);
-            assert deletedResult == deletedRecordsCount; // check in debug mode only
-        } else {
-            //  deleting actual records for 'NOT Searchable' entities
-            pstmtDelete.setInt(1, height);
-            deletedRecordsCount = pstmtDelete.executeUpdate();
-            log.trace("Deleted '{}' at height = {}, deletedCount = {}",
-                this.table, height, deletedRecordsCount);
         }
         return deletedRecordsCount;
     }

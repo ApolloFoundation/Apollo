@@ -4,7 +4,6 @@
 
 package com.apollocurrency.aplwallet.apl.core.dao.state.derived;
 
-import com.apollocurrency.aplwallet.apl.core.app.observer.events.TrimEvent;
 import com.apollocurrency.aplwallet.apl.core.dao.DbContainerBaseTest;
 import com.apollocurrency.aplwallet.apl.core.dao.state.keyfactory.DbKey;
 import com.apollocurrency.aplwallet.apl.core.dao.state.keyfactory.KeyFactory;

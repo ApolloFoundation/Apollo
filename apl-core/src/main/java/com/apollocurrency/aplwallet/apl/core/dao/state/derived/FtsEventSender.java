@@ -25,7 +25,6 @@ public class FtsEventSender {
     public Integer fireEventsForDeletedIds(
         FullTextOperationData operationData,
         ResultSet deletedIds,
-        int height,
         Integer deletedRecordsCount) throws SQLException {
         // take one DB_ID and fire Event to FTS with data
         while (deletedIds.next()) {
@@ -35,8 +34,8 @@ public class FtsEventSender {
             fullTextOperationDataEvent.select(new AnnotationLiteral<TrimEvent>() {})
                 .fire(operationData);
             ++deletedRecordsCount;
-            log.trace("Update lucene index for '{}' at height = {}, deletedRecordsCount = {} by data :\n{}",
-                operationData.getTableName(), height, deletedRecordsCount, operationData);
+            log.trace("Update lucene index for '{}' deletedRecordsCount = {} by data :\n{}",
+                operationData.getTableName(), deletedRecordsCount, operationData);
         }
         return deletedRecordsCount;
     }
