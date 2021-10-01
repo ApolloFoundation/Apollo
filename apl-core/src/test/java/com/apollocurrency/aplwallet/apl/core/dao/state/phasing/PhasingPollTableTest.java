@@ -165,11 +165,6 @@ public class PhasingPollTableTest extends EntityDbTableTest<PhasingPoll> {
 
 
     @Override
-    public Blockchain getBlockchain() {
-        return blockchain;
-    }
-
-    @Override
     public PhasingPoll valueToInsert() {
         return ptd.NEW_POLL;
     }

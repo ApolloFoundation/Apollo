@@ -155,11 +155,6 @@ public class DGSTagTableTest extends EntityDbTableTest<DGSTag> {
         return Comparator.comparing(DGSTag::getInStockCount).thenComparing(DGSTag::getTotalCount).reversed().thenComparing(DGSTag::getTag);
     }
 
-    @Override
-    public Blockchain getBlockchain() {
-        return blockchain;
-    }
-
     @Test
     void testGetByTag() {
         DGSTag dgsTag = table.get(dtd.TAG_10.getTag());
