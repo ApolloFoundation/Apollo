@@ -26,7 +26,11 @@ public class PrunableEncryptedMessageAppendixValidator extends AbstractAppendixV
     }
 
     @Override
-    public void validateStateDependent(Transaction transaction, PrunableEncryptedMessageAppendix appendix, int validationHeight) throws AplException.ValidationException {
+    public void validateStateDependent(Transaction transaction, PrunableEncryptedMessageAppendix appendix, int validationHeight) throws AplException.NotCurrentlyValidException {
+        EncryptedData ed = appendix.getEncryptedData();
+        // validate here at the end of validation cycle to ensure, that transaction is not failed and data
+        // should be present for at least a minimum prunable lifetime
+        validateDataExistence(transaction, ed);
     }
 
     @Override
@@ -35,9 +39,6 @@ public class PrunableEncryptedMessageAppendixValidator extends AbstractAppendixV
             throw new AplException.NotValidException("Cannot have both encrypted and prunable encrypted message attachments");
         }
         EncryptedData ed = appendix.getEncryptedData();
-        if (ed == null && timeService.getEpochTime() - transaction.getTimestamp() < blockchainConfig.getMinPrunableLifetime()) {
-            throw new AplException.NotCurrentlyValidException("Encrypted message has been pruned prematurely");
-        }
         if (ed != null) {
             if (ed.getData().length > Constants.MAX_PRUNABLE_ENCRYPTED_MESSAGE_LENGTH) {
                 throw new AplException.NotValidException(String.format("Message length %d exceeds max prunable encrypted message length %d",
@@ -50,6 +51,12 @@ public class PrunableEncryptedMessageAppendixValidator extends AbstractAppendixV
         }
         if (transaction.getRecipientId() == 0) {
             throw new AplException.NotValidException("Encrypted messages cannot be attached to transactions with no recipient");
+        }
+    }
+
+    private void validateDataExistence(Transaction transaction, EncryptedData ed) throws AplException.NotCurrentlyValidException {
+        if (ed == null && timeService.getEpochTime() - transaction.getTimestamp() < blockchainConfig.getMinPrunableLifetime()) {
+            throw new AplException.NotCurrentlyValidException("Encrypted message has been pruned prematurely");
         }
     }
 

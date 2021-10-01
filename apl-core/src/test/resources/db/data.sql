@@ -446,10 +446,9 @@ VALUES (10, 7995581942006468815, null, 0, 1, null, null, 0, 300000000, 12, 113, 
 ;
 
 INSERT into shuffling_data
-(DB_ID  	,SHUFFLING_ID  	,ACCOUNT_ID  	,DATA  	                                            ,TRANSACTION_TIMESTAMP  	,HEIGHT ) VALUES
-(1          ,100            ,105            ,'aced0005757200035b5b424bfd19156767db37020000787000000003757200025b42acf317f8060854e0020000787000000008ff112385a1f832bc7571007e000200000003ffffff7571007e0002000000051234567890'    ,150                        ,1),
-(2          ,101            ,110            ,'aced0005757200035b5b424bfd19156767db37020000787000000001757200025b42acf317f8060854e002000078700000000775849274935438
-'                                ,250                        ,5);
+(DB_ID  	,TRANSACTION_ID     ,SHUFFLING_ID  	,ACCOUNT_ID ,TRANSACTION_TIMESTAMP  	,HEIGHT  	,DATA  	                                                                                                                                                                            ) VALUES
+(1          ,10                 ,100            ,105         ,150                        ,1         ,'aced0005757200035b5b424bfd19156767db37020000787000000003757200025b42acf317f8060854e0020000787000000008ff112385a1f832bc7571007e000200000003ffffff7571007e0002000000051234567890'   ),
+(2          ,20                 ,101            ,110         ,250                        ,5         ,'aced0005757200035b5b424bfd19156767db37020000787000000001757200025b42acf317f8060854e002000078700000000775849274935438'                                                             );
 
 INSERT into `trim`
 (DB_ID,     HEIGHT,   DONE ) VALUES

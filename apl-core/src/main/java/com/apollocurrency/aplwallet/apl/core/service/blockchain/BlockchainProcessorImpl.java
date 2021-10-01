@@ -843,7 +843,7 @@ public class BlockchainProcessorImpl implements BlockchainProcessor {
                 lastException = e;
             }
             // recalculate total amount and payload length for a changed set of failed transactions
-            totals = new BlockTotals(block.getTransactions());
+            totals = new BlockTotals(blockTransactions);
         }
         throw lastException; // throw last caught exception, when unable to generate block for 2 iterations
     }

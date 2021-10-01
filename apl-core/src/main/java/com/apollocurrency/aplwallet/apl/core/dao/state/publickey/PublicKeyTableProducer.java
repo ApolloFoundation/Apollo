@@ -1,5 +1,5 @@
 /*
- * Copyright (c)  2018-2019. Apollo Foundation.
+ * Copyright (c)  2018-2021. Apollo Foundation.
  */
 
 package com.apollocurrency.aplwallet.apl.core.dao.state.publickey;

@@ -22,7 +22,7 @@ import com.apollocurrency.aplwallet.apl.core.dao.state.account.AccountTable;
 import com.apollocurrency.aplwallet.apl.core.dao.state.account.AccountTableInterface;
 import com.apollocurrency.aplwallet.apl.core.dao.state.publickey.PublicKeyTableProducer;
 import com.apollocurrency.aplwallet.apl.core.db.DatabaseManager;
-import com.apollocurrency.aplwallet.apl.core.db.JdbiConfiguration;
+import com.apollocurrency.aplwallet.apl.core.config.JdbiConfiguration;
 import com.apollocurrency.aplwallet.apl.core.entity.state.account.Account;
 import com.apollocurrency.aplwallet.apl.core.entity.state.account.PublicKey;
 import com.apollocurrency.aplwallet.apl.core.service.appdata.GeneratorService;
@@ -126,7 +126,7 @@ class ChildAccountTransactionTypeApplyTest extends DbContainerBaseTest {
     WeldInitiator weldInitiator = WeldInitiator.from(
         GlobalSyncImpl.class, DaoConfig.class, AccountGuaranteedBalanceTable.class, PublicKeyTableProducer.class,
         AccountServiceImpl.class, GenesisAccounts.class, BlockChainInfoServiceImpl.class, AccountPublicKeyServiceImpl.class,
-        FullTextConfigImpl.class, DerivedDbTablesRegistryImpl.class, PropertiesHolder.class,
+        FullTextConfigImpl.class, DerivedDbTablesRegistryImpl.class,
         DefaultBlockValidator.class, ReferencedTransactionService.class,
         AppendixApplierRegistry.class,
         AppendixValidatorRegistry.class,

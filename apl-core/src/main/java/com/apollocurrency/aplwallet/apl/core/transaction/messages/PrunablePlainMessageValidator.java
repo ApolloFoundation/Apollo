@@ -25,7 +25,10 @@ public class PrunablePlainMessageValidator extends AbstractAppendixValidator<Pru
     }
 
     @Override
-    public void validateStateDependent(Transaction transaction, PrunablePlainMessageAppendix appendix, int validationHeight) throws AplException.ValidationException {
+    public void validateStateDependent(Transaction transaction, PrunablePlainMessageAppendix appendix, int validationHeight) throws AplException.NotCurrentlyValidException {
+        if (appendix.getMessage() == null && timeService.getEpochTime() - transaction.getTimestamp() < blockchainConfig.getMinPrunableLifetime()) {
+            throw new AplException.NotCurrentlyValidException("Message has been pruned prematurely");
+        }
     }
 
     @Override
@@ -36,9 +39,6 @@ public class PrunablePlainMessageValidator extends AbstractAppendixValidator<Pru
         byte[] msg = appendix.getMessage();
         if (msg != null && msg.length > Constants.MAX_PRUNABLE_MESSAGE_LENGTH) {
             throw new AplException.NotValidException("Invalid prunable message length: " + msg.length);
-        }
-        if (msg == null && timeService.getEpochTime() - transaction.getTimestamp() < blockchainConfig.getMinPrunableLifetime()) {
-            throw new AplException.NotCurrentlyValidException("Message has been pruned prematurely");
         }
     }
 

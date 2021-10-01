@@ -8,7 +8,6 @@ import com.apollocurrency.aplwallet.apl.util.StringUtils;
 import com.apollocurrency.aplwallet.apl.util.env.dirprovider.ConfigDirProvider;
 import lombok.extern.slf4j.Slf4j;
 
-import javax.inject.Inject;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileNotFoundException;
@@ -25,7 +24,6 @@ public class UserResourceLocator implements ResourceLocator {
     private final ConfigDirProvider dirProvider;
     private final String configDir;
 
-    @Inject
     public UserResourceLocator(ConfigDirProvider dirProvider) {
         this.dirProvider = dirProvider;
         this.configDir = dirProvider.getConfigName();

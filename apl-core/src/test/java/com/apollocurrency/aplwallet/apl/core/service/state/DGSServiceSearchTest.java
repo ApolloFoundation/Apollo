@@ -16,7 +16,7 @@ import com.apollocurrency.aplwallet.apl.core.dao.state.dgs.DGSPublicFeedbackTabl
 import com.apollocurrency.aplwallet.apl.core.dao.state.dgs.DGSPurchaseTable;
 import com.apollocurrency.aplwallet.apl.core.dao.state.dgs.DGSTagTable;
 import com.apollocurrency.aplwallet.apl.core.db.DatabaseManager;
-import com.apollocurrency.aplwallet.apl.core.db.JdbiConfiguration;
+import com.apollocurrency.aplwallet.apl.core.config.JdbiConfiguration;
 import com.apollocurrency.aplwallet.apl.core.entity.state.dgs.DGSGoods;
 import com.apollocurrency.aplwallet.apl.core.service.blockchain.Blockchain;
 import com.apollocurrency.aplwallet.apl.core.service.blockchain.BlockchainProcessor;
