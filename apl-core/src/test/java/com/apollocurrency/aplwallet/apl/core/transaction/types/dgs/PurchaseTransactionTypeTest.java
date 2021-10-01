@@ -36,10 +36,12 @@ import static org.mockito.Mockito.doReturn;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.verifyNoInteractions;
+import static org.mockito.Mockito.when;
 
 @ExtendWith(MockitoExtension.class)
 class PurchaseTransactionTypeTest {
     public static final int GOODS_ID = 1;
+    public static final long SENDER_ID = 222L;
     @Mock
     BlockchainConfig blockchainConfig;
     @Mock
@@ -329,6 +331,25 @@ class PurchaseTransactionTypeTest {
     }
 
     @Test
+    void doValidateAttachment_notEnoughFunds() {
+        mockAttachment(5, 10);
+        DGSGoods goods = mock(DGSGoods.class);
+        doReturn(111L).when(goods).getSellerId();
+        doReturn(111L).when(tx).getRecipientId();
+        doReturn(false).when(goods).isDelisted();
+        doReturn(goods).when(dgsService).getGoods(GOODS_ID);
+        doReturn(5).when(goods).getQuantity();
+        doReturn(10L).when(goods).getPriceATM();
+        when(tx.getSenderId()).thenReturn(SENDER_ID);
+        when(accountService.getAccount(SENDER_ID)).thenReturn(sender);
+        when(sender.getUnconfirmedBalanceATM()).thenReturn(49L);
+
+        AplException.NotCurrentlyValidException ex = assertThrows(AplException.NotCurrentlyValidException.class, () -> type.doValidateAttachment(tx));
+
+        assertEquals("Sender 222 has not enough funds: required 50, but only has 49", ex.getMessage());
+    }
+
+    @Test
     void doValidateAttachmentOK() throws AplException.ValidationException {
         mockAttachment(5, 10);
         DGSGoods goods = mock(DGSGoods.class);
@@ -338,6 +359,9 @@ class PurchaseTransactionTypeTest {
         doReturn(goods).when(dgsService).getGoods(GOODS_ID);
         doReturn(5).when(goods).getQuantity();
         doReturn(10L).when(goods).getPriceATM();
+        when(tx.getSenderId()).thenReturn(SENDER_ID);
+        when(accountService.getAccount(SENDER_ID)).thenReturn(sender);
+        when(sender.getUnconfirmedBalanceATM()).thenReturn(50L);
 
         type.doValidateAttachment(tx);
 

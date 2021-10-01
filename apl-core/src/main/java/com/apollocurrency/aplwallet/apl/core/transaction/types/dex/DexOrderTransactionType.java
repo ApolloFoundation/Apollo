@@ -64,6 +64,10 @@ public class DexOrderTransactionType extends DexTransactionType {
 
     @Override
     public void doStateDependentValidation(Transaction transaction) throws AplException.ValidationException {
+        DexOrderAttachment attachment = (DexOrderAttachment) transaction.getAttachment();
+        if (attachment.getType() == OrderType.SELL.ordinal()) {
+            verifyAccountBalanceSufficiency(transaction, attachment.getOrderAmount());
+        }
     }
 
     @Override

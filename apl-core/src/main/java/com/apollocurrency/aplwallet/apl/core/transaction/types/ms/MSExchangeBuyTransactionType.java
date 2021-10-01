@@ -58,6 +58,14 @@ public class MSExchangeBuyTransactionType extends MSExchangeTransactionType {
     }
 
     @Override
+    public void doStateDependentValidation(Transaction transaction) throws AplException.ValidationException {
+        super.doStateDependentValidation(transaction);
+        MonetarySystemExchangeBuyAttachment attachment = (MonetarySystemExchangeBuyAttachment) transaction.getAttachment();
+        long orderTotalATM = Math.multiplyExact(attachment.getUnits(), attachment.getRateATM());
+        verifyAccountBalanceSufficiency(transaction, orderTotalATM);
+    }
+
+    @Override
     public boolean applyAttachmentUnconfirmed(Transaction transaction, Account senderAccount) {
         MonetarySystemExchangeBuyAttachment attachment = (MonetarySystemExchangeBuyAttachment) transaction.getAttachment();
         long orderTotalATM = Math.multiplyExact(attachment.getUnits(), attachment.getRateATM());

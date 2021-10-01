@@ -62,6 +62,18 @@ public class MSExchangeSellTransactionType extends MSExchangeTransactionType {
     }
 
     @Override
+    public void doStateDependentValidation(Transaction transaction) throws AplException.ValidationException {
+        super.doStateDependentValidation(transaction);
+        MonetarySystemExchangeSell attachment = (MonetarySystemExchangeSell) transaction.getAttachment();
+        long accountCurrencyBalance = accountCurrencyService.getUnconfirmedCurrencyUnits(transaction.getSenderId(), attachment.getCurrencyId());
+        if (accountCurrencyBalance < attachment.getUnits()) {
+            throw new AplException.NotCurrentlyValidException("Account " + Long.toUnsignedString(transaction.getSenderId())
+                + " has not enough " + Long.toUnsignedString(attachment.getCurrencyId()) + " currency to place currency " +
+                " exchange sell order: required " + attachment.getUnits() + ", but has only " + accountCurrencyBalance);
+        }
+    }
+
+    @Override
     public boolean applyAttachmentUnconfirmed(Transaction transaction, Account senderAccount) {
         MonetarySystemExchangeSell attachment = (MonetarySystemExchangeSell) transaction.getAttachment();
         if (accountCurrencyService.getUnconfirmedCurrencyUnits(senderAccount, attachment.getCurrencyId()) >= attachment.getUnits()) {

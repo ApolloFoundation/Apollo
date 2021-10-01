@@ -68,6 +68,12 @@ public class MSCurrencyTransferTransactionType extends MSTransactionType {
         if (!currencyService.isActive(currency)) {
             throw new AplException.NotCurrentlyValidException("Currency not currently active: " + attachment.getJSONObject());
         }
+        long accountCurrencyBalance = accountCurrencyService.getUnconfirmedCurrencyUnits(transaction.getSenderId(), attachment.getCurrencyId());
+        if (attachment.getUnits() > accountCurrencyBalance) {
+            throw new AplException.NotCurrentlyValidException("Account " + Long.toUnsignedString(transaction.getSenderId()) +
+                " has not enough currency " + Long.toUnsignedString(attachment.getCurrencyId()) + " to perform transfer: required " +
+                attachment.getUnits() + ", but has only " + accountCurrencyBalance);
+        }
     }
 
     @Override

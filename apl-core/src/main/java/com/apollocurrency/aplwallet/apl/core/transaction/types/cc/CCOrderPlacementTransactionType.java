@@ -21,7 +21,7 @@ abstract class CCOrderPlacementTransactionType extends CCTransactionType {
     }
 
     @Override
-    public final void doStateDependentValidation(Transaction transaction) throws AplException.ValidationException {
+    public void doStateDependentValidation(Transaction transaction) throws AplException.ValidationException {
         ColoredCoinsOrderPlacementAttachment attachment = (ColoredCoinsOrderPlacementAttachment) transaction.getAttachment();
         Asset asset = assetService.getAsset(attachment.getAssetId());
         if (asset != null && attachment.getQuantityATU() > asset.getInitialQuantityATU()) {

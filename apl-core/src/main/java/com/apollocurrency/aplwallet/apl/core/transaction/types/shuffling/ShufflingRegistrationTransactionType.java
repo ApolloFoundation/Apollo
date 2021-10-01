@@ -89,6 +89,21 @@ public class ShufflingRegistrationTransactionType extends ShufflingTransactionTy
         if (blockchain.getHeight() + shuffling.getBlocksRemaining() <= validator.getFinishValidationHeight(transaction, attachment)) {
             throw new AplException.NotCurrentlyValidException("Shuffling registration finishes in " + shuffling.getBlocksRemaining() + " blocks");
         }
+        HoldingType holdingType = shuffling.getHoldingType();
+
+        Account senderAccount = getAccountService().getAccount(transaction.getSenderId());
+        if (holdingType != HoldingType.APL) {
+            BlockchainConfig blockchainConfig = getBlockchainConfig();
+            long holdingBalance = holdingType.getUnconfirmedBalance(senderAccount, shuffling.getHoldingId());
+            if (holdingBalance < shuffling.getAmount()) {
+                throw new AplException.NotCurrentlyValidException("Account " + Long.toUnsignedString(senderAccount.getId())
+                    + " has not enough " + holdingType + " " + Long.toUnsignedString(shuffling.getHoldingId()) +
+                    " for shuffling registration: required " + shuffling.getAmount() + ", but has only " + holdingBalance);
+            }
+            verifyAccountBalanceSufficiency(transaction,  blockchainConfig.getShufflingDepositAtm());
+        } else {
+            verifyAccountBalanceSufficiency(transaction, shuffling.getAmount());
+        }
     }
 
     @Override

@@ -113,6 +113,7 @@ public class PurchaseTransactionType extends DigitalGoodsTransactionType {
         if (attachment.getQuantity() > goods.getQuantity() || attachment.getPriceATM() != goods.getPriceATM()) {
             throw new AplException.NotCurrentlyValidException("Goods price or quantity changed: " + attachment.getJSONObject());
         }
+        verifyAccountBalanceSufficiency(transaction, Math.multiplyExact(attachment.getQuantity(), attachment.getPriceATM()));
     }
 
     @Override

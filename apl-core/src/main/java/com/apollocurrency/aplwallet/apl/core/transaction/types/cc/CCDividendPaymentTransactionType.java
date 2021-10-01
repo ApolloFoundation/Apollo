@@ -123,7 +123,8 @@ public class CCDividendPaymentTransactionType extends CCTransactionType {
             throw new AplException.NotCurrentlyValidException("Last dividend payment for asset " + Long.toUnsignedString(attachment.getAssetId()) + " was less than 60 blocks ago at " + lastDividend.getHeight() + ", current height is " + blockchain.getHeight() + ", limit is one dividend per 60 blocks");
         }
         long dividendEligibleQuantityATU = asset.getQuantityATU() - accountAssetService.getAssetBalanceATU(transaction.getSenderId(), asset.getId(), attachment.getHeight());
-        MathUtils.safeMultiply(attachment.getAmountATMPerATU(), dividendEligibleQuantityATU, transaction);
+        long totalPayment = MathUtils.safeMultiply(attachment.getAmountATMPerATU(), dividendEligibleQuantityATU, transaction);
+        verifyAccountBalanceSufficiency(transaction, totalPayment);
     }
 
     @Override

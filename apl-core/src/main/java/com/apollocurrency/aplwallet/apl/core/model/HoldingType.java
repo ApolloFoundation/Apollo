@@ -68,7 +68,7 @@ public enum HoldingType {
 
         @Override
         public long getUnconfirmedBalance(Account account, long holdingId) {
-            return HoldingType.lookupAccountAssetService().getUnconfirmedAssetBalanceATU(account, holdingId);
+            return HoldingType.lookupAccountAssetService().getUnconfirmedAssetBalanceATU(account.getId(), holdingId);
         }
 
         @Override

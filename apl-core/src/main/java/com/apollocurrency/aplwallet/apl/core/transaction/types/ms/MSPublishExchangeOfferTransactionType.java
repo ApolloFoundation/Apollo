@@ -70,6 +70,13 @@ public class MSPublishExchangeOfferTransactionType extends MSTransactionType {
         if (!currencyService.isActive(currency)) {
             throw new AplException.NotCurrentlyValidException("Currency not currently active: " + attachment.getJSONObject());
         }
+        verifyAccountBalanceSufficiency(transaction, Math.multiplyExact(attachment.getInitialBuySupply(), attachment.getBuyRateATM()));
+        long accountCurrencyBalance = accountCurrencyService.getUnconfirmedCurrencyUnits(transaction.getSenderId(), attachment.getCurrencyId());
+        if (accountCurrencyBalance <= attachment.getInitialSellSupply()) {
+            throw new AplException.NotCurrentlyValidException("Account " + Long.toUnsignedString(transaction.getSenderId())
+                + " has not enough " + Long.toUnsignedString(attachment.getCurrencyId()) + " currency to publish currency " +
+                " exchange offer: required " + attachment.getInitialSellSupply() + ", but has only " + accountCurrencyBalance);
+        }
     }
 
     @Override

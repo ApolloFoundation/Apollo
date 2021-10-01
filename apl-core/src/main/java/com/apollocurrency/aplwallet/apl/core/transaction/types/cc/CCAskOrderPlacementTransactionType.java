@@ -64,12 +64,24 @@ public class CCAskOrderPlacementTransactionType extends CCOrderPlacementTransact
     @Override
     public boolean applyAttachmentUnconfirmed(Transaction transaction, Account senderAccount) {
         ColoredCoinsAskOrderPlacement attachment = (ColoredCoinsAskOrderPlacement) transaction.getAttachment();
-        long unconfirmedAssetBalance = accountAssetService.getUnconfirmedAssetBalanceATU(senderAccount, attachment.getAssetId());
+        long unconfirmedAssetBalance = accountAssetService.getUnconfirmedAssetBalanceATU(senderAccount.getId(), attachment.getAssetId());
         if (unconfirmedAssetBalance >= 0 && unconfirmedAssetBalance >= attachment.getQuantityATU()) {
             accountAssetService.addToUnconfirmedAssetBalanceATU(senderAccount, getLedgerEvent(), transaction.getId(), attachment.getAssetId(), -attachment.getQuantityATU());
             return true;
         }
         return false;
+    }
+
+    @Override
+    public void doStateDependentValidation(Transaction transaction) throws AplException.ValidationException {
+        super.doStateDependentValidation(transaction);
+        ColoredCoinsAskOrderPlacement attachment = (ColoredCoinsAskOrderPlacement) transaction.getAttachment();
+        long unconfirmedAssetBalance = accountAssetService.getUnconfirmedAssetBalanceATU(transaction.getSenderId(), attachment.getAssetId());
+        if (unconfirmedAssetBalance < attachment.getQuantityATU()) {
+            throw new AplException.NotCurrentlyValidException("Account " + Long.toUnsignedString(transaction.getSenderId())
+                + " has not enough " + Long.toUnsignedString(attachment.getAssetId()) + " asset balance to place ASK order, required: "
+                + attachment.getQuantityATU() + ", but only has " + unconfirmedAssetBalance);
+        }
     }
 
     @Override

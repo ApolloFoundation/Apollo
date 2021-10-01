@@ -586,8 +586,18 @@ public abstract class TransactionType {
         }
     }
 
+    protected void verifyAccountBalanceSufficiency(Transaction tx, long additionalAmount) throws AplException.NotCurrentlyValidException {
+        TransactionAmounts amounts = new TransactionAmounts(tx);
+        long transactionTotal = Math.addExact(amounts.getTotalAmountATM(), additionalAmount);
+        Account account = getAccountService().getAccount(tx.getSenderId());
+        if (account.getUnconfirmedBalanceATM() < transactionTotal) {
+            throw new AplException.NotCurrentlyValidException("Sender " + Long.toUnsignedString(tx.getSenderId()) +
+                " has not enough funds: required " + transactionTotal + ", but only has " + account.getUnconfirmedBalanceATM());
+        }
+    }
+
     @Getter
-    private class TransactionAmounts {
+    protected class TransactionAmounts {
         private final long feeATM;
         private final long amountATM;
 
@@ -605,4 +615,6 @@ public abstract class TransactionType {
             return Math.addExact(amountATM, feeATM);
         }
     }
+
+
 }

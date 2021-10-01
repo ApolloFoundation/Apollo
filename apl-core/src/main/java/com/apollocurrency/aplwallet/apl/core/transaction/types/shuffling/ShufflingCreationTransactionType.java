@@ -88,6 +88,20 @@ public class ShufflingCreationTransactionType extends ShufflingTransactionType {
                 throw new AplException.NotCurrentlyValidException("Currency is not active: " + currency.getCode());
             }
         }
+
+        Account senderAccount = getAccountService().getAccount(transaction.getSenderId());
+        if (holdingType != HoldingType.APL) {
+            BlockchainConfig blockchainConfig = getBlockchainConfig();
+            long holdingBalance = holdingType.getUnconfirmedBalance(senderAccount, attachment.getHoldingId());
+            if (holdingBalance < attachment.getAmount()) {
+                throw new AplException.NotCurrentlyValidException("Account " + Long.toUnsignedString(senderAccount.getId())
+                    + " has not enough " + holdingType + " " + Long.toUnsignedString(attachment.getHoldingId()) +
+                    " for shuffling creation: required " + attachment.getAmount() + ", but has only " + holdingBalance);
+            }
+            verifyAccountBalanceSufficiency(transaction,  blockchainConfig.getShufflingDepositAtm());
+        } else {
+            verifyAccountBalanceSufficiency(transaction, attachment.getAmount());
+        }
     }
 
     @Override

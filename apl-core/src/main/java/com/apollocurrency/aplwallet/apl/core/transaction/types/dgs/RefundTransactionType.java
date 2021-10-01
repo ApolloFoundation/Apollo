@@ -98,6 +98,7 @@ class RefundTransactionType extends DigitalGoodsTransactionType {
         if (purchase == null || purchase.getEncryptedGoods() == null || purchase.getRefundATM() != 0) {
             throw new AplException.NotCurrentlyValidException("Purchase does not exist or is not delivered or is already refunded");
         }
+        verifyAccountBalanceSufficiency(transaction, attachment.getRefundATM());
     }
 
     @Override

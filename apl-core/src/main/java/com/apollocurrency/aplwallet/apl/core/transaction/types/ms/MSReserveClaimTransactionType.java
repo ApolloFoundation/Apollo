@@ -60,6 +60,12 @@ public class MSReserveClaimTransactionType extends MSTransactionType {
         MonetarySystemReserveClaim attachment = (MonetarySystemReserveClaim) transaction.getAttachment();
         Currency currency = currencyService.getCurrency(attachment.getCurrencyId());
         currencyService.validate(currency, transaction);
+        long accountCurrencyBalance = accountCurrencyService.getUnconfirmedCurrencyUnits(transaction.getSenderId(), attachment.getCurrencyId());
+        if (accountCurrencyBalance < attachment.getUnits()) {
+            throw new AplException.NotCurrentlyValidException("Account " + Long.toUnsignedString(transaction.getSenderId())
+                + " has not enough " + Long.toUnsignedString(attachment.getCurrencyId()) + " currency to claim currency reserve: required "
+                + attachment.getUnits() + ", but has only " + accountCurrencyBalance);
+        }
     }
 
     @Override
