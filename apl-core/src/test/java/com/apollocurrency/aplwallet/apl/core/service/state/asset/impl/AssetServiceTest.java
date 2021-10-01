@@ -28,7 +28,6 @@ import org.mockito.junit.jupiter.MockitoExtension;
 
 import java.sql.ResultSet;
 import java.sql.SQLException;
-import java.util.concurrent.CompletableFuture;
 import java.util.stream.Stream;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
@@ -171,7 +170,6 @@ class AssetServiceTest {
         doReturn("asset").when(assetTable).getTableName();
         Event mockEvent = mock(Event.class);
         when(fullTextOperationDataEvent.select(new AnnotationLiteral<TrimEvent>() {})).thenReturn(mockEvent);
-        when(mockEvent.fireAsync(any())).thenReturn(new CompletableFuture());
 
         //WHEN
         service.addAsset(tr, attach);
@@ -193,7 +191,6 @@ class AssetServiceTest {
         doReturn("asset").when(assetTable).getTableName();
         Event mockEvent = mock(Event.class);
         when(fullTextOperationDataEvent.select(new AnnotationLiteral<TrimEvent>() {})).thenReturn(mockEvent);
-        when(mockEvent.fireAsync(any())).thenReturn(new CompletableFuture());
 
         //WHEN
         service.deleteAsset(tr, td.ASSET_0.getId(), 10L);

@@ -34,7 +34,6 @@ import com.apollocurrency.aplwallet.apl.core.service.fulltext.FullTextConfig;
 import com.apollocurrency.aplwallet.apl.core.service.fulltext.FullTextConfigImpl;
 import com.apollocurrency.aplwallet.apl.core.service.fulltext.FullTextOperationData;
 import com.apollocurrency.aplwallet.apl.core.service.fulltext.FullTextSearchService;
-import com.apollocurrency.aplwallet.apl.core.service.fulltext.FullTextSearchUpdaterImpl;
 import com.apollocurrency.aplwallet.apl.core.service.state.BlockChainInfoService;
 import com.apollocurrency.aplwallet.apl.core.service.state.DerivedDbTablesRegistryImpl;
 import com.apollocurrency.aplwallet.apl.core.service.state.DerivedTablesRegistry;
@@ -170,7 +169,6 @@ class CurrencyServiceTest {
         doReturn("currency").when(currencyTable).getTableName();
         Event mockEvent = mock(Event.class);
         when(fullTextOperationDataEvent.select(new AnnotationLiteral<TrimEvent>() {})).thenReturn(mockEvent);
-        when(mockEvent.fireAsync(any())).thenReturn(new CompletableFuture());
 
         //WHEN
         service.addCurrency(LedgerEvent.CURRENCY_ISSUANCE, tr.getId(), tr, account, attach);
@@ -350,7 +348,6 @@ class CurrencyServiceTest {
         doReturn("currency").when(currencyTable).getTableName();
         Event mockEvent = mock(Event.class);
         when(fullTextOperationDataEvent.select(new AnnotationLiteral<TrimEvent>() {})).thenReturn(mockEvent);
-        when(mockEvent.fireAsync(any())).thenReturn(new CompletableFuture());
 
         //WHEN
         service.delete(td.CURRENCY_3, LedgerEvent.CURRENCY_ISSUANCE, tr.getId(), account);

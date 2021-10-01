@@ -30,12 +30,10 @@ import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.util.Iterator;
 import java.util.List;
-import java.util.concurrent.CompletableFuture;
 import java.util.stream.Stream;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
-import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.doReturn;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.verify;
@@ -286,7 +284,6 @@ class PollServiceImplTest {
         doReturn(poll).when(pollTable).addPoll(transaction, attachment, timestamp, height);
         Event mockEvent = mock(Event.class);
         when(fullTextOperationDataEvent.select(new AnnotationLiteral<TrimEvent>() {})).thenReturn(mockEvent);
-        when(mockEvent.fireAsync(any())).thenReturn(new CompletableFuture());
 
         //WHEN
         pollService.addPoll(transaction, attachment);
