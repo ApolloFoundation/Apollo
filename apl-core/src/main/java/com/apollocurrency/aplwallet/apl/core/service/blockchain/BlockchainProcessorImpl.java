@@ -51,11 +51,11 @@ import com.apollocurrency.aplwallet.apl.core.exception.AplAcceptableTransactionV
 import com.apollocurrency.aplwallet.apl.core.exception.AplBlockException;
 import com.apollocurrency.aplwallet.apl.core.exception.AplBlockPayloadSizeMismatchException;
 import com.apollocurrency.aplwallet.apl.core.exception.AplBlockTotalAmountMismatchException;
+import com.apollocurrency.aplwallet.apl.core.exception.AplBlockTxErrorResultsMismatchException;
 import com.apollocurrency.aplwallet.apl.core.exception.AplTransactionValidationException;
 import com.apollocurrency.aplwallet.apl.core.exception.AplUnacceptableTransactionValidationException;
 import com.apollocurrency.aplwallet.apl.core.files.shards.ShardsDownloadService;
 import com.apollocurrency.aplwallet.apl.core.files.statcheck.FileDownloadDecision;
-import com.apollocurrency.aplwallet.apl.core.exception.AplBlockTxErrorResultsMismatchException;
 import com.apollocurrency.aplwallet.apl.core.model.Block;
 import com.apollocurrency.aplwallet.apl.core.model.BlockImpl;
 import com.apollocurrency.aplwallet.apl.core.model.BlockchainProcessorState;
@@ -82,7 +82,6 @@ import com.apollocurrency.aplwallet.apl.core.transaction.TransactionUtils;
 import com.apollocurrency.aplwallet.apl.core.transaction.TransactionValidator;
 import com.apollocurrency.aplwallet.apl.core.transaction.common.TxBContext;
 import com.apollocurrency.aplwallet.apl.core.transaction.messages.AbstractAppendix;
-import com.apollocurrency.aplwallet.apl.core.transaction.messages.Appendix;
 import com.apollocurrency.aplwallet.apl.core.transaction.messages.MessagingPhasingVoteCasting;
 import com.apollocurrency.aplwallet.apl.core.transaction.messages.PhasingAppendixV2;
 import com.apollocurrency.aplwallet.apl.core.transaction.messages.Prunable;
@@ -1345,7 +1344,6 @@ public class BlockchainProcessorImpl implements BlockchainProcessor {
                                       boolean fullValidation) throws BlockNotAcceptedException {
         long calculatedTotalFee = 0;
         MessageDigest digest = Crypto.sha256();
-        boolean hasPrunedTransactions = false;
         for (Transaction transaction : block.getTransactions()) {
             if (transaction.getTimestamp() > curTime + Constants.MAX_TIMEDRIFT) {
                 throw new BlockOutOfOrderException("Invalid transaction timestamp: " + transaction.getTimestamp()
@@ -1398,14 +1396,6 @@ public class BlockchainProcessorImpl implements BlockchainProcessor {
                     throw new TransactionNotAcceptedException(
                         "Transaction is a duplicate", transaction, blockSerializer.getJSONObject(block));
                 }
-                if (!hasPrunedTransactions) {
-                    for (Appendix appendage : transaction.getAppendages()) {
-                        if ((appendage instanceof Prunable) && !((Prunable) appendage).hasPrunableData()) {
-                            hasPrunedTransactions = true;
-                            break;
-                        }
-                    }
-                }
             }
             calculatedTotalFee += transaction.getFeeATM();
             Result result = getTxByteArrayResult(transaction);
@@ -1448,7 +1438,6 @@ public class BlockchainProcessorImpl implements BlockchainProcessor {
             invalidPhasedTransactions.forEach(phasingPollService::reject);
             int fromTimestamp = timeService.getEpochTime() - blockchainConfig.getMaxPrunableLifetime();
             log.trace(":accept: load transactions fromTimestamp={}", fromTimestamp);
-            boolean hasPrunedTransactions = false;
             for (Transaction transaction : block.getTransactions()) {
                 try {
                     transactionApplier.apply(transaction);
@@ -1457,7 +1446,6 @@ public class BlockchainProcessorImpl implements BlockchainProcessor {
                             prunableService.loadPrunable(transaction, appendage, true);
                             if ((appendage instanceof Prunable) &&
                                 !((Prunable) appendage).hasPrunableData()) {
-                                hasPrunedTransactions = true;
                                 Set<Long> prunableTransactions = prunableRestorationService.getPrunableTransactions();
                                 synchronized (prunableTransactions) {
                                     prunableTransactions.add(transaction.getId());
@@ -1548,7 +1536,7 @@ public class BlockchainProcessorImpl implements BlockchainProcessor {
                 log.error(e.toString(), e);
                 throw new RuntimeException(e.getMessage(), e);
             }
-            validateAfterExecution(block, hasPrunedTransactions);
+            validateAfterExecution(block);
 
             log.trace(":accept: fire AFTER_BLOCK_APPLY.");
             blockEvent.select(literal(BlockEventType.AFTER_BLOCK_APPLY)).fire(block);
@@ -1580,7 +1568,7 @@ public class BlockchainProcessorImpl implements BlockchainProcessor {
      * @throws AplBlockTxErrorResultsMismatchException when declared failed txs inside the block
      * differs from the failed txs obtained by the node during execution
      */
-    private void validateAfterExecution(Block block, boolean hasPrunedTransactions) {
+    private void validateAfterExecution(Block block) {
         block.checkFailedTxsExecution();
         long calculatedBlockAmount = block.getTransactions()
             .stream()
@@ -1598,8 +1586,12 @@ public class BlockchainProcessorImpl implements BlockchainProcessor {
                 int signedSize = result.size();
                 return tx.isFailed() ? signedSize : TransactionUtils.calculateFullSize(tx, signedSize);
             }).sum();
+        boolean hasPrunedTxs = block.getTransactions()
+            .stream()
+            .flatMap(e -> e.getAppendages().stream())
+            .anyMatch(e -> e instanceof Prunable && !((Prunable) e).hasPrunableData());
 
-        if (hasPrunedTransactions ? calculatedPayloadLength > block.getPayloadLength() : calculatedPayloadLength != block.getPayloadLength()) {
+        if (hasPrunedTxs ? calculatedPayloadLength > block.getPayloadLength() : calculatedPayloadLength != block.getPayloadLength()) {
             throw new AplBlockPayloadSizeMismatchException(block, calculatedPayloadLength);
         }
     }

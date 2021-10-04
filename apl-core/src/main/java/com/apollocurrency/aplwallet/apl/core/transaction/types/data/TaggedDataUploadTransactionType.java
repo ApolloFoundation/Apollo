@@ -5,9 +5,10 @@
 package com.apollocurrency.aplwallet.apl.core.transaction.types.data;
 
 import com.apollocurrency.aplwallet.apl.core.chainid.BlockchainConfig;
-import com.apollocurrency.aplwallet.apl.core.model.Transaction;
 import com.apollocurrency.aplwallet.apl.core.entity.state.account.Account;
 import com.apollocurrency.aplwallet.apl.core.entity.state.account.LedgerEvent;
+import com.apollocurrency.aplwallet.apl.core.exception.AplUnacceptableTransactionValidationException;
+import com.apollocurrency.aplwallet.apl.core.model.Transaction;
 import com.apollocurrency.aplwallet.apl.core.service.appdata.TimeService;
 import com.apollocurrency.aplwallet.apl.core.service.state.TaggedDataService;
 import com.apollocurrency.aplwallet.apl.core.service.state.account.AccountService;
@@ -60,8 +61,9 @@ public class TaggedDataUploadTransactionType extends DataTransactionType {
     public void doStateDependentValidation(Transaction transaction) throws AplException.ValidationException {
         TaggedDataUploadAttachment attachment = (TaggedDataUploadAttachment) transaction.getAttachment();
         // validate at the end of validation cycle to ensure, that transaction is not failed and data should be present for minPrunableLifetime
+        // transaction can not be failed by 'no data' reason
         if (attachment.getData() == null && timeService.getEpochTime() - transaction.getTimestamp() < getBlockchainConfig().getMinPrunableLifetime()) {
-            throw new AplException.NotCurrentlyValidException("Data has been pruned prematurely");
+            throw new AplUnacceptableTransactionValidationException("Data has been pruned prematurely", transaction);
         }
     }
 

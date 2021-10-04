@@ -5,10 +5,11 @@
 package com.apollocurrency.aplwallet.apl.core.transaction.types.data;
 
 import com.apollocurrency.aplwallet.apl.core.chainid.BlockchainConfig;
-import com.apollocurrency.aplwallet.apl.core.model.Transaction;
 import com.apollocurrency.aplwallet.apl.core.entity.prunable.TaggedData;
 import com.apollocurrency.aplwallet.apl.core.entity.state.account.Account;
 import com.apollocurrency.aplwallet.apl.core.entity.state.account.LedgerEvent;
+import com.apollocurrency.aplwallet.apl.core.exception.AplUnacceptableTransactionValidationException;
+import com.apollocurrency.aplwallet.apl.core.model.Transaction;
 import com.apollocurrency.aplwallet.apl.core.service.appdata.TimeService;
 import com.apollocurrency.aplwallet.apl.core.service.blockchain.Blockchain;
 import com.apollocurrency.aplwallet.apl.core.service.state.TaggedDataService;
@@ -71,6 +72,7 @@ public class TaggedDataExtendTransactionType extends DataTransactionType {
             throw new AplException.NotCurrentlyValidException("Data already extended, timestamp is " + taggedData.getTransactionTimestamp());
         }
         // Transaction is validated and not failed, so that data should be present for at least a minPrunableLifetime
+        // transaction can not be failed by 'no data' reason
         validateDataExistence(transaction, attachment);
     }
 
@@ -95,9 +97,9 @@ public class TaggedDataExtendTransactionType extends DataTransactionType {
         return false;
     }
 
-    private void validateDataExistence(Transaction transaction, TaggedDataExtendAttachment attachment) throws AplException.NotCurrentlyValidException {
+    private void validateDataExistence(Transaction transaction, TaggedDataExtendAttachment attachment) {
         if ((attachment.jsonIsPruned() || attachment.getData() == null) && timeService.getEpochTime() - transaction.getTimestamp() < getBlockchainConfig().getMinPrunableLifetime()) {
-            throw new AplException.NotCurrentlyValidException("Data has been pruned prematurely");
+            throw new AplUnacceptableTransactionValidationException("Data has been pruned prematurely", transaction);
         }
     }
 }

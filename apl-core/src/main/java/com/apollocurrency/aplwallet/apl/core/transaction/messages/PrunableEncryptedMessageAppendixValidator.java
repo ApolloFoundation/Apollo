@@ -5,6 +5,7 @@
 package com.apollocurrency.aplwallet.apl.core.transaction.messages;
 
 import com.apollocurrency.aplwallet.apl.core.chainid.BlockchainConfig;
+import com.apollocurrency.aplwallet.apl.core.exception.AplUnacceptableTransactionValidationException;
 import com.apollocurrency.aplwallet.apl.core.model.Transaction;
 import com.apollocurrency.aplwallet.apl.core.service.appdata.TimeService;
 import com.apollocurrency.aplwallet.apl.crypto.EncryptedData;
@@ -30,6 +31,7 @@ public class PrunableEncryptedMessageAppendixValidator extends AbstractAppendixV
         EncryptedData ed = appendix.getEncryptedData();
         // validate here at the end of validation cycle to ensure, that transaction is not failed and data
         // should be present for at least a minimum prunable lifetime
+        // transaction can not be failed by 'no data' reason and should be not accepted at all
         validateDataExistence(transaction, ed);
     }
 
@@ -54,9 +56,9 @@ public class PrunableEncryptedMessageAppendixValidator extends AbstractAppendixV
         }
     }
 
-    private void validateDataExistence(Transaction transaction, EncryptedData ed) throws AplException.NotCurrentlyValidException {
+    private void validateDataExistence(Transaction transaction, EncryptedData ed) {
         if (ed == null && timeService.getEpochTime() - transaction.getTimestamp() < blockchainConfig.getMinPrunableLifetime()) {
-            throw new AplException.NotCurrentlyValidException("Encrypted message has been pruned prematurely");
+            throw new AplUnacceptableTransactionValidationException("Encrypted message has been pruned prematurely", transaction);
         }
     }
 

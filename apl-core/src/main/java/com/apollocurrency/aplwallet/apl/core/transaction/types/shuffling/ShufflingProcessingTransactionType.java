@@ -5,6 +5,7 @@
 package com.apollocurrency.aplwallet.apl.core.transaction.types.shuffling;
 
 import com.apollocurrency.aplwallet.apl.core.chainid.BlockchainConfig;
+import com.apollocurrency.aplwallet.apl.core.exception.AplUnacceptableTransactionValidationException;
 import com.apollocurrency.aplwallet.apl.core.model.Transaction;
 import com.apollocurrency.aplwallet.apl.core.entity.state.account.Account;
 import com.apollocurrency.aplwallet.apl.core.entity.state.account.LedgerEvent;
@@ -182,9 +183,9 @@ public class ShufflingProcessingTransactionType extends ShufflingTransactionType
         return shufflingService.getData(attachment.getShufflingId(), transaction.getSenderId()) == null;
     }
 
-    private void validateDataExistence(Transaction transaction, byte[][] data) throws AplException.NotCurrentlyValidException {
+    private void validateDataExistence(Transaction transaction, byte[][] data) {
         if (data == null && timeService.getEpochTime() - transaction.getTimestamp() < getBlockchainConfig().getMinPrunableLifetime()) {
-            throw new AplException.NotCurrentlyValidException("Data has been pruned prematurely");
+            throw new AplUnacceptableTransactionValidationException("Data has been pruned prematurely", transaction);
         }
     }
 
