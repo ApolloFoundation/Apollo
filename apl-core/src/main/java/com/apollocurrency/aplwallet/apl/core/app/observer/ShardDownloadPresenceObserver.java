@@ -9,19 +9,20 @@ import com.apollocurrency.aplwallet.apl.core.app.GenesisImporter;
 import com.apollocurrency.aplwallet.apl.core.app.observer.events.ShardPresentEvent;
 import com.apollocurrency.aplwallet.apl.core.app.observer.events.ShardPresentEventType;
 import com.apollocurrency.aplwallet.apl.core.chainid.BlockchainConfigUpdater;
-import com.apollocurrency.aplwallet.apl.util.db.TransactionalDataSource;
 import com.apollocurrency.aplwallet.apl.core.dao.state.derived.DerivedTableInterface;
-import com.apollocurrency.aplwallet.apl.util.db.DbTransactionHelper;
-import com.apollocurrency.aplwallet.apl.core.model.Block;
-import com.apollocurrency.aplwallet.apl.core.files.shards.ShardPresentData;
 import com.apollocurrency.aplwallet.apl.core.db.DatabaseManager;
+import com.apollocurrency.aplwallet.apl.core.files.shards.ShardPresentData;
+import com.apollocurrency.aplwallet.apl.core.model.Block;
 import com.apollocurrency.aplwallet.apl.core.service.blockchain.Blockchain;
 import com.apollocurrency.aplwallet.apl.core.service.blockchain.BlockchainProcessor;
 import com.apollocurrency.aplwallet.apl.core.service.fulltext.FullTextSearchService;
 import com.apollocurrency.aplwallet.apl.core.service.state.DerivedTablesRegistry;
 import com.apollocurrency.aplwallet.apl.core.shard.ShardImporter;
+import com.apollocurrency.aplwallet.apl.util.db.DbTransactionHelper;
+import com.apollocurrency.aplwallet.apl.util.db.TransactionalDataSource;
 import lombok.extern.slf4j.Slf4j;
 
+import javax.enterprise.event.Event;
 import javax.enterprise.event.Observes;
 import javax.enterprise.event.ObservesAsync;
 import javax.inject.Inject;
@@ -50,14 +51,15 @@ public class ShardDownloadPresenceObserver {
     private final BlockchainConfigUpdater blockchainConfigUpdater;
     private final GenesisImporter genesisImporter;
     private final FullTextSearchService fullTextSearchService;
+    private final Event<ShardPresentData> shardImportEvent;
 
     @Inject
     public ShardDownloadPresenceObserver(DatabaseManager databaseManager, BlockchainProcessor blockchainProcessor,
                                          Blockchain blockchain, DerivedTablesRegistry derivedTablesRegistry,
                                          ShardImporter shardImporter, BlockchainConfigUpdater blockchainConfigUpdater,
                                          GenesisImporter genesisImporter,
-                                         FullTextSearchService fullTextSearchService
-    ) {
+                                         FullTextSearchService fullTextSearchService,
+                                         Event<ShardPresentData> shardImportEvent) {
         this.databaseManager = Objects.requireNonNull(databaseManager, "databaseManager is NULL");
         this.blockchainProcessor = Objects.requireNonNull(blockchainProcessor, "blockchainProcessor is NULL");
         this.derivedTablesRegistry = Objects.requireNonNull(derivedTablesRegistry, "derivedTablesRegistry is NULL");
@@ -66,6 +68,7 @@ public class ShardDownloadPresenceObserver {
         this.blockchainConfigUpdater = Objects.requireNonNull(blockchainConfigUpdater, "blockchainConfigUpdater is NULL");
         this.genesisImporter = Objects.requireNonNull(genesisImporter, "genesisImporter is NULL");
         this.fullTextSearchService = Objects.requireNonNull(fullTextSearchService, "fullTextSearchService is NULL");
+        this.shardImportEvent = shardImportEvent;
     }
 
     /**
@@ -99,6 +102,7 @@ public class ShardDownloadPresenceObserver {
             blockchainConfigUpdater.updateToLatestConfig();
             blockchainProcessor.resumeBlockchainDownloading(); // turn ON blockchain downloading
             log.info("onShardPresent() finished Last block height: " + lastBlock.getHeight());
+            shardImportEvent.fire(shardPresentData);
         });
     }
 
