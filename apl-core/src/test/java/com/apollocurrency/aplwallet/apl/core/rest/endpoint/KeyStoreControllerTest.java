@@ -7,6 +7,7 @@ package com.apollocurrency.aplwallet.apl.core.rest.endpoint;
 import com.apollocurrency.aplwallet.api.dto.WalletDTO;
 import com.apollocurrency.aplwallet.api.dto.account.CurrenciesWalletsDTO;
 import com.apollocurrency.aplwallet.api.dto.account.CurrencyWalletsDTO;
+import com.apollocurrency.aplwallet.api.dto.vault.UserKeyStoreDTO;
 import com.apollocurrency.aplwallet.apl.core.http.HttpParameterParserUtil;
 import com.apollocurrency.aplwallet.apl.core.service.appdata.SecureStorageService;
 import com.apollocurrency.aplwallet.apl.crypto.Convert;
@@ -14,6 +15,7 @@ import com.apollocurrency.aplwallet.apl.util.service.ElGamalEncryptor;
 import com.apollocurrency.aplwallet.vault.model.AplWalletKey;
 import com.apollocurrency.aplwallet.vault.model.ApolloFbWallet;
 import com.apollocurrency.aplwallet.vault.model.EthWalletKey;
+import com.apollocurrency.aplwallet.vault.model.UserKeyStore;
 import com.apollocurrency.aplwallet.vault.model.WalletKeysInfo;
 import com.apollocurrency.aplwallet.vault.service.KMSService;
 import lombok.SneakyThrows;
@@ -29,6 +31,7 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
+import javax.servlet.http.HttpServletRequest;
 import java.util.List;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
@@ -46,6 +49,8 @@ class KeyStoreControllerTest extends AbstractEndpointTest {
     KMSService kmsService;
     @Mock
     SecureStorageService secureStorageService;
+    @Mock
+    HttpServletRequest request;
     ElGamalEncryptor encryptor = mock(ElGamalEncryptor.class);
 
     @WeldSetup
@@ -59,6 +64,7 @@ class KeyStoreControllerTest extends AbstractEndpointTest {
     void setUp() {
         super.setUp();
         dispatcher.getRegistry().addSingletonResource( new KeyStoreController(kmsService, secureStorageService, maxKeystoreFileSize));
+        dispatcher.getDefaultContextObjects().put(HttpServletRequest.class, request);
     }
 
     @AfterEach
@@ -128,4 +134,81 @@ class KeyStoreControllerTest extends AbstractEndpointTest {
         CurrenciesWalletsDTO result = mapper.readValue(response.getContentAsString(), CurrenciesWalletsDTO.class);
         assertEquals(expected, result);
     }
+
+
+    @SneakyThrows
+    @Test
+    void downloadKeystore_legacyPassphraseParam() {
+        when(encryptor.elGamalDecrypt(PASSPHRASE)).thenReturn(PASSPHRASE);
+        when(kmsService.isWalletExist(ACCOUNT_ID_WITH_SECRET)).thenReturn(true);
+        when(kmsService.exportUserKeyStore(ACCOUNT_ID_WITH_SECRET, PASSPHRASE)).thenReturn(new UserKeyStore(SECRET.getBytes(), "Test keystore file"));
+        when(request.getParameter("passPhrase")).thenReturn(PASSPHRASE);
+
+        MockHttpResponse response = sendPostRequest("/keyStore/download", "account=" + Long.toUnsignedString(ACCOUNT_ID_WITH_SECRET)
+            + "&passPhrase=" + PASSPHRASE);
+
+        assertEquals(200, response.getStatus());
+        String json = response.getContentAsString();
+        UserKeyStoreDTO keyStore = mapper.readValue(json, UserKeyStoreDTO.class);
+        assertEquals(new UserKeyStoreDTO(SECRET.getBytes(), "Test keystore file"), keyStore);
+    }
+
+
+    @SneakyThrows
+    @Test
+    void downloadKeystore_correctPassphraseParam() {
+        when(encryptor.elGamalDecrypt(PASSPHRASE)).thenReturn(PASSPHRASE);
+        when(kmsService.isWalletExist(ACCOUNT_ID_WITH_SECRET)).thenReturn(true);
+        when(kmsService.exportUserKeyStore(ACCOUNT_ID_WITH_SECRET, PASSPHRASE)).thenReturn(new UserKeyStore(SECRET.getBytes(), "Test keystore file"));
+
+        MockHttpResponse response = sendPostRequest("/keyStore/download", "account=" + Long.toUnsignedString(ACCOUNT_ID_WITH_SECRET)
+            + "&passphrase=" + PASSPHRASE);
+
+        assertEquals(200, response.getStatus());
+        String json = response.getContentAsString();
+        UserKeyStoreDTO keyStore = mapper.readValue(json, UserKeyStoreDTO.class);
+        assertEquals(new UserKeyStoreDTO(SECRET.getBytes(), "Test keystore file"), keyStore);
+    }
+
+    @SneakyThrows
+    @Test
+    void downloadKeystore_noPassphrase() {
+        MockHttpResponse response = sendPostRequest("/keyStore/download", "account=" + Long.toUnsignedString(ACCOUNT_ID_WITH_SECRET));
+
+        assertEquals(200, response.getStatus());
+        String json = response.getContentAsString();
+        Error error = mapper.readValue(json, Error.class);
+        assertEquals("The mandatory parameter 'passphrase' is not specified", error.getErrorDescription());
+    }
+
+    @SneakyThrows
+    @Test
+    void downloadKeystore_noWallet() {
+        when(encryptor.elGamalDecrypt(PASSPHRASE)).thenReturn(PASSPHRASE);
+
+        MockHttpResponse response = sendPostRequest("/keyStore/download", "account=" + Long.toUnsignedString(ACCOUNT_ID_WITH_SECRET)
+        + "&passphrase=" + PASSPHRASE);
+
+        assertEquals(200, response.getStatus());
+        String json = response.getContentAsString();
+        Error error = mapper.readValue(json, Error.class);
+        assertEquals("Key for this account is not exist.", error.getErrorDescription());
+    }
+
+    @SneakyThrows
+    @Test
+    void downloadKeystore_keystoreNotExist() {
+        when(encryptor.elGamalDecrypt(PASSPHRASE)).thenReturn(PASSPHRASE);
+        when(kmsService.isWalletExist(ACCOUNT_ID_WITH_SECRET)).thenReturn(true);
+
+        MockHttpResponse response = sendPostRequest("/keyStore/download", "account=" + Long.toUnsignedString(ACCOUNT_ID_WITH_SECRET)
+            + "&passphrase=" + PASSPHRASE);
+
+        assertEquals(200, response.getStatus());
+        String json = response.getContentAsString();
+        Error error = mapper.readValue(json, Error.class);
+        assertEquals("Incorrect account id or passphrase", error.getErrorDescription());
+    }
+
+
 }

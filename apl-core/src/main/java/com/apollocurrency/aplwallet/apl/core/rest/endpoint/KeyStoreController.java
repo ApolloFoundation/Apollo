@@ -181,7 +181,16 @@ public class KeyStoreController {
     @PermitAll
     public Response downloadKeyStore(@FormParam("account") String account,
                                      @FormParam("passphrase") String passphraseReq, @Context HttpServletRequest request) throws ParameterException, IOException {
-        String passphraseStr = HttpParameterParserUtil.getPassphrase(passphraseReq, true);
+        String passphraseStr = HttpParameterParserUtil.getPassphrase(passphraseReq, false);
+        String passphraseReqAlternative = request.getParameter("passPhrase");
+
+        // backward compatibility with a previous 'passPhrase' parameter name
+        String passphraseStrAlternative = HttpParameterParserUtil.getPassphrase(passphraseReqAlternative, false);
+        String passphrase = passphraseStr == null ? passphraseStrAlternative : passphraseStr;
+        if (StringUtils.isBlank(passphrase)) {
+            return ResponseBuilder.apiError(ApiErrors.MISSING_PARAM, "passphrase").build();
+        }
+
         long accountId = RestParametersParser.parseAccountId(account);
 
 
@@ -189,7 +198,7 @@ public class KeyStoreController {
             return ResponseBuilder.apiError(ApiErrors.ACCOUNT_2FA_ERROR, "Key for this account is not exist.").build();
         }
 
-        UserKeyStore keyStore = KMSService.exportUserKeyStore(accountId, passphraseStr);
+        UserKeyStore keyStore = KMSService.exportUserKeyStore(accountId, passphrase);
         if (keyStore == null) {
             return ResponseBuilder.apiError(ApiErrors.ACCOUNT_2FA_ERROR, "Incorrect account id or passphrase").build();
         }
