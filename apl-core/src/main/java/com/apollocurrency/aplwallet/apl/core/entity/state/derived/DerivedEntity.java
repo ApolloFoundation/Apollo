@@ -17,8 +17,8 @@ public abstract class DerivedEntity implements Comparable<DerivedEntity>, Clonea
     protected static final int DEFAULT_HEIGHT = -1;
     private static final long DEFAULT_DB_ID = 0L;
     private volatile DbKey dbKey;
-    private long dbId;
-    private int height;
+    private volatile long dbId;
+    private volatile int height;
 
     public DerivedEntity(Long dbId, Integer height) {
         this.dbId = dbId == null ? DEFAULT_DB_ID : dbId;

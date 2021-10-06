@@ -4,6 +4,7 @@ import com.apollocurrency.aplwallet.apl.core.chainid.BlockchainConfig;
 import com.apollocurrency.aplwallet.apl.core.chainid.HeightConfig;
 import com.apollocurrency.aplwallet.apl.core.entity.state.account.Account;
 import com.apollocurrency.aplwallet.apl.core.entity.state.account.LedgerEvent;
+import com.apollocurrency.aplwallet.apl.core.entity.state.account.PublicKey;
 import com.apollocurrency.aplwallet.apl.core.exception.AplAcceptableTransactionValidationException;
 import com.apollocurrency.aplwallet.apl.core.exception.AplUnacceptableTransactionValidationException;
 import com.apollocurrency.aplwallet.apl.core.model.Transaction;
@@ -54,6 +55,8 @@ class TransactionTypeTest {
     Account recipient;
     @Mock
     HeightConfig heightConfig;
+    @Mock
+    PublicKey publicKey;
 
     @Test
     void isDuplicate_withTwoMaxPossible() {
@@ -237,6 +240,7 @@ class TransactionTypeTest {
     void apply_recipientAndSenderAreEquals() {
         mockTxAmounts();
         doReturn(200L).when(sender).getBalanceATM();
+        doReturn(publicKey).when(sender).getPublicKey();
         FallibleTransactionType type = prepareTransactionType();
 
         type.apply(transaction, sender, recipient);
@@ -244,6 +248,7 @@ class TransactionTypeTest {
         verify(type.getAccountService()).addToBalanceATM(sender, type.getLedgerEvent(), 0, -100, -10);
         verify(type.getAccountService()).addToBalanceAndUnconfirmedBalanceATM(recipient, type.getLedgerEvent(), 0, 100);
         verify(recipient).setBalanceATM(200);
+        verify(recipient).setPublicKey(publicKey);
         assertEquals(1, type.getApplicationCounter());
     }
 

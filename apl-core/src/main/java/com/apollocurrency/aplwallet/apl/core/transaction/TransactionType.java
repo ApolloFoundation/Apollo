@@ -273,6 +273,7 @@ public abstract class TransactionType {
             //refresh balance in case a debit account is equal to a credit one
             if (Objects.equals(senderAccount.getId(), recipientAccount.getId())) {
                 recipientAccount.setBalanceATM(senderAccount.getBalanceATM());
+                recipientAccount.setPublicKey(senderAccount.getPublicKey());
             }
             accountService.addToBalanceAndUnconfirmedBalanceATM(recipientAccount, getLedgerEvent(), transactionId, amount);
             log.info("{} transferred {} ATM to the recipient {}", senderAccount.balanceString(), transaction.getAmountATM(), recipientAccount.balanceString());

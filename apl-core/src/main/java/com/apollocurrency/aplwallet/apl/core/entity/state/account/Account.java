@@ -47,24 +47,24 @@ public class Account extends VersionedDeletableEntity {
 
     private final long id;
     @Setter
-    private long parentId;
+    private volatile long parentId;
     @Setter
-    private boolean multiSig;
+    private volatile boolean multiSig;
     @Setter
-    private AddressScope addrScope;
+    private volatile AddressScope addrScope;
 
     @Setter
-    private PublicKey publicKey;
+    private volatile PublicKey publicKey;
     @Setter
-    private long balanceATM;
+    private volatile long balanceATM;
     @Setter
-    private long unconfirmedBalanceATM;
+    private volatile long unconfirmedBalanceATM;
 
-    private long forgedBalanceATM;
+    private volatile long forgedBalanceATM;
     @Setter
-    private long activeLesseeId;
+    private volatile long activeLesseeId;
     @Setter
-    private Set<AccountControlType> controls;
+    private volatile Set<AccountControlType> controls;
 
     public Account(long id, DbKey dbKey) {
         this(id, DEFAULT_HEIGHT);
