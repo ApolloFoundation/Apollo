@@ -26,7 +26,7 @@ import com.apollocurrency.aplwallet.apl.core.http.APITag;
 import com.apollocurrency.aplwallet.apl.core.http.HttpParameterParserUtil;
 import com.apollocurrency.aplwallet.apl.core.http.JSONResponses;
 import com.apollocurrency.aplwallet.apl.core.transaction.messages.Attachment;
-import com.apollocurrency.aplwallet.apl.core.transaction.messages.ShufflingRegistration;
+import com.apollocurrency.aplwallet.apl.core.transaction.messages.ShufflingRegistrationAttachment;
 import com.apollocurrency.aplwallet.apl.util.exception.AplException;
 import org.json.simple.JSONStreamAware;
 
@@ -44,7 +44,7 @@ public final class ShufflingRegister extends CreateTransactionHandler {
     public JSONStreamAware processRequest(HttpServletRequest req) throws AplException {
         byte[] shufflingFullHash = HttpParameterParserUtil.getBytes(req, "shufflingFullHash", true);
 
-        Attachment attachment = new ShufflingRegistration(shufflingFullHash);
+        Attachment attachment = new ShufflingRegistrationAttachment(shufflingFullHash);
 
         Account account = HttpParameterParserUtil.getSenderAccount(req);
         if (account.getControls().contains(AccountControlType.PHASING_ONLY)) {

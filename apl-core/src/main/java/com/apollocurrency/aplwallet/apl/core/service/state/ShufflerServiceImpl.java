@@ -28,7 +28,7 @@ import com.apollocurrency.aplwallet.apl.core.transaction.FeeCalculator;
 import com.apollocurrency.aplwallet.apl.core.transaction.messages.Attachment;
 import com.apollocurrency.aplwallet.apl.core.transaction.messages.ShufflingAttachment;
 import com.apollocurrency.aplwallet.apl.core.transaction.messages.ShufflingCancellationAttachment;
-import com.apollocurrency.aplwallet.apl.core.transaction.messages.ShufflingRegistration;
+import com.apollocurrency.aplwallet.apl.core.transaction.messages.ShufflingRegistrationAttachment;
 import com.apollocurrency.aplwallet.apl.core.transaction.messages.ShufflingVerificationAttachment;
 import com.apollocurrency.aplwallet.apl.core.utils.CollectionUtil;
 import com.apollocurrency.aplwallet.apl.crypto.Convert;
@@ -444,7 +444,7 @@ public class ShufflerServiceImpl implements ShufflerService {
 
     private void submitRegister(Shuffler shuffler, Shuffling shuffling) {
         log.info("Account {} registering for shuffling {}", Long.toUnsignedString(shuffler.getAccountId()), Long.toUnsignedString(shuffling.getId()));
-        ShufflingRegistration attachment = new ShufflingRegistration(shuffler.getShufflingFullHash());
+        ShufflingRegistrationAttachment attachment = new ShufflingRegistrationAttachment(shuffler.getShufflingFullHash());
         submitTransaction(shuffler, attachment);
     }
 

@@ -5,20 +5,19 @@
 package com.apollocurrency.aplwallet.apl.core.transaction.types.shuffling;
 
 import com.apollocurrency.aplwallet.apl.core.chainid.BlockchainConfig;
-import com.apollocurrency.aplwallet.apl.core.model.Transaction;
 import com.apollocurrency.aplwallet.apl.core.entity.state.account.Account;
 import com.apollocurrency.aplwallet.apl.core.entity.state.account.LedgerEvent;
 import com.apollocurrency.aplwallet.apl.core.entity.state.asset.Asset;
 import com.apollocurrency.aplwallet.apl.core.entity.state.currency.Currency;
 import com.apollocurrency.aplwallet.apl.core.model.HoldingType;
+import com.apollocurrency.aplwallet.apl.core.model.Transaction;
 import com.apollocurrency.aplwallet.apl.core.service.state.ShufflingService;
 import com.apollocurrency.aplwallet.apl.core.service.state.account.AccountService;
 import com.apollocurrency.aplwallet.apl.core.service.state.asset.AssetService;
 import com.apollocurrency.aplwallet.apl.core.service.state.currency.CurrencyService;
 import com.apollocurrency.aplwallet.apl.core.transaction.TransactionType;
 import com.apollocurrency.aplwallet.apl.core.transaction.TransactionTypes;
-import com.apollocurrency.aplwallet.apl.core.transaction.messages.AbstractAttachment;
-import com.apollocurrency.aplwallet.apl.core.transaction.messages.ShufflingCreation;
+import com.apollocurrency.aplwallet.apl.core.transaction.messages.ShufflingCreationAttachment;
 import com.apollocurrency.aplwallet.apl.util.Constants;
 import com.apollocurrency.aplwallet.apl.util.exception.AplException;
 import org.json.simple.JSONObject;
@@ -59,18 +58,18 @@ public class ShufflingCreationTransactionType extends ShufflingTransactionType {
     }
 
     @Override
-    public AbstractAttachment parseAttachment(ByteBuffer buffer) {
-        return new ShufflingCreation(buffer);
+    public ShufflingCreationAttachment parseAttachment(ByteBuffer buffer) {
+        return new ShufflingCreationAttachment(buffer);
     }
 
     @Override
-    public AbstractAttachment parseAttachment(JSONObject attachmentData) {
-        return new ShufflingCreation(attachmentData);
+    public ShufflingCreationAttachment parseAttachment(JSONObject attachmentData) {
+        return new ShufflingCreationAttachment(attachmentData);
     }
 
     @Override
     public void doStateDependentValidation(Transaction transaction) throws AplException.ValidationException {
-        ShufflingCreation attachment = (ShufflingCreation) transaction.getAttachment();
+        ShufflingCreationAttachment attachment = (ShufflingCreationAttachment) transaction.getAttachment();
         HoldingType holdingType = attachment.getHoldingType();
         long amount = attachment.getAmount();
         if (holdingType == HoldingType.ASSET) {
@@ -106,7 +105,7 @@ public class ShufflingCreationTransactionType extends ShufflingTransactionType {
 
     @Override
     public void doStateIndependentValidation(Transaction transaction) throws AplException.ValidationException {
-        ShufflingCreation attachment = (ShufflingCreation) transaction.getAttachment();
+        ShufflingCreationAttachment attachment = (ShufflingCreationAttachment) transaction.getAttachment();
         HoldingType holdingType = attachment.getHoldingType();
         long amount = attachment.getAmount();
         if (holdingType == HoldingType.APL) {
@@ -138,7 +137,7 @@ public class ShufflingCreationTransactionType extends ShufflingTransactionType {
 
     @Override
     public boolean applyAttachmentUnconfirmed(Transaction transaction, Account senderAccount) {
-        ShufflingCreation attachment = (ShufflingCreation) transaction.getAttachment();
+        ShufflingCreationAttachment attachment = (ShufflingCreationAttachment) transaction.getAttachment();
         HoldingType holdingType = attachment.getHoldingType();
         if (holdingType != HoldingType.APL) {
             BlockchainConfig blockchainConfig = getBlockchainConfig();
@@ -159,13 +158,13 @@ public class ShufflingCreationTransactionType extends ShufflingTransactionType {
 
     @Override
     public void applyAttachment(Transaction transaction, Account senderAccount, Account recipientAccount) {
-        ShufflingCreation attachment = (ShufflingCreation) transaction.getAttachment();
+        ShufflingCreationAttachment attachment = (ShufflingCreationAttachment) transaction.getAttachment();
         shufflingService.addShuffling(transaction, attachment);
     }
 
     @Override
     public void undoAttachmentUnconfirmed(Transaction transaction, Account senderAccount) {
-        ShufflingCreation attachment = (ShufflingCreation) transaction.getAttachment();
+        ShufflingCreationAttachment attachment = (ShufflingCreationAttachment) transaction.getAttachment();
         HoldingType holdingType = attachment.getHoldingType();
         if (holdingType != HoldingType.APL) {
             holdingType.addToUnconfirmedBalance(senderAccount, getLedgerEvent(), transaction.getId(), attachment.getHoldingId(), attachment.getAmount());
@@ -177,7 +176,7 @@ public class ShufflingCreationTransactionType extends ShufflingTransactionType {
 
     @Override
     public boolean isDuplicate(Transaction transaction, Map<TransactionTypes.TransactionTypeSpec, Map<String, Integer>> duplicates) {
-        ShufflingCreation attachment = (ShufflingCreation) transaction.getAttachment();
+        ShufflingCreationAttachment attachment = (ShufflingCreationAttachment) transaction.getAttachment();
         if (attachment.getHoldingType() != HoldingType.CURRENCY) {
             return false;
         }

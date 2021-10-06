@@ -25,7 +25,7 @@ import com.apollocurrency.aplwallet.apl.core.dao.state.keyfactory.DbKey;
 import com.apollocurrency.aplwallet.apl.core.dao.state.shuffling.ShufflingTable;
 import com.apollocurrency.aplwallet.apl.core.entity.state.derived.VersionedDeletableEntity;
 import com.apollocurrency.aplwallet.apl.core.model.HoldingType;
-import com.apollocurrency.aplwallet.apl.core.transaction.messages.ShufflingCreation;
+import com.apollocurrency.aplwallet.apl.core.transaction.messages.ShufflingCreationAttachment;
 import com.apollocurrency.aplwallet.apl.crypto.Convert;
 import com.apollocurrency.aplwallet.apl.util.db.DbUtils;
 import lombok.EqualsAndHashCode;
@@ -50,7 +50,7 @@ public final class Shuffling extends VersionedDeletableEntity {
     private long assigneeAccountId;
     private byte[][] recipientPublicKeys;
 
-    public Shuffling(Transaction transaction, ShufflingCreation attachment, int height) {
+    public Shuffling(Transaction transaction, ShufflingCreationAttachment attachment, int height) {
         super(null, height);
         this.id = transaction.getId();
         this.holdingId = attachment.getHoldingId();

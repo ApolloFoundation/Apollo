@@ -12,7 +12,7 @@ import com.apollocurrency.aplwallet.apl.core.entity.state.shuffling.ShufflingPar
 import com.apollocurrency.aplwallet.apl.core.entity.state.shuffling.ShufflingStage;
 import com.apollocurrency.aplwallet.apl.core.transaction.messages.ShufflingAttachment;
 import com.apollocurrency.aplwallet.apl.core.transaction.messages.ShufflingCancellationAttachment;
-import com.apollocurrency.aplwallet.apl.core.transaction.messages.ShufflingCreation;
+import com.apollocurrency.aplwallet.apl.core.transaction.messages.ShufflingCreationAttachment;
 import com.apollocurrency.aplwallet.apl.core.transaction.messages.ShufflingProcessingAttachment;
 import com.apollocurrency.aplwallet.apl.core.transaction.messages.ShufflingRecipientsAttachment;
 import com.apollocurrency.aplwallet.apl.util.Listener;
@@ -51,7 +51,7 @@ public interface ShufflingService {
 
 
 
-    void addShuffling(Transaction transaction, ShufflingCreation attachment);
+    void addShuffling(Transaction transaction, ShufflingCreationAttachment attachment);
 
     int getShufflingCount();
 

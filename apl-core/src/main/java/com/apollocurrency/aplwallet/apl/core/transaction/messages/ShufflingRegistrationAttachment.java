@@ -5,6 +5,8 @@ package com.apollocurrency.aplwallet.apl.core.transaction.messages;
 
 import com.apollocurrency.aplwallet.apl.core.transaction.TransactionTypes;
 import com.apollocurrency.aplwallet.apl.crypto.Convert;
+import lombok.EqualsAndHashCode;
+import lombok.ToString;
 import org.json.simple.JSONObject;
 
 import java.nio.ByteBuffer;
@@ -14,22 +16,24 @@ import static com.apollocurrency.aplwallet.apl.core.transaction.TransactionTypes
 /**
  * @author al
  */
-public final class ShufflingRegistration extends AbstractAttachment implements ShufflingAttachment {
+@EqualsAndHashCode(callSuper = true)
+@ToString
+public final class ShufflingRegistrationAttachment extends AbstractAttachment implements ShufflingAttachment {
 
     final byte[] shufflingFullHash;
 
-    public ShufflingRegistration(ByteBuffer buffer) {
+    public ShufflingRegistrationAttachment(ByteBuffer buffer) {
         super(buffer);
         this.shufflingFullHash = new byte[32];
         buffer.get(this.shufflingFullHash);
     }
 
-    public ShufflingRegistration(JSONObject attachmentData) {
+    public ShufflingRegistrationAttachment(JSONObject attachmentData) {
         super(attachmentData);
         this.shufflingFullHash = Convert.parseHexString((String) attachmentData.get("shufflingFullHash"));
     }
 
-    public ShufflingRegistration(byte[] shufflingFullHash) {
+    public ShufflingRegistrationAttachment(byte[] shufflingFullHash) {
         this.shufflingFullHash = shufflingFullHash;
     }
 

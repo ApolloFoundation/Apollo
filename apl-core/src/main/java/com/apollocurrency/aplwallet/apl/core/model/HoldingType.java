@@ -9,9 +9,6 @@ import com.apollocurrency.aplwallet.apl.core.entity.state.account.LedgerEvent;
 import com.apollocurrency.aplwallet.apl.core.service.state.account.AccountAssetService;
 import com.apollocurrency.aplwallet.apl.core.service.state.account.AccountCurrencyService;
 import com.apollocurrency.aplwallet.apl.core.service.state.account.AccountService;
-import com.apollocurrency.aplwallet.apl.core.service.state.account.impl.AccountAssetServiceImpl;
-import com.apollocurrency.aplwallet.apl.core.service.state.account.impl.AccountCurrencyServiceImpl;
-import com.apollocurrency.aplwallet.apl.core.service.state.account.impl.AccountServiceImpl;
 
 import javax.enterprise.inject.spi.CDI;
 
@@ -129,23 +126,29 @@ public enum HoldingType {
         this.code = 0;
     }
 
+    public static void resetDependencies() {
+        accountAssetService = null;
+        accountCurrencyService = null;
+        accountService = null;
+    }
+
     private static AccountService lookupAccountService() {
         if (accountService == null) {
-            accountService = CDI.current().select(AccountServiceImpl.class).get();
+            accountService = CDI.current().select(AccountService.class).get();
         }
         return accountService;
     }
 
     private static AccountAssetService lookupAccountAssetService() {
         if (accountAssetService == null) {
-            accountAssetService = CDI.current().select(AccountAssetServiceImpl.class).get();
+            accountAssetService = CDI.current().select(AccountAssetService.class).get();
         }
         return accountAssetService;
     }
 
     private static AccountCurrencyService lookupAccountCurrencyService() {
         if (accountCurrencyService == null) {
-            accountCurrencyService = CDI.current().select(AccountCurrencyServiceImpl.class).get();
+            accountCurrencyService = CDI.current().select(AccountCurrencyService.class).get();
         }
         return accountCurrencyService;
     }

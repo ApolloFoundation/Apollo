@@ -28,7 +28,7 @@ import com.apollocurrency.aplwallet.apl.core.service.state.account.AccountPublic
 import com.apollocurrency.aplwallet.apl.core.service.state.account.AccountService;
 import com.apollocurrency.aplwallet.apl.core.transaction.messages.ShufflingAttachment;
 import com.apollocurrency.aplwallet.apl.core.transaction.messages.ShufflingCancellationAttachment;
-import com.apollocurrency.aplwallet.apl.core.transaction.messages.ShufflingCreation;
+import com.apollocurrency.aplwallet.apl.core.transaction.messages.ShufflingCreationAttachment;
 import com.apollocurrency.aplwallet.apl.core.transaction.messages.ShufflingProcessingAttachment;
 import com.apollocurrency.aplwallet.apl.core.transaction.messages.ShufflingRecipientsAttachment;
 import com.apollocurrency.aplwallet.apl.crypto.AnonymouslyEncryptedData;
@@ -206,7 +206,7 @@ public class ShufflingServiceImpl implements ShufflingService {
     }
 
     @Override
-    public void addShuffling(Transaction transaction, ShufflingCreation attachment) {
+    public void addShuffling(Transaction transaction, ShufflingCreationAttachment attachment) {
         Shuffling shuffling = new Shuffling(transaction, attachment, blockchain.getHeight());
         shufflingRepository.insert(shuffling);
         addParticipant(shuffling.getId(), transaction.getSenderId(), 0);

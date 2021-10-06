@@ -6,6 +6,7 @@ package com.apollocurrency.aplwallet.apl.core.transaction.messages;
 import com.apollocurrency.aplwallet.apl.core.model.HoldingType;
 import com.apollocurrency.aplwallet.apl.core.transaction.TransactionTypes;
 import com.apollocurrency.aplwallet.apl.crypto.Convert;
+import lombok.EqualsAndHashCode;
 import org.json.simple.JSONObject;
 
 import java.nio.ByteBuffer;
@@ -13,7 +14,8 @@ import java.nio.ByteBuffer;
 /**
  * @author al
  */
-public final class ShufflingCreation extends AbstractAttachment {
+@EqualsAndHashCode(callSuper = true)
+public final class ShufflingCreationAttachment extends AbstractAttachment {
 
     final long holdingId;
     final HoldingType holdingType;
@@ -21,7 +23,7 @@ public final class ShufflingCreation extends AbstractAttachment {
     final byte participantCount;
     final short registrationPeriod;
 
-    public ShufflingCreation(ByteBuffer buffer) {
+    public ShufflingCreationAttachment(ByteBuffer buffer) {
         super(buffer);
         this.holdingId = buffer.getLong();
         this.holdingType = HoldingType.get(buffer.get());
@@ -30,7 +32,7 @@ public final class ShufflingCreation extends AbstractAttachment {
         this.registrationPeriod = buffer.getShort();
     }
 
-    public ShufflingCreation(JSONObject attachmentData) {
+    public ShufflingCreationAttachment(JSONObject attachmentData) {
         super(attachmentData);
         this.holdingId = Convert.parseUnsignedLong((String) attachmentData.get("holding"));
         this.holdingType = HoldingType.get(((Number) attachmentData.get("holdingType")).byteValue());
@@ -39,7 +41,7 @@ public final class ShufflingCreation extends AbstractAttachment {
         this.registrationPeriod = ((Number) attachmentData.get("registrationPeriod")).shortValue();
     }
 
-    public ShufflingCreation(long holdingId, HoldingType holdingType, long amount, byte participantCount, short registrationPeriod) {
+    public ShufflingCreationAttachment(long holdingId, HoldingType holdingType, long amount, byte participantCount, short registrationPeriod) {
         this.holdingId = holdingId;
         this.holdingType = holdingType;
         this.amount = amount;
