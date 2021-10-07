@@ -5,6 +5,8 @@ package com.apollocurrency.aplwallet.apl.core.transaction.messages;
 
 import com.apollocurrency.aplwallet.apl.core.transaction.TransactionTypes;
 import com.apollocurrency.aplwallet.apl.crypto.Convert;
+import lombok.EqualsAndHashCode;
+import lombok.ToString;
 import org.json.simple.JSONObject;
 
 import java.nio.ByteBuffer;
@@ -12,7 +14,9 @@ import java.nio.ByteBuffer;
 /**
  * @author al
  */
-public final class MonetarySystemPublishExchangeOffer extends AbstractAttachment implements MonetarySystemAttachment {
+@EqualsAndHashCode(callSuper = true)
+@ToString
+public final class MSPublishExchangeOfferAttachment extends AbstractAttachment implements MonetarySystemAttachment {
 
     final long currencyId;
     final long buyRateATM;
@@ -23,7 +27,7 @@ public final class MonetarySystemPublishExchangeOffer extends AbstractAttachment
     final long initialSellSupply;
     final int expirationHeight;
 
-    public MonetarySystemPublishExchangeOffer(ByteBuffer buffer) {
+    public MSPublishExchangeOfferAttachment(ByteBuffer buffer) {
         super(buffer);
         this.currencyId = buffer.getLong();
         this.buyRateATM = buffer.getLong();
@@ -35,7 +39,7 @@ public final class MonetarySystemPublishExchangeOffer extends AbstractAttachment
         this.expirationHeight = buffer.getInt();
     }
 
-    public MonetarySystemPublishExchangeOffer(JSONObject attachmentData) {
+    public MSPublishExchangeOfferAttachment(JSONObject attachmentData) {
         super(attachmentData);
         this.currencyId = Convert.parseUnsignedLong((String) attachmentData.get("currency"));
         this.buyRateATM = Convert.parseLong(attachmentData.get("buyRateATM"));
@@ -47,7 +51,7 @@ public final class MonetarySystemPublishExchangeOffer extends AbstractAttachment
         this.expirationHeight = ((Number) attachmentData.get("expirationHeight")).intValue();
     }
 
-    public MonetarySystemPublishExchangeOffer(long currencyId, long buyRateATM, long sellRateATM, long totalBuyLimit, long totalSellLimit, long initialBuySupply, long initialSellSupply, int expirationHeight) {
+    public MSPublishExchangeOfferAttachment(long currencyId, long buyRateATM, long sellRateATM, long totalBuyLimit, long totalSellLimit, long initialBuySupply, long initialSellSupply, int expirationHeight) {
         this.currencyId = currencyId;
         this.buyRateATM = buyRateATM;
         this.sellRateATM = sellRateATM;

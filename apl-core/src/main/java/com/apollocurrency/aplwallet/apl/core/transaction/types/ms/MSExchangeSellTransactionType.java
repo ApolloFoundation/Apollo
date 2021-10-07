@@ -14,7 +14,7 @@ import com.apollocurrency.aplwallet.apl.core.service.state.currency.CurrencyExch
 import com.apollocurrency.aplwallet.apl.core.service.state.currency.CurrencyService;
 import com.apollocurrency.aplwallet.apl.core.service.state.exchange.ExchangeRequestService;
 import com.apollocurrency.aplwallet.apl.core.transaction.TransactionTypes;
-import com.apollocurrency.aplwallet.apl.core.transaction.messages.MonetarySystemExchangeSell;
+import com.apollocurrency.aplwallet.apl.core.transaction.messages.MSExchangeSellAttachment;
 import com.apollocurrency.aplwallet.apl.util.exception.AplException;
 import org.json.simple.JSONObject;
 
@@ -52,19 +52,19 @@ public class MSExchangeSellTransactionType extends MSExchangeTransactionType {
     }
 
     @Override
-    public MonetarySystemExchangeSell parseAttachment(ByteBuffer buffer) throws AplException.NotValidException {
-        return new MonetarySystemExchangeSell(buffer);
+    public MSExchangeSellAttachment parseAttachment(ByteBuffer buffer) throws AplException.NotValidException {
+        return new MSExchangeSellAttachment(buffer);
     }
 
     @Override
-    public MonetarySystemExchangeSell parseAttachment(JSONObject attachmentData) throws AplException.NotValidException {
-        return new MonetarySystemExchangeSell(attachmentData);
+    public MSExchangeSellAttachment parseAttachment(JSONObject attachmentData) throws AplException.NotValidException {
+        return new MSExchangeSellAttachment(attachmentData);
     }
 
     @Override
     public void doStateDependentValidation(Transaction transaction) throws AplException.ValidationException {
         super.doStateDependentValidation(transaction);
-        MonetarySystemExchangeSell attachment = (MonetarySystemExchangeSell) transaction.getAttachment();
+        MSExchangeSellAttachment attachment = (MSExchangeSellAttachment) transaction.getAttachment();
         long accountCurrencyBalance = accountCurrencyService.getUnconfirmedCurrencyUnits(transaction.getSenderId(), attachment.getCurrencyId());
         if (accountCurrencyBalance < attachment.getUnits()) {
             throw new AplException.NotCurrentlyValidException("Account " + Long.toUnsignedString(transaction.getSenderId())
@@ -75,7 +75,7 @@ public class MSExchangeSellTransactionType extends MSExchangeTransactionType {
 
     @Override
     public boolean applyAttachmentUnconfirmed(Transaction transaction, Account senderAccount) {
-        MonetarySystemExchangeSell attachment = (MonetarySystemExchangeSell) transaction.getAttachment();
+        MSExchangeSellAttachment attachment = (MSExchangeSellAttachment) transaction.getAttachment();
         if (accountCurrencyService.getUnconfirmedCurrencyUnits(senderAccount, attachment.getCurrencyId()) >= attachment.getUnits()) {
             accountCurrencyService.addToUnconfirmedCurrencyUnits(senderAccount, getLedgerEvent(), transaction.getId(), attachment.getCurrencyId(), -attachment.getUnits());
             return true;
@@ -85,7 +85,7 @@ public class MSExchangeSellTransactionType extends MSExchangeTransactionType {
 
     @Override
     public void undoAttachmentUnconfirmed(Transaction transaction, Account senderAccount) {
-        MonetarySystemExchangeSell attachment = (MonetarySystemExchangeSell) transaction.getAttachment();
+        MSExchangeSellAttachment attachment = (MSExchangeSellAttachment) transaction.getAttachment();
         Currency currency = currencyService.getCurrency(attachment.getCurrencyId());
         if (currency != null) {
             accountCurrencyService.addToUnconfirmedCurrencyUnits(senderAccount, getLedgerEvent(), transaction.getId(), attachment.getCurrencyId(), attachment.getUnits());
@@ -94,7 +94,7 @@ public class MSExchangeSellTransactionType extends MSExchangeTransactionType {
 
     @Override
     public void applyAttachment(Transaction transaction, Account senderAccount, Account recipientAccount) {
-        MonetarySystemExchangeSell attachment = (MonetarySystemExchangeSell) transaction.getAttachment();
+        MSExchangeSellAttachment attachment = (MSExchangeSellAttachment) transaction.getAttachment();
         exchangeRequestService.addExchangeRequest(transaction, attachment);
         exchangeOfferFacade.exchangeCurrencyForAPL(
             transaction, senderAccount, attachment.getCurrencyId(), attachment.getRateATM(), attachment.getUnits());

@@ -11,17 +11,17 @@ import java.nio.ByteBuffer;
 /**
  * @author al
  */
-public final class MonetarySystemExchangeSell extends MonetarySystemExchangeAttachment {
+public final class MSExchangeSellAttachment extends MonetarySystemExchangeAttachment {
 
-    public MonetarySystemExchangeSell(ByteBuffer buffer) {
+    public MSExchangeSellAttachment(ByteBuffer buffer) {
         super(buffer);
     }
 
-    public MonetarySystemExchangeSell(JSONObject attachmentData) {
+    public MSExchangeSellAttachment(JSONObject attachmentData) {
         super(attachmentData);
     }
 
-    public MonetarySystemExchangeSell(long currencyId, long rateATM, long units) {
+    public MSExchangeSellAttachment(long currencyId, long rateATM, long units) {
         super(currencyId, rateATM, units);
     }
 

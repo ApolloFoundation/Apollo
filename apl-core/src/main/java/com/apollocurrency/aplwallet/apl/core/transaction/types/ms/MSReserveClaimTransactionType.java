@@ -12,7 +12,7 @@ import com.apollocurrency.aplwallet.apl.core.service.state.account.AccountCurren
 import com.apollocurrency.aplwallet.apl.core.service.state.account.AccountService;
 import com.apollocurrency.aplwallet.apl.core.service.state.currency.CurrencyService;
 import com.apollocurrency.aplwallet.apl.core.transaction.TransactionTypes;
-import com.apollocurrency.aplwallet.apl.core.transaction.messages.MonetarySystemReserveClaim;
+import com.apollocurrency.aplwallet.apl.core.transaction.messages.MSReserveClaimAttachment;
 import com.apollocurrency.aplwallet.apl.util.exception.AplException;
 import org.json.simple.JSONObject;
 
@@ -25,7 +25,8 @@ public class MSReserveClaimTransactionType extends MSTransactionType {
     private final AccountCurrencyService accountCurrencyService;
 
     @Inject
-    public MSReserveClaimTransactionType(BlockchainConfig blockchainConfig, AccountService accountService, CurrencyService currencyService, AccountCurrencyService accountCurrencyService) {
+    public MSReserveClaimTransactionType(BlockchainConfig blockchainConfig, AccountService accountService,
+                                         CurrencyService currencyService, AccountCurrencyService accountCurrencyService) {
         super(blockchainConfig, accountService, currencyService);
         this.accountCurrencyService = accountCurrencyService;
     }
@@ -46,18 +47,18 @@ public class MSReserveClaimTransactionType extends MSTransactionType {
     }
 
     @Override
-    public MonetarySystemReserveClaim parseAttachment(ByteBuffer buffer) throws AplException.NotValidException {
-        return new MonetarySystemReserveClaim(buffer);
+    public MSReserveClaimAttachment parseAttachment(ByteBuffer buffer) throws AplException.NotValidException {
+        return new MSReserveClaimAttachment(buffer);
     }
 
     @Override
-    public MonetarySystemReserveClaim parseAttachment(JSONObject attachmentData) throws AplException.NotValidException {
-        return new MonetarySystemReserveClaim(attachmentData);
+    public MSReserveClaimAttachment parseAttachment(JSONObject attachmentData) throws AplException.NotValidException {
+        return new MSReserveClaimAttachment(attachmentData);
     }
 
     @Override
     public void doStateDependentValidation(Transaction transaction) throws AplException.ValidationException {
-        MonetarySystemReserveClaim attachment = (MonetarySystemReserveClaim) transaction.getAttachment();
+        MSReserveClaimAttachment attachment = (MSReserveClaimAttachment) transaction.getAttachment();
         Currency currency = currencyService.getCurrency(attachment.getCurrencyId());
         currencyService.validate(currency, transaction);
         long accountCurrencyBalance = accountCurrencyService.getUnconfirmedCurrencyUnits(transaction.getSenderId(), attachment.getCurrencyId());
@@ -70,7 +71,7 @@ public class MSReserveClaimTransactionType extends MSTransactionType {
 
     @Override
     public void doStateIndependentValidation(Transaction transaction) throws AplException.ValidationException {
-        MonetarySystemReserveClaim attachment = (MonetarySystemReserveClaim) transaction.getAttachment();
+        MSReserveClaimAttachment attachment = (MSReserveClaimAttachment) transaction.getAttachment();
         if (attachment.getUnits() <= 0) {
             throw new AplException.NotValidException("Reserve claim number of units must be positive: " + attachment.getUnits());
         }
@@ -78,7 +79,7 @@ public class MSReserveClaimTransactionType extends MSTransactionType {
 
     @Override
     public boolean applyAttachmentUnconfirmed(Transaction transaction, Account senderAccount) {
-        MonetarySystemReserveClaim attachment = (MonetarySystemReserveClaim) transaction.getAttachment();
+        MSReserveClaimAttachment attachment = (MSReserveClaimAttachment) transaction.getAttachment();
         if (accountCurrencyService.getUnconfirmedCurrencyUnits(senderAccount, attachment.getCurrencyId()) >= attachment.getUnits()) {
             accountCurrencyService.addToUnconfirmedCurrencyUnits(senderAccount, getLedgerEvent(), transaction.getId(), attachment.getCurrencyId(), -attachment.getUnits());
             return true;
@@ -88,7 +89,7 @@ public class MSReserveClaimTransactionType extends MSTransactionType {
 
     @Override
     public void undoAttachmentUnconfirmed(Transaction transaction, Account senderAccount) {
-        MonetarySystemReserveClaim attachment = (MonetarySystemReserveClaim) transaction.getAttachment();
+        MSReserveClaimAttachment attachment = (MSReserveClaimAttachment) transaction.getAttachment();
         Currency currency = currencyService.getCurrency(attachment.getCurrencyId());
         if (currency != null) {
             accountCurrencyService.addToUnconfirmedCurrencyUnits(senderAccount, getLedgerEvent(), transaction.getId(), attachment.getCurrencyId(), attachment.getUnits());
@@ -97,7 +98,7 @@ public class MSReserveClaimTransactionType extends MSTransactionType {
 
     @Override
     public void applyAttachment(Transaction transaction, Account senderAccount, Account recipientAccount) {
-        MonetarySystemReserveClaim attachment = (MonetarySystemReserveClaim) transaction.getAttachment();
+        MSReserveClaimAttachment attachment = (MSReserveClaimAttachment) transaction.getAttachment();
         currencyService.claimReserve(getLedgerEvent(), transaction.getId(), senderAccount, attachment.getCurrencyId(), attachment.getUnits());
     }
 

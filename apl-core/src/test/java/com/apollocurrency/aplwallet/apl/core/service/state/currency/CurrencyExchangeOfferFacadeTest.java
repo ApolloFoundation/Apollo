@@ -32,7 +32,7 @@ import com.apollocurrency.aplwallet.apl.core.service.state.account.AccountServic
 import com.apollocurrency.aplwallet.apl.core.service.state.currency.impl.CurrencyBuyOfferServiceImpl;
 import com.apollocurrency.aplwallet.apl.core.service.state.currency.impl.CurrencyExchangeOfferFacadeImpl;
 import com.apollocurrency.aplwallet.apl.core.service.state.exchange.ExchangeService;
-import com.apollocurrency.aplwallet.apl.core.transaction.messages.MonetarySystemPublishExchangeOffer;
+import com.apollocurrency.aplwallet.apl.core.transaction.messages.MSPublishExchangeOfferAttachment;
 import com.apollocurrency.aplwallet.apl.data.AccountTestData;
 import com.apollocurrency.aplwallet.apl.data.BlockTestData;
 import com.apollocurrency.aplwallet.apl.data.CurrencyBuyOfferTestData;
@@ -121,7 +121,7 @@ class CurrencyExchangeOfferFacadeTest {
         //GIVEN
         Transaction tr = mock(Transaction.class);
         doReturn(tdBuy.OFFER_7.getAccountId()).when(tr).getSenderId();
-        MonetarySystemPublishExchangeOffer attach = mock(MonetarySystemPublishExchangeOffer.class);
+        MSPublishExchangeOfferAttachment attach = mock(MSPublishExchangeOfferAttachment.class);
         doReturn(tdBuy.OFFER_7.getCurrencyId()).when(attach).getCurrencyId();
         doReturn(tdBuy.OFFER_7).when(currencyBuyOfferService).getOffer(tdBuy.OFFER_7.getCurrencyId(), tdBuy.OFFER_7.getAccountId());
         doReturn(tdSell.OFFER_5).when(currencySellOfferService).getOffer(tdBuy.OFFER_7.getId());
