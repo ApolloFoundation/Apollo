@@ -247,6 +247,21 @@ class TransactionApplierTest {
     }
 
     @Test
+    void apply_withRecipientEqualToSender_OK() {
+        Account sender = new Account(SENDER_ID, 200000000000000000L,10_000_000L, 0, 0, 0);
+        doReturn(SENDER_ID).when(tx).getSenderId();
+        when(tx.getRecipientId()).thenReturn(SENDER_ID);
+        doReturn(List.of(attachment, appendix)).when(tx).getAppendages();
+        doReturn(sender).when(accountService).getAccount(SENDER_ID);
+
+        applier.apply(tx);
+
+        verify(tx, never()).fail(anyString());
+        verify(attachment).apply(tx, sender, sender);
+        verify(appendix).apply(tx, sender, sender);
+    }
+
+    @Test
     void apply_failedDuringExecution_txTypeIsNotAllowedToFail() {
         Account sender = mockSender();
         doReturn(List.of(attachment)).when(tx).getAppendages();
@@ -356,6 +371,23 @@ class TransactionApplierTest {
         verify(tx, never()).fail(any(String.class));
         verify(attachment).apply(tx, sender, recipientAccount);
         verify(appendix, never()).apply(tx, sender, recipientAccount);
+    }
+
+    @Test
+    void applyPhasing_SameSenderAndRecipient_OK() {
+        Account sender = new Account(SENDER_ID, 200000000000000000L,10_000_000L, 0, 0, 0);
+        doReturn(List.of(attachment, appendix)).when(tx).getAppendages();
+        doReturn(sender).when(accountService).getAccount(SENDER_ID);
+        when(tx.getRecipientId()).thenReturn(SENDER_ID);
+        doReturn(SENDER_ID).when(tx).getSenderId();
+        doReturn(true).when(attachment).isPhasable();
+        doReturn(false).when(appendix).isPhasable();
+
+        applier.applyPhasing(tx);
+
+        verify(tx, never()).fail(any(String.class));
+        verify(attachment).apply(tx, sender, sender);
+        verify(appendix, never()).apply(tx, sender, sender);
     }
 
     @Test

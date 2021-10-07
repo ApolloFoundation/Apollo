@@ -81,7 +81,7 @@ public class TransactionApplier {
         accountPublicKeyService.apply(senderAccount, transaction.getSenderPublicKey());
         Account recipientAccount = null;
         if (transaction.getRecipientId() != 0) {
-            recipientAccount = accountService.getAccount(transaction.getRecipientId());
+            recipientAccount = recipientAccount(transaction, senderAccount);
             if (recipientAccount == null) {
                 recipientAccount = accountService.addAccount(transaction.getRecipientId(), false);
             }
@@ -105,7 +105,7 @@ public class TransactionApplier {
 
     public void applyPhasing(Transaction transaction) {
         Account senderAccount = accountService.getAccount(transaction.getSenderId());
-        Account recipientAccount = transaction.getRecipientId() == 0 ? null : accountService.getAccount(transaction.getRecipientId());
+        Account recipientAccount = recipientAccount(transaction, senderAccount);
         transaction.getAppendages().forEach(appendage -> {
             if (!transaction.isFailed() && appendage.isPhasable()) {
                 executeAppendage(transaction, senderAccount, recipientAccount, appendage);
@@ -182,5 +182,11 @@ public class TransactionApplier {
     private void undoUnconfirmedFailed(Transaction tx) {
         Account sender = accountService.getAccount(tx.getSenderId());
         accountService.addToUnconfirmedBalanceATM(sender, LedgerEvent.FAILED_VALIDATION_TRANSACTION_FEE, tx.getId(), 0, tx.getFeeATM());
+    }
+
+    private Account recipientAccount(Transaction tx, Account sender) {
+        return  tx.getRecipientId() == 0
+            ? null : tx.getSenderId() == tx.getRecipientId()
+            ? sender : accountService.getAccount(tx.getRecipientId());
     }
 }

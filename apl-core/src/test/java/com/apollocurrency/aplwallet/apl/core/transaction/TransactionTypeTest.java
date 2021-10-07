@@ -225,7 +225,6 @@ class TransactionTypeTest {
     @Test
     void apply_recipientAndSenderAreDifferent() {
         mockTxAmounts();
-        doReturn(SENDER_ID).when(sender).getId();
         FallibleTransactionType type = prepareTransactionType();
 
         type.apply(transaction, sender, recipient);
@@ -239,16 +238,12 @@ class TransactionTypeTest {
     @Test
     void apply_recipientAndSenderAreEquals() {
         mockTxAmounts();
-        doReturn(200L).when(sender).getBalanceATM();
-        doReturn(publicKey).when(sender).getPublicKey();
         FallibleTransactionType type = prepareTransactionType();
 
-        type.apply(transaction, sender, recipient);
+        type.apply(transaction, sender, sender);
 
         verify(type.getAccountService()).addToBalanceATM(sender, type.getLedgerEvent(), 0, -100, -10);
-        verify(type.getAccountService()).addToBalanceAndUnconfirmedBalanceATM(recipient, type.getLedgerEvent(), 0, 100);
-        verify(recipient).setBalanceATM(200);
-        verify(recipient).setPublicKey(publicKey);
+        verify(type.getAccountService()).addToBalanceAndUnconfirmedBalanceATM(sender, type.getLedgerEvent(), 0, 100);
         assertEquals(1, type.getApplicationCounter());
     }
 
@@ -297,16 +292,14 @@ class TransactionTypeTest {
     @Test
     void undoApply_sameSenderAndRecipientAccount() {
         mockTxAmounts();
-        doReturn(210L).when(sender).getBalanceATM();
         doReturn(false).when(transaction).attachmentIsPhased();
         FallibleTransactionType type = prepareTransactionType();
 
-        type.undoApply(transaction, sender, recipient);
+        type.undoApply(transaction, sender, sender);
 
         assertEquals(-1, type.getApplicationCounter());
         verify(accountService).addToBalanceATM(sender, LedgerEvent.ORDINARY_PAYMENT, 0L, 100, 10);
-        verify(accountService).addToBalanceAndUnconfirmedBalanceATM(recipient, LedgerEvent.ORDINARY_PAYMENT, 0L, -100);
-        verify(recipient).setBalanceATM(210L); // update balance of the same account
+        verify(accountService).addToBalanceAndUnconfirmedBalanceATM(sender, LedgerEvent.ORDINARY_PAYMENT, 0L, -100);
     }
 
     @Test

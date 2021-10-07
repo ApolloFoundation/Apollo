@@ -13,7 +13,7 @@ import java.sql.SQLException;
 public class VersionedDeletableEntity extends VersionedDerivedEntity {
     @Getter
     @Setter
-    private boolean deleted;
+    private volatile boolean deleted;
 
     public VersionedDeletableEntity(Long dbId, Integer height) {
         super(dbId, height);
