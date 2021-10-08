@@ -9,7 +9,7 @@ import com.apollocurrency.aplwallet.apl.core.dao.state.keyfactory.DbKey;
 import com.apollocurrency.aplwallet.apl.core.dao.state.keyfactory.LinkKeyFactory;
 import com.apollocurrency.aplwallet.apl.core.entity.state.currency.CurrencyFounder;
 import com.apollocurrency.aplwallet.apl.core.db.DatabaseManager;
-import com.apollocurrency.aplwallet.apl.core.shard.observer.DeleteOnTrimData;
+import com.apollocurrency.aplwallet.apl.core.service.fulltext.FullTextOperationData;
 import com.apollocurrency.aplwallet.apl.util.annotation.DatabaseSpecificDml;
 import com.apollocurrency.aplwallet.apl.util.annotation.DmlMarker;
 
@@ -36,9 +36,9 @@ public class CurrencyFounderTable extends VersionedDeletableEntityDbTable<Curren
 
     @Inject
     public CurrencyFounderTable(DatabaseManager databaseManager,
-                                Event<DeleteOnTrimData> deleteOnTrimDataEvent) {
+                                Event<FullTextOperationData> fullTextOperationDataEvent) {
         super("currency_founder", currencyFounderDbKeyFactory, null,
-                databaseManager, deleteOnTrimDataEvent);
+                databaseManager, fullTextOperationDataEvent);
     }
 
     @Override

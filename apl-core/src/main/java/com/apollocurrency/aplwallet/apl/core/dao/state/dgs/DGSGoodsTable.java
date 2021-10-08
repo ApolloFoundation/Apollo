@@ -6,16 +6,14 @@ package com.apollocurrency.aplwallet.apl.core.dao.state.dgs;
 
 import com.apollocurrency.aplwallet.apl.core.converter.db.dgs.DGSGoodsMapper;
 import com.apollocurrency.aplwallet.apl.core.dao.state.derived.EntityDbTable;
-import com.apollocurrency.aplwallet.apl.core.dao.state.derived.SearchableTableInterface;
+import com.apollocurrency.aplwallet.apl.core.dao.state.derived.SearchableTableMarkerInterface;
 import com.apollocurrency.aplwallet.apl.core.dao.state.keyfactory.DbKey;
 import com.apollocurrency.aplwallet.apl.core.dao.state.keyfactory.LongKeyFactory;
 import com.apollocurrency.aplwallet.apl.core.db.DatabaseManager;
 import com.apollocurrency.aplwallet.apl.core.entity.state.dgs.DGSGoods;
-import com.apollocurrency.aplwallet.apl.core.shard.observer.DeleteOnTrimData;
+import com.apollocurrency.aplwallet.apl.core.service.fulltext.FullTextOperationData;
 import com.apollocurrency.aplwallet.apl.util.annotation.DatabaseSpecificDml;
 import com.apollocurrency.aplwallet.apl.util.annotation.DmlMarker;
-import com.apollocurrency.aplwallet.apl.util.db.DbClause;
-import com.apollocurrency.aplwallet.apl.util.db.DbIterator;
 import com.apollocurrency.aplwallet.apl.util.db.DbUtils;
 
 import javax.enterprise.event.Event;
@@ -29,9 +27,12 @@ import java.sql.Statement;
 
 @DatabaseSpecificDml(DmlMarker.FULL_TEXT_SEARCH)
 @Singleton
-public class DGSGoodsTable extends EntityDbTable<DGSGoods> implements SearchableTableInterface<DGSGoods> {
-    private static final LongKeyFactory<DGSGoods> KEY_FACTORY = new LongKeyFactory<>("id") {
+public class DGSGoodsTable extends EntityDbTable<DGSGoods> implements SearchableTableMarkerInterface<DGSGoods> {
 
+    public static final String TABLE_NAME = "goods";
+    public static final String FULL_TEXT_SEARCH_COLUMNS = "name,description,tags";
+
+    private static final LongKeyFactory<DGSGoods> KEY_FACTORY = new LongKeyFactory<>("id") {
         @Override
         public DbKey newKey(DGSGoods goods) {
             if (goods.getDbKey() == null) {
@@ -42,14 +43,11 @@ public class DGSGoodsTable extends EntityDbTable<DGSGoods> implements Searchable
     };
     private static final DGSGoodsMapper MAPPER = new DGSGoodsMapper(KEY_FACTORY);
 
-    private static final String TABLE_NAME = "goods";
-    private static final String FULL_TEXT_SEARCH_COLUMNS = "name,description,tags";
-
     @Inject
     public DGSGoodsTable(DatabaseManager databaseManager,
-                         Event<DeleteOnTrimData> deleteOnTrimDataEvent) {
+                         Event<FullTextOperationData> fullTextOperationDataEvent) {
         super(TABLE_NAME, KEY_FACTORY, true, FULL_TEXT_SEARCH_COLUMNS,
-                databaseManager, deleteOnTrimDataEvent);
+                databaseManager, fullTextOperationDataEvent);
     }
 
     @Override
@@ -103,16 +101,5 @@ public class DGSGoodsTable extends EntityDbTable<DGSGoods> implements Searchable
     public DGSGoods get(long purchaseId) {
         return get(KEY_FACTORY.newKey(purchaseId));
     }
-
-    @Override
-    public final DbIterator<DGSGoods> search(String query, DbClause dbClause, int from, int to) {
-        throw new UnsupportedOperationException("Call service, should be implemented by service");
-    }
-
-    @Override
-    public final DbIterator<DGSGoods> search(String query, DbClause dbClause, int from, int to, String sort) {
-        throw new UnsupportedOperationException("Call service, should be implemented by service");
-    }
-
 
 }

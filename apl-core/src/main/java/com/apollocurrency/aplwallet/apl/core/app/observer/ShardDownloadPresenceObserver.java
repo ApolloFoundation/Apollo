@@ -114,6 +114,7 @@ public class ShardDownloadPresenceObserver {
      */
     private void createLuceneSearchIndexes(Connection con) throws SQLException {
         for (DerivedTableInterface table : derivedTablesRegistry.getDerivedTables()) {
+            // only searchable table will be processed inside createSearchIndex(...)
             fullTextSearchService.createSearchIndex(con, table.getName(), table.getFullTextSearchColumns());
         }
     }

@@ -90,4 +90,5 @@ public abstract class DerivedEntity implements Comparable<DerivedEntity>, Clonea
             throw new RuntimeException(getClass().getSimpleName() + " does not support Object.clone() operation");
         }
     }
+
 }

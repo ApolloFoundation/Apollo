@@ -7,11 +7,11 @@ package com.apollocurrency.aplwallet.apl.exchange.dao;
 import com.apollocurrency.aplwallet.apl.core.converter.db.DexOrderMapper;
 import com.apollocurrency.aplwallet.apl.core.dao.state.derived.EntityDbTable;
 import com.apollocurrency.aplwallet.apl.core.dao.state.keyfactory.DbKey;
+import com.apollocurrency.aplwallet.apl.core.service.fulltext.FullTextOperationData;
 import com.apollocurrency.aplwallet.apl.util.db.DbClause;
 import com.apollocurrency.aplwallet.apl.util.db.DbIterator;
 import com.apollocurrency.aplwallet.apl.core.model.dex.DexOrder;
 import com.apollocurrency.aplwallet.apl.core.db.DatabaseManager;
-import com.apollocurrency.aplwallet.apl.core.shard.observer.DeleteOnTrimData;
 import com.apollocurrency.aplwallet.apl.core.utils.CollectionUtil;
 import com.apollocurrency.aplwallet.apl.dex.core.model.OrderStatus;
 import com.apollocurrency.aplwallet.apl.dex.eth.utils.EthUtil;
@@ -42,8 +42,9 @@ public class DexOrderTable extends EntityDbTable<DexOrder> {
 
     @Inject
     public DexOrderTable(DatabaseManager databaseManager,
-                         Event<DeleteOnTrimData> deleteOnTrimDataEvent) {
-        super(TABLE_NAME, keyFactory, true, null, databaseManager, deleteOnTrimDataEvent);
+                         Event<FullTextOperationData> fullTextOperationDataEvent) {
+        super(TABLE_NAME, keyFactory, true, null,
+            databaseManager, fullTextOperationDataEvent);
     }
 
     @Override

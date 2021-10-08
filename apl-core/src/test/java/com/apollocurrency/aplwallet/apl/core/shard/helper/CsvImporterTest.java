@@ -59,6 +59,7 @@ import com.apollocurrency.aplwallet.apl.core.service.blockchain.UnconfirmedTrans
 import com.apollocurrency.aplwallet.apl.core.service.fulltext.FullTextConfigImpl;
 import com.apollocurrency.aplwallet.apl.core.service.fulltext.FullTextSearchService;
 import com.apollocurrency.aplwallet.apl.core.service.fulltext.FullTextSearchUpdater;
+import com.apollocurrency.aplwallet.apl.core.service.fulltext.FullTextSearchUpdaterImpl;
 import com.apollocurrency.aplwallet.apl.core.service.state.DerivedDbTablesRegistryImpl;
 import com.apollocurrency.aplwallet.apl.core.service.state.PhasingPollServiceImpl;
 import com.apollocurrency.aplwallet.apl.core.service.state.TaggedDataServiceImpl;
@@ -210,7 +211,7 @@ class CsvImporterTest extends DbContainerBaseTest {
         .addBeans(MockBean.of(mock(PublicKeyDao.class), PublicKeyDao.class))
         .addBeans(MockBean.of(unconfirmedTransactionProcessingService, UnconfirmedTransactionProcessingService.class))
         .addBeans(MockBean.of(memPool, MemPool.class))
-        .addBeans(MockBean.of(mock(FullTextSearchUpdater.class), FullTextSearchUpdater.class))
+        .addBeans(MockBean.of(mock(FullTextSearchUpdater.class), FullTextSearchUpdater.class, FullTextSearchUpdaterImpl.class))
         .build();
 
     private HeightConfig config = Mockito.mock(HeightConfig.class);

@@ -37,7 +37,7 @@ import com.apollocurrency.aplwallet.apl.core.chainid.HeightConfig;
 import com.apollocurrency.aplwallet.apl.core.dao.appdata.ScanDao;
 import com.apollocurrency.aplwallet.apl.core.dao.appdata.ShardDao;
 import com.apollocurrency.aplwallet.apl.core.dao.state.derived.DerivedTableInterface;
-import com.apollocurrency.aplwallet.apl.core.dao.state.derived.SearchableTableInterface;
+import com.apollocurrency.aplwallet.apl.core.dao.state.derived.SearchableTableMarkerInterface;
 import com.apollocurrency.aplwallet.apl.core.db.DatabaseManager;
 import com.apollocurrency.aplwallet.apl.core.db.DatabaseManagerImpl;
 import com.apollocurrency.aplwallet.apl.core.entity.appdata.ScanEntity;
@@ -1053,7 +1053,7 @@ public class BlockchainProcessorImpl implements BlockchainProcessor {
                 double percentsPerTableIndex = getPercentsPerEvent(4.0, dbTables.getDerivedTables().size());
                 if (height == shardInitialHeight) {
                     for (DerivedTableInterface table : dbTables.getDerivedTables()) {
-                        if (table instanceof SearchableTableInterface) {
+                        if (table instanceof SearchableTableMarkerInterface) {
                             aplAppStatus.durableTaskUpdate(scanTaskId,
                                 "Create full text search index for table " + table.toString(), percentsPerTableIndex);
                             fullTextSearchProvider.createSearchIndex(con, table.getName(), table.getFullTextSearchColumns());

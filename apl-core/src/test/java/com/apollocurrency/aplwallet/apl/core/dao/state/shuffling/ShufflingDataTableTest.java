@@ -31,7 +31,8 @@ class ShufflingDataTableTest extends DBContainerRootTest {
     private ShufflingTestData std;
     @BeforeEach
     void setUp() {
-        table = new ShufflingDataTable(extension.getDatabaseManager(),mock(BlockchainConfig.class), mock(PropertiesHolder.class), mock(Event.class));
+        table = new ShufflingDataTable(extension.getDatabaseManager(), mock(BlockchainConfig.class),
+            mock(PropertiesHolder.class), mock(Event.class));
         std = new ShufflingTestData();
     }
 

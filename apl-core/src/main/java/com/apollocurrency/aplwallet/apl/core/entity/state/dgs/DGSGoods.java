@@ -159,4 +159,5 @@ public class DGSGoods extends VersionedDerivedEntity {
             ", height=" + getHeight() +
             '}';
     }
+
 }

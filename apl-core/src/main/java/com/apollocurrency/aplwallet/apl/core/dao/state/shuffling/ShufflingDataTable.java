@@ -8,9 +8,9 @@ import com.apollocurrency.aplwallet.apl.core.chainid.BlockchainConfig;
 import com.apollocurrency.aplwallet.apl.core.dao.state.derived.PrunableDbTable;
 import com.apollocurrency.aplwallet.apl.core.dao.state.keyfactory.DbKey;
 import com.apollocurrency.aplwallet.apl.core.dao.state.keyfactory.LongKeyFactory;
+import com.apollocurrency.aplwallet.apl.core.service.fulltext.FullTextOperationData;
 import com.apollocurrency.aplwallet.apl.core.db.DatabaseManager;
 import com.apollocurrency.aplwallet.apl.core.entity.state.shuffling.ShufflingData;
-import com.apollocurrency.aplwallet.apl.core.shard.observer.DeleteOnTrimData;
 import com.apollocurrency.aplwallet.apl.util.annotation.DatabaseSpecificDml;
 import com.apollocurrency.aplwallet.apl.util.annotation.DmlMarker;
 import com.apollocurrency.aplwallet.apl.util.db.DbClause;
@@ -42,8 +42,10 @@ public class ShufflingDataTable extends PrunableDbTable<ShufflingData> {
     public ShufflingDataTable(DatabaseManager databaseManager,
                               BlockchainConfig blockchainConfig,
                               PropertiesHolder propertiesHolder,
-                              Event<DeleteOnTrimData> deleteOnTrimDataEvent) {
-        super("shuffling_data", dbKeyFactory, false, null, databaseManager, blockchainConfig, propertiesHolder, deleteOnTrimDataEvent);
+                              Event<FullTextOperationData> fullTextOperationDataEvent) {
+        super("shuffling_data", dbKeyFactory, false,
+            null, databaseManager, blockchainConfig,
+            propertiesHolder, fullTextOperationDataEvent);
     }
 
 

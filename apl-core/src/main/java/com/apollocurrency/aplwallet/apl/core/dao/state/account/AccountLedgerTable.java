@@ -3,6 +3,7 @@
  */
 package com.apollocurrency.aplwallet.apl.core.dao.state.account;
 
+import com.apollocurrency.aplwallet.apl.core.service.fulltext.FullTextOperationData;
 import com.apollocurrency.aplwallet.apl.util.db.TransactionalDataSource;
 import com.apollocurrency.aplwallet.apl.core.dao.state.derived.DerivedDbTable;
 import com.apollocurrency.aplwallet.apl.core.dao.state.keyfactory.DbKey;
@@ -15,6 +16,7 @@ import com.apollocurrency.aplwallet.apl.util.annotation.DatabaseSpecificDml;
 import com.apollocurrency.aplwallet.apl.util.annotation.DmlMarker;
 import com.apollocurrency.aplwallet.apl.util.injectable.PropertiesHolder;
 
+import javax.enterprise.event.Event;
 import javax.inject.Inject;
 import javax.inject.Singleton;
 import java.sql.Connection;
@@ -43,8 +45,9 @@ public class AccountLedgerTable extends DerivedDbTable<LedgerEntry> {
      */
     @Inject
     public AccountLedgerTable(PropertiesHolder propertiesHolder,
-                              DatabaseManager databaseManager) {
-        super("account_ledger", databaseManager, null);
+                              DatabaseManager databaseManager,
+                              Event<FullTextOperationData> fullTextOperationDataEvent) {
+        super("account_ledger", databaseManager, fullTextOperationDataEvent, null);
         this.propertiesHolder = propertiesHolder;
         trimKeep = propertiesHolder.getIntProperty("apl.ledgerTrimKeep", 30000);
     }

@@ -51,6 +51,8 @@ import com.apollocurrency.aplwallet.apl.core.service.blockchain.TransactionProce
 import com.apollocurrency.aplwallet.apl.core.service.blockchain.TransactionService;
 import com.apollocurrency.aplwallet.apl.core.service.blockchain.TransactionServiceImpl;
 import com.apollocurrency.aplwallet.apl.core.service.fulltext.FullTextConfigImpl;
+import com.apollocurrency.aplwallet.apl.core.service.fulltext.FullTextSearchUpdater;
+import com.apollocurrency.aplwallet.apl.core.service.fulltext.FullTextSearchUpdaterImpl;
 import com.apollocurrency.aplwallet.apl.core.service.prunable.PrunableMessageService;
 import com.apollocurrency.aplwallet.apl.core.service.state.account.AccountPublicKeyService;
 import com.apollocurrency.aplwallet.apl.core.service.state.account.AccountService;
@@ -133,7 +135,7 @@ public class PhasingPollServiceTest extends DbContainerBaseTest {
         TransactionServiceImpl.class, ShardDbExplorerImpl.class,
         TransactionEntityRowMapper.class, TransactionEntityRowMapper.class, TxReceiptRowMapper.class, PrunableTxRowMapper.class,
         TransactionModelToEntityConverter.class, TransactionEntityToModelConverter.class,
-        TransactionBuilderFactory.class, TransactionApplier.class,
+        TransactionBuilderFactory.class,
         AppendixApplierRegistry.class,
         AppendixValidatorRegistry.class,
         PhasingPollResultTable.class,
@@ -168,6 +170,8 @@ public class PhasingPollServiceTest extends DbContainerBaseTest {
         .addBeans(MockBean.of(publicKeyDao, PublicKeyDao.class))
         .addBeans(MockBean.of(publicKeyService, AccountPublicKeyService.class))
         .addBeans(MockBean.of(mock(ReferencedTransactionDao.class), ReferencedTransactionDao.class))
+        .addBeans(MockBean.of(mock(FullTextSearchUpdater.class), FullTextSearchUpdater.class, FullTextSearchUpdaterImpl.class))
+        .addBeans(MockBean.of(mock(TransactionApplier.class), TransactionApplier.class))
         .build();
     @Inject
     PhasingPollServiceImpl service;

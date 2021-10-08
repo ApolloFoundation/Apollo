@@ -136,11 +136,6 @@ public class PhasingResultTableTest extends EntityDbTableTest<PhasingPollResult>
     }
 
     @Override
-    public Blockchain getBlockchain() {
-        return blockchain;
-    }
-
-    @Override
     public PhasingPollResult valueToInsert() {
         return ptd.NEW_RESULT;
     }

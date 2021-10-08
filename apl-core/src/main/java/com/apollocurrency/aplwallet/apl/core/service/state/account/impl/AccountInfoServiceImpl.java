@@ -4,6 +4,7 @@
 
 package com.apollocurrency.aplwallet.apl.core.service.state.account.impl;
 
+import com.apollocurrency.aplwallet.apl.core.app.observer.events.TrimEvent;
 import com.apollocurrency.aplwallet.apl.util.db.TransactionalDataSource;
 import com.apollocurrency.aplwallet.apl.core.dao.state.account.AccountInfoTable;
 import com.apollocurrency.aplwallet.apl.core.dao.state.account.AccountTableInterface;
@@ -16,16 +17,16 @@ import com.apollocurrency.aplwallet.apl.core.entity.state.account.AccountInfo;
 import com.apollocurrency.aplwallet.apl.core.service.blockchain.Blockchain;
 import com.apollocurrency.aplwallet.apl.core.service.fulltext.FullTextOperationData;
 import com.apollocurrency.aplwallet.apl.core.service.fulltext.FullTextSearchService;
-import com.apollocurrency.aplwallet.apl.core.service.fulltext.FullTextSearchUpdater;
 import com.apollocurrency.aplwallet.apl.core.service.state.account.AccountInfoService;
 import com.apollocurrency.aplwallet.apl.crypto.Convert;
 import com.apollocurrency.aplwallet.apl.util.annotation.DatabaseSpecificDml;
 import com.apollocurrency.aplwallet.apl.util.annotation.DmlMarker;
 import lombok.extern.slf4j.Slf4j;
 
+import javax.enterprise.event.Event;
+import javax.enterprise.util.AnnotationLiteral;
 import javax.inject.Inject;
 import javax.inject.Singleton;
-import java.math.BigInteger;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
@@ -45,17 +46,17 @@ public class AccountInfoServiceImpl implements AccountInfoService {
 
     private final Blockchain blockchain;
     private final AccountInfoTable accountInfoTable;
-    private final FullTextSearchUpdater fullTextSearchUpdater;
+    private final Event<FullTextOperationData> fullTextOperationDataEvent;
     private final FullTextSearchService fullTextSearchService;
 
     @Inject
     public AccountInfoServiceImpl(Blockchain blockchain,
                                   AccountInfoTable accountInfoTable,
-                                  FullTextSearchUpdater fullTextSearchUpdater,
+                                  Event<FullTextOperationData> fullTextOperationDataEvent,
                                   FullTextSearchService fullTextSearchService) {
         this.blockchain = blockchain;
         this.accountInfoTable = accountInfoTable;
-        this.fullTextSearchUpdater = fullTextSearchUpdater;
+        this.fullTextOperationDataEvent = fullTextOperationDataEvent;
         this.fullTextSearchService = fullTextSearchService;
     }
 
@@ -81,7 +82,7 @@ public class AccountInfoServiceImpl implements AccountInfoService {
         }
         // send data into Lucene index component
         log.trace("Put lucene index update data = {}", operationData);
-        fullTextSearchUpdater.putFullTextOperationData(operationData);
+        this.fullTextOperationDataEvent.select(new AnnotationLiteral<TrimEvent>() {}).fire(operationData);
     }
 
     @Override
@@ -139,7 +140,7 @@ public class AccountInfoServiceImpl implements AccountInfoService {
                 index++;
             }
             inRange.append(")");
-            log.debug("{}", inRange.toString());
+            log.trace("Found [{}] DB_IDs in Lucene, {}", index, inRange);
         } catch (SQLException e) {
             log.error("FTS failed", e);
             throw new RuntimeException(e);

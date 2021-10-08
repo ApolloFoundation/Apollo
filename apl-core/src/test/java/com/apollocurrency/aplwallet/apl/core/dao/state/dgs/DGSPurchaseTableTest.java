@@ -129,11 +129,6 @@ public class DGSPurchaseTableTest extends EntityDbTableTest<DGSPurchase> {
     }
 
     @Override
-    public Blockchain getBlockchain() {
-        return blockchain;
-    }
-
-    @Override
     public DGSPurchase valueToInsert() {
         return dtd.NEW_PURCHASE;
     }

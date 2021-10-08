@@ -5,8 +5,6 @@
 package com.apollocurrency.aplwallet.apl.core.dao.state.derived;
 
 import com.apollocurrency.aplwallet.apl.core.dao.DbContainerBaseTest;
-import com.apollocurrency.aplwallet.apl.core.dao.state.derived.DerivedDbTable;
-import com.apollocurrency.aplwallet.apl.core.dao.state.derived.DerivedTableData;
 import com.apollocurrency.aplwallet.apl.core.dao.state.keyfactory.DbKey;
 import com.apollocurrency.aplwallet.apl.core.dao.state.keyfactory.KeyFactory;
 import com.apollocurrency.aplwallet.apl.core.db.DatabaseManager;
@@ -105,6 +103,7 @@ public abstract class DerivedDbTableTest<T extends DerivedEntity> extends DbCont
 
     @Test
     public void testRollbackToNegativeHeight() throws SQLException {
+        // fired FTS event(s) : fullTextOperationDataEvent.select(new AnnotationLiteral<TrimEvent>() {}).fire(operationData);
         testRollback(0);
     }
 

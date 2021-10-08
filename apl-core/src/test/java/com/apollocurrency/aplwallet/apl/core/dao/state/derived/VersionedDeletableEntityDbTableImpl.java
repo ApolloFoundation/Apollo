@@ -19,7 +19,8 @@ import static org.mockito.Mockito.mock;
 public class VersionedDeletableEntityDbTableImpl extends VersionedDeletableEntityDbTable<VersionedDerivedIdEntity> {
 
     public VersionedDeletableEntityDbTableImpl(DatabaseManager databaseManager) {
-        super("versioned_derived_entity", new VersionedEntityKeyFactory(), null,databaseManager, mock(Event.class));
+        super("versioned_derived_entity", new VersionedEntityKeyFactory(),
+            null,databaseManager, mock(Event.class));
     }
 
     @Override
