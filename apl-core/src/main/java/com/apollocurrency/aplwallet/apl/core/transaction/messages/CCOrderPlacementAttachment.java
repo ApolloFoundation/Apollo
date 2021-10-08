@@ -5,6 +5,7 @@ package com.apollocurrency.aplwallet.apl.core.transaction.messages;
 
 import com.apollocurrency.aplwallet.apl.crypto.Convert;
 import lombok.EqualsAndHashCode;
+import lombok.ToString;
 import org.json.simple.JSONObject;
 
 import java.nio.ByteBuffer;
@@ -13,27 +14,28 @@ import java.nio.ByteBuffer;
  * @author al
  */
 @EqualsAndHashCode(callSuper = true)
-public abstract class ColoredCoinsOrderPlacementAttachment extends AbstractAttachment {
+@ToString
+public abstract class CCOrderPlacementAttachment extends AbstractAttachment {
 
     final long assetId;
     final long quantityATU;
     final long priceATM;
 
-    public ColoredCoinsOrderPlacementAttachment(ByteBuffer buffer) {
+    public CCOrderPlacementAttachment(ByteBuffer buffer) {
         super(buffer);
         this.assetId = buffer.getLong();
         this.quantityATU = buffer.getLong();
         this.priceATM = buffer.getLong();
     }
 
-    public ColoredCoinsOrderPlacementAttachment(JSONObject attachmentData) {
+    public CCOrderPlacementAttachment(JSONObject attachmentData) {
         super(attachmentData);
         this.assetId = Convert.parseUnsignedLong((String) attachmentData.get("asset"));
         this.quantityATU = Convert.parseLong(attachmentData.get("quantityATU"));
         this.priceATM = Convert.parseLong(attachmentData.get("priceATM"));
     }
 
-    public ColoredCoinsOrderPlacementAttachment(long assetId, long quantityATU, long priceATM) {
+    public CCOrderPlacementAttachment(long assetId, long quantityATU, long priceATM) {
         this.assetId = assetId;
         this.quantityATU = quantityATU;
         this.priceATM = priceATM;

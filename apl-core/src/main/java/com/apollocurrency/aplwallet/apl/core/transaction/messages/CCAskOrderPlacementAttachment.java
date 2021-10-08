@@ -11,17 +11,17 @@ import java.nio.ByteBuffer;
 /**
  * @author al
  */
-public final class ColoredCoinsAskOrderPlacement extends ColoredCoinsOrderPlacementAttachment {
+public final class CCAskOrderPlacementAttachment extends CCOrderPlacementAttachment {
 
-    public ColoredCoinsAskOrderPlacement(ByteBuffer buffer) {
+    public CCAskOrderPlacementAttachment(ByteBuffer buffer) {
         super(buffer);
     }
 
-    public ColoredCoinsAskOrderPlacement(JSONObject attachmentData) {
+    public CCAskOrderPlacementAttachment(JSONObject attachmentData) {
         super(attachmentData);
     }
 
-    public ColoredCoinsAskOrderPlacement(long assetId, long quantityATU, long priceATM) {
+    public CCAskOrderPlacementAttachment(long assetId, long quantityATU, long priceATM) {
         super(assetId, quantityATU, priceATM);
     }
 

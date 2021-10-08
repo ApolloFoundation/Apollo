@@ -8,7 +8,7 @@ import com.apollocurrency.aplwallet.apl.core.model.Transaction;
 import com.apollocurrency.aplwallet.apl.core.entity.state.asset.Asset;
 import com.apollocurrency.aplwallet.apl.core.service.state.account.AccountService;
 import com.apollocurrency.aplwallet.apl.core.service.state.asset.AssetService;
-import com.apollocurrency.aplwallet.apl.core.transaction.messages.ColoredCoinsOrderPlacementAttachment;
+import com.apollocurrency.aplwallet.apl.core.transaction.messages.CCOrderPlacementAttachment;
 import com.apollocurrency.aplwallet.apl.core.utils.MathUtils;
 import com.apollocurrency.aplwallet.apl.util.exception.AplException;
 
@@ -22,7 +22,7 @@ abstract class CCOrderPlacementTransactionType extends CCTransactionType {
 
     @Override
     public void doStateDependentValidation(Transaction transaction) throws AplException.ValidationException {
-        ColoredCoinsOrderPlacementAttachment attachment = (ColoredCoinsOrderPlacementAttachment) transaction.getAttachment();
+        CCOrderPlacementAttachment attachment = (CCOrderPlacementAttachment) transaction.getAttachment();
         Asset asset = assetService.getAsset(attachment.getAssetId());
         if (asset != null && attachment.getQuantityATU() > asset.getInitialQuantityATU()) {
             throw new AplException.NotValidException("Invalid asset order placement asset or quantity: " + attachment.getJSONObject());
@@ -34,7 +34,7 @@ abstract class CCOrderPlacementTransactionType extends CCTransactionType {
 
     @Override
     public void doStateIndependentValidation(Transaction transaction) throws AplException.ValidationException {
-        ColoredCoinsOrderPlacementAttachment attachment = (ColoredCoinsOrderPlacementAttachment) transaction.getAttachment();
+        CCOrderPlacementAttachment attachment = (CCOrderPlacementAttachment) transaction.getAttachment();
         long maxBalanceATM = getBlockchainConfig().getCurrentConfig().getMaxBalanceATM();
         if (attachment.getPriceATM() <= 0
             || attachment.getQuantityATU() <= 0

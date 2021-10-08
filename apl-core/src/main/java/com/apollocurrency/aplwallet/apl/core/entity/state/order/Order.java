@@ -7,7 +7,7 @@ package com.apollocurrency.aplwallet.apl.core.entity.state.order;
 import com.apollocurrency.aplwallet.apl.core.dao.state.keyfactory.DbKey;
 import com.apollocurrency.aplwallet.apl.core.model.Transaction;
 import com.apollocurrency.aplwallet.apl.core.entity.state.derived.VersionedDerivedEntity;
-import com.apollocurrency.aplwallet.apl.core.transaction.messages.ColoredCoinsOrderPlacementAttachment;
+import com.apollocurrency.aplwallet.apl.core.transaction.messages.CCOrderPlacementAttachment;
 import lombok.Getter;
 import lombok.Setter;
 import lombok.ToString;
@@ -28,7 +28,7 @@ public abstract class Order extends VersionedDerivedEntity {
     private final int transactionHeight;
     private long quantityATU;
 
-    public Order(Transaction transaction, ColoredCoinsOrderPlacementAttachment attachment, int height) {
+    public Order(Transaction transaction, CCOrderPlacementAttachment attachment, int height) {
         super(transaction.getId(), height);
         this.id = transaction.getId();
         this.accountId = transaction.getSenderId();
