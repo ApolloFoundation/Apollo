@@ -12,21 +12,21 @@ import java.nio.ByteBuffer;
 /**
  * @author al
  */
-public final class DigitalGoodsDelisting extends AbstractAttachment {
+public final class DGSDelistingAttachment extends AbstractAttachment {
 
     final long goodsId;
 
-    public DigitalGoodsDelisting(ByteBuffer buffer) {
+    public DGSDelistingAttachment(ByteBuffer buffer) {
         super(buffer);
         this.goodsId = buffer.getLong();
     }
 
-    public DigitalGoodsDelisting(JSONObject attachmentData) {
+    public DGSDelistingAttachment(JSONObject attachmentData) {
         super(attachmentData);
         this.goodsId = Convert.parseUnsignedLong((String) attachmentData.get("goods"));
     }
 
-    public DigitalGoodsDelisting(long goodsId) {
+    public DGSDelistingAttachment(long goodsId) {
         this.goodsId = goodsId;
     }
 

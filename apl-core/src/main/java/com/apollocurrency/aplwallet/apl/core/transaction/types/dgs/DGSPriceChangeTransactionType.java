@@ -12,8 +12,7 @@ import com.apollocurrency.aplwallet.apl.core.entity.state.dgs.DGSGoods;
 import com.apollocurrency.aplwallet.apl.core.service.state.DGSService;
 import com.apollocurrency.aplwallet.apl.core.service.state.account.AccountService;
 import com.apollocurrency.aplwallet.apl.core.transaction.TransactionTypes;
-import com.apollocurrency.aplwallet.apl.core.transaction.messages.DigitalGoodsQuantityChange;
-import com.apollocurrency.aplwallet.apl.util.Constants;
+import com.apollocurrency.aplwallet.apl.core.transaction.messages.DGSriceChangeAttachment;
 import com.apollocurrency.aplwallet.apl.util.exception.AplException;
 import org.json.simple.JSONObject;
 
@@ -23,58 +22,59 @@ import java.nio.ByteBuffer;
 import java.util.Map;
 
 @Singleton
-public class QuantityChangeTransactionType extends DigitalGoodsTransactionType {
+public class DGSPriceChangeTransactionType extends DGSTransactionType {
 
     @Inject
-    public QuantityChangeTransactionType(BlockchainConfig blockchainConfig, AccountService accountService, DGSService service) {
+    public DGSPriceChangeTransactionType(BlockchainConfig blockchainConfig, AccountService accountService, DGSService service) {
         super(blockchainConfig, accountService, service);
     }
 
     @Override
     public TransactionTypes.TransactionTypeSpec getSpec() {
-        return TransactionTypes.TransactionTypeSpec.DGS_CHANGE_QUANTITY;
+        return TransactionTypes.TransactionTypeSpec.DGS_CHANGE_PRICE;
     }
 
     @Override
     public LedgerEvent getLedgerEvent() {
-        return LedgerEvent.DIGITAL_GOODS_QUANTITY_CHANGE;
+        return LedgerEvent.DIGITAL_GOODS_PRICE_CHANGE;
     }
 
     @Override
     public String getName() {
-        return "DigitalGoodsQuantityChange";
+        return "DigitalGoodsPriceChange";
     }
 
     @Override
-    public DigitalGoodsQuantityChange parseAttachment(ByteBuffer buffer) throws AplException.NotValidException {
-        return new DigitalGoodsQuantityChange(buffer);
+    public DGSriceChangeAttachment parseAttachment(ByteBuffer buffer) throws AplException.NotValidException {
+        return new DGSriceChangeAttachment(buffer);
     }
 
     @Override
-    public DigitalGoodsQuantityChange parseAttachment(JSONObject attachmentData) throws AplException.NotValidException {
-        return new DigitalGoodsQuantityChange(attachmentData);
+    public DGSriceChangeAttachment parseAttachment(JSONObject attachmentData) throws AplException.NotValidException {
+        return new DGSriceChangeAttachment(attachmentData);
     }
 
     @Override
     public void doStateIndependentValidation(Transaction transaction) throws AplException.ValidationException {
-        DigitalGoodsQuantityChange attachment = (DigitalGoodsQuantityChange) transaction.getAttachment();
-        if (attachment.getDeltaQuantity() < -Constants.MAX_DGS_LISTING_QUANTITY || attachment.getDeltaQuantity() > Constants.MAX_DGS_LISTING_QUANTITY) {
-            throw new AplException.NotValidException("Invalid digital goods quantity change: " + attachment.getJSONObject());
+        DGSriceChangeAttachment attachment = (DGSriceChangeAttachment) transaction.getAttachment();
+        if (attachment.getPriceATM() <= 0
+            || attachment.getPriceATM() > getBlockchainConfig().getCurrentConfig().getMaxBalanceATM()) {
+            throw new AplException.NotValidException("Invalid digital goods price change: " + attachment.getJSONObject());
         }
     }
 
     @Override
     public void applyAttachment(Transaction transaction, Account senderAccount, Account recipientAccount) {
-        DigitalGoodsQuantityChange attachment = (DigitalGoodsQuantityChange) transaction.getAttachment();
-        dgsService.changeQuantity(attachment.getGoodsId(), attachment.getDeltaQuantity());
+        DGSriceChangeAttachment attachment = (DGSriceChangeAttachment) transaction.getAttachment();
+        dgsService.changePrice(attachment.getGoodsId(), attachment.getPriceATM());
     }
 
     @Override
     public void doValidateAttachment(Transaction transaction) throws AplException.ValidationException {
-        DigitalGoodsQuantityChange attachment = (DigitalGoodsQuantityChange) transaction.getAttachment();
+        DGSriceChangeAttachment attachment = (DGSriceChangeAttachment) transaction.getAttachment();
         DGSGoods goods = dgsService.getGoods(attachment.getGoodsId());
-        if (goods != null && transaction.getSenderId() != goods.getSellerId()) {
-            throw new AplException.NotValidException("Invalid digital goods quantity change: " + attachment.getJSONObject());
+        if ((goods != null && transaction.getSenderId() != goods.getSellerId())) {
+            throw new AplException.NotValidException("Invalid digital goods price change: " + attachment.getJSONObject());
         }
         if (goods == null || goods.isDelisted()) {
             throw new AplException.NotCurrentlyValidException("Goods " + Long.toUnsignedString(attachment.getGoodsId()) + "not yet listed or already delisted");
@@ -83,7 +83,7 @@ public class QuantityChangeTransactionType extends DigitalGoodsTransactionType {
 
     @Override
     public boolean isDuplicate(Transaction transaction, Map<TransactionTypes.TransactionTypeSpec, Map<String, Integer>> duplicates) {
-        DigitalGoodsQuantityChange attachment = (DigitalGoodsQuantityChange) transaction.getAttachment();
+        DGSriceChangeAttachment attachment = (DGSriceChangeAttachment) transaction.getAttachment();
         // not a bug, uniqueness is based on DigitalGoods.DELISTING
         return isDuplicate(TransactionTypes.TransactionTypeSpec.DGS_DELISTING, Long.toUnsignedString(attachment.getGoodsId()), duplicates, true);
     }

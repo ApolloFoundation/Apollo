@@ -14,7 +14,7 @@ import com.apollocurrency.aplwallet.apl.core.service.blockchain.Blockchain;
 import com.apollocurrency.aplwallet.apl.core.service.state.DGSService;
 import com.apollocurrency.aplwallet.apl.core.service.state.account.AccountService;
 import com.apollocurrency.aplwallet.apl.core.transaction.TransactionTypes;
-import com.apollocurrency.aplwallet.apl.core.transaction.messages.DigitalGoodsPurchaseAttachment;
+import com.apollocurrency.aplwallet.apl.core.transaction.messages.DGSPurchaseAttachment;
 import com.apollocurrency.aplwallet.apl.core.transaction.messages.EncryptedMessageAppendix;
 import com.apollocurrency.aplwallet.apl.util.exception.AplException;
 import org.json.simple.JSONObject;
@@ -39,7 +39,7 @@ import static org.mockito.Mockito.verifyNoInteractions;
 import static org.mockito.Mockito.when;
 
 @ExtendWith(MockitoExtension.class)
-class PurchaseTransactionTypeTest {
+class DGSPurchaseTransactionTypeTest {
     public static final int GOODS_ID = 1;
     public static final long SENDER_ID = 222L;
     @Mock
@@ -52,7 +52,7 @@ class PurchaseTransactionTypeTest {
     Blockchain blockchain;
 
     @InjectMocks
-    PurchaseTransactionType type;
+    DGSPurchaseTransactionType type;
 
     // supporting mocks for several scenarios
     @Mock
@@ -90,9 +90,9 @@ class PurchaseTransactionTypeTest {
         buffer.putInt(1000); // deadline timestamp
         buffer.flip();
 
-        DigitalGoodsPurchaseAttachment attachment = type.parseAttachment(buffer);
+        DGSPurchaseAttachment attachment = type.parseAttachment(buffer);
 
-        assertEquals(new DigitalGoodsPurchaseAttachment(-GOODS_ID, 2, 10, 1000), attachment);
+        assertEquals(new DGSPurchaseAttachment(-GOODS_ID, 2, 10, 1000), attachment);
     }
 
     @Test
@@ -104,9 +104,9 @@ class PurchaseTransactionTypeTest {
         attachmentJson.put("priceATM", 100L);
         attachmentJson.put("deliveryDeadlineTimestamp", 2000L);
 
-        DigitalGoodsPurchaseAttachment parsedAttachment = type.parseAttachment(attachmentJson);
+        DGSPurchaseAttachment parsedAttachment = type.parseAttachment(attachmentJson);
 
-        assertEquals(new DigitalGoodsPurchaseAttachment(GOODS_ID, 25, 100, 2000), parsedAttachment);
+        assertEquals(new DGSPurchaseAttachment(GOODS_ID, 25, 100, 2000), parsedAttachment);
     }
 
     @Test
@@ -256,7 +256,7 @@ class PurchaseTransactionTypeTest {
 
     @Test
     void applyAttachment() {
-        DigitalGoodsPurchaseAttachment attachment = mockAttachment(GOODS_ID, 5);
+        DGSPurchaseAttachment attachment = mockAttachment(GOODS_ID, 5);
 
         type.applyAttachment(tx, sender, recipient);
 
@@ -407,8 +407,8 @@ class PurchaseTransactionTypeTest {
         assertFalse(type.isPhasingSafe(), "DGS_PURCHASE type should not be phasing safe");
     }
 
-    private DigitalGoodsPurchaseAttachment mockAttachment(int quantity, long price) {
-        DigitalGoodsPurchaseAttachment attachment = new DigitalGoodsPurchaseAttachment(1L, quantity, price, 1000);
+    private DGSPurchaseAttachment mockAttachment(int quantity, long price) {
+        DGSPurchaseAttachment attachment = new DGSPurchaseAttachment(1L, quantity, price, 1000);
         doReturn(attachment).when(tx).getAttachment();
         return attachment;
     }

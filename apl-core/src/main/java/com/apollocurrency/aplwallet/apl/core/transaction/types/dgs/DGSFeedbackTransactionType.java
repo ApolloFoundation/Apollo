@@ -12,7 +12,7 @@ import com.apollocurrency.aplwallet.apl.core.entity.state.dgs.DGSPurchase;
 import com.apollocurrency.aplwallet.apl.core.service.state.DGSService;
 import com.apollocurrency.aplwallet.apl.core.service.state.account.AccountService;
 import com.apollocurrency.aplwallet.apl.core.transaction.TransactionTypes;
-import com.apollocurrency.aplwallet.apl.core.transaction.messages.DigitalGoodsFeedback;
+import com.apollocurrency.aplwallet.apl.core.transaction.messages.DGSFeedbackAttachment;
 import com.apollocurrency.aplwallet.apl.util.exception.AplException;
 import org.json.simple.JSONObject;
 
@@ -21,10 +21,10 @@ import javax.inject.Singleton;
 import java.nio.ByteBuffer;
 
 @Singleton
-public class FeedbackTransactionType extends DigitalGoodsTransactionType {
+public class DGSFeedbackTransactionType extends DGSTransactionType {
 
     @Inject
-    public FeedbackTransactionType(BlockchainConfig blockchainConfig, AccountService accountService, DGSService service) {
+    public DGSFeedbackTransactionType(BlockchainConfig blockchainConfig, AccountService accountService, DGSService service) {
         super(blockchainConfig, accountService, service);
     }
 
@@ -44,13 +44,13 @@ public class FeedbackTransactionType extends DigitalGoodsTransactionType {
     }
 
     @Override
-    public DigitalGoodsFeedback parseAttachment(ByteBuffer buffer) throws AplException.NotValidException {
-        return new DigitalGoodsFeedback(buffer);
+    public DGSFeedbackAttachment parseAttachment(ByteBuffer buffer) throws AplException.NotValidException {
+        return new DGSFeedbackAttachment(buffer);
     }
 
     @Override
-    public DigitalGoodsFeedback parseAttachment(JSONObject attachmentData) throws AplException.NotValidException {
-        return new DigitalGoodsFeedback(attachmentData);
+    public DGSFeedbackAttachment parseAttachment(JSONObject attachmentData) throws AplException.NotValidException {
+        return new DGSFeedbackAttachment(attachmentData);
     }
 
     @Override
@@ -68,13 +68,13 @@ public class FeedbackTransactionType extends DigitalGoodsTransactionType {
 
     @Override
     public void applyAttachment(Transaction transaction, Account senderAccount, Account recipientAccount) {
-        DigitalGoodsFeedback attachment = (DigitalGoodsFeedback) transaction.getAttachment();
+        DGSFeedbackAttachment attachment = (DGSFeedbackAttachment) transaction.getAttachment();
         dgsService.feedback(attachment.getPurchaseId(), transaction.getEncryptedMessage(), transaction.getMessage());
     }
 
     @Override
     public void doValidateAttachment(Transaction transaction) throws AplException.ValidationException {
-        DigitalGoodsFeedback attachment = (DigitalGoodsFeedback) transaction.getAttachment();
+        DGSFeedbackAttachment attachment = (DGSFeedbackAttachment) transaction.getAttachment();
         DGSPurchase purchase = dgsService.getPurchase(attachment.getPurchaseId());
         if (purchase != null && (purchase.getSellerId() != transaction.getRecipientId() || transaction.getSenderId() != purchase.getBuyerId())) {
             throw new AplException.NotValidException("Invalid digital goods feedback: " + attachment.getJSONObject());

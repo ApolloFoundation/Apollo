@@ -27,9 +27,9 @@ import com.apollocurrency.aplwallet.apl.core.service.fulltext.FullTextOperationD
 import com.apollocurrency.aplwallet.apl.core.service.fulltext.FullTextSearchService;
 import com.apollocurrency.aplwallet.apl.core.service.fulltext.FullTextSearchUpdater;
 import com.apollocurrency.aplwallet.apl.core.service.state.account.AccountService;
-import com.apollocurrency.aplwallet.apl.core.transaction.messages.DigitalGoodsDelivery;
-import com.apollocurrency.aplwallet.apl.core.transaction.messages.DigitalGoodsListing;
-import com.apollocurrency.aplwallet.apl.core.transaction.messages.DigitalGoodsPurchaseAttachment;
+import com.apollocurrency.aplwallet.apl.core.transaction.messages.DGSDeliveryAttachment;
+import com.apollocurrency.aplwallet.apl.core.transaction.messages.DGSListingAttachment;
+import com.apollocurrency.aplwallet.apl.core.transaction.messages.DGSPurchaseAttachment;
 import com.apollocurrency.aplwallet.apl.core.transaction.messages.EncryptedMessageAppendix;
 import com.apollocurrency.aplwallet.apl.core.transaction.messages.MessageAppendix;
 import com.apollocurrency.aplwallet.apl.core.utils.CollectionUtil;
@@ -259,7 +259,7 @@ public class DGSServiceImpl implements DGSService {
         purchaseTable.insert(dgsPurchase);
     }
 
-    public void listGoods(Transaction transaction, DigitalGoodsListing attachment) {
+    public void listGoods(Transaction transaction, DGSListingAttachment attachment) {
         DGSGoods goods = new DGSGoods(transaction, attachment, blockchain.getLastBlockTimestamp());
         addTag(goods);
         goodsTable.insert(goods);
@@ -345,7 +345,7 @@ public class DGSServiceImpl implements DGSService {
         }
     }
 
-    public void purchase(Transaction transaction, DigitalGoodsPurchaseAttachment attachment) {
+    public void purchase(Transaction transaction, DGSPurchaseAttachment attachment) {
         DGSGoods goods = goodsTable.get(attachment.getGoodsId());
         if (!goods.isDelisted()
             && attachment.getQuantity() <= goods.getQuantity()
@@ -362,7 +362,7 @@ public class DGSServiceImpl implements DGSService {
         }
     }
 
-    public void deliver(Transaction transaction, DigitalGoodsDelivery attachment) {
+    public void deliver(Transaction transaction, DGSDeliveryAttachment attachment) {
         DGSPurchase purchase = getPendingPurchase(attachment.getPurchaseId());
         purchase.setHeight(blockchain.getHeight());
         setPending(purchase, false);

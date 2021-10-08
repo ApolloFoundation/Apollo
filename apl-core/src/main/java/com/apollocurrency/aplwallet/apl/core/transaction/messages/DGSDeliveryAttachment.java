@@ -16,14 +16,14 @@ import java.nio.ByteBuffer;
 /**
  * @author al
  */
-public class DigitalGoodsDelivery extends AbstractAttachment {
+public class DGSDeliveryAttachment extends AbstractAttachment {
 
     final long purchaseId;
     final long discountATM;
     final boolean goodsIsText;
     EncryptedData goods;
 
-    public DigitalGoodsDelivery(ByteBuffer buffer) throws AplException.NotValidException {
+    public DGSDeliveryAttachment(ByteBuffer buffer) throws AplException.NotValidException {
         super(buffer);
         this.purchaseId = buffer.getLong();
         int length = buffer.getInt();
@@ -39,7 +39,7 @@ public class DigitalGoodsDelivery extends AbstractAttachment {
         this.discountATM = buffer.getLong();
     }
 
-    public DigitalGoodsDelivery(JSONObject attachmentData) {
+    public DGSDeliveryAttachment(JSONObject attachmentData) {
         super(attachmentData);
         this.purchaseId = Convert.parseUnsignedLong((String) attachmentData.get("purchase"));
         this.goods = new EncryptedData(Convert.parseHexString((String) attachmentData.get("goodsData")), Convert.parseHexString((String) attachmentData.get("goodsNonce")));
@@ -47,7 +47,7 @@ public class DigitalGoodsDelivery extends AbstractAttachment {
         this.goodsIsText = Boolean.TRUE.equals(attachmentData.get("goodsIsText"));
     }
 
-    public DigitalGoodsDelivery(long purchaseId, EncryptedData goods, boolean goodsIsText, long discountATM) {
+    public DGSDeliveryAttachment(long purchaseId, EncryptedData goods, boolean goodsIsText, long discountATM) {
         this.purchaseId = purchaseId;
         this.goods = goods;
         this.discountATM = discountATM;

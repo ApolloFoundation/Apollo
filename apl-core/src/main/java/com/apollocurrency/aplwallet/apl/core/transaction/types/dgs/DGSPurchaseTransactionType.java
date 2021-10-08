@@ -13,7 +13,7 @@ import com.apollocurrency.aplwallet.apl.core.service.blockchain.Blockchain;
 import com.apollocurrency.aplwallet.apl.core.service.state.DGSService;
 import com.apollocurrency.aplwallet.apl.core.service.state.account.AccountService;
 import com.apollocurrency.aplwallet.apl.core.transaction.TransactionTypes;
-import com.apollocurrency.aplwallet.apl.core.transaction.messages.DigitalGoodsPurchaseAttachment;
+import com.apollocurrency.aplwallet.apl.core.transaction.messages.DGSPurchaseAttachment;
 import com.apollocurrency.aplwallet.apl.core.utils.MathUtils;
 import com.apollocurrency.aplwallet.apl.util.Constants;
 import com.apollocurrency.aplwallet.apl.util.exception.AplException;
@@ -25,12 +25,12 @@ import java.nio.ByteBuffer;
 import java.util.Map;
 
 @Singleton
-public class PurchaseTransactionType extends DigitalGoodsTransactionType {
+public class DGSPurchaseTransactionType extends DGSTransactionType {
 
     private final Blockchain blockchain;
 
     @Inject
-    public PurchaseTransactionType(BlockchainConfig blockchainConfig, AccountService accountService, DGSService service, Blockchain blockchain) {
+    public DGSPurchaseTransactionType(BlockchainConfig blockchainConfig, AccountService accountService, DGSService service, Blockchain blockchain) {
         super(blockchainConfig, accountService, service);
         this.blockchain = blockchain;
     }
@@ -51,18 +51,18 @@ public class PurchaseTransactionType extends DigitalGoodsTransactionType {
     }
 
     @Override
-    public DigitalGoodsPurchaseAttachment parseAttachment(ByteBuffer buffer) throws AplException.NotValidException {
-        return new DigitalGoodsPurchaseAttachment(buffer);
+    public DGSPurchaseAttachment parseAttachment(ByteBuffer buffer) throws AplException.NotValidException {
+        return new DGSPurchaseAttachment(buffer);
     }
 
     @Override
-    public DigitalGoodsPurchaseAttachment parseAttachment(JSONObject attachmentData) throws AplException.NotValidException {
-        return new DigitalGoodsPurchaseAttachment(attachmentData);
+    public DGSPurchaseAttachment parseAttachment(JSONObject attachmentData) throws AplException.NotValidException {
+        return new DGSPurchaseAttachment(attachmentData);
     }
 
     @Override
     public void doStateIndependentValidation(Transaction transaction) throws AplException.ValidationException {
-        DigitalGoodsPurchaseAttachment attachment = (DigitalGoodsPurchaseAttachment) transaction.getAttachment();
+        DGSPurchaseAttachment attachment = (DGSPurchaseAttachment) transaction.getAttachment();
         if (attachment.getQuantity() <= 0
             || attachment.getQuantity() > Constants.MAX_DGS_LISTING_QUANTITY
             || attachment.getPriceATM() <= 0
@@ -80,7 +80,7 @@ public class PurchaseTransactionType extends DigitalGoodsTransactionType {
 
     @Override
     public boolean applyAttachmentUnconfirmed(Transaction transaction, Account senderAccount) {
-        DigitalGoodsPurchaseAttachment attachment = (DigitalGoodsPurchaseAttachment) transaction.getAttachment();
+        DGSPurchaseAttachment attachment = (DGSPurchaseAttachment) transaction.getAttachment();
         if (senderAccount.getUnconfirmedBalanceATM() >= Math.multiplyExact(attachment.getQuantity(), attachment.getPriceATM())) {
             getAccountService().addToUnconfirmedBalanceATM(senderAccount, getLedgerEvent(), transaction.getId(), -Math.multiplyExact(attachment.getQuantity(), attachment.getPriceATM()));
             return true;
@@ -90,19 +90,19 @@ public class PurchaseTransactionType extends DigitalGoodsTransactionType {
 
     @Override
     public void undoAttachmentUnconfirmed(Transaction transaction, Account senderAccount) {
-        DigitalGoodsPurchaseAttachment attachment = (DigitalGoodsPurchaseAttachment) transaction.getAttachment();
+        DGSPurchaseAttachment attachment = (DGSPurchaseAttachment) transaction.getAttachment();
         getAccountService().addToUnconfirmedBalanceATM(senderAccount, getLedgerEvent(), transaction.getId(), Math.multiplyExact(attachment.getQuantity(), attachment.getPriceATM()));
     }
 
     @Override
     public void applyAttachment(Transaction transaction, Account senderAccount, Account recipientAccount) {
-        DigitalGoodsPurchaseAttachment attachment = (DigitalGoodsPurchaseAttachment) transaction.getAttachment();
+        DGSPurchaseAttachment attachment = (DGSPurchaseAttachment) transaction.getAttachment();
         dgsService.purchase(transaction, attachment);
     }
 
     @Override
     public void doValidateAttachment(Transaction transaction) throws AplException.ValidationException {
-        DigitalGoodsPurchaseAttachment attachment = (DigitalGoodsPurchaseAttachment) transaction.getAttachment();
+        DGSPurchaseAttachment attachment = (DGSPurchaseAttachment) transaction.getAttachment();
         DGSGoods goods = dgsService.getGoods(attachment.getGoodsId());
         if (goods != null && goods.getSellerId() != transaction.getRecipientId()) {
             throw new AplException.NotValidException("Invalid digital goods purchase: " + attachment.getJSONObject());
@@ -118,7 +118,7 @@ public class PurchaseTransactionType extends DigitalGoodsTransactionType {
 
     @Override
     public boolean isDuplicate(Transaction transaction, Map<TransactionTypes.TransactionTypeSpec, Map<String, Integer>> duplicates) {
-        DigitalGoodsPurchaseAttachment attachment = (DigitalGoodsPurchaseAttachment) transaction.getAttachment();
+        DGSPurchaseAttachment attachment = (DGSPurchaseAttachment) transaction.getAttachment();
         // not a bug, uniqueness is based on DigitalGoods.DELISTING
         return isDuplicate(TransactionTypes.TransactionTypeSpec.DGS_DELISTING, Long.toUnsignedString(attachment.getGoodsId()), duplicates, false);
     }

@@ -12,24 +12,24 @@ import java.nio.ByteBuffer;
 /**
  * @author al
  */
-public final class DigitalGoodsRefund extends AbstractAttachment {
+public final class DGSRefundAttachment extends AbstractAttachment {
 
     final long purchaseId;
     final long refundATM;
 
-    public DigitalGoodsRefund(ByteBuffer buffer) {
+    public DGSRefundAttachment(ByteBuffer buffer) {
         super(buffer);
         this.purchaseId = buffer.getLong();
         this.refundATM = buffer.getLong();
     }
 
-    public DigitalGoodsRefund(JSONObject attachmentData) {
+    public DGSRefundAttachment(JSONObject attachmentData) {
         super(attachmentData);
         this.purchaseId = Convert.parseUnsignedLong((String) attachmentData.get("purchase"));
         this.refundATM = Convert.parseLong(attachmentData.get("refundATM"));
     }
 
-    public DigitalGoodsRefund(long purchaseId, long refundATM) {
+    public DGSRefundAttachment(long purchaseId, long refundATM) {
         this.purchaseId = purchaseId;
         this.refundATM = refundATM;
     }

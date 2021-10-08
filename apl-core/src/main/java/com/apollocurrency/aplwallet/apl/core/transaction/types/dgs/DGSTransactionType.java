@@ -11,11 +11,11 @@ import com.apollocurrency.aplwallet.apl.core.service.state.account.AccountServic
 import com.apollocurrency.aplwallet.apl.core.transaction.TransactionType;
 import com.apollocurrency.aplwallet.apl.util.exception.AplException;
 
-public abstract class DigitalGoodsTransactionType extends TransactionType {
+public abstract class DGSTransactionType extends TransactionType {
 
     protected final DGSService dgsService;
 
-    public DigitalGoodsTransactionType(BlockchainConfig blockchainConfig, AccountService accountService, DGSService service) {
+    public DGSTransactionType(BlockchainConfig blockchainConfig, AccountService accountService, DGSService service) {
         super(blockchainConfig, accountService);
         this.dgsService = service;
     }

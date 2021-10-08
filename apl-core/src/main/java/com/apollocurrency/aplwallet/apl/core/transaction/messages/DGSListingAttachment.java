@@ -15,7 +15,7 @@ import java.nio.ByteBuffer;
 /**
  * @author al
  */
-public final class DigitalGoodsListing extends AbstractAttachment {
+public final class DGSListingAttachment extends AbstractAttachment {
 
     final String name;
     final String description;
@@ -23,7 +23,7 @@ public final class DigitalGoodsListing extends AbstractAttachment {
     final int quantity;
     final long priceATM;
 
-    public DigitalGoodsListing(ByteBuffer buffer) throws AplException.NotValidException {
+    public DGSListingAttachment(ByteBuffer buffer) throws AplException.NotValidException {
         super(buffer);
         try {
             this.name = Convert.readString(buffer, buffer.getShort(), Constants.MAX_DGS_LISTING_NAME_LENGTH);
@@ -36,7 +36,7 @@ public final class DigitalGoodsListing extends AbstractAttachment {
         }
     }
 
-    public DigitalGoodsListing(JSONObject attachmentData) {
+    public DGSListingAttachment(JSONObject attachmentData) {
         super(attachmentData);
         this.name = (String) attachmentData.get("name");
         this.description = (String) attachmentData.get("description");
@@ -45,7 +45,7 @@ public final class DigitalGoodsListing extends AbstractAttachment {
         this.priceATM = Convert.parseLong(attachmentData.get("priceATM"));
     }
 
-    public DigitalGoodsListing(String name, String description, String tags, int quantity, long priceATM) {
+    public DGSListingAttachment(String name, String description, String tags, int quantity, long priceATM) {
         this.name = name;
         this.description = description;
         this.tags = tags;

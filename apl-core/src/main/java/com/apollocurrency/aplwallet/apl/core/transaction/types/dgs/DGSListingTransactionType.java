@@ -12,7 +12,7 @@ import com.apollocurrency.aplwallet.apl.core.service.state.DGSService;
 import com.apollocurrency.aplwallet.apl.core.service.state.account.AccountService;
 import com.apollocurrency.aplwallet.apl.core.transaction.Fee;
 import com.apollocurrency.aplwallet.apl.core.transaction.TransactionTypes;
-import com.apollocurrency.aplwallet.apl.core.transaction.messages.DigitalGoodsListing;
+import com.apollocurrency.aplwallet.apl.core.transaction.messages.DGSListingAttachment;
 import com.apollocurrency.aplwallet.apl.core.transaction.messages.PrunablePlainMessageAppendix;
 import com.apollocurrency.aplwallet.apl.util.Constants;
 import com.apollocurrency.aplwallet.apl.util.Search;
@@ -28,10 +28,10 @@ import java.nio.ByteBuffer;
 import java.util.Map;
 @Slf4j
 @Singleton
-public class ListingTransactionType extends DigitalGoodsTransactionType {
+public class DGSListingTransactionType extends DGSTransactionType {
 
     @Inject
-    public ListingTransactionType(BlockchainConfig blockchainConfig, AccountService accountService, DGSService service) {
+    public DGSListingTransactionType(BlockchainConfig blockchainConfig, AccountService accountService, DGSService service) {
         super(blockchainConfig, accountService, service);
     }
 
@@ -54,24 +54,24 @@ public class ListingTransactionType extends DigitalGoodsTransactionType {
     @Override
     public Fee getBaselineFee(Transaction transaction) {
         return getFeeFactory().createSizeBased(BigDecimal.valueOf(2), BigDecimal.valueOf(2), (tx, app) -> {
-            DigitalGoodsListing attachment = (DigitalGoodsListing) tx.getAttachment();
+            DGSListingAttachment attachment = (DGSListingAttachment) tx.getAttachment();
             return attachment.getName().length() + attachment.getDescription().length();
         });
     }
 
     @Override
-    public DigitalGoodsListing parseAttachment(ByteBuffer buffer) throws AplException.NotValidException {
-        return new DigitalGoodsListing(buffer);
+    public DGSListingAttachment parseAttachment(ByteBuffer buffer) throws AplException.NotValidException {
+        return new DGSListingAttachment(buffer);
     }
 
     @Override
-    public DigitalGoodsListing parseAttachment(JSONObject attachmentData) throws AplException.NotValidException {
-        return new DigitalGoodsListing(attachmentData);
+    public DGSListingAttachment parseAttachment(JSONObject attachmentData) throws AplException.NotValidException {
+        return new DGSListingAttachment(attachmentData);
     }
 
     @Override
     public void doStateIndependentValidation(Transaction transaction) throws AplException.ValidationException {
-        DigitalGoodsListing attachment = (DigitalGoodsListing) transaction.getAttachment();
+        DGSListingAttachment attachment = (DGSListingAttachment) transaction.getAttachment();
         if (attachment.getName().length() == 0 || attachment.getName().length() > Constants.MAX_DGS_LISTING_NAME_LENGTH
             || attachment.getDescription().length() > Constants.MAX_DGS_LISTING_DESCRIPTION_LENGTH
             || attachment.getTags().length() > Constants.MAX_DGS_LISTING_TAGS_LENGTH
@@ -96,7 +96,7 @@ public class ListingTransactionType extends DigitalGoodsTransactionType {
 
     @Override
     public void applyAttachment(Transaction transaction, Account senderAccount, Account recipientAccount) {
-        DigitalGoodsListing attachment = (DigitalGoodsListing) transaction.getAttachment();
+        DGSListingAttachment attachment = (DGSListingAttachment) transaction.getAttachment();
         dgsService.listGoods(transaction, attachment);
     }
 

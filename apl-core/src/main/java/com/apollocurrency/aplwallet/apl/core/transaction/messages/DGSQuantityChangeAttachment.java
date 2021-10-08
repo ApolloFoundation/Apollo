@@ -12,24 +12,24 @@ import java.nio.ByteBuffer;
 /**
  * @author al
  */
-public final class DigitalGoodsQuantityChange extends AbstractAttachment {
+public final class DGSQuantityChangeAttachment extends AbstractAttachment {
 
     final long goodsId;
     final int deltaQuantity;
 
-    public DigitalGoodsQuantityChange(ByteBuffer buffer) {
+    public DGSQuantityChangeAttachment(ByteBuffer buffer) {
         super(buffer);
         this.goodsId = buffer.getLong();
         this.deltaQuantity = buffer.getInt();
     }
 
-    public DigitalGoodsQuantityChange(JSONObject attachmentData) {
+    public DGSQuantityChangeAttachment(JSONObject attachmentData) {
         super(attachmentData);
         this.goodsId = Convert.parseUnsignedLong((String) attachmentData.get("goods"));
         this.deltaQuantity = ((Number) attachmentData.get("deltaQuantity")).intValue();
     }
 
-    public DigitalGoodsQuantityChange(long goodsId, int deltaQuantity) {
+    public DGSQuantityChangeAttachment(long goodsId, int deltaQuantity) {
         this.goodsId = goodsId;
         this.deltaQuantity = deltaQuantity;
     }

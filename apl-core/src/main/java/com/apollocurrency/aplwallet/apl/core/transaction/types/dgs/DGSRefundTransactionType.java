@@ -12,7 +12,7 @@ import com.apollocurrency.aplwallet.apl.core.entity.state.dgs.DGSPurchase;
 import com.apollocurrency.aplwallet.apl.core.service.state.DGSService;
 import com.apollocurrency.aplwallet.apl.core.service.state.account.AccountService;
 import com.apollocurrency.aplwallet.apl.core.transaction.TransactionTypes;
-import com.apollocurrency.aplwallet.apl.core.transaction.messages.DigitalGoodsRefund;
+import com.apollocurrency.aplwallet.apl.core.transaction.messages.DGSRefundAttachment;
 import com.apollocurrency.aplwallet.apl.util.exception.AplException;
 import org.json.simple.JSONObject;
 
@@ -21,10 +21,10 @@ import javax.inject.Singleton;
 import java.nio.ByteBuffer;
 import java.util.Map;
 @Singleton
-class RefundTransactionType extends DigitalGoodsTransactionType {
+class DGSRefundTransactionType extends DGSTransactionType {
 
     @Inject
-    public RefundTransactionType(BlockchainConfig blockchainConfig, AccountService accountService, DGSService service) {
+    public DGSRefundTransactionType(BlockchainConfig blockchainConfig, AccountService accountService, DGSService service) {
         super(blockchainConfig, accountService, service);
     }
 
@@ -44,18 +44,18 @@ class RefundTransactionType extends DigitalGoodsTransactionType {
     }
 
     @Override
-    public DigitalGoodsRefund parseAttachment(ByteBuffer buffer) throws AplException.NotValidException {
-        return new DigitalGoodsRefund(buffer);
+    public DGSRefundAttachment parseAttachment(ByteBuffer buffer) throws AplException.NotValidException {
+        return new DGSRefundAttachment(buffer);
     }
 
     @Override
-    public DigitalGoodsRefund parseAttachment(JSONObject attachmentData) throws AplException.NotValidException {
-        return new DigitalGoodsRefund(attachmentData);
+    public DGSRefundAttachment parseAttachment(JSONObject attachmentData) throws AplException.NotValidException {
+        return new DGSRefundAttachment(attachmentData);
     }
 
     @Override
     public void doStateIndependentValidation(Transaction transaction) throws AplException.ValidationException {
-        DigitalGoodsRefund attachment = (DigitalGoodsRefund) transaction.getAttachment();
+        DGSRefundAttachment attachment = (DGSRefundAttachment) transaction.getAttachment();
         if (attachment.getRefundATM() < 0
             || attachment.getRefundATM() > getBlockchainConfig().getCurrentConfig().getMaxBalanceATM()) {
             throw new AplException.NotValidException("Invalid digital goods refund: " + attachment.getJSONObject());
@@ -67,7 +67,7 @@ class RefundTransactionType extends DigitalGoodsTransactionType {
 
     @Override
     public boolean applyAttachmentUnconfirmed(Transaction transaction, Account senderAccount) {
-        DigitalGoodsRefund attachment = (DigitalGoodsRefund) transaction.getAttachment();
+        DGSRefundAttachment attachment = (DGSRefundAttachment) transaction.getAttachment();
         if (senderAccount.getUnconfirmedBalanceATM() >= attachment.getRefundATM()) {
             getAccountService().addToUnconfirmedBalanceATM(senderAccount, getLedgerEvent(), transaction.getId(), -attachment.getRefundATM());
             return true;
@@ -77,19 +77,19 @@ class RefundTransactionType extends DigitalGoodsTransactionType {
 
     @Override
     public void undoAttachmentUnconfirmed(Transaction transaction, Account senderAccount) {
-        DigitalGoodsRefund attachment = (DigitalGoodsRefund) transaction.getAttachment();
+        DGSRefundAttachment attachment = (DGSRefundAttachment) transaction.getAttachment();
         getAccountService().addToUnconfirmedBalanceATM(senderAccount, getLedgerEvent(), transaction.getId(), attachment.getRefundATM());
     }
 
     @Override
     public void applyAttachment(Transaction transaction, Account senderAccount, Account recipientAccount) {
-        DigitalGoodsRefund attachment = (DigitalGoodsRefund) transaction.getAttachment();
+        DGSRefundAttachment attachment = (DGSRefundAttachment) transaction.getAttachment();
         dgsService.refund(getLedgerEvent(), transaction.getId(), transaction.getSenderId(), attachment.getPurchaseId(), attachment.getRefundATM(), transaction.getEncryptedMessage());
     }
 
     @Override
     public void doValidateAttachment(Transaction transaction) throws AplException.ValidationException {
-        DigitalGoodsRefund attachment = (DigitalGoodsRefund) transaction.getAttachment();
+        DGSRefundAttachment attachment = (DGSRefundAttachment) transaction.getAttachment();
         DGSPurchase purchase = dgsService.getPurchase(attachment.getPurchaseId());
         if (purchase != null && (purchase.getBuyerId() != transaction.getRecipientId()
             || transaction.getSenderId() != purchase.getSellerId())) {
@@ -103,7 +103,7 @@ class RefundTransactionType extends DigitalGoodsTransactionType {
 
     @Override
     public boolean isDuplicate(Transaction transaction, Map<TransactionTypes.TransactionTypeSpec, Map<String, Integer>> duplicates) {
-        DigitalGoodsRefund attachment = (DigitalGoodsRefund) transaction.getAttachment();
+        DGSRefundAttachment attachment = (DGSRefundAttachment) transaction.getAttachment();
         return isDuplicate(TransactionTypes.TransactionTypeSpec.DGS_REFUND, Long.toUnsignedString(attachment.getPurchaseId()), duplicates, true);
     }
 

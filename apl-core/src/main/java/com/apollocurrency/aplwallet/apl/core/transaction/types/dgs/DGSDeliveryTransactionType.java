@@ -13,7 +13,7 @@ import com.apollocurrency.aplwallet.apl.core.service.state.DGSService;
 import com.apollocurrency.aplwallet.apl.core.service.state.account.AccountService;
 import com.apollocurrency.aplwallet.apl.core.transaction.Fee;
 import com.apollocurrency.aplwallet.apl.core.transaction.TransactionTypes;
-import com.apollocurrency.aplwallet.apl.core.transaction.messages.DigitalGoodsDelivery;
+import com.apollocurrency.aplwallet.apl.core.transaction.messages.DGSDeliveryAttachment;
 import com.apollocurrency.aplwallet.apl.util.Constants;
 import com.apollocurrency.aplwallet.apl.util.exception.AplException;
 import org.json.simple.JSONObject;
@@ -25,10 +25,10 @@ import java.nio.ByteBuffer;
 import java.util.Map;
 
 @Singleton
-public class DeliveryTransactionType extends DigitalGoodsTransactionType {
+public class DGSDeliveryTransactionType extends DGSTransactionType {
 
     @Inject
-    public DeliveryTransactionType(BlockchainConfig blockchainConfig, AccountService accountService, DGSService service) {
+    public DGSDeliveryTransactionType(BlockchainConfig blockchainConfig, AccountService accountService, DGSService service) {
         super(blockchainConfig, accountService, service);
     }
 
@@ -50,27 +50,27 @@ public class DeliveryTransactionType extends DigitalGoodsTransactionType {
     @Override
     public Fee getBaselineFee(Transaction transaction) {
         return getFeeFactory().createSizeBased(BigDecimal.ONE, BigDecimal.valueOf(2), (tx, app) -> {
-            DigitalGoodsDelivery attachment = (DigitalGoodsDelivery) tx.getAttachment();
+            DGSDeliveryAttachment attachment = (DGSDeliveryAttachment) tx.getAttachment();
             return attachment.getGoodsDataLength() - 16;
         });
     }
 
     @Override
-    public DigitalGoodsDelivery parseAttachment(ByteBuffer buffer) throws AplException.NotValidException {
-        return new DigitalGoodsDelivery(buffer);
+    public DGSDeliveryAttachment parseAttachment(ByteBuffer buffer) throws AplException.NotValidException {
+        return new DGSDeliveryAttachment(buffer);
     }
 
     @Override
-    public DigitalGoodsDelivery parseAttachment(JSONObject attachmentData) throws AplException.NotValidException {
+    public DGSDeliveryAttachment parseAttachment(JSONObject attachmentData) throws AplException.NotValidException {
         if (attachmentData.get("goodsData") == null) {
             throw new AplException.NotValidException("Unencrypted goodsData is not supported");
         }
-        return new DigitalGoodsDelivery(attachmentData);
+        return new DGSDeliveryAttachment(attachmentData);
     }
 
     @Override
     public void doStateIndependentValidation(Transaction transaction) throws AplException.ValidationException {
-        DigitalGoodsDelivery attachment = (DigitalGoodsDelivery) transaction.getAttachment();
+        DGSDeliveryAttachment attachment = (DGSDeliveryAttachment) transaction.getAttachment();
         if (attachment.getGoodsDataLength() > Constants.MAX_DGS_GOODS_LENGTH) {
             throw new AplException.NotValidException("Invalid digital goods delivery data length: " + attachment.getGoodsDataLength());
         }
@@ -87,13 +87,13 @@ public class DeliveryTransactionType extends DigitalGoodsTransactionType {
 
     @Override
     public void applyAttachment(Transaction transaction, Account senderAccount, Account recipientAccount) {
-        DigitalGoodsDelivery attachment = (DigitalGoodsDelivery) transaction.getAttachment();
+        DGSDeliveryAttachment attachment = (DGSDeliveryAttachment) transaction.getAttachment();
         dgsService.deliver(transaction, attachment);
     }
 
     @Override
     public void doValidateAttachment(Transaction transaction) throws AplException.ValidationException {
-        DigitalGoodsDelivery attachment = (DigitalGoodsDelivery) transaction.getAttachment();
+        DGSDeliveryAttachment attachment = (DGSDeliveryAttachment) transaction.getAttachment();
         DGSPurchase purchase = dgsService.getPendingPurchase(attachment.getPurchaseId());
         if (purchase != null && (purchase.getBuyerId() != transaction.getRecipientId()
             || transaction.getSenderId() != purchase.getSellerId()
@@ -107,7 +107,7 @@ public class DeliveryTransactionType extends DigitalGoodsTransactionType {
 
     @Override
     public boolean isDuplicate(Transaction transaction, Map<TransactionTypes.TransactionTypeSpec, Map<String, Integer>> duplicates) {
-        DigitalGoodsDelivery attachment = (DigitalGoodsDelivery) transaction.getAttachment();
+        DGSDeliveryAttachment attachment = (DGSDeliveryAttachment) transaction.getAttachment();
         return isDuplicate(TransactionTypes.TransactionTypeSpec.DGS_DELIVERY, Long.toUnsignedString(attachment.getPurchaseId()), duplicates, true);
     }
 

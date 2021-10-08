@@ -37,6 +37,15 @@ public enum DexCurrency {
         return DexCurrency.values()[ordinal];
     }
 
+
+    public static DexCurrency getTypeThrowing(int ordinal) {
+        DexCurrency type = getType(ordinal);
+        if (type == null) {
+            throw new IllegalArgumentException("No DexCurrency found by ordinal " + ordinal);
+        }
+        return type;
+    }
+
     /**
      * Resteasy currency parsing method. Please note, that APL/ETH will be parsed to ETH
      *
