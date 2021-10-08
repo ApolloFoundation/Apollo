@@ -14,7 +14,7 @@ import com.apollocurrency.aplwallet.apl.core.service.state.account.AccountServic
 import com.apollocurrency.aplwallet.apl.core.service.state.asset.AssetService;
 import com.apollocurrency.aplwallet.apl.core.service.state.asset.AssetTransferService;
 import com.apollocurrency.aplwallet.apl.core.transaction.TransactionTypes;
-import com.apollocurrency.aplwallet.apl.core.transaction.messages.ColoredCoinsAssetTransfer;
+import com.apollocurrency.aplwallet.apl.core.transaction.messages.CCAssetTransferAttachment;
 import com.apollocurrency.aplwallet.apl.util.exception.AplException;
 import org.json.simple.JSONObject;
 
@@ -24,8 +24,6 @@ import java.nio.ByteBuffer;
 
 @Singleton
 public class CCAssetTransferTransactionType extends CCTransactionType {
-
-
     private final AccountAssetService accountAssetService;
     private final AssetService assetService;
     private final AssetTransferService assetTransferService;
@@ -54,18 +52,18 @@ public class CCAssetTransferTransactionType extends CCTransactionType {
     }
 
     @Override
-    public ColoredCoinsAssetTransfer parseAttachment(ByteBuffer buffer) throws AplException.NotValidException {
-        return new ColoredCoinsAssetTransfer(buffer);
+    public CCAssetTransferAttachment parseAttachment(ByteBuffer buffer) throws AplException.NotValidException {
+        return new CCAssetTransferAttachment(buffer);
     }
 
     @Override
-    public ColoredCoinsAssetTransfer parseAttachment(JSONObject attachmentData) throws AplException.NotValidException {
-        return new ColoredCoinsAssetTransfer(attachmentData);
+    public CCAssetTransferAttachment parseAttachment(JSONObject attachmentData) throws AplException.NotValidException {
+        return new CCAssetTransferAttachment(attachmentData);
     }
 
     @Override
     public boolean applyAttachmentUnconfirmed(Transaction transaction, Account senderAccount) {
-        ColoredCoinsAssetTransfer attachment = (ColoredCoinsAssetTransfer) transaction.getAttachment();
+        CCAssetTransferAttachment attachment = (CCAssetTransferAttachment) transaction.getAttachment();
         long unconfirmedAssetBalance = accountAssetService.getUnconfirmedAssetBalanceATU(senderAccount.getId(), attachment.getAssetId());
         if (unconfirmedAssetBalance >= 0 && unconfirmedAssetBalance >= attachment.getQuantityATU()) {
             accountAssetService.addToUnconfirmedAssetBalanceATU(senderAccount, getLedgerEvent(), transaction.getId(), attachment.getAssetId(), -attachment.getQuantityATU());
@@ -76,7 +74,7 @@ public class CCAssetTransferTransactionType extends CCTransactionType {
 
     @Override
     public void applyAttachment(Transaction transaction, Account senderAccount, Account recipientAccount) {
-        ColoredCoinsAssetTransfer attachment = (ColoredCoinsAssetTransfer) transaction.getAttachment();
+        CCAssetTransferAttachment attachment = (CCAssetTransferAttachment) transaction.getAttachment();
         accountAssetService.addToAssetBalanceATU(senderAccount, getLedgerEvent(), transaction.getId(), attachment.getAssetId(), -attachment.getQuantityATU());
         if (recipientAccount.getId() == GenesisImporter.CREATOR_ID) {
             assetService.deleteAsset(transaction, attachment.getAssetId(), attachment.getQuantityATU());
@@ -88,13 +86,13 @@ public class CCAssetTransferTransactionType extends CCTransactionType {
 
     @Override
     public void undoAttachmentUnconfirmed(Transaction transaction, Account senderAccount) {
-        ColoredCoinsAssetTransfer attachment = (ColoredCoinsAssetTransfer) transaction.getAttachment();
+        CCAssetTransferAttachment attachment = (CCAssetTransferAttachment) transaction.getAttachment();
         accountAssetService.addToUnconfirmedAssetBalanceATU(senderAccount, getLedgerEvent(), transaction.getId(), attachment.getAssetId(), attachment.getQuantityATU());
     }
 
     @Override
     public void doStateDependentValidation(Transaction transaction) throws AplException.ValidationException {
-        ColoredCoinsAssetTransfer attachment = (ColoredCoinsAssetTransfer) transaction.getAttachment();
+        CCAssetTransferAttachment attachment = (CCAssetTransferAttachment) transaction.getAttachment();
         Asset asset = assetService.getAsset(attachment.getAssetId());
         if (asset != null && attachment.getQuantityATU() > asset.getInitialQuantityATU()) {
             throw new AplException.NotValidException("Invalid asset transfer asset or quantity: " + attachment.getJSONObject());
@@ -112,7 +110,7 @@ public class CCAssetTransferTransactionType extends CCTransactionType {
 
     @Override
     public void doStateIndependentValidation(Transaction transaction) throws AplException.ValidationException {
-        ColoredCoinsAssetTransfer attachment = (ColoredCoinsAssetTransfer) transaction.getAttachment();
+        CCAssetTransferAttachment attachment = (CCAssetTransferAttachment) transaction.getAttachment();
         if (transaction.getAmountATM() != 0 || attachment.getAssetId() == 0) {
             throw new AplException.NotValidException("Invalid asset transfer amount or asset: " + attachment.getJSONObject());
         }

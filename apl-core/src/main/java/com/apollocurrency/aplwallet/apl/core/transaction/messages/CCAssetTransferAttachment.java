@@ -6,6 +6,8 @@ package com.apollocurrency.aplwallet.apl.core.transaction.messages;
 import com.apollocurrency.aplwallet.apl.core.transaction.TransactionTypes;
 import com.apollocurrency.aplwallet.apl.crypto.Convert;
 import com.apollocurrency.aplwallet.apl.util.exception.AplException;
+import lombok.EqualsAndHashCode;
+import lombok.ToString;
 import org.json.simple.JSONObject;
 
 import java.nio.ByteBuffer;
@@ -13,24 +15,26 @@ import java.nio.ByteBuffer;
 /**
  * @author al
  */
-public final class ColoredCoinsAssetTransfer extends AbstractAttachment {
+@EqualsAndHashCode(callSuper = true)
+@ToString
+public final class CCAssetTransferAttachment extends AbstractAttachment {
 
     final long assetId;
     final long quantityATU;
 
-    public ColoredCoinsAssetTransfer(ByteBuffer buffer) throws AplException.NotValidException {
+    public CCAssetTransferAttachment(ByteBuffer buffer) throws AplException.NotValidException {
         super(buffer);
         this.assetId = buffer.getLong();
         this.quantityATU = buffer.getLong();
     }
 
-    public ColoredCoinsAssetTransfer(JSONObject attachmentData) {
+    public CCAssetTransferAttachment(JSONObject attachmentData) {
         super(attachmentData);
         this.assetId = Convert.parseUnsignedLong((String) attachmentData.get("asset"));
         this.quantityATU = Convert.parseLong(attachmentData.get("quantityATU"));
     }
 
-    public ColoredCoinsAssetTransfer(long assetId, long quantityATU) {
+    public CCAssetTransferAttachment(long assetId, long quantityATU) {
         this.assetId = assetId;
         this.quantityATU = quantityATU;
     }
