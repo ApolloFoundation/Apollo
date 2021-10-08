@@ -24,8 +24,8 @@ import java.math.BigInteger;
 @Slf4j
 public class AplContractEventManager extends SmcContractEventManager {
 
-    public AplContractEventManager(Address contract, Address transaction, HashSumProvider hashSumProvider, TxLog txLog) {
-        super(contract, transaction, hashSumProvider, txLog);
+    public AplContractEventManager(Address contract, Address transaction, int height, HashSumProvider hashSumProvider, TxLog txLog) {
+        super(contract, transaction, height, hashSumProvider, txLog);
     }
 
     @Override

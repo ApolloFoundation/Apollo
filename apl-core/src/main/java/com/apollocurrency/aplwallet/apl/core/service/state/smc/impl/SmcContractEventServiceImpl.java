@@ -54,7 +54,11 @@ public class SmcContractEventServiceImpl implements SmcContractEventService {
     public void saveEvent(AplContractEvent event) {
         var eventEntity = entityConverter.convert(event);
         eventEntity.setHeight(blockchain.getHeight());
-
+        if (eventEntity.getHeight() != event.getHeight()) {
+            var errMsg = String.format("Different height value: blockchain height=%d, event height=%d", eventEntity.getHeight(), event.getHeight());
+            log.error(errMsg);
+            throw new IllegalStateException(errMsg);
+        }
         var logEntry = logEntryConverter.convert(event);
         logEntry.setHeight(blockchain.getHeight());
 

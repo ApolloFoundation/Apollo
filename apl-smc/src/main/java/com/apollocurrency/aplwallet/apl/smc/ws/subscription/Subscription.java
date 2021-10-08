@@ -4,8 +4,7 @@
 
 package com.apollocurrency.aplwallet.apl.smc.ws.subscription;
 
-import com.apollocurrency.aplwallet.apl.smc.ws.SmcEventSocket;
-import com.apollocurrency.aplwallet.apl.smc.ws.expr.Term;
+import com.apollocurrency.smc.data.expr.Term;
 import lombok.Builder;
 import lombok.Getter;
 
@@ -15,7 +14,6 @@ import lombok.Getter;
 @Getter
 @Builder
 public class Subscription {
-    private SmcEventSocket socket;
     private String requestId;
     private String subscriptionId;
     private String name;

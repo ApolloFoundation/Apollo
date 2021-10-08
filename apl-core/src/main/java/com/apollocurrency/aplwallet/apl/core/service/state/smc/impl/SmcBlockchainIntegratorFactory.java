@@ -222,7 +222,7 @@ public class SmcBlockchainIntegratorFactory {
             this.txLogProcessor = txLogProcessor;
             this.txLog = new ArrayTxLog(new AplAddress(originatorTransactionId), contract);
             this.cachedMappingRepositories = new HashSet<>();
-            this.eventManagerFactory = smcContractEventManagerClassFactory.createEventManagerFactory(currentTransaction, txLog);
+            this.eventManagerFactory = smcContractEventManagerClassFactory.createEventManagerFactory(currentTransaction, blockchain.getHeight(), txLog);
         }
 
         @Override

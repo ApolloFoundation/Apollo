@@ -27,7 +27,7 @@ class AplContractEventManagerTest extends AbstractContractEventTest {
     @BeforeEach
     void setUp() {
         manager = spy(
-            new AplContractEventManager(contractAddress, transactionAddress, hashSumProvider, txLog)
+            new AplContractEventManager(contractAddress, transactionAddress, height, hashSumProvider, txLog)
         );
     }
 

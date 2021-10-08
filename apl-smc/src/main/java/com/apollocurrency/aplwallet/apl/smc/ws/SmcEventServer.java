@@ -6,12 +6,16 @@ package com.apollocurrency.aplwallet.apl.smc.ws;
 
 import com.apollocurrency.aplwallet.apl.smc.events.SmcEvent;
 import com.apollocurrency.aplwallet.apl.smc.events.SmcEventType;
+import com.apollocurrency.aplwallet.apl.smc.model.AplContractEvent;
 import com.apollocurrency.aplwallet.apl.smc.ws.dto.SmcEventMessage;
 import com.apollocurrency.aplwallet.apl.smc.ws.dto.SmcEventReceipt;
 import com.apollocurrency.aplwallet.apl.smc.ws.dto.SmcEventResponse;
 import com.apollocurrency.aplwallet.apl.smc.ws.dto.SmcEventSubscriptionRequest;
 import com.apollocurrency.aplwallet.apl.smc.ws.subscription.SubscriptionManager;
-import com.apollocurrency.smc.contract.vm.event.SmcContractEvent;
+import com.apollocurrency.smc.contract.vm.event.EventArguments;
+import com.apollocurrency.smc.contract.vm.event.NamedParameters;
+import com.apollocurrency.smc.data.jsonmapper.JsonMapper;
+import com.apollocurrency.smc.data.jsonmapper.event.EventJsonMapper;
 import lombok.Getter;
 import lombok.extern.slf4j.Slf4j;
 import org.eclipse.jetty.websocket.api.WebSocketException;
@@ -27,21 +31,17 @@ import javax.inject.Singleton;
 @Slf4j
 @Singleton
 public class SmcEventServer implements SmcEventSocketListener {
-
     @Getter
     private final SubscriptionManager subscriptionManager;
     private SmcEventService eventServiceInt;
+    private final JsonMapper jsonMapper;
 
     public SmcEventServer() {
         this.subscriptionManager = new SubscriptionManager();
+        this.jsonMapper = new EventJsonMapper();
     }
 
     private SmcEventService lookupService() {
-/*
-        if(eventServiceInt == null){
-            eventServiceInt = CDI.current().select(SmcEventService.class).get();
-        }
-*/
         return eventServiceInt;
     }
 
@@ -66,11 +66,57 @@ public class SmcEventServer implements SmcEventSocketListener {
 
     @Override
     public void onMessage(SmcEventSocket socket, SmcEventSubscriptionRequest request) {
-        SmcEventResponse response = process(request);
+        SmcEventResponse response = process(socket, request);
         socket.sendWebSocket(response);
         if (request.getOperation() == SmcEventSubscriptionRequest.Operation.SUBSCRIBE_TEST) {
             sendMockEvent(socket, request);
         }
+    }
+
+    private SmcEventResponse process(SmcEventSocket socket, SmcEventSubscriptionRequest request) {
+        var rc = validateRequest(request);
+        if (rc != null) {
+            return rc;
+        }
+        var response = new SmcEventReceipt(SmcEventReceipt.Status.OK, request.getRequestId());
+        switch (request.getOperation()) {
+            case SUBSCRIBE:
+                //call subscription routine
+                if (!subscriptionManager.addSubscription(socket.getContract(), socket, request)) {
+                    response = SmcErrorReceipt.error(request.getRequestId(), SmcEventServerErrors.SUBSCRIPTION_ALREADY_REGISTERED,
+                        request.getEvents().get(0).getSubscriptionId());
+                }
+                break;
+            case UNSUBSCRIBE:
+                //call unsubscription routine
+                if (!subscriptionManager.removeSubscription(socket.getContract(), socket, request)) {
+                    response = SmcErrorReceipt.error(request.getRequestId(), SmcEventServerErrors.SUBSCRIPTION_ALREADY_REGISTERED,
+                        request.getEvents().get(0).getSubscriptionId());
+                }
+                break;
+            case SUBSCRIBE_TEST:
+                //nothing to do
+                break;
+            default:
+                response = SmcErrorReceipt.error(request.getRequestId(), SmcEventServerErrors.UNSUPPORTED_OPERATION, request.getOperation().name());
+
+        }
+        return response;
+    }
+
+    public SmcEventResponse validateRequest(SmcEventSubscriptionRequest request) {
+        if (request.getRequestId() == null || request.getEvents().isEmpty()) {
+            return SmcErrorReceipt.error(request.getRequestId(), SmcEventServerErrors.INVALID_REQUEST_ARGUMENTS);
+        } else {
+            return null;
+        }
+    }
+
+    public void onSmcEventEmitted(@Observes @SmcEvent(SmcEventType.EMIT_EVENT) AplContractEvent event) {
+        log.debug("Subscription: fire event={}", event);
+        var args = jsonMapper.deserializer().deserialize(event.getState(), EventArguments.class);
+        var params = new NamedParameters(event.getParamNames(), args);
+        subscriptionManager.fire(event, params);
     }
 
     private void sendMockEvent(SmcEventSocket socket, SmcEventSubscriptionRequest request) {
@@ -82,38 +128,5 @@ public class SmcEventServer implements SmcEventSocketListener {
             .signature(event.getSignature())
             .data("{\"sender\":\"0x111111111111\",\"receiver\":\"0x222222222222\",\"value\":\"0x12345\"}")
             .build());
-    }
-
-    private SmcEventResponse process(SmcEventSubscriptionRequest request) {
-        SmcEventResponse response = SmcEventReceipt.OK;
-        SmcEventReceipt.OK.setRequestId(request.getRequestId());
-        switch (request.getOperation()) {
-            case SUBSCRIBE:
-                //call subscription routine
-
-                break;
-            case UNSUBSCRIBE:
-                //call unsubscription routine
-
-                break;
-            case SUBSCRIBE_TEST:
-                //call subscription routine
-
-                break;
-            default:
-                response = SmcErrorReceipt.error(request.getRequestId(), SmcEventServerErrors.UNSUPPORTED_OPERATION, request.getOperation().name());
-
-        }
-        return response;
-    }
-
-    public void validateRequest(SmcEventSocket socket, SmcEventSubscriptionRequest request) {
-        var response = SmcErrorReceipt.error(request.getRequestId(), SmcEventServerErrors.INVALID_REQUEST_ARGUMENTS);
-        socket.sendWebSocket(response);
-    }
-
-    public void onSmcEventEmitted(@Observes @SmcEvent(SmcEventType.EMIT_EVENT) SmcContractEvent contractEvent) {
-        log.debug("Subscription: fire event={}", contractEvent);
-        subscriptionManager.fire(contractEvent);
     }
 }

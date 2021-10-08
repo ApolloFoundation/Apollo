@@ -13,6 +13,7 @@ public class ContractEventModelToEntityConverter implements Converter<AplContrac
         return SmcContractEventEntity.builder()
             .contract(model.getContractId())
             .id(model.getId())
+            .spec(model.getSpec())
             .signature(model.getSignature())
             .name(model.getName())
             .idxCount(model.getIndexedFieldsCount())

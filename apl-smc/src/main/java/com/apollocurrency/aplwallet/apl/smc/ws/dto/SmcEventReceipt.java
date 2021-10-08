@@ -22,7 +22,6 @@ import lombok.ToString;
 @ToString
 @EqualsAndHashCode(callSuper = true)
 public class SmcEventReceipt extends SmcEventResponse {
-    public static final SmcEventReceipt OK = new SmcEventReceipt(Status.OK);
 
     public enum Status {
         OK,
@@ -39,7 +38,7 @@ public class SmcEventReceipt extends SmcEventResponse {
         this.requestId = requestId;
     }
 
-    public SmcEventReceipt(Status status) {
-        this(null, null, status, null);
+    public SmcEventReceipt(Status status, String requestId) {
+        this(null, null, status, requestId);
     }
 }

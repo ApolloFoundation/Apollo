@@ -8,7 +8,8 @@ CREATE TABLE IF NOT EXISTS `smc_event`
     `id`             bigint(20)                              NOT NULL, # event id
     `transaction_id` bigint(20)                              NOT NULL, # transaction id
     `contract`       bigint(20)                              NOT NULL, # contract address
-    `signature`      binary(32)                              NOT NULL, # hash(name+idxCount) ???
+    `spec`           varchar(256) COLLATE utf8mb4_unicode_ci NOT NULL, # event specification(name+params list)
+    `signature`      binary(32)                              NOT NULL, # hash(spec+idxCount+anonymous)
     `name`           varchar(128) COLLATE utf8mb4_unicode_ci NOT NULL, # event name
     `idx_count`      tinyint(2)                              NOT NULL DEFAULT 0,
     `is_anonymous`   tinyint(1)                              NOT NULL DEFAULT FALSE,

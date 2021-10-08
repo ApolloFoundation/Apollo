@@ -43,6 +43,11 @@ public class SmcEventSocket extends WebSocketAdapter {
         log.trace("Created socket for contract address={}", contract);
     }
 
+    public SmcEventSocket(SmcEventSocket copy) {
+        this.contract = copy.contract;
+        this.listener = copy.listener;
+    }
+
     @Override
     public void onWebSocketConnect(Session sess) {
         super.onWebSocketConnect(sess);
@@ -101,5 +106,18 @@ public class SmcEventSocket extends WebSocketAdapter {
 
     public void sendWebSocket(SmcEventResponse response) {
         sendWebSocketText(serializeMessage(response));
+    }
+
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) return true;
+        if (o == null || getClass() != o.getClass()) return false;
+        SmcEventSocket that = (SmcEventSocket) o;
+        return contract.equals(that.contract) && getSession().equals(that.getSession()) && getRemote().equals(that.getRemote());
+    }
+
+    @Override
+    public int hashCode() {
+        return Objects.hash(contract, getSession(), getRemote());
     }
 }

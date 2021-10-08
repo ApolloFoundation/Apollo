@@ -33,12 +33,12 @@ class AbstractContractEventTest {
 
     @Mock
     HashSumProvider hashSumProvider;
-
+    int height = 123;
     AplAddress contractAddress = new AplAddress(Convert.parseAccountId("APL-632K-TWX3-2ALQ-973CU"));
     AplAddress transactionAddress = new AplAddress(123L);
 
     final ContractEventType eventType = ContractEventType.builder()
-        .name("Transfer")
+        .spec("Transfer:from,to,amount")
         .indexedFieldsCount(2)
         .anonymous(false)
         .build();
@@ -51,9 +51,7 @@ class AbstractContractEventTest {
         return SmcContractEvent.builder()
             .contract(contractAddress)
             .transaction(transactionAddress)
-            .name(eventType.getName())
-            .indexedFieldsCount(eventType.getIndexedFieldsCount())
-            .anonymous(eventType.isAnonymous())
+            .eventType(eventType)
             .txIdx(0)
             .signature(signature)
             .state("[1,2,3]")

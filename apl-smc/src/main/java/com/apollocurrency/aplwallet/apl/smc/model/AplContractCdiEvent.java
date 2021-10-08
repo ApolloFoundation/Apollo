@@ -4,12 +4,11 @@
 
 package com.apollocurrency.aplwallet.apl.smc.model;
 
-import com.apollocurrency.smc.data.type.ContractEvent;
+import com.apollocurrency.smc.contract.vm.event.NamedParameters;
 import lombok.Builder;
 import lombok.EqualsAndHashCode;
 import lombok.Getter;
 import lombok.ToString;
-import lombok.experimental.Delegate;
 
 /**
  * @author andrew.zinchenko@gmail.com
@@ -18,12 +17,14 @@ import lombok.experimental.Delegate;
 @Builder
 @ToString
 @EqualsAndHashCode
-public class AplContractEvent implements ContractEvent {
+public class AplContractCdiEvent {
     private long id;
     private long contractId;
     private long transactionId;
+    private int txIdx;//the sequential number within the transaction
 
-    @Delegate
-    private ContractEvent event;
-
+    private String spec;
+    private byte[] signature;
+    private String name;
+    private NamedParameters params;
 }

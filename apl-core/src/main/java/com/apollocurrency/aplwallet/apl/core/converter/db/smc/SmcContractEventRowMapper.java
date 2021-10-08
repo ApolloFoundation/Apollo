@@ -20,10 +20,11 @@ public class SmcContractEventRowMapper extends DerivedEntityMapper<SmcContractEv
         long address = rs.getLong("contract");
         long transactionId = rs.getLong("transaction_id");
         byte[] signature = rs.getBytes("signature");
+        String spec = rs.getString("spec");
         String name = rs.getString("name");
         byte idxCount = rs.getByte("idx_count");
         boolean anonymous = rs.getBoolean("is_anonymous");
 
-        return new SmcContractEventEntity(null, null, id, address, transactionId, signature, name, idxCount, anonymous);
+        return new SmcContractEventEntity(null, null, id, address, transactionId, spec, signature, name, idxCount, anonymous);
     }
 }
