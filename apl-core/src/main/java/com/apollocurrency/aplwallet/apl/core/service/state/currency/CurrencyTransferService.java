@@ -6,7 +6,7 @@ package com.apollocurrency.aplwallet.apl.core.service.state.currency;
 
 import com.apollocurrency.aplwallet.apl.core.model.Transaction;
 import com.apollocurrency.aplwallet.apl.core.entity.state.currency.CurrencyTransfer;
-import com.apollocurrency.aplwallet.apl.core.transaction.messages.MonetarySystemCurrencyTransfer;
+import com.apollocurrency.aplwallet.apl.core.transaction.messages.MSCurrencyTransferAttachment;
 import com.apollocurrency.aplwallet.apl.util.db.DbIterator;
 
 import java.util.stream.Stream;
@@ -33,6 +33,6 @@ public interface CurrencyTransferService {
 
     int getTransferCount(long currencyId);
 
-    CurrencyTransfer addTransfer(Transaction transaction, MonetarySystemCurrencyTransfer attachment);
+    CurrencyTransfer addTransfer(Transaction transaction, MSCurrencyTransferAttachment attachment);
 
 }

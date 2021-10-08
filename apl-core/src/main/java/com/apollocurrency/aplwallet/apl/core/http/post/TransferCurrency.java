@@ -25,7 +25,7 @@ import com.apollocurrency.aplwallet.apl.core.entity.state.currency.Currency;
 import com.apollocurrency.aplwallet.apl.core.http.APITag;
 import com.apollocurrency.aplwallet.apl.core.http.HttpParameterParserUtil;
 import com.apollocurrency.aplwallet.apl.core.transaction.messages.Attachment;
-import com.apollocurrency.aplwallet.apl.core.transaction.messages.MonetarySystemCurrencyTransfer;
+import com.apollocurrency.aplwallet.apl.core.transaction.messages.MSCurrencyTransferAttachment;
 import com.apollocurrency.aplwallet.apl.util.exception.AplException;
 import org.json.simple.JSONStreamAware;
 
@@ -48,7 +48,7 @@ public final class TransferCurrency extends CreateTransactionHandler {
         long units = HttpParameterParserUtil.getLong(req, "units", 0, Long.MAX_VALUE, true);
         Account account = HttpParameterParserUtil.getSenderAccount(req);
 
-        Attachment attachment = new MonetarySystemCurrencyTransfer(currency.getId(), units);
+        Attachment attachment = new MSCurrencyTransferAttachment(currency.getId(), units);
         return createTransaction(req, account, recipient, 0, attachment);
     }
 }

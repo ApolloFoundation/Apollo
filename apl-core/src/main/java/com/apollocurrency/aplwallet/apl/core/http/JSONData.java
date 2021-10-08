@@ -103,7 +103,7 @@ import com.apollocurrency.aplwallet.apl.core.transaction.messages.ColoredCoinsAs
 import com.apollocurrency.aplwallet.apl.core.transaction.messages.ColoredCoinsOrderCancellationAttachment;
 import com.apollocurrency.aplwallet.apl.core.transaction.messages.ColoredCoinsOrderPlacementAttachment;
 import com.apollocurrency.aplwallet.apl.core.transaction.messages.MonetarySystemCurrencyIssuanceAttachment;
-import com.apollocurrency.aplwallet.apl.core.transaction.messages.MonetarySystemCurrencyTransfer;
+import com.apollocurrency.aplwallet.apl.core.transaction.messages.MSCurrencyTransferAttachment;
 import com.apollocurrency.aplwallet.apl.core.transaction.messages.MonetarySystemExchangeAttachment;
 import com.apollocurrency.aplwallet.apl.core.transaction.messages.MSPublishExchangeOfferAttachment;
 import com.apollocurrency.aplwallet.apl.core.transaction.messages.PrunableLoadingService;
@@ -1076,7 +1076,7 @@ public final class JSONData {
 
     public static JSONObject expectedCurrencyTransfer(Transaction transaction, boolean includeCurrencyInfo) {
         JSONObject json = new JSONObject();
-        MonetarySystemCurrencyTransfer attachment = (MonetarySystemCurrencyTransfer) transaction.getAttachment();
+        MSCurrencyTransferAttachment attachment = (MSCurrencyTransferAttachment) transaction.getAttachment();
         json.put("transfer", transaction.getStringId());
         json.put("currency", Long.toUnsignedString(attachment.getCurrencyId()));
         putAccount(json, "sender", transaction.getSenderId());

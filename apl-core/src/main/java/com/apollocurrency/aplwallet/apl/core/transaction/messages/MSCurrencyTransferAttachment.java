@@ -12,24 +12,24 @@ import java.nio.ByteBuffer;
 /**
  * @author al
  */
-public final class MonetarySystemCurrencyTransfer extends AbstractAttachment implements MonetarySystemAttachment {
+public final class MSCurrencyTransferAttachment extends AbstractAttachment implements MonetarySystemAttachment {
 
     final long currencyId;
     final long units;
 
-    public MonetarySystemCurrencyTransfer(ByteBuffer buffer) {
+    public MSCurrencyTransferAttachment(ByteBuffer buffer) {
         super(buffer);
         this.currencyId = buffer.getLong();
         this.units = buffer.getLong();
     }
 
-    public MonetarySystemCurrencyTransfer(JSONObject attachmentData) {
+    public MSCurrencyTransferAttachment(JSONObject attachmentData) {
         super(attachmentData);
         this.currencyId = Convert.parseUnsignedLong((String) attachmentData.get("currency"));
         this.units = Convert.parseLong(attachmentData.get("units"));
     }
 
-    public MonetarySystemCurrencyTransfer(long currencyId, long units) {
+    public MSCurrencyTransferAttachment(long currencyId, long units) {
         this.currencyId = currencyId;
         this.units = units;
     }

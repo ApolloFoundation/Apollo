@@ -112,7 +112,7 @@ class MSCurrencyBurningTransactionTypeTest {
     }
 
     @Test
-    void doStateDependentValidation_notEnoughFunds_OK() throws AplException.ValidationException {
+    void doStateDependentValidation_notEnoughFunds() throws AplException.ValidationException {
         mockAttachment(987, 10);
         doReturn(true).when(currencyService).isActive(null);
         when(transaction.getSenderId()).thenReturn(SENDER_ID);

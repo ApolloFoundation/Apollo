@@ -14,7 +14,7 @@ import com.apollocurrency.aplwallet.apl.core.service.state.account.AccountServic
 import com.apollocurrency.aplwallet.apl.core.service.state.currency.CurrencyService;
 import com.apollocurrency.aplwallet.apl.core.service.state.currency.CurrencyTransferService;
 import com.apollocurrency.aplwallet.apl.core.transaction.TransactionTypes;
-import com.apollocurrency.aplwallet.apl.core.transaction.messages.MonetarySystemCurrencyTransfer;
+import com.apollocurrency.aplwallet.apl.core.transaction.messages.MSCurrencyTransferAttachment;
 import com.apollocurrency.aplwallet.apl.util.exception.AplException;
 import org.json.simple.JSONObject;
 
@@ -28,7 +28,9 @@ public class MSCurrencyTransferTransactionType extends MSTransactionType {
     private final CurrencyTransferService accountTransferService;
 
     @Inject
-    public MSCurrencyTransferTransactionType(BlockchainConfig blockchainConfig, AccountService accountService, CurrencyService currencyService, AccountCurrencyService accountCurrencyService, CurrencyTransferService accountTransferService) {
+    public MSCurrencyTransferTransactionType(BlockchainConfig blockchainConfig, AccountService accountService,
+                                             CurrencyService currencyService, AccountCurrencyService accountCurrencyService,
+                                             CurrencyTransferService accountTransferService) {
         super(blockchainConfig, accountService, currencyService);
         this.accountCurrencyService = accountCurrencyService;
         this.accountTransferService = accountTransferService;
@@ -51,18 +53,18 @@ public class MSCurrencyTransferTransactionType extends MSTransactionType {
     }
 
     @Override
-    public MonetarySystemCurrencyTransfer parseAttachment(ByteBuffer buffer) throws AplException.NotValidException {
-        return new MonetarySystemCurrencyTransfer(buffer);
+    public MSCurrencyTransferAttachment parseAttachment(ByteBuffer buffer) throws AplException.NotValidException {
+        return new MSCurrencyTransferAttachment(buffer);
     }
 
     @Override
-    public MonetarySystemCurrencyTransfer parseAttachment(JSONObject attachmentData) throws AplException.NotValidException {
-        return new MonetarySystemCurrencyTransfer(attachmentData);
+    public MSCurrencyTransferAttachment parseAttachment(JSONObject attachmentData) throws AplException.NotValidException {
+        return new MSCurrencyTransferAttachment(attachmentData);
     }
 
     @Override
     public void doStateDependentValidation(Transaction transaction) throws AplException.ValidationException {
-        MonetarySystemCurrencyTransfer attachment = (MonetarySystemCurrencyTransfer) transaction.getAttachment();
+        MSCurrencyTransferAttachment attachment = (MSCurrencyTransferAttachment) transaction.getAttachment();
         Currency currency = currencyService.getCurrency(attachment.getCurrencyId());
         currencyService.validate(currency, transaction);
         if (!currencyService.isActive(currency)) {
@@ -78,7 +80,7 @@ public class MSCurrencyTransferTransactionType extends MSTransactionType {
 
     @Override
     public void doStateIndependentValidation(Transaction transaction) throws AplException.ValidationException {
-        MonetarySystemCurrencyTransfer attachment = (MonetarySystemCurrencyTransfer) transaction.getAttachment();
+        MSCurrencyTransferAttachment attachment = (MSCurrencyTransferAttachment) transaction.getAttachment();
         if (attachment.getUnits() <= 0) {
             throw new AplException.NotValidException("Invalid currency transfer: " + attachment.getJSONObject());
         }
@@ -90,7 +92,7 @@ public class MSCurrencyTransferTransactionType extends MSTransactionType {
 
     @Override
     public boolean applyAttachmentUnconfirmed(Transaction transaction, Account senderAccount) {
-        MonetarySystemCurrencyTransfer attachment = (MonetarySystemCurrencyTransfer) transaction.getAttachment();
+        MSCurrencyTransferAttachment attachment = (MSCurrencyTransferAttachment) transaction.getAttachment();
         if (attachment.getUnits() > accountCurrencyService.getUnconfirmedCurrencyUnits(senderAccount, attachment.getCurrencyId())) {
             return false;
         }
@@ -100,7 +102,7 @@ public class MSCurrencyTransferTransactionType extends MSTransactionType {
 
     @Override
     public void undoAttachmentUnconfirmed(Transaction transaction, Account senderAccount) {
-        MonetarySystemCurrencyTransfer attachment = (MonetarySystemCurrencyTransfer) transaction.getAttachment();
+        MSCurrencyTransferAttachment attachment = (MSCurrencyTransferAttachment) transaction.getAttachment();
         Currency currency = currencyService.getCurrency(attachment.getCurrencyId());
         if (currency != null) {
             accountCurrencyService.addToUnconfirmedCurrencyUnits(senderAccount, getLedgerEvent(), transaction.getId(), attachment.getCurrencyId(), attachment.getUnits());
@@ -109,7 +111,7 @@ public class MSCurrencyTransferTransactionType extends MSTransactionType {
 
     @Override
     public void applyAttachment(Transaction transaction, Account senderAccount, Account recipientAccount) {
-        MonetarySystemCurrencyTransfer attachment = (MonetarySystemCurrencyTransfer) transaction.getAttachment();
+        MSCurrencyTransferAttachment attachment = (MSCurrencyTransferAttachment) transaction.getAttachment();
         currencyService.transferCurrency(getLedgerEvent(), transaction.getId(), senderAccount, recipientAccount, attachment.getCurrencyId(), attachment.getUnits());
         accountTransferService.addTransfer(transaction, attachment);
     }

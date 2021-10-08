@@ -13,7 +13,7 @@ import com.apollocurrency.aplwallet.apl.core.model.Transaction;
 import com.apollocurrency.aplwallet.apl.core.entity.state.currency.CurrencyTransfer;
 import com.apollocurrency.aplwallet.apl.core.service.state.BlockChainInfoService;
 import com.apollocurrency.aplwallet.apl.core.service.state.currency.CurrencyTransferService;
-import com.apollocurrency.aplwallet.apl.core.transaction.messages.MonetarySystemCurrencyTransfer;
+import com.apollocurrency.aplwallet.apl.core.transaction.messages.MSCurrencyTransferAttachment;
 import lombok.extern.slf4j.Slf4j;
 
 import javax.inject.Inject;
@@ -104,7 +104,7 @@ public class CurrencyTransferServiceImpl implements CurrencyTransferService {
     }
 
     @Override
-    public CurrencyTransfer addTransfer(Transaction transaction, MonetarySystemCurrencyTransfer attachment) {
+    public CurrencyTransfer addTransfer(Transaction transaction, MSCurrencyTransferAttachment attachment) {
         Block lastBlock = blockChainInfoService.getLastBlock();
         CurrencyTransfer transfer = new CurrencyTransfer(transaction, attachment, lastBlock.getTimestamp(), lastBlock.getHeight());
         currencyTransferTable.insert(transfer);
