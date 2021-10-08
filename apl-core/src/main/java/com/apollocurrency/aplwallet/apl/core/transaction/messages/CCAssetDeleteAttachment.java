@@ -5,6 +5,8 @@ package com.apollocurrency.aplwallet.apl.core.transaction.messages;
 
 import com.apollocurrency.aplwallet.apl.core.transaction.TransactionTypes;
 import com.apollocurrency.aplwallet.apl.crypto.Convert;
+import lombok.EqualsAndHashCode;
+import lombok.ToString;
 import org.json.simple.JSONObject;
 
 import java.nio.ByteBuffer;
@@ -12,25 +14,27 @@ import java.nio.ByteBuffer;
 /**
  * @author al
  */
-public final class ColoredCoinsAssetDelete extends AbstractAttachment {
+@EqualsAndHashCode(callSuper = true)
+@ToString
+public final class CCAssetDeleteAttachment extends AbstractAttachment {
 
     final long assetId;
     final long quantityATU;
 
-    public ColoredCoinsAssetDelete(ByteBuffer buffer) {
+    public CCAssetDeleteAttachment(ByteBuffer buffer) {
         super(buffer);
         this.assetId = buffer.getLong();
         this.quantityATU = buffer.getLong();
     }
 
-    public ColoredCoinsAssetDelete(JSONObject attachmentData) {
+    public CCAssetDeleteAttachment(JSONObject attachmentData) {
         super(attachmentData);
         this.assetId = Convert.parseUnsignedLong((String) attachmentData.get("asset"));
         this.quantityATU = Convert.parseLong(attachmentData.get("quantityATU"));
         ;
     }
 
-    public ColoredCoinsAssetDelete(long assetId, long quantityATU) {
+    public CCAssetDeleteAttachment(long assetId, long quantityATU) {
         this.assetId = assetId;
         this.quantityATU = quantityATU;
     }

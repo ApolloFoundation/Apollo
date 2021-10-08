@@ -12,7 +12,7 @@ import com.apollocurrency.aplwallet.apl.core.service.state.account.AccountAssetS
 import com.apollocurrency.aplwallet.apl.core.service.state.account.AccountService;
 import com.apollocurrency.aplwallet.apl.core.service.state.asset.AssetService;
 import com.apollocurrency.aplwallet.apl.core.transaction.TransactionTypes;
-import com.apollocurrency.aplwallet.apl.core.transaction.messages.ColoredCoinsAssetDelete;
+import com.apollocurrency.aplwallet.apl.core.transaction.messages.CCAssetDeleteAttachment;
 import com.apollocurrency.aplwallet.apl.util.exception.AplException;
 import org.json.simple.JSONObject;
 
@@ -48,18 +48,18 @@ public class CCAssetDeleteTransactionType extends CCTransactionType {
     }
 
     @Override
-    public ColoredCoinsAssetDelete parseAttachment(ByteBuffer buffer) throws AplException.NotValidException {
-        return new ColoredCoinsAssetDelete(buffer);
+    public CCAssetDeleteAttachment parseAttachment(ByteBuffer buffer) throws AplException.NotValidException {
+        return new CCAssetDeleteAttachment(buffer);
     }
 
     @Override
-    public ColoredCoinsAssetDelete parseAttachment(JSONObject attachmentData) throws AplException.NotValidException {
-        return new ColoredCoinsAssetDelete(attachmentData);
+    public CCAssetDeleteAttachment parseAttachment(JSONObject attachmentData) throws AplException.NotValidException {
+        return new CCAssetDeleteAttachment(attachmentData);
     }
 
     @Override
     public boolean applyAttachmentUnconfirmed(Transaction transaction, Account senderAccount) {
-        ColoredCoinsAssetDelete attachment = (ColoredCoinsAssetDelete) transaction.getAttachment();
+        CCAssetDeleteAttachment attachment = (CCAssetDeleteAttachment) transaction.getAttachment();
         long unconfirmedAssetBalance = accountAssetService.getUnconfirmedAssetBalanceATU(senderAccount.getId(), attachment.getAssetId());
         if (unconfirmedAssetBalance >= 0 && unconfirmedAssetBalance >= attachment.getQuantityATU()) {
             accountAssetService.addToUnconfirmedAssetBalanceATU(senderAccount, getLedgerEvent(), transaction.getId(), attachment.getAssetId(), -attachment.getQuantityATU());
@@ -70,20 +70,20 @@ public class CCAssetDeleteTransactionType extends CCTransactionType {
 
     @Override
     public void applyAttachment(Transaction transaction, Account senderAccount, Account recipientAccount) {
-        ColoredCoinsAssetDelete attachment = (ColoredCoinsAssetDelete) transaction.getAttachment();
+        CCAssetDeleteAttachment attachment = (CCAssetDeleteAttachment) transaction.getAttachment();
         accountAssetService.addToAssetBalanceATU(senderAccount, getLedgerEvent(), transaction.getId(), attachment.getAssetId(), -attachment.getQuantityATU());
         assetService.deleteAsset(transaction, attachment.getAssetId(), attachment.getQuantityATU());
     }
 
     @Override
     public void undoAttachmentUnconfirmed(Transaction transaction, Account senderAccount) {
-        ColoredCoinsAssetDelete attachment = (ColoredCoinsAssetDelete) transaction.getAttachment();
+        CCAssetDeleteAttachment attachment = (CCAssetDeleteAttachment) transaction.getAttachment();
         accountAssetService.addToUnconfirmedAssetBalanceATU(senderAccount, getLedgerEvent(), transaction.getId(), attachment.getAssetId(), attachment.getQuantityATU());
     }
 
     @Override
     public void doStateDependentValidation(Transaction transaction) throws AplException.ValidationException {
-        ColoredCoinsAssetDelete attachment = (ColoredCoinsAssetDelete) transaction.getAttachment();
+        CCAssetDeleteAttachment attachment = (CCAssetDeleteAttachment) transaction.getAttachment();
         Asset asset = assetService.getAsset(attachment.getAssetId());
         if (asset != null && attachment.getQuantityATU() > asset.getInitialQuantityATU()) {
             throw new AplException.NotValidException("Invalid asset delete asset or quantity: " + attachment.getJSONObject());
@@ -101,7 +101,7 @@ public class CCAssetDeleteTransactionType extends CCTransactionType {
 
     @Override
     public void doStateIndependentValidation(Transaction transaction) throws AplException.ValidationException {
-        ColoredCoinsAssetDelete attachment = (ColoredCoinsAssetDelete) transaction.getAttachment();
+        CCAssetDeleteAttachment attachment = (CCAssetDeleteAttachment) transaction.getAttachment();
         if (attachment.getAssetId() == 0) {
             throw new AplException.NotValidException("Invalid asset identifier: " + attachment.getJSONObject());
         }
