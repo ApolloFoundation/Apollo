@@ -61,7 +61,7 @@ import com.apollocurrency.aplwallet.apl.core.service.state.order.impl.BidOrderSe
 import com.apollocurrency.aplwallet.apl.core.service.state.qualifier.AskOrderService;
 import com.apollocurrency.aplwallet.apl.core.service.state.qualifier.BidOrderService;
 import com.apollocurrency.aplwallet.apl.core.transaction.common.TxBContext;
-import com.apollocurrency.aplwallet.apl.core.transaction.messages.ColoredCoinsAskOrderPlacement;
+import com.apollocurrency.aplwallet.apl.core.transaction.messages.CCAskOrderPlacementAttachment;
 import com.apollocurrency.aplwallet.apl.core.transaction.messages.CCBidOrderPlacementAttachment;
 import com.apollocurrency.aplwallet.apl.util.UPnP;
 import com.apollocurrency.aplwallet.apl.util.db.TransactionalDataSource;
@@ -83,7 +83,7 @@ import java.util.Set;
 public abstract class AbstractAPIRequestHandler {
 
     protected final AliasService aliasService = CDI.current().select(AliasService.class).get();
-    protected final OrderService<AskOrder, ColoredCoinsAskOrderPlacement> askOrderService =
+    protected final OrderService<AskOrder, CCAskOrderPlacementAttachment> askOrderService =
         CDI.current().select(AskOrderServiceImpl.class, AskOrderService.Literal.INSTANCE).get();
     protected final OrderService<BidOrder, CCBidOrderPlacementAttachment> bidOrderService =
         CDI.current().select(BidOrderServiceImpl.class, BidOrderService.Literal.INSTANCE).get();

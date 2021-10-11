@@ -14,6 +14,7 @@ import com.apollocurrency.aplwallet.apl.core.transaction.messages.Appendix;
 import com.apollocurrency.aplwallet.apl.core.transaction.messages.EmptyAttachment;
 import com.apollocurrency.aplwallet.apl.util.annotation.FeeMarker;
 import com.apollocurrency.aplwallet.apl.util.annotation.TransactionFee;
+import com.apollocurrency.aplwallet.apl.util.exception.AplException;
 import lombok.EqualsAndHashCode;
 import lombok.Getter;
 import lombok.SneakyThrows;
@@ -39,6 +40,7 @@ import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.verifyNoInteractions;
+import static org.mockito.Mockito.when;
 
 @ExtendWith(MockitoExtension.class)
 class TransactionTypeTest {
@@ -460,6 +462,31 @@ class TransactionTypeTest {
         long fee = customFee.getFee(transaction, mock(Appendix.class));
 
         assertEquals(100, fee);
+    }
+
+
+    @Test
+    void verifyAccountBalanceSufficiency_notEnoughFunds() {
+        FallibleTransactionType type = prepareTransactionType();
+        mockTxAndSender();
+        when(sender.getUnconfirmedBalanceATM()).thenReturn(209L);
+
+        AplException.NotCurrentlyValidException ex = assertThrows(AplException.NotCurrentlyValidException.class
+            , () -> type.verifyAccountBalanceSufficiency(transaction, 100));
+
+        assertEquals("Sender 1 has not enough funds: required 210, but only has 209", ex.getMessage());
+    }
+
+    @SneakyThrows
+    @Test
+    void verifyAccountBalanceSufficiency_OK() {
+        FallibleTransactionType type = prepareTransactionType();
+        mockTxAndSender();
+        when(sender.getUnconfirmedBalanceATM()).thenReturn(210L);
+
+        type.verifyAccountBalanceSufficiency(transaction, 100);
+
+        verify(sender).getUnconfirmedBalanceATM();
     }
 
 

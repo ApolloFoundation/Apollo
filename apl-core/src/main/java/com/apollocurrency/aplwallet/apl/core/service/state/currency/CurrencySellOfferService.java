@@ -8,7 +8,7 @@ import com.apollocurrency.aplwallet.apl.core.model.Transaction;
 import com.apollocurrency.aplwallet.apl.core.entity.state.account.Account;
 import com.apollocurrency.aplwallet.apl.core.entity.state.currency.Currency;
 import com.apollocurrency.aplwallet.apl.core.entity.state.currency.CurrencySellOffer;
-import com.apollocurrency.aplwallet.apl.core.transaction.messages.MonetarySystemPublishExchangeOffer;
+import com.apollocurrency.aplwallet.apl.core.transaction.messages.MSPublishExchangeOfferAttachment;
 import com.apollocurrency.aplwallet.apl.util.db.DbClause;
 import com.apollocurrency.aplwallet.apl.util.db.DbIterator;
 
@@ -66,7 +66,7 @@ public interface CurrencySellOfferService {
 
     Stream<CurrencySellOffer> getOffersStream(DbClause dbClause, int from, int to, String sort);
 
-    void addOffer(Transaction transaction, MonetarySystemPublishExchangeOffer attachment);
+    void addOffer(Transaction transaction, MSPublishExchangeOfferAttachment attachment);
 
     void remove(CurrencySellOffer buyOffer);
 

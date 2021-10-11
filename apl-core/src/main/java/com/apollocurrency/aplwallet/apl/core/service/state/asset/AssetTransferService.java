@@ -6,7 +6,7 @@ package com.apollocurrency.aplwallet.apl.core.service.state.asset;
 
 import com.apollocurrency.aplwallet.apl.core.model.Transaction;
 import com.apollocurrency.aplwallet.apl.core.entity.state.asset.AssetTransfer;
-import com.apollocurrency.aplwallet.apl.core.transaction.messages.ColoredCoinsAssetTransfer;
+import com.apollocurrency.aplwallet.apl.core.transaction.messages.CCAssetTransferAttachment;
 import com.apollocurrency.aplwallet.apl.util.db.DbIterator;
 
 import java.util.stream.Stream;
@@ -45,5 +45,5 @@ public interface AssetTransferService {
 
     int getTransferCount(long assetId);
 
-    AssetTransfer addAssetTransfer(Transaction transaction, ColoredCoinsAssetTransfer attachment);
+    AssetTransfer addAssetTransfer(Transaction transaction, CCAssetTransferAttachment attachment);
 }

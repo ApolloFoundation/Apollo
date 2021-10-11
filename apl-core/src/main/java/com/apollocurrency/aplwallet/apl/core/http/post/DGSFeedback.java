@@ -26,7 +26,7 @@ import com.apollocurrency.aplwallet.apl.core.http.APITag;
 import com.apollocurrency.aplwallet.apl.core.http.HttpParameterParserUtil;
 import com.apollocurrency.aplwallet.apl.core.service.state.DGSService;
 import com.apollocurrency.aplwallet.apl.core.transaction.messages.Attachment;
-import com.apollocurrency.aplwallet.apl.core.transaction.messages.DigitalGoodsFeedback;
+import com.apollocurrency.aplwallet.apl.core.transaction.messages.DGSFeedbackAttachment;
 import com.apollocurrency.aplwallet.apl.util.exception.AplException;
 import org.json.simple.JSONStreamAware;
 
@@ -61,7 +61,7 @@ public final class DGSFeedback extends CreateTransactionHandler {
         }
 
         Account sellerAccount = lookupAccountService().getAccount(purchase.getSellerId());
-        Attachment attachment = new DigitalGoodsFeedback(purchase.getId());
+        Attachment attachment = new DGSFeedbackAttachment(purchase.getId());
         return createTransaction(req, buyerAccount, sellerAccount.getId(), 0, attachment);
     }
 

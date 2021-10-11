@@ -12,7 +12,7 @@ import com.apollocurrency.aplwallet.apl.core.entity.state.currency.Currency;
 import com.apollocurrency.aplwallet.apl.core.entity.state.currency.CurrencySellOffer;
 import com.apollocurrency.aplwallet.apl.core.service.state.BlockChainInfoService;
 import com.apollocurrency.aplwallet.apl.core.service.state.currency.CurrencySellOfferService;
-import com.apollocurrency.aplwallet.apl.core.transaction.messages.MonetarySystemPublishExchangeOffer;
+import com.apollocurrency.aplwallet.apl.core.transaction.messages.MSPublishExchangeOfferAttachment;
 import com.apollocurrency.aplwallet.apl.util.db.DbClause;
 import com.apollocurrency.aplwallet.apl.util.db.DbIterator;
 import lombok.extern.slf4j.Slf4j;
@@ -160,7 +160,7 @@ public class CurrencySellOfferServiceImpl implements CurrencySellOfferService {
     }
 
     @Override
-    public void addOffer(Transaction transaction, MonetarySystemPublishExchangeOffer attachment) {
+    public void addOffer(Transaction transaction, MSPublishExchangeOfferAttachment attachment) {
         CurrencySellOffer currencyBuyOffer = new CurrencySellOffer(transaction, attachment, blockChainInfoService.getHeight());
         currencySellOfferTable.insert(currencyBuyOffer);
     }

@@ -26,7 +26,7 @@ import com.apollocurrency.aplwallet.apl.core.entity.state.currency.CurrencyType;
 import com.apollocurrency.aplwallet.apl.core.http.APITag;
 import com.apollocurrency.aplwallet.apl.core.http.HttpParameterParserUtil;
 import com.apollocurrency.aplwallet.apl.core.transaction.messages.Attachment;
-import com.apollocurrency.aplwallet.apl.core.transaction.messages.MonetarySystemPublishExchangeOffer;
+import com.apollocurrency.aplwallet.apl.core.transaction.messages.MSPublishExchangeOfferAttachment;
 import com.apollocurrency.aplwallet.apl.util.exception.AplException;
 import org.json.simple.JSONStreamAware;
 
@@ -83,7 +83,7 @@ public final class PublishExchangeOffer extends CreateTransactionHandler {
         int expirationHeight = HttpParameterParserUtil.getInt(req, "expirationHeight", 0, Integer.MAX_VALUE, true);
         Account account = HttpParameterParserUtil.getSenderAccount(req);
 
-        Attachment attachment = new MonetarySystemPublishExchangeOffer(currency.getId(), buyRateATM, sellRateATM,
+        Attachment attachment = new MSPublishExchangeOfferAttachment(currency.getId(), buyRateATM, sellRateATM,
             totalBuyLimit, totalSellLimit, initialBuySupply, initialSellSupply, expirationHeight);
         return createTransaction(req, account, attachment);
     }

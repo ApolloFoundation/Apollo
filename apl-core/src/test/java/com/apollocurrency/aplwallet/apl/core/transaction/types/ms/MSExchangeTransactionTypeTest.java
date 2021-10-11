@@ -64,10 +64,6 @@ class MSExchangeTransactionTypeTest {
         verify(currencyService).getCurrency(1L);
     }
 
-    private Attachment setUpAttachmentMock() {
-        return doReturn(new TestMSExchangeAttachment(1L, 25L, 10L)).when(tx).getAttachment();
-    }
-
     @Test
     void doStateDependentValidationOK() throws AplException.ValidationException {
         setUpAttachmentMock();
@@ -163,6 +159,11 @@ class MSExchangeTransactionTypeTest {
         boolean haveRecipient = type.canHaveRecipient();
 
         assertFalse(haveRecipient, "Currency exchange types should not have recipient");
+    }
+
+
+    private Attachment setUpAttachmentMock() {
+        return doReturn(new TestMSExchangeAttachment(1L, 25L, 10L)).when(tx).getAttachment();
     }
 
     private static class TestMSExchangeTransactionType extends MSExchangeTransactionType {

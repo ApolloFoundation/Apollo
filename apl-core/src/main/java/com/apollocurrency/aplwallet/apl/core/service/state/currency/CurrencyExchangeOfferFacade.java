@@ -10,13 +10,13 @@ import com.apollocurrency.aplwallet.apl.core.entity.state.account.LedgerEvent;
 import com.apollocurrency.aplwallet.apl.core.entity.state.currency.AvailableOffers;
 import com.apollocurrency.aplwallet.apl.core.entity.state.currency.CurrencyBuyOffer;
 import com.apollocurrency.aplwallet.apl.core.entity.state.currency.CurrencyExchangeOffer;
-import com.apollocurrency.aplwallet.apl.core.transaction.messages.MonetarySystemPublishExchangeOffer;
+import com.apollocurrency.aplwallet.apl.core.transaction.messages.MSPublishExchangeOfferAttachment;
 
 import java.util.List;
 
 public interface CurrencyExchangeOfferFacade {
 
-    void publishOffer(Transaction transaction, MonetarySystemPublishExchangeOffer attachment);
+    void publishOffer(Transaction transaction, MSPublishExchangeOfferAttachment attachment);
 
     void removeOffer(LedgerEvent event, CurrencyBuyOffer buyOffer);
 

@@ -24,7 +24,7 @@ import com.apollocurrency.aplwallet.apl.core.transaction.messages.PrunableEncryp
 import com.apollocurrency.aplwallet.apl.core.transaction.messages.PrunablePlainMessageAppendix;
 import com.apollocurrency.aplwallet.apl.core.transaction.messages.PublicKeyAnnouncementAppendix;
 import com.apollocurrency.aplwallet.apl.core.transaction.types.cc.CCAssetIssuanceTransactionType;
-import com.apollocurrency.aplwallet.apl.core.transaction.types.dgs.ListingTransactionType;
+import com.apollocurrency.aplwallet.apl.core.transaction.types.dgs.DGSListingTransactionType;
 import com.apollocurrency.aplwallet.apl.core.transaction.types.messaging.AliasAssignmentTransactionType;
 import com.apollocurrency.aplwallet.apl.core.transaction.types.messaging.ArbitraryMessageTransactionType;
 import com.apollocurrency.aplwallet.apl.core.transaction.types.ms.MSCurrencyIssuanceTransactionType;
@@ -159,7 +159,7 @@ public class TransactionTestData {
             new ArbitraryMessageTransactionType(blockchainConfig, accountService),
             new CriticalUpdateTransactiionType(blockchainConfig, accountService),
             new ImportantUpdateTransactionType(blockchainConfig, accountService),
-            new ListingTransactionType(blockchainConfig, accountService, dgsService)
+            new DGSListingTransactionType(blockchainConfig, accountService, dgsService)
         ));
         initTransactions();
     }
