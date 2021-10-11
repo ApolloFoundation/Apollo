@@ -481,6 +481,7 @@ public final class API {
                 (servletContext, nativeWebSocketConfiguration) -> {
                     // Configure default max size
                     nativeWebSocketConfiguration.getPolicy().setMaxTextMessageBufferSize(65535);
+                    nativeWebSocketConfiguration.getPolicy().setIdleTimeout(10 * 60 * 1000L);//10min
                     // Add websockets
                     nativeWebSocketConfiguration.addMapping(pathSpec, new SmcEventSocketCreator(server));
                     LOG.info("Smart-contract Event subscription path = {}", pathSpec);
