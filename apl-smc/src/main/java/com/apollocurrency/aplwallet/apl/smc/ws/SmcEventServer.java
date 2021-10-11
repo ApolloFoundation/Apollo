@@ -78,13 +78,15 @@ public class SmcEventServer implements SmcEventSocketListener {
         if (rc != null) {
             return rc;
         }
-        var response = new SmcEventReceipt(SmcEventReceipt.Status.OK, request.getRequestId());
+        SmcEventResponse response;
         switch (request.getOperation()) {
             case SUBSCRIBE:
                 //call subscription routine
                 if (!subscriptionManager.addSubscription(socket.getContract(), socket, request)) {
                     response = SmcErrorReceipt.error(request.getRequestId(), SmcEventServerErrors.SUBSCRIPTION_ALREADY_REGISTERED,
                         request.getEvents().get(0).getSubscriptionId());
+                } else {
+                    response = new SmcEventReceipt(SmcEventReceipt.Status.OK, request.getRequestId());
                 }
                 break;
             case UNSUBSCRIBE:
@@ -92,14 +94,16 @@ public class SmcEventServer implements SmcEventSocketListener {
                 if (!subscriptionManager.removeSubscription(socket.getContract(), socket, request)) {
                     response = SmcErrorReceipt.error(request.getRequestId(), SmcEventServerErrors.SUBSCRIPTION_ALREADY_REGISTERED,
                         request.getEvents().get(0).getSubscriptionId());
+                } else {
+                    response = new SmcEventReceipt(SmcEventReceipt.Status.OK, request.getRequestId());
                 }
                 break;
             case SUBSCRIBE_TEST:
                 //nothing to do
+                response = new SmcEventReceipt(SmcEventReceipt.Status.OK, request.getRequestId());
                 break;
             default:
                 response = SmcErrorReceipt.error(request.getRequestId(), SmcEventServerErrors.UNSUPPORTED_OPERATION, request.getOperation().name());
-
         }
         return response;
     }

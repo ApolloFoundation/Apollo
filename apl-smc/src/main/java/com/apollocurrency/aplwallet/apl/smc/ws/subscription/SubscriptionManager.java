@@ -12,14 +12,7 @@ import com.apollocurrency.aplwallet.apl.util.api.converter.Converter;
 import com.apollocurrency.smc.contract.vm.event.NamedParameters;
 import com.apollocurrency.smc.data.type.Address;
 import com.apollocurrency.smc.data.type.ContractEvent;
-import com.google.common.collect.HashMultimap;
-import com.google.common.collect.Multimap;
-import com.google.common.collect.Multimaps;
-import lombok.experimental.Delegate;
 import org.eclipse.jetty.websocket.api.WebSocketException;
-
-import java.util.HashMap;
-import java.util.Map;
 
 import static com.apollocurrency.smc.util.HexUtils.toHex;
 
@@ -27,25 +20,18 @@ import static com.apollocurrency.smc.util.HexUtils.toHex;
  * @author andrew.zinchenko@gmail.com
  */
 public class SubscriptionManager {
-    private static final int MAX_SIZE = 200;
-    private final Multimap<Address, SmcEventSocket> registeredSockets;
+    static final int MAX_SIZE = 200;
+    private final RegisteredSocketContainer registeredSockets;
 
     private final Converter<SmcEventSubscriptionRequest, Subscription> converter;
 
-    private static class SubscriptionSocket extends SmcEventSocket {
-        @Delegate
-        //Map of <signature, subscription>
-        Map<String, Subscription> subscriptionMap;
-
-        public SubscriptionSocket(SmcEventSocket socket) {
-            super(socket);
-            this.subscriptionMap = new HashMap<>();
-        }
+    public SubscriptionManager() {
+        this.registeredSockets = new RegisteredSocketContainer();
+        this.converter = new RequestToSubscriptionConverter();
     }
 
-    public SubscriptionManager() {
-        this.registeredSockets = Multimaps.synchronizedMultimap(HashMultimap.create());
-        this.converter = new RequestToSubscriptionConverter();
+    public int getRegisteredSocketsCount() {
+        return registeredSockets.size();
     }
 
     /**
@@ -57,10 +43,10 @@ public class SubscriptionManager {
      */
     public boolean register(Address address, SmcEventSocket socket) {
         if (registeredSockets.size() < MAX_SIZE) {
-            if (registeredSockets.containsEntry(address, socket)) {
+            if (!registeredSockets.register(address, socket)) {
                 throw new WebSocketException("The socket is already registered.");
             } else {
-                return registeredSockets.put(address, new SubscriptionSocket(socket));
+                return true;
             }
         } else {
             throw new WebSocketException("The queue size exceeds the MAX value.");
@@ -76,16 +62,9 @@ public class SubscriptionManager {
      * @return true if subscription added successfully.
      */
     public boolean addSubscription(Address address, SmcEventSocket socket, SmcEventSubscriptionRequest request) {
-        if (registeredSockets.containsEntry(address, socket)) {
-            var subscription = (SubscriptionSocket) registeredSockets.get(address);
+        if (registeredSockets.isRegistered(address, socket)) {
             if (!request.getEvents().isEmpty()) {
-                var event = request.getEvents().get(0);
-                if (subscription.containsKey(event.getSignature())) {
-                    //Subscription already registered
-                    return false;
-                } else {
-                    subscription.put(event.getSignature(), converter.convert(request));
-                }
+                return registeredSockets.addSubscription(address, socket, converter.convert(request));
             }
             return true;
         } else {
@@ -98,16 +77,10 @@ public class SubscriptionManager {
     }
 
     public boolean removeSubscription(Address address, SmcEventSocket socket, SmcEventSubscriptionRequest request) {
-        if (registeredSockets.containsEntry(address, socket)) {
-            var subscription = (SubscriptionSocket) registeredSockets.get(address);
+        if (registeredSockets.isRegistered(address, socket)) {
             if (!request.getEvents().isEmpty()) {
                 var event = request.getEvents().get(0);
-                if (subscription.containsKey(event.getSignature())) {
-                    subscription.remove(event.getSignature());
-                } else {
-                    //Subscription doesn't exist
-                    return false;
-                }
+                return registeredSockets.removeSubscription(address, socket, event.getSignature());
             }
             return true;
         } else {
@@ -122,13 +95,14 @@ public class SubscriptionManager {
      */
     public void fire(ContractEvent contractEvent, NamedParameters params) {
         var response = toMessage(contractEvent);
-        var sockets = registeredSockets.get(contractEvent.getContract());
-        sockets.forEach(s -> {
-            var socket = (SubscriptionSocket) s;
-            var subscription = socket.get(toHex(contractEvent.getSignature()));
-            if (subscription != null && subscription.getFromBlock() <= contractEvent.getHeight() && subscription.getFilter().test(params.getMap())) {
+        var signature = toHex(contractEvent.getSignature());
+        var sockets = registeredSockets.getSubscriptionSockets(contractEvent.getContract(), signature);
+        sockets.forEach(socket -> {
+            var subscription = socket.subscription;
+            if (subscription.getFromBlock() <= contractEvent.getHeight()
+                && subscription.getFilter().test(params.getMap())) {
                 response.setSubscriptionId(subscription.getSubscriptionId());
-                socket.sendWebSocket(response);
+                socket.socket.sendWebSocket(response);
             }
         });
     }

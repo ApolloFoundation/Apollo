@@ -113,7 +113,7 @@ public class SmcEventSocket extends WebSocketAdapter {
         if (this == o) return true;
         if (o == null || getClass() != o.getClass()) return false;
         SmcEventSocket that = (SmcEventSocket) o;
-        return contract.equals(that.contract) && getSession().equals(that.getSession()) && getRemote().equals(that.getRemote());
+        return Objects.equals(contract, that.contract) && Objects.equals(getSession(), that.getSession()) && Objects.equals(getRemote(), that.getRemote());
     }
 
     @Override
