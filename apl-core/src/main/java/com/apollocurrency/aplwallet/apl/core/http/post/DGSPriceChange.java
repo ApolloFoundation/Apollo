@@ -26,7 +26,7 @@ import com.apollocurrency.aplwallet.apl.core.http.APITag;
 import com.apollocurrency.aplwallet.apl.core.http.HttpParameterParserUtil;
 import com.apollocurrency.aplwallet.apl.core.service.state.DGSService;
 import com.apollocurrency.aplwallet.apl.core.transaction.messages.Attachment;
-import com.apollocurrency.aplwallet.apl.core.transaction.messages.DGSriceChangeAttachment;
+import com.apollocurrency.aplwallet.apl.core.transaction.messages.DGSPriceChangeAttachment;
 import com.apollocurrency.aplwallet.apl.util.exception.AplException;
 import org.json.simple.JSONStreamAware;
 
@@ -54,7 +54,7 @@ public final class DGSPriceChange extends CreateTransactionHandler {
         if (goods.isDelisted() || goods.getSellerId() != account.getId()) {
             return UNKNOWN_GOODS;
         }
-        Attachment attachment = new DGSriceChangeAttachment(goods.getId(), priceATM);
+        Attachment attachment = new DGSPriceChangeAttachment(goods.getId(), priceATM);
         return createTransaction(req, account, attachment);
     }
 
