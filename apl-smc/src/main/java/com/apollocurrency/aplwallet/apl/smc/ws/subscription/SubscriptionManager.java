@@ -26,7 +26,11 @@ public class SubscriptionManager {
     private final Converter<SmcEventSubscriptionRequest, Subscription> converter;
 
     public SubscriptionManager() {
-        this.registeredSockets = new RegisteredSocketContainer();
+        this(new RegisteredSocketContainer());
+    }
+
+    public SubscriptionManager(RegisteredSocketContainer registeredSockets) {
+        this.registeredSockets = registeredSockets;
         this.converter = new RequestToSubscriptionConverter();
     }
 
@@ -98,11 +102,12 @@ public class SubscriptionManager {
         var signature = toHex(contractEvent.getSignature());
         var sockets = registeredSockets.getSubscriptionSockets(contractEvent.getContract(), signature);
         sockets.forEach(socket -> {
-            var subscription = socket.subscription;
+            var subscription = socket.getSubscription();
             if (subscription.getFromBlock() <= contractEvent.getHeight()
                 && subscription.getFilter().test(params.getMap())) {
                 response.setSubscriptionId(subscription.getSubscriptionId());
-                socket.socket.sendWebSocket(response);
+                response.setParsedParams(params.getMap());
+                socket.getSocket().sendWebSocket(response);
             }
         });
     }

@@ -75,7 +75,7 @@ public class SmcConfig {
         };
     }
 
-    public static SmcContext asContext(BlockchainIntegrator integrator) {
+    public static SmcContext asContext(final BlockchainIntegrator integrator) {
         return new SmcContext() {
             @Override
             public BlockchainIntegrator getIntegrator() {

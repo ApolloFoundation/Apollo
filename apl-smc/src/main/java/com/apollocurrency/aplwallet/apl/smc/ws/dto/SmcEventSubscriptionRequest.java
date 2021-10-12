@@ -4,6 +4,7 @@
 
 package com.apollocurrency.aplwallet.apl.smc.ws.dto;
 
+import com.apollocurrency.smc.data.expr.Term;
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonInclude;
@@ -33,13 +34,18 @@ public class SmcEventSubscriptionRequest {
         SUBSCRIBE_TEST;
     }
 
+    @JsonProperty
     private Operation operation;
+    @JsonProperty
     private String requestId;
+    @JsonProperty
     private List<Event> events;
 
     @JsonCreator
     @Builder
-    public SmcEventSubscriptionRequest(@JsonProperty("operation") Operation operation, @JsonProperty("requestId") String requestId, @JsonProperty("events") List<Event> events) {
+    public SmcEventSubscriptionRequest(@JsonProperty("operation") Operation operation
+        , @JsonProperty("requestId") String requestId
+        , @JsonProperty("events") List<Event> events) {
         this.operation = operation;
         this.requestId = requestId;
         this.events = events;
@@ -49,35 +55,29 @@ public class SmcEventSubscriptionRequest {
     @ToString
     @EqualsAndHashCode
     public static class Event {
+        @JsonProperty
         private String subscriptionId;//the subscription Identifier
+        @JsonProperty
         private String name;
+        @JsonProperty
         private String signature;
+        @JsonProperty
         private String fromBlock;
-        private List<Filter> filter;
+        @JsonProperty
+        private Term filter;
 
         @JsonCreator
         @Builder
-        public Event(@JsonProperty("subscriptionId") String subscriptionId, @JsonProperty("name") String name, @JsonProperty("signature") String signature, @JsonProperty("fromBlock") String fromBlock, @JsonProperty("filter") List<Filter> filter) {
+        public Event(@JsonProperty("subscriptionId") String subscriptionId
+            , @JsonProperty("name") String name
+            , @JsonProperty("signature") String signature
+            , @JsonProperty("fromBlock") String fromBlock
+            , @JsonProperty("filter") Term filter) {
             this.subscriptionId = subscriptionId;
             this.name = name;
             this.signature = signature;
             this.fromBlock = fromBlock;
             this.filter = filter;
-        }
-    }
-
-    @Data
-    @ToString
-    @EqualsAndHashCode
-    public static class Filter {
-        private String parameter;
-        private String value;
-
-        @JsonCreator
-        @Builder
-        public Filter(@JsonProperty("parameter") String parameter, @JsonProperty("value") String value) {
-            this.parameter = parameter;
-            this.value = value;
         }
     }
 }

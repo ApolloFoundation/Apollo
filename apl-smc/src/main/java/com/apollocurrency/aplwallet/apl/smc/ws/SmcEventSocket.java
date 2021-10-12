@@ -7,10 +7,10 @@ package com.apollocurrency.aplwallet.apl.smc.ws;
 import com.apollocurrency.aplwallet.apl.smc.model.AplAddress;
 import com.apollocurrency.aplwallet.apl.smc.ws.dto.SmcEventResponse;
 import com.apollocurrency.aplwallet.apl.smc.ws.dto.SmcEventSubscriptionRequest;
+import com.apollocurrency.smc.data.jsonmapper.JsonMapper;
+import com.apollocurrency.smc.data.jsonmapper.event.EventJsonMapper;
 import com.apollocurrency.smc.data.type.Address;
 import com.fasterxml.jackson.core.JsonProcessingException;
-import com.fasterxml.jackson.databind.MapperFeature;
-import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
 import org.eclipse.jetty.websocket.api.Session;
@@ -27,10 +27,10 @@ import java.util.Objects;
 public class SmcEventSocket extends WebSocketAdapter {
     private static final String INVALID_REQUEST_FORMAT_RESPONSE;
 
-    private static final ObjectMapper MAPPER = new ObjectMapper();
+    private static final JsonMapper MAPPER;
 
     static {
-        MAPPER.enable(MapperFeature.ACCEPT_CASE_INSENSITIVE_ENUMS);
+        MAPPER = new EventJsonMapper();
         INVALID_REQUEST_FORMAT_RESPONSE = serializeMessage(SmcErrorReceipt.error(SmcEventServerErrors.WRONG_REQUEST_STRUCTURE));
     }
 
@@ -44,8 +44,7 @@ public class SmcEventSocket extends WebSocketAdapter {
     }
 
     public SmcEventSocket(SmcEventSocket copy) {
-        this.contract = copy.contract;
-        this.listener = copy.listener;
+        this(copy.contract.getHex(), copy.listener);
     }
 
     @Override
@@ -96,12 +95,12 @@ public class SmcEventSocket extends WebSocketAdapter {
     }
 
     protected static SmcEventSubscriptionRequest deserializeMessage(String json) throws JsonProcessingException {
-        return MAPPER.readValue(json, SmcEventSubscriptionRequest.class);
+        return MAPPER.deserializer().deserialize(json, SmcEventSubscriptionRequest.class);
     }
 
     @SneakyThrows
     protected static String serializeMessage(Object response) {
-        return MAPPER.writeValueAsString(response);
+        return MAPPER.serializer().serializeAsString(response);
     }
 
     public void sendWebSocket(SmcEventResponse response) {

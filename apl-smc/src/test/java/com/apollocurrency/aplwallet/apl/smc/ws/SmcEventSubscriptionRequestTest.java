@@ -30,21 +30,22 @@ class SmcEventSubscriptionRequestTest {
             .operation(SUBSCRIBE)
             .requestId(UUID.randomUUID().toString())
             .events(List.of(SmcEventSubscriptionRequest.Event.builder()
+                .subscriptionId("0x01")
                 .name("Transfer")
                 .signature("0x1234567890")
                 .fromBlock("0")
-                .filter(List.of(SmcEventSubscriptionRequest.Filter.builder()
-                    .parameter("sender")
-                    .value("0xaabbccddeeff")
-                    .build()))
                 .build()))
             .build();
         //WHEN
-        var json = serializeMessage(request);
+        var str = serializeMessage(request);
+        var json = str.replace("null", "{\"$expr\":{\"$not\":{\"$eq\":{\"from\":\"0x25dcf5c92f9e2c8b\"}}}}");
         //THEN
         assertNotNull(json);
         //WHEN
         var obj = deserializeMessage(json);
+        request.getEvents().get(0).setFilter(
+            obj.getEvents().get(0).getFilter()
+        );
         //THEN
         assertEquals(request, obj);
 

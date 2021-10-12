@@ -42,5 +42,4 @@ public class OneErrorSocket extends WebSocketAdapter {
     public void onWebSocketError(Throwable cause) {
     }
 
-
 }

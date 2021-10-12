@@ -6,6 +6,8 @@ package com.apollocurrency.aplwallet.apl.smc.ws.subscription;
 
 import com.apollocurrency.aplwallet.apl.smc.ws.SmcEventSocket;
 import com.apollocurrency.smc.data.type.Address;
+import lombok.Getter;
+import lombok.extern.slf4j.Slf4j;
 
 import java.util.Collection;
 import java.util.Collections;
@@ -16,12 +18,15 @@ import java.util.stream.Collectors;
 /**
  * @author andrew.zinchenko@gmail.com
  */
+@Slf4j
 public class RegisteredSocketContainer {
     private final Map<Address, Map<SmcEventSocket, Map<String, SubscriptionSocket>>> registeredSockets;
 
     static class SubscriptionSocket {
-        final Subscription subscription;
-        final SmcEventSocket socket;
+        @Getter
+        private final Subscription subscription;
+        @Getter
+        private final SmcEventSocket socket;
 
         public SubscriptionSocket(SmcEventSocket socket, Subscription subscription) {
             this.socket = socket;
@@ -33,16 +38,22 @@ public class RegisteredSocketContainer {
         this.registeredSockets = new HashMap<>();
     }
 
+    RegisteredSocketContainer(Map<Address, Map<SmcEventSocket, Map<String, SubscriptionSocket>>> registeredSockets) {
+        this.registeredSockets = registeredSockets;
+    }
+
     public int size() {
-        return registeredSockets.size();
+        return registeredSockets.values().stream().mapToInt(Map::size).sum();
     }
 
     public boolean register(Address address, SmcEventSocket socket) {
         var m = registeredSockets.computeIfAbsent(address, key -> new HashMap<>());
         if (m.containsKey(socket)) {
+            log.debug("Socket already registered, socket={}.", socket);
             return false;
         } else {
             m.put(socket, new HashMap<>());
+            log.debug("Register new socket, socket={}.", socket);
             return true;
         }
     }
@@ -52,9 +63,11 @@ public class RegisteredSocketContainer {
             var m = registeredSockets.get(address);
             if (m.containsKey(socket)) {
                 m.remove(socket);
+                log.debug("Remove socket, socket={}.", socket);
                 return true;
             }
         }
+        log.debug("Socket is not registered, socket={}.", socket);
         return false;
     }
 
@@ -85,10 +98,11 @@ public class RegisteredSocketContainer {
     public boolean addSubscription(Address address, SmcEventSocket socket, Subscription subscription) {
         var e = getEntry(address, socket);
         if (e.containsKey(subscription.getSignature())) {
-            //Subscription already registered
+            log.debug("Subscription already registered, subscription={}.", subscription);
             return false;
         } else {
             e.put(subscription.getSignature(), new SubscriptionSocket(socket, subscription));
+            log.debug("Register new subscription, subscription={}.", subscription);
             return true;
         }
     }
@@ -97,8 +111,10 @@ public class RegisteredSocketContainer {
         var e = getEntry(address, socket);
         if (e.containsKey(eventSignature)) {
             e.remove(eventSignature);
+            log.debug("Remove subscription on signature, signature={}.", eventSignature);
             return true;
         } else {
+            log.debug("Subscription on signature is not registered, signature={}.", eventSignature);
             return false;
         }
     }

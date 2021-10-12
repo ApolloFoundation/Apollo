@@ -21,7 +21,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.eclipse.jetty.websocket.api.WebSocketException;
 
 import javax.annotation.PostConstruct;
-import javax.enterprise.event.Observes;
+import javax.enterprise.event.ObservesAsync;
 import javax.enterprise.inject.spi.CDI;
 import javax.inject.Singleton;
 
@@ -92,7 +92,7 @@ public class SmcEventServer implements SmcEventSocketListener {
             case UNSUBSCRIBE:
                 //call unsubscription routine
                 if (!subscriptionManager.removeSubscription(socket.getContract(), socket, request)) {
-                    response = SmcErrorReceipt.error(request.getRequestId(), SmcEventServerErrors.SUBSCRIPTION_ALREADY_REGISTERED,
+                    response = SmcErrorReceipt.error(request.getRequestId(), SmcEventServerErrors.SUBSCRIPTION_NOT_REGISTERED,
                         request.getEvents().get(0).getSubscriptionId());
                 } else {
                     response = new SmcEventReceipt(SmcEventReceipt.Status.OK, request.getRequestId());
@@ -116,8 +116,8 @@ public class SmcEventServer implements SmcEventSocketListener {
         }
     }
 
-    public void onSmcEventEmitted(@Observes @SmcEvent(SmcEventType.EMIT_EVENT) AplContractEvent event) {
-        log.debug("Subscription: fire event={}", event);
+    public void onSmcEventEmitted(@ObservesAsync @SmcEvent(SmcEventType.EMIT_EVENT) AplContractEvent event) {
+        log.debug("Subscription: fired event={}", event);
         var args = jsonMapper.deserializer().deserialize(event.getState(), EventArguments.class);
         var params = new NamedParameters(event.getParamNames(), args);
         subscriptionManager.fire(event, params);
