@@ -7,8 +7,10 @@ package com.apollocurrency.aplwallet.apl.core.rest.endpoint;
 import com.apollocurrency.aplwallet.api.dto.WalletDTO;
 import com.apollocurrency.aplwallet.api.dto.account.CurrenciesWalletsDTO;
 import com.apollocurrency.aplwallet.api.dto.account.CurrencyWalletsDTO;
+import com.apollocurrency.aplwallet.api.dto.auth.TwoFactorAuthParameters;
 import com.apollocurrency.aplwallet.api.dto.vault.UserKeyStoreDTO;
 import com.apollocurrency.aplwallet.apl.core.http.HttpParameterParserUtil;
+import com.apollocurrency.aplwallet.apl.core.rest.filters.Secured2FAInterceptor;
 import com.apollocurrency.aplwallet.apl.core.service.appdata.SecureStorageService;
 import com.apollocurrency.aplwallet.apl.crypto.Convert;
 import com.apollocurrency.aplwallet.apl.util.service.ElGamalEncryptor;
@@ -18,6 +20,7 @@ import com.apollocurrency.aplwallet.vault.model.EthWalletKey;
 import com.apollocurrency.aplwallet.vault.model.UserKeyStore;
 import com.apollocurrency.aplwallet.vault.model.WalletKeysInfo;
 import com.apollocurrency.aplwallet.vault.service.KMSService;
+import com.apollocurrency.aplwallet.vault.service.auth.Account2FAService;
 import lombok.SneakyThrows;
 import org.jboss.resteasy.mock.MockHttpResponse;
 import org.jboss.weld.junit.MockBean;
@@ -35,6 +38,7 @@ import javax.servlet.http.HttpServletRequest;
 import java.util.List;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.never;
@@ -51,6 +55,9 @@ class KeyStoreControllerTest extends AbstractEndpointTest {
     SecureStorageService secureStorageService;
     @Mock
     HttpServletRequest request;
+    @Mock
+    Account2FAService account2FAService;
+
     ElGamalEncryptor encryptor = mock(ElGamalEncryptor.class);
 
     @WeldSetup
@@ -63,8 +70,12 @@ class KeyStoreControllerTest extends AbstractEndpointTest {
     @BeforeEach
     void setUp() {
         super.setUp();
-        dispatcher.getRegistry().addSingletonResource( new KeyStoreController(kmsService, secureStorageService, maxKeystoreFileSize));
+        Secured2FAInterceptor interceptor = new Secured2FAInterceptor();
+        interceptor.setFaHelper(account2FAService);
+        dispatcher.getProviderFactory().getContainerRequestFilterRegistry().registerSingleton(interceptor);
         dispatcher.getDefaultContextObjects().put(HttpServletRequest.class, request);
+        dispatcher.getRegistry().addSingletonResource(new KeyStoreController(kmsService, secureStorageService, maxKeystoreFileSize));
+
     }
 
     @AfterEach
@@ -139,6 +150,7 @@ class KeyStoreControllerTest extends AbstractEndpointTest {
     @SneakyThrows
     @Test
     void downloadKeystore_legacyPassphraseParam() {
+        when(account2FAService.verify2FA(any(), any(), any(), any(), any())).thenReturn(mock(TwoFactorAuthParameters.class));
         when(encryptor.elGamalDecrypt(PASSPHRASE)).thenReturn(PASSPHRASE);
         when(kmsService.isWalletExist(ACCOUNT_ID_WITH_SECRET)).thenReturn(true);
         when(kmsService.exportUserKeyStore(ACCOUNT_ID_WITH_SECRET, PASSPHRASE)).thenReturn(new UserKeyStore(SECRET.getBytes(), "Test keystore file"));
@@ -151,12 +163,14 @@ class KeyStoreControllerTest extends AbstractEndpointTest {
         String json = response.getContentAsString();
         UserKeyStoreDTO keyStore = mapper.readValue(json, UserKeyStoreDTO.class);
         assertEquals(new UserKeyStoreDTO(SECRET.getBytes(), "Test keystore file"), keyStore);
+        verify(account2FAService).verify2FA(Long.toUnsignedString(ACCOUNT_ID_WITH_SECRET), PASSPHRASE, null, null, null);
     }
 
 
     @SneakyThrows
     @Test
     void downloadKeystore_correctPassphraseParam() {
+        when(account2FAService.verify2FA(any(), any(), any(), any(), any())).thenReturn(mock(TwoFactorAuthParameters.class));
         when(encryptor.elGamalDecrypt(PASSPHRASE)).thenReturn(PASSPHRASE);
         when(kmsService.isWalletExist(ACCOUNT_ID_WITH_SECRET)).thenReturn(true);
         when(kmsService.exportUserKeyStore(ACCOUNT_ID_WITH_SECRET, PASSPHRASE)).thenReturn(new UserKeyStore(SECRET.getBytes(), "Test keystore file"));
@@ -168,22 +182,28 @@ class KeyStoreControllerTest extends AbstractEndpointTest {
         String json = response.getContentAsString();
         UserKeyStoreDTO keyStore = mapper.readValue(json, UserKeyStoreDTO.class);
         assertEquals(new UserKeyStoreDTO(SECRET.getBytes(), "Test keystore file"), keyStore);
+        verify(account2FAService).verify2FA(Long.toUnsignedString(ACCOUNT_ID_WITH_SECRET), PASSPHRASE, null, null, null);
     }
 
     @SneakyThrows
     @Test
     void downloadKeystore_noPassphrase() {
+        when(account2FAService.verify2FA(any(), any(), any(), any(), any())).thenReturn(mock(TwoFactorAuthParameters.class));
+
         MockHttpResponse response = sendPostRequest("/keyStore/download", "account=" + Long.toUnsignedString(ACCOUNT_ID_WITH_SECRET));
 
         assertEquals(200, response.getStatus());
         String json = response.getContentAsString();
         Error error = mapper.readValue(json, Error.class);
         assertEquals("The mandatory parameter 'passphrase' is not specified", error.getErrorDescription());
+        verify(account2FAService).verify2FA(Long.toUnsignedString(ACCOUNT_ID_WITH_SECRET), null, null, null, null);
+
     }
 
     @SneakyThrows
     @Test
     void downloadKeystore_noWallet() {
+        when(account2FAService.verify2FA(any(), any(), any(), any(), any())).thenReturn(mock(TwoFactorAuthParameters.class));
         when(encryptor.elGamalDecrypt(PASSPHRASE)).thenReturn(PASSPHRASE);
 
         MockHttpResponse response = sendPostRequest("/keyStore/download", "account=" + Long.toUnsignedString(ACCOUNT_ID_WITH_SECRET)
@@ -193,11 +213,13 @@ class KeyStoreControllerTest extends AbstractEndpointTest {
         String json = response.getContentAsString();
         Error error = mapper.readValue(json, Error.class);
         assertEquals("Key for this account is not exist.", error.getErrorDescription());
+        verify(account2FAService).verify2FA(Long.toUnsignedString(ACCOUNT_ID_WITH_SECRET), PASSPHRASE, null, null, null);
     }
 
     @SneakyThrows
     @Test
     void downloadKeystore_keystoreNotExist() {
+        when(account2FAService.verify2FA(any(), any(), any(), any(), any())).thenReturn(mock(TwoFactorAuthParameters.class));
         when(encryptor.elGamalDecrypt(PASSPHRASE)).thenReturn(PASSPHRASE);
         when(kmsService.isWalletExist(ACCOUNT_ID_WITH_SECRET)).thenReturn(true);
 
@@ -208,6 +230,7 @@ class KeyStoreControllerTest extends AbstractEndpointTest {
         String json = response.getContentAsString();
         Error error = mapper.readValue(json, Error.class);
         assertEquals("Incorrect account id or passphrase", error.getErrorDescription());
+        verify(account2FAService).verify2FA(Long.toUnsignedString(ACCOUNT_ID_WITH_SECRET), PASSPHRASE, null, null, null);
     }
 
 

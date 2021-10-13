@@ -20,4 +20,11 @@ public @interface Secured2FA {
      * @return the vault account name, default value is "account"
      */
     String value() default "account";
+
+    /**
+     * Array of the supported 'passphrase' parameter names. Required only for
+     * backward compatibility with 'passPhrase' and other wrong parameter naming cases
+     * @return array of the possible 'passphrase' parameter names, first are more significant
+     */
+    String[] passphraseParamNames() default {"passphrase"};
 }

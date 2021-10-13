@@ -177,7 +177,7 @@ public class KeyStoreController {
                     schema = @Schema(implementation = Response.class)))
         }
     )
-    @Secured2FA
+    @Secured2FA(passphraseParamNames = {"passphrase", "passPhrase"})
     @PermitAll
     public Response downloadKeyStore(@FormParam("account") String account,
                                      @FormParam("passphrase") String passphraseReq, @Context HttpServletRequest request) throws ParameterException, IOException {
