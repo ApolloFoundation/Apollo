@@ -7,6 +7,7 @@ package com.apollocurrency.aplwallet.apl.smc.ws;
 import com.apollocurrency.aplwallet.apl.smc.events.SmcEvent;
 import com.apollocurrency.aplwallet.apl.smc.events.SmcEventType;
 import com.apollocurrency.aplwallet.apl.smc.model.AplContractEvent;
+import com.apollocurrency.aplwallet.apl.smc.service.SmcContractEventService;
 import com.apollocurrency.aplwallet.apl.smc.ws.dto.SmcEventMessage;
 import com.apollocurrency.aplwallet.apl.smc.ws.dto.SmcEventReceipt;
 import com.apollocurrency.aplwallet.apl.smc.ws.dto.SmcEventResponse;
@@ -33,7 +34,7 @@ import javax.inject.Singleton;
 public class SmcEventServer implements SmcEventSocketListener {
     @Getter
     private final SubscriptionManager subscriptionManager;
-    private SmcEventService eventServiceInt;
+    private SmcContractEventService eventServiceInt;
     private final JsonMapper jsonMapper;
 
     public SmcEventServer() {
@@ -41,13 +42,13 @@ public class SmcEventServer implements SmcEventSocketListener {
         this.jsonMapper = new EventJsonMapper();
     }
 
-    private SmcEventService lookupService() {
+    private SmcContractEventService lookupService() {
         return eventServiceInt;
     }
 
     @PostConstruct
     void init() {
-        eventServiceInt = CDI.current().select(SmcEventService.class).get();
+        eventServiceInt = CDI.current().select(SmcContractEventService.class).get();
     }
 
     @Override
@@ -117,7 +118,7 @@ public class SmcEventServer implements SmcEventSocketListener {
     }
 
     public void onSmcEventEmitted(@ObservesAsync @SmcEvent(SmcEventType.EMIT_EVENT) AplContractEvent event) {
-        log.debug("Subscription: fired event={}", event);
+        log.debug("Catch async cdi event={}", event);
         var args = jsonMapper.deserializer().deserialize(event.getState(), EventArguments.class);
         var params = new NamedParameters(event.getParamNames(), args);
         subscriptionManager.fire(event, params);

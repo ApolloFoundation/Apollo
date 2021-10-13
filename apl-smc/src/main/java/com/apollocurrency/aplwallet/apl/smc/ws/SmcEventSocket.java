@@ -59,7 +59,7 @@ public class SmcEventSocket extends WebSocketAdapter {
     public void onWebSocketText(String message) {
         log.debug("Received TEXT message: {}", message);
         if (message.toLowerCase(Locale.US).equals("exit")) {
-            getSession().close(StatusCode.NORMAL, "Thanks");
+            getSession().close(StatusCode.NORMAL, "Thanks.");
         } else {
             try {
                 var request = deserializeMessage(message);

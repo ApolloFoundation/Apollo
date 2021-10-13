@@ -11,6 +11,8 @@ import com.apollocurrency.aplwallet.api.v2.model.AsrSpecResponse;
 import com.apollocurrency.aplwallet.api.v2.model.CallContractMethodReq;
 import com.apollocurrency.aplwallet.api.v2.model.CallViewMethodReq;
 import com.apollocurrency.aplwallet.api.v2.model.ContractDetails;
+import com.apollocurrency.aplwallet.api.v2.model.ContractEventsRequest;
+import com.apollocurrency.aplwallet.api.v2.model.ContractEventsResponse;
 import com.apollocurrency.aplwallet.api.v2.model.ContractListResponse;
 import com.apollocurrency.aplwallet.api.v2.model.ContractMethod;
 import com.apollocurrency.aplwallet.api.v2.model.ContractSpecResponse;
@@ -42,6 +44,7 @@ import com.apollocurrency.aplwallet.apl.core.transaction.messages.SmcPublishCont
 import com.apollocurrency.aplwallet.apl.crypto.Convert;
 import com.apollocurrency.aplwallet.apl.crypto.Crypto;
 import com.apollocurrency.aplwallet.apl.smc.model.AplAddress;
+import com.apollocurrency.aplwallet.apl.smc.service.SmcContractEventService;
 import com.apollocurrency.aplwallet.apl.smc.service.SmcContractTxBatchProcessor;
 import com.apollocurrency.aplwallet.apl.smc.service.SmcContractTxProcessor;
 import com.apollocurrency.aplwallet.apl.smc.service.tx.CallMethodTxValidator;
@@ -60,6 +63,9 @@ import com.apollocurrency.smc.contract.SmartMethod;
 import com.apollocurrency.smc.contract.fuel.ContractFuel;
 import com.apollocurrency.smc.contract.vm.ExecutionLog;
 import com.apollocurrency.smc.contract.vm.ResultValue;
+import com.apollocurrency.smc.data.expr.Term;
+import com.apollocurrency.smc.data.expr.TrueTerm;
+import com.apollocurrency.smc.data.expr.parser.TermParser;
 import com.apollocurrency.smc.data.type.Address;
 import com.apollocurrency.smc.polyglot.SimpleVersion;
 import com.apollocurrency.smc.polyglot.Version;
@@ -89,6 +95,7 @@ public class SmcApiServiceImpl implements SmcApiService {
 
     private final AccountService accountService;
     private final SmcContractService contractService;
+    private final SmcContractEventService eventService;
     private final TransactionCreator transactionCreator;
     private final TxBContext txBContext;
     private final SmcBlockchainIntegratorFactory integratorFactory;
@@ -103,6 +110,7 @@ public class SmcApiServiceImpl implements SmcApiService {
     public SmcApiServiceImpl(BlockchainConfig blockchainConfig,
                              AccountService accountService,
                              SmcContractService contractService,
+                             SmcContractEventService eventService,
                              TransactionCreator transactionCreator,
                              SmcBlockchainIntegratorFactory integratorFactory,
                              SmcConfig smcConfig,
@@ -112,6 +120,7 @@ public class SmcApiServiceImpl implements SmcApiService {
                              @Property(name = "apl.maxAPIRecords", defaultValue = "100") int maxAPIRecords) {
         this.accountService = accountService;
         this.contractService = contractService;
+        this.eventService = eventService;
         this.transactionCreator = transactionCreator;
         this.txBContext = TxBContext.newInstance(blockchainConfig.getChain());
         this.integratorFactory = integratorFactory;
@@ -595,6 +604,43 @@ public class SmcApiServiceImpl implements SmcApiService {
 
         List<ContractDetails> contracts = contractService.loadContractsByOwner(address, 0, Integer.MAX_VALUE);
         response.setContracts(contracts);
+
+        return builder.bind(response).build();
+    }
+
+    @Override
+    public Response getSmcEvents(String address, ContractEventsRequest body, SecurityContext securityContext) throws NotFoundException {
+        ResponseBuilderV2 builder = ResponseBuilderV2.startTiming();
+        final AplAddress contract = AplAddress.valueOf(address);
+        if (contractService.isContractExist(contract)) {
+            return ResponseBuilderV2.apiError(ApiErrors.CONTRACT_NOT_FOUND, address).build();
+        }
+        var filterStr = body.getFilter();
+        Term filter;
+        if (Strings.isNullOrEmpty(filterStr)) {
+            filter = new TrueTerm();
+        } else {
+            try {
+                filter = TermParser.parse(filterStr);
+            } catch (Exception e) {
+                return ResponseBuilderV2.apiError(ApiErrors.CONTRACT_EVENT_FILTER_ERROR, e.getMessage()).build();
+            }
+        }
+        int fromBlock = 0;
+        int toBlock = -1;
+        if (!Strings.isNullOrEmpty(body.getFromBlock())) {
+            fromBlock = Integer.parseInt(body.getFromBlock());
+        }
+        if (!Strings.isNullOrEmpty(body.getToBlock())) {
+            toBlock = Integer.parseInt(body.getToBlock());
+        }
+        ContractEventsResponse response = new ContractEventsResponse();
+        var rc = eventService.getEventsByFilter(contract.getLongId(), body.getEvent(),
+            filter,
+            fromBlock, toBlock,
+            body.getFrom(), body.getTo(), body.getOrder());
+
+        response.setEvents(rc);
 
         return builder.bind(response).build();
     }

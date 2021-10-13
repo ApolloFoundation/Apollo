@@ -12,6 +12,7 @@ import com.apollocurrency.aplwallet.apl.util.api.converter.Converter;
 import com.apollocurrency.smc.contract.vm.event.NamedParameters;
 import com.apollocurrency.smc.data.type.Address;
 import com.apollocurrency.smc.data.type.ContractEvent;
+import lombok.extern.slf4j.Slf4j;
 import org.eclipse.jetty.websocket.api.WebSocketException;
 
 import static com.apollocurrency.smc.util.HexUtils.toHex;
@@ -19,6 +20,7 @@ import static com.apollocurrency.smc.util.HexUtils.toHex;
 /**
  * @author andrew.zinchenko@gmail.com
  */
+@Slf4j
 public class SubscriptionManager {
     static final int MAX_SIZE = 200;
     private final RegisteredSocketContainer registeredSockets;
@@ -72,7 +74,8 @@ public class SubscriptionManager {
             }
             return true;
         } else {
-            throw new WebSocketException("The socket is not registered.");
+            log.debug("The socket is not registered.");
+            return false;
         }
     }
 
@@ -88,7 +91,8 @@ public class SubscriptionManager {
             }
             return true;
         } else {
-            throw new WebSocketException("The socket is not registered.");
+            log.debug("The socket is not registered.");
+            return false;
         }
     }
 
@@ -98,18 +102,30 @@ public class SubscriptionManager {
      * @param contractEvent the fired contract event
      */
     public void fire(ContractEvent contractEvent, NamedParameters params) {
-        var response = toMessage(contractEvent);
         var signature = toHex(contractEvent.getSignature());
+        if (log.isDebugEnabled()) {
+            log.debug("Fired event, contract={} signature={} params={}", contractEvent.getContract().getHex(), signature, params);
+        }
         var sockets = registeredSockets.getSubscriptionSockets(contractEvent.getContract(), signature);
-        sockets.forEach(socket -> {
-            var subscription = socket.getSubscription();
-            if (subscription.getFromBlock() <= contractEvent.getHeight()
-                && subscription.getFilter().test(params.getMap())) {
-                response.setSubscriptionId(subscription.getSubscriptionId());
-                response.setParsedParams(params.getMap());
-                socket.getSocket().sendWebSocket(response);
-            }
-        });
+        if (!sockets.isEmpty()) {
+            log.debug("found {} subscriptions", sockets.size());
+            var response = toMessage(contractEvent);
+            sockets.forEach(socket -> {
+                var subscription = socket.getSubscription();
+                log.debug("Check subscription={}", subscription);
+                if (checkSubscription(subscription, contractEvent, params)) {
+                    log.debug("is matched, send response to remote={}", socket.getSocket().getRemote());
+                    response.setSubscriptionId(subscription.getSubscriptionId());
+                    response.setParsedParams(params.getMap());
+                    socket.getSocket().sendWebSocket(response);
+                }
+            });
+        }
+    }
+
+    private static boolean checkSubscription(Subscription subscription, ContractEvent contractEvent, NamedParameters params) {
+        return subscription.getFromBlock() <= contractEvent.getHeight()
+            && subscription.getFilter().test(params.getMap());
     }
 
     private static SmcEventMessage toMessage(ContractEvent contractEvent) {

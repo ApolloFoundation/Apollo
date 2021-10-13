@@ -30,7 +30,7 @@ public class AplAddress implements Address {
         this.id = new BigInteger(address.get()).longValueExact();
     }
 
-    public static Address valueOf(String address) {
+    public static AplAddress valueOf(String address) {
         if (HexUtils.isHex(address)) {
             byte[] bytes = HexUtils.parseHex(address);
             return new AplAddress(new BigInteger(bytes).longValueExact());

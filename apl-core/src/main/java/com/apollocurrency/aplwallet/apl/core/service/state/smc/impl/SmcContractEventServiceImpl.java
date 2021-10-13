@@ -4,21 +4,26 @@
 
 package com.apollocurrency.aplwallet.apl.core.service.state.smc.impl;
 
+import com.apollocurrency.aplwallet.api.v2.model.SmcContractEvent;
 import com.apollocurrency.aplwallet.apl.core.converter.db.smc.ContractEventLogModelToLogEntryConverter;
 import com.apollocurrency.aplwallet.apl.core.converter.db.smc.ContractEventModelToEntityConverter;
 import com.apollocurrency.aplwallet.apl.core.dao.state.smc.SmcContractEventLogTable;
 import com.apollocurrency.aplwallet.apl.core.dao.state.smc.SmcContractEventTable;
 import com.apollocurrency.aplwallet.apl.core.service.blockchain.Blockchain;
+import com.apollocurrency.aplwallet.apl.core.service.state.smc.SmcContractService;
 import com.apollocurrency.aplwallet.apl.smc.events.SmcEventType;
 import com.apollocurrency.aplwallet.apl.smc.model.AplContractEvent;
 import com.apollocurrency.aplwallet.apl.smc.service.SmcContractEventService;
 import com.apollocurrency.aplwallet.apl.util.cdi.Transactional;
 import com.apollocurrency.smc.blockchain.crypt.HashSumProvider;
+import com.apollocurrency.smc.data.expr.Term;
+import com.apollocurrency.smc.data.type.Address;
 import lombok.extern.slf4j.Slf4j;
 
 import javax.enterprise.event.Event;
 import javax.inject.Inject;
 import javax.inject.Singleton;
+import java.util.List;
 
 import static com.apollocurrency.aplwallet.apl.smc.events.SmcEventBinding.literal;
 import static com.apollocurrency.smc.util.HexUtils.toHex;
@@ -37,9 +42,16 @@ public class SmcContractEventServiceImpl implements SmcContractEventService {
     private final ContractEventModelToEntityConverter entityConverter;
     private final HashSumProvider hashSumProvider;
     private final Event<AplContractEvent> cdiContractEvent;
+    private final SmcContractService smcContractService;
 
     @Inject
-    public SmcContractEventServiceImpl(Blockchain blockchain, SmcContractEventTable contractEventTable, SmcContractEventLogTable contractEventLogTable, ContractEventLogModelToLogEntryConverter contractEventLogModelToLogEntryConverter, ContractEventModelToEntityConverter contractEventModelToEntityConverter, HashSumProvider hashSumProvider, Event<AplContractEvent> cdiContractEvent) {
+    public SmcContractEventServiceImpl(Blockchain blockchain, SmcContractEventTable contractEventTable,
+                                       SmcContractEventLogTable contractEventLogTable,
+                                       ContractEventLogModelToLogEntryConverter contractEventLogModelToLogEntryConverter,
+                                       ContractEventModelToEntityConverter contractEventModelToEntityConverter,
+                                       HashSumProvider hashSumProvider,
+                                       Event<AplContractEvent> cdiContractEvent,
+                                       SmcContractService smcContractService) {
         this.blockchain = blockchain;
         this.contractEventTable = contractEventTable;
         this.contractEventLogTable = contractEventLogTable;
@@ -47,6 +59,12 @@ public class SmcContractEventServiceImpl implements SmcContractEventService {
         this.entityConverter = contractEventModelToEntityConverter;
         this.hashSumProvider = hashSumProvider;
         this.cdiContractEvent = cdiContractEvent;
+        this.smcContractService = smcContractService;
+    }
+
+    @Override
+    public boolean isContractExist(Address contract) {
+        return smcContractService.isContractExist(contract);
     }
 
     @Override
@@ -77,5 +95,13 @@ public class SmcContractEventServiceImpl implements SmcContractEventService {
     @Override
     public void fireCdiEvent(AplContractEvent event) {
         cdiContractEvent.select(literal(SmcEventType.EMIT_EVENT)).fireAsync(event);
+    }
+
+    @Override
+    public List<SmcContractEvent> getEventsByFilter(Long contract, String eventName, Term filter, int fromBlock, int toBlock, int from, int to, String order) {
+        var result = contractEventLogTable.getContractsByFilter(contract, eventName, fromBlock, toBlock, from, to, order);
+        //filter result set
+
+        return null;
     }
 }

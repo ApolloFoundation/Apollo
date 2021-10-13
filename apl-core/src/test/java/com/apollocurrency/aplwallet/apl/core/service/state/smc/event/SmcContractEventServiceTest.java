@@ -9,6 +9,7 @@ import com.apollocurrency.aplwallet.apl.core.converter.db.smc.ContractEventModel
 import com.apollocurrency.aplwallet.apl.core.dao.state.smc.SmcContractEventLogTable;
 import com.apollocurrency.aplwallet.apl.core.dao.state.smc.SmcContractEventTable;
 import com.apollocurrency.aplwallet.apl.core.service.blockchain.Blockchain;
+import com.apollocurrency.aplwallet.apl.core.service.state.smc.SmcContractService;
 import com.apollocurrency.aplwallet.apl.core.service.state.smc.impl.SmcContractEventServiceImpl;
 import com.apollocurrency.aplwallet.apl.smc.events.SmcEventType;
 import com.apollocurrency.aplwallet.apl.smc.model.AplContractEvent;
@@ -40,6 +41,8 @@ class SmcContractEventServiceTest extends AbstractContractEventTest {
     SmcContractEventLogTable contractEventLogTable;
     @Mock
     Event<AplContractEvent> cdiEvent;
+    @Mock
+    SmcContractService smcContractService;
 
     ContractEventLogModelToLogEntryConverter logEntryConverter = new ContractEventLogModelToLogEntryConverter();
     ContractEventModelToEntityConverter entityConverter = new ContractEventModelToEntityConverter();
@@ -53,7 +56,8 @@ class SmcContractEventServiceTest extends AbstractContractEventTest {
         eventService = new SmcContractEventServiceImpl(blockchain, contractEventTable, contractEventLogTable,
             logEntryConverter, entityConverter,
             hashSumProvider,
-            cdiEvent);
+            cdiEvent,
+            smcContractService);
     }
 
     @Test
