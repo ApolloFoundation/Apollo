@@ -11,6 +11,7 @@ import com.apollocurrency.aplwallet.apl.core.entity.state.shuffling.Shuffler;
 import com.apollocurrency.aplwallet.apl.core.entity.state.shuffling.Shuffling;
 import com.apollocurrency.aplwallet.apl.core.entity.state.shuffling.ShufflingParticipant;
 import com.apollocurrency.aplwallet.apl.core.entity.state.shuffling.ShufflingParticipantState;
+import com.apollocurrency.aplwallet.apl.core.exception.AplAcceptableTransactionValidationException;
 import com.apollocurrency.aplwallet.apl.core.exception.AplTransactionValidationException;
 import com.apollocurrency.aplwallet.apl.core.exception.ShufflerException;
 import com.apollocurrency.aplwallet.apl.core.model.Transaction;
@@ -499,10 +500,10 @@ public class ShufflerServiceImpl implements ShufflerService {
                 processor.broadcast(transaction);
                 log.trace("Submitted Shuffling Tx: id: {}, participantAccount:{}, atm: {}, deadline: {}",
                     transaction.getId(), participantAccount, transaction.getAmountATM(), transaction.getDeadline());
-            } catch (AplMemPoolFullException e) {
+            } catch (AplMemPoolFullException | AplAcceptableTransactionValidationException e) {
                 shuffler.setFailedTransaction(transaction);
                 shuffler.setFailureCause(e);
-                log.debug("Error submitting shuffler transaction, mempool is full", e);
+                log.info("Error submitting shuffler transaction", e);
             } catch (AplTransactionIsAlreadyInMemPoolException e) {
                 log.warn("Transaction {} is already in mempool, possible synchronization issue appeared or before-check logic changed", transaction.getStringId());
             }
