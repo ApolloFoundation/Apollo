@@ -1762,26 +1762,27 @@ components:
           description: the event name or predefined value 'allEvents' for getting all possible events
           example: Transfer
         fromBlock:
-          type: string
+          type: integer
           description: |
             The block number/height (greater than or equal to) from which to get events;|
-            Pre-defined block numbers as 'earliest', 'latest' can also be used.
-          default: "0"
+            The default block number is 0, the block number -1 equivalents to the latest block.
+          default: 0
         toBlock:
-          type: string
+          type: integer
           description: |
             The block number/height (less than or equal to) upto which to get events;|
-            Pre-defined block numbers as 'earliest', 'latest' can also be used.
-          default: "latest"
+            The default block number is -1, it equivalents to the latest block.
+          default: -1
         from:
           type: integer
           description: First matching entry index, inclusive. The maximum limit is 200.
           example: 100
-          default: 200
+          default: 0
         to:
           type: integer
           description: Last matching entry index, inclusive.
           example: 10500
+          default: -1
         order:
           type: string
           description: the sorting direction, ASC/DESC
@@ -1799,20 +1800,20 @@ components:
             events:
               type: array
               items:
-                $ref: '#/components/schemas/SmcContractEvent'
+                $ref: '#/components/schemas/ContractEventDetails'
 
-    SmcContractEvent:
+    ContractEventDetails:
       type: object
       properties:
         type:
           type: string
-          description: the EVENT string
+          description: the EVENT constatnt string
           example: EVENT
         contract:
           type: string
           description: the contract address as hex-string
           example: 0x7306555ca0dd2890194d37960152eef5365f24
-        event:
+        eventId:
           type: string
           description: the event id
           example: 0x4d37960152eef5365f2473564231ee32ab3f01
@@ -1842,12 +1843,10 @@ components:
         height:
           type: integer
           description: the block height
-        data:
+        state:
           type: string
           description: the event state as stringified json object
-        parsedParams:
-          type: string
-          description: the parsed parameters as a strigifield json object
+
 
     ContractListResponse:
       allOf:

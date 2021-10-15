@@ -6,7 +6,6 @@ package com.apollocurrency.aplwallet.apl.core.service.state.smc.event;
 
 import com.apollocurrency.aplwallet.apl.core.service.state.smc.txlog.EventLogRecord;
 import com.apollocurrency.aplwallet.apl.crypto.AplIdGenerator;
-import com.apollocurrency.aplwallet.apl.smc.model.AplAddress;
 import com.apollocurrency.aplwallet.apl.smc.model.AplContractEvent;
 import com.apollocurrency.smc.blockchain.crypt.HashSumProvider;
 import com.apollocurrency.smc.contract.vm.event.SmcContractEventManager;
@@ -36,8 +35,6 @@ public class AplContractEventManager extends SmcContractEventManager {
         var smcEvent = AplContractEvent.builder()
             .event(event)
             .id(eventId)
-            .contractId(new AplAddress(getContract()).getLongId())
-            .transactionId(new AplAddress(getTransaction()).getLongId())
             .build();
 
         var rec = EventLogRecord.builder()

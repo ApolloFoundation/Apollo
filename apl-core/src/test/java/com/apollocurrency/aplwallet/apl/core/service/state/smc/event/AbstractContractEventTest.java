@@ -64,8 +64,6 @@ class AbstractContractEventTest {
         var aplEvent = AplContractEvent.builder()
             .event(event)
             .id(id)
-            .contractId(new AplAddress(event.getContract()).getLongId())
-            .transactionId(new AplAddress(event.getTransaction()).getLongId())
             .build();
 
         return aplEvent;

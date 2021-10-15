@@ -14,7 +14,6 @@ import com.apollocurrency.aplwallet.apl.smc.ws.dto.SmcEventResponse;
 import com.apollocurrency.aplwallet.apl.smc.ws.dto.SmcEventSubscriptionRequest;
 import com.apollocurrency.aplwallet.apl.smc.ws.subscription.SubscriptionManager;
 import com.apollocurrency.smc.contract.vm.event.EventArguments;
-import com.apollocurrency.smc.contract.vm.event.NamedParameters;
 import com.apollocurrency.smc.data.jsonmapper.JsonMapper;
 import com.apollocurrency.smc.data.jsonmapper.event.EventJsonMapper;
 import lombok.Getter;
@@ -120,8 +119,7 @@ public class SmcEventServer implements SmcEventSocketListener {
     public void onSmcEventEmitted(@ObservesAsync @SmcEvent(SmcEventType.EMIT_EVENT) AplContractEvent event) {
         log.debug("Catch async cdi event={}", event);
         var args = jsonMapper.deserializer().deserialize(event.getState(), EventArguments.class);
-        var params = new NamedParameters(event.getParamNames(), args);
-        subscriptionManager.fire(event, params);
+        subscriptionManager.fire(event, args);
     }
 
     private void sendMockEvent(SmcEventSocket socket, SmcEventSubscriptionRequest request) {

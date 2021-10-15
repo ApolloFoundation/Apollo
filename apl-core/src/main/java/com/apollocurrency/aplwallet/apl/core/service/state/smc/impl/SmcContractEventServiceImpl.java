@@ -4,7 +4,7 @@
 
 package com.apollocurrency.aplwallet.apl.core.service.state.smc.impl;
 
-import com.apollocurrency.aplwallet.api.v2.model.SmcContractEvent;
+import com.apollocurrency.aplwallet.api.v2.model.ContractEventDetails;
 import com.apollocurrency.aplwallet.apl.core.converter.db.smc.ContractEventLogModelToLogEntryConverter;
 import com.apollocurrency.aplwallet.apl.core.converter.db.smc.ContractEventModelToEntityConverter;
 import com.apollocurrency.aplwallet.apl.core.dao.state.smc.SmcContractEventLogTable;
@@ -16,7 +16,10 @@ import com.apollocurrency.aplwallet.apl.smc.model.AplContractEvent;
 import com.apollocurrency.aplwallet.apl.smc.service.SmcContractEventService;
 import com.apollocurrency.aplwallet.apl.util.cdi.Transactional;
 import com.apollocurrency.smc.blockchain.crypt.HashSumProvider;
+import com.apollocurrency.smc.contract.vm.event.EventArguments;
 import com.apollocurrency.smc.data.expr.Term;
+import com.apollocurrency.smc.data.jsonmapper.JsonMapper;
+import com.apollocurrency.smc.data.jsonmapper.event.EventJsonMapper;
 import com.apollocurrency.smc.data.type.Address;
 import lombok.extern.slf4j.Slf4j;
 
@@ -24,6 +27,7 @@ import javax.enterprise.event.Event;
 import javax.inject.Inject;
 import javax.inject.Singleton;
 import java.util.List;
+import java.util.stream.Collectors;
 
 import static com.apollocurrency.aplwallet.apl.smc.events.SmcEventBinding.literal;
 import static com.apollocurrency.smc.util.HexUtils.toHex;
@@ -43,6 +47,7 @@ public class SmcContractEventServiceImpl implements SmcContractEventService {
     private final HashSumProvider hashSumProvider;
     private final Event<AplContractEvent> cdiContractEvent;
     private final SmcContractService smcContractService;
+    private final JsonMapper jsonMapper;
 
     @Inject
     public SmcContractEventServiceImpl(Blockchain blockchain, SmcContractEventTable contractEventTable,
@@ -60,6 +65,7 @@ public class SmcContractEventServiceImpl implements SmcContractEventService {
         this.hashSumProvider = hashSumProvider;
         this.cdiContractEvent = cdiContractEvent;
         this.smcContractService = smcContractService;
+        this.jsonMapper = new EventJsonMapper();
     }
 
     @Override
@@ -98,10 +104,25 @@ public class SmcContractEventServiceImpl implements SmcContractEventService {
     }
 
     @Override
-    public List<SmcContractEvent> getEventsByFilter(Long contract, String eventName, Term filter, int fromBlock, int toBlock, int from, int to, String order) {
-        var result = contractEventLogTable.getContractsByFilter(contract, eventName, fromBlock, toBlock, from, to, order);
+    public List<ContractEventDetails> getEventsByFilter(Long contract, String eventName, Term filter, int fromBlock, int toBlock, int from, int to, String order) {
+        var height = blockchain.getHeight();
+        if (fromBlock < 0) {
+            fromBlock = height;
+        }
+        if (toBlock < 0) {
+            toBlock = height;
+        }
+        log.trace("getEventsByFilter: height={} contract={} eventName={} fromBlock={} toBlock={} from={} to={} order={}"
+            , height, contract, eventName, fromBlock, toBlock, from, to, order);
+        var result = contractEventLogTable.getEventsByFilter(contract, eventName, fromBlock, toBlock, from, to, order);
+        log.trace("getEventsByFilter: resultSet.size={}", result.size());
         //filter result set
-
-        return null;
+        var deserializer = jsonMapper.deserializer();
+        var rc = result.stream().filter(event -> {
+            var args = deserializer.deserialize(event.getState(), EventArguments.class);
+            return filter.test(args.getMap());
+        }).collect(Collectors.toList());
+        log.trace("getEventsByFilter: apply filter={} result.size={}", filter, rc.size());
+        return rc;
     }
 }

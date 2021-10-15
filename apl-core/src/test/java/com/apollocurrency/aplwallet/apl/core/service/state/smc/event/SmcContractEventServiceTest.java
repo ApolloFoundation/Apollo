@@ -97,4 +97,9 @@ class SmcContractEventServiceTest extends AbstractContractEventTest {
         verify(mockEvent).fireAsync(event);
 
     }
+
+    @Test
+    void getEventsByFilter() {
+
+    }
 }

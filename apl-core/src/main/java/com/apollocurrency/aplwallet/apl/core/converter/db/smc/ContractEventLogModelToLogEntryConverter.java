@@ -1,6 +1,7 @@
 package com.apollocurrency.aplwallet.apl.core.converter.db.smc;
 
 import com.apollocurrency.aplwallet.apl.core.entity.state.smc.SmcContractEventLogEntry;
+import com.apollocurrency.aplwallet.apl.smc.model.AplAddress;
 import com.apollocurrency.aplwallet.apl.smc.model.AplContractEvent;
 import com.apollocurrency.aplwallet.apl.util.api.converter.Converter;
 
@@ -13,7 +14,7 @@ public class ContractEventLogModelToLogEntryConverter implements Converter<AplCo
         return SmcContractEventLogEntry.builder()
             .eventId(model.getId())
             .signature(model.getSignature())
-            .transactionId(model.getTransactionId())
+            .transactionId(new AplAddress(model.getTransaction()).getLongId())
             .state(model.getState())
             .build();
     }

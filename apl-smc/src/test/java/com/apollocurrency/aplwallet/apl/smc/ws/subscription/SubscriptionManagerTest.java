@@ -8,7 +8,7 @@ import com.apollocurrency.aplwallet.apl.smc.model.AplAddress;
 import com.apollocurrency.aplwallet.apl.smc.ws.SmcEventSocket;
 import com.apollocurrency.aplwallet.apl.smc.ws.dto.SmcEventSubscriptionRequest;
 import com.apollocurrency.aplwallet.apl.util.Convert2;
-import com.apollocurrency.smc.contract.vm.event.NamedParameters;
+import com.apollocurrency.smc.contract.vm.event.EventArguments;
 import com.apollocurrency.smc.contract.vm.event.SmcContractEvent;
 import com.apollocurrency.smc.data.expr.FalseTerm;
 import com.apollocurrency.smc.data.expr.TrueTerm;
@@ -155,7 +155,7 @@ class SubscriptionManagerTest {
                 new RegisteredSocketContainer.SubscriptionSocket(socket, subscription)
                 , new RegisteredSocketContainer.SubscriptionSocket(socket2, subscription2)));
         //
-        var params = mock(NamedParameters.class);
+        var params = mock(EventArguments.class);
         when(params.getMap()).thenReturn(new HashMap<>());
         //catch event
         var event = SmcContractEvent.builder()

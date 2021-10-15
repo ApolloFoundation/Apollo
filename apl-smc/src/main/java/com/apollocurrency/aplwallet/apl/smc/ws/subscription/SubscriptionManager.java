@@ -9,7 +9,7 @@ import com.apollocurrency.aplwallet.apl.smc.ws.converter.RequestToSubscriptionCo
 import com.apollocurrency.aplwallet.apl.smc.ws.dto.SmcEventMessage;
 import com.apollocurrency.aplwallet.apl.smc.ws.dto.SmcEventSubscriptionRequest;
 import com.apollocurrency.aplwallet.apl.util.api.converter.Converter;
-import com.apollocurrency.smc.contract.vm.event.NamedParameters;
+import com.apollocurrency.smc.contract.vm.event.EventArguments;
 import com.apollocurrency.smc.data.type.Address;
 import com.apollocurrency.smc.data.type.ContractEvent;
 import lombok.extern.slf4j.Slf4j;
@@ -101,7 +101,7 @@ public class SubscriptionManager {
      *
      * @param contractEvent the fired contract event
      */
-    public void fire(ContractEvent contractEvent, NamedParameters params) {
+    public void fire(ContractEvent contractEvent, EventArguments params) {
         var signature = toHex(contractEvent.getSignature());
         if (log.isDebugEnabled()) {
             log.debug("Fired event, contract={} signature={} params={}", contractEvent.getContract().getHex(), signature, params);
@@ -123,7 +123,7 @@ public class SubscriptionManager {
         }
     }
 
-    private static boolean checkSubscription(Subscription subscription, ContractEvent contractEvent, NamedParameters params) {
+    private static boolean checkSubscription(Subscription subscription, ContractEvent contractEvent, EventArguments params) {
         return subscription.getFromBlock() <= contractEvent.getHeight()
             && subscription.getFilter().test(params.getMap());
     }

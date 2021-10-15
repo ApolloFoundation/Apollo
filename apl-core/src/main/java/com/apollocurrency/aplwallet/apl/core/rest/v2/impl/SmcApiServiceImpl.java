@@ -612,8 +612,14 @@ public class SmcApiServiceImpl implements SmcApiService {
     public Response getSmcEvents(String address, ContractEventsRequest body, SecurityContext securityContext) throws NotFoundException {
         ResponseBuilderV2 builder = ResponseBuilderV2.startTiming();
         final AplAddress contract = AplAddress.valueOf(address);
-        if (contractService.isContractExist(contract)) {
+        if (!contractService.isContractExist(contract)) {
             return ResponseBuilderV2.apiError(ApiErrors.CONTRACT_NOT_FOUND, address).build();
+        }
+        String eventName;
+        if (body.getEvent() == null || "allEvents".equals(body.getEvent())) {
+            eventName = null;
+        } else {
+            eventName = body.getEvent();
         }
         var filterStr = body.getFilter();
         Term filter;
@@ -628,17 +634,35 @@ public class SmcApiServiceImpl implements SmcApiService {
         }
         int fromBlock = 0;
         int toBlock = -1;
-        if (!Strings.isNullOrEmpty(body.getFromBlock())) {
-            fromBlock = Integer.parseInt(body.getFromBlock());
+        if (body.getFromBlock() != null) {
+            fromBlock = body.getFromBlock();
         }
-        if (!Strings.isNullOrEmpty(body.getToBlock())) {
-            toBlock = Integer.parseInt(body.getToBlock());
+        if (body.getToBlock() != null) {
+            toBlock = body.getToBlock();
         }
+        int from = 0;
+        int to = -1;
+        String order;
+        if (body.getFrom() != null) {
+            from = body.getFrom();
+        }
+        if (body.getTo() != null) {
+            to = body.getTo();
+        }
+        if (!Strings.isNullOrEmpty(body.getOrder())) {
+            order = body.getOrder();
+            if (!"ASC".equals(order) && !"DESC".equals(order)) {
+                order = "ASC";
+            }
+        } else
+            order = "ASC";
+
         ContractEventsResponse response = new ContractEventsResponse();
-        var rc = eventService.getEventsByFilter(contract.getLongId(), body.getEvent(),
+        var rc = eventService.getEventsByFilter(contract.getLongId(), eventName,
             filter,
             fromBlock, toBlock,
-            body.getFrom(), body.getTo(), body.getOrder());
+            from, to, order
+        );
 
         response.setEvents(rc);
 

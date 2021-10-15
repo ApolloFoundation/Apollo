@@ -20,8 +20,6 @@ import lombok.experimental.Delegate;
 @EqualsAndHashCode
 public class AplContractEvent implements ContractEvent {
     private long id;
-    private long contractId;
-    private long transactionId;
 
     @Delegate
     private ContractEvent event;
