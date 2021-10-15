@@ -16,8 +16,8 @@ import java.util.Map;
 @Slf4j
 public class CachedTable<T extends DerivedEntity> extends DbTableWrapper<T> {
 
-    private final Cache<DbKey, T> cache;
-    private final Object lock = new Object();
+    protected final Cache<DbKey, T> cache;
+    protected final Object lock = new Object();
 
     public CachedTable(Cache<DbKey, T> cache, EntityDbTableInterface<T> table) {
         super(table);
@@ -88,11 +88,11 @@ public class CachedTable<T extends DerivedEntity> extends DbTableWrapper<T> {
         }
     }
 
-    private String tableName() {
+    protected String tableName() {
         return table.getName().toUpperCase();
     }
 
-    private String tableLogHeader() {
+    protected String tableLogHeader() {
         return "--" + tableName() + " " + "CACHE--";
     }
 
