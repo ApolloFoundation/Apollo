@@ -28,12 +28,14 @@ import org.jboss.weld.junit5.WeldInitiator;
 import org.jboss.weld.junit5.WeldSetup;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.RegisterExtension;
 
 import javax.inject.Inject;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNotEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.Mockito.mock;
@@ -42,6 +44,7 @@ import static org.mockito.Mockito.mock;
  * @author andrew.zinchenko@gmail.com
  */
 @Slf4j
+@Tag("slow")
 @EnableWeld
 class SmcContractStateTableTest extends DbContainerBaseTest {
 
@@ -99,7 +102,7 @@ class SmcContractStateTableTest extends DbContainerBaseTest {
 
         SmcContractStateEntity actual = table.get(SmcContractStateTable.KEY_FACTORY.newKey(contractAddress));
         assertNotNull(actual);
-        assertTrue(actual.getDbId() != 0);
+        assertNotEquals(0, actual.getDbId());
         assertEquals(contractAddress, actual.getAddress());
     }
 

@@ -12,21 +12,20 @@ import com.apollocurrency.aplwallet.apl.core.entity.state.account.LedgerEvent;
 import com.apollocurrency.aplwallet.apl.core.exception.AplAcceptableTransactionValidationException;
 import com.apollocurrency.aplwallet.apl.core.exception.AplUnacceptableTransactionValidationException;
 import com.apollocurrency.aplwallet.apl.core.model.Transaction;
-import com.apollocurrency.aplwallet.apl.core.model.smc.AplAddress;
 import com.apollocurrency.aplwallet.apl.core.service.state.account.AccountService;
 import com.apollocurrency.aplwallet.apl.core.service.state.smc.SmcContractService;
-import com.apollocurrency.aplwallet.apl.core.service.state.smc.SmcContractTxProcessor;
 import com.apollocurrency.aplwallet.apl.core.service.state.smc.impl.SmcBlockchainIntegratorFactory;
-import com.apollocurrency.aplwallet.apl.core.service.state.smc.internal.CallMethodTxProcessor;
-import com.apollocurrency.aplwallet.apl.core.service.state.smc.internal.CallMethodTxValidator;
-import com.apollocurrency.aplwallet.apl.core.service.state.smc.internal.SyntaxValidator;
 import com.apollocurrency.aplwallet.apl.core.transaction.Fee;
 import com.apollocurrency.aplwallet.apl.core.transaction.TransactionTypes;
 import com.apollocurrency.aplwallet.apl.core.transaction.messages.AbstractAttachment;
 import com.apollocurrency.aplwallet.apl.core.transaction.messages.AbstractSmcAttachment;
 import com.apollocurrency.aplwallet.apl.core.transaction.messages.SmcCallMethodAttachment;
+import com.apollocurrency.aplwallet.apl.smc.model.AplAddress;
+import com.apollocurrency.aplwallet.apl.smc.service.SmcContractTxProcessor;
+import com.apollocurrency.aplwallet.apl.smc.service.tx.CallMethodTxProcessor;
+import com.apollocurrency.aplwallet.apl.smc.service.tx.CallMethodTxValidator;
+import com.apollocurrency.aplwallet.apl.smc.service.tx.SyntaxValidator;
 import com.apollocurrency.aplwallet.apl.util.rlp.RlpReader;
-import com.apollocurrency.smc.blockchain.BlockchainIntegrator;
 import com.apollocurrency.smc.contract.AddressNotFoundException;
 import com.apollocurrency.smc.contract.SmartContract;
 import com.apollocurrency.smc.contract.SmartMethod;
@@ -113,12 +112,12 @@ public class SmcCallMethodTransactionType extends AbstractSmcTransactionType {
             .args(attachment.getMethodParams())
             .value(BigInteger.valueOf(transaction.getAmountATM()))
             .build();
+        var context = SmcConfig.asContext(integratorFactory.createMockProcessor(transaction.getId()));
         //syntactical and semantic validation
         SmcContractTxProcessor processor = new CallMethodTxValidator(
             smartContract,
             smartMethod,
-            integratorFactory.createMockProcessor(transaction.getId()),
-            smcConfig
+            context
         );
         var executionLog = new ExecutionLog();
         processor.process(executionLog);
@@ -148,12 +147,10 @@ public class SmcCallMethodTransactionType extends AbstractSmcTransactionType {
             throw new AplUnacceptableTransactionValidationException("Not enough fuel to execute this transaction, expected="
                 + calculatedFuel + " but actual=" + actualFuel, transaction);
         }
+
+        var context = SmcConfig.asContext(integratorFactory.createMockProcessor(transaction.getId()));
         //syntactical validation
-        SmcContractTxProcessor processor = new SyntaxValidator(
-            smartMethod.getMethodWithParams(),
-            integratorFactory.createMockProcessor(transaction.getId()),
-            smcConfig
-        );
+        SmcContractTxProcessor processor = new SyntaxValidator(smartMethod.getMethodWithParams(), context);
         var executionLog = new ExecutionLog();
         processor.process(executionLog);
         if (executionLog.hasError()) {
@@ -179,10 +176,13 @@ public class SmcCallMethodTransactionType extends AbstractSmcTransactionType {
             .args(attachment.getMethodParams())
             .value(BigInteger.valueOf(transaction.getAmountATM()))
             .build();
-
-        BlockchainIntegrator integrator = integratorFactory.createProcessor(transaction, smartContract.getAddress(), attachment, senderAccount, recipientAccount, getLedgerEvent());
         log.debug("Before processing Address={} Fuel={}", smartContract.getAddress(), smartContract.getFuel());
-        SmcContractTxProcessor processor = new CallMethodTxProcessor(smartContract, smartMethod, integrator, smcConfig);
+        var context = SmcConfig.asContext(
+            integratorFactory.createProcessor(transaction,
+                smartContract.getAddress(), attachment, senderAccount, recipientAccount, getLedgerEvent())
+        );
+
+        SmcContractTxProcessor processor = new CallMethodTxProcessor(smartContract, smartMethod, context);
 
         executeContract(transaction, senderAccount, smartContract, processor);
 

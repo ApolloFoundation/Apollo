@@ -4,7 +4,7 @@
 
 package com.apollocurrency.aplwallet.apl.core.service.state.smc.txlog;
 
-import com.apollocurrency.aplwallet.apl.core.model.smc.AplContractEvent;
+import com.apollocurrency.aplwallet.apl.smc.model.AplContractEvent;
 import com.apollocurrency.smc.txlog.Record;
 import lombok.Builder;
 import lombok.EqualsAndHashCode;

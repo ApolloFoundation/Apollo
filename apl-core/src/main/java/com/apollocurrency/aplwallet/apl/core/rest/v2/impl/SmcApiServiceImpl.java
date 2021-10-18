@@ -11,6 +11,8 @@ import com.apollocurrency.aplwallet.api.v2.model.AsrSpecResponse;
 import com.apollocurrency.aplwallet.api.v2.model.CallContractMethodReq;
 import com.apollocurrency.aplwallet.api.v2.model.CallViewMethodReq;
 import com.apollocurrency.aplwallet.api.v2.model.ContractDetails;
+import com.apollocurrency.aplwallet.api.v2.model.ContractEventsRequest;
+import com.apollocurrency.aplwallet.api.v2.model.ContractEventsResponse;
 import com.apollocurrency.aplwallet.api.v2.model.ContractListResponse;
 import com.apollocurrency.aplwallet.api.v2.model.ContractMethod;
 import com.apollocurrency.aplwallet.api.v2.model.ContractSpecResponse;
@@ -27,7 +29,6 @@ import com.apollocurrency.aplwallet.apl.core.config.SmcConfig;
 import com.apollocurrency.aplwallet.apl.core.entity.state.account.Account;
 import com.apollocurrency.aplwallet.apl.core.model.CreateTransactionRequest;
 import com.apollocurrency.aplwallet.apl.core.model.Transaction;
-import com.apollocurrency.aplwallet.apl.core.model.smc.AplAddress;
 import com.apollocurrency.aplwallet.apl.core.rest.TransactionCreator;
 import com.apollocurrency.aplwallet.apl.core.rest.v2.ResponseBuilderV2;
 import com.apollocurrency.aplwallet.apl.core.rest.v2.converter.CallMethodResultMapper;
@@ -35,25 +36,26 @@ import com.apollocurrency.aplwallet.apl.core.rest.v2.converter.MethodSpecMapper;
 import com.apollocurrency.aplwallet.apl.core.rest.v2.converter.SmartMethodMapper;
 import com.apollocurrency.aplwallet.apl.core.service.state.account.AccountService;
 import com.apollocurrency.aplwallet.apl.core.service.state.smc.SmcContractService;
-import com.apollocurrency.aplwallet.apl.core.service.state.smc.SmcContractTxBatchProcessor;
-import com.apollocurrency.aplwallet.apl.core.service.state.smc.SmcContractTxProcessor;
 import com.apollocurrency.aplwallet.apl.core.service.state.smc.impl.SmcBlockchainIntegratorFactory;
-import com.apollocurrency.aplwallet.apl.core.service.state.smc.internal.CallMethodTxValidator;
-import com.apollocurrency.aplwallet.apl.core.service.state.smc.internal.CallViewMethodTxProcessor;
-import com.apollocurrency.aplwallet.apl.core.service.state.smc.internal.PublishContractTxValidator;
 import com.apollocurrency.aplwallet.apl.core.signature.MultiSigCredential;
 import com.apollocurrency.aplwallet.apl.core.transaction.common.TxBContext;
 import com.apollocurrency.aplwallet.apl.core.transaction.messages.SmcCallMethodAttachment;
 import com.apollocurrency.aplwallet.apl.core.transaction.messages.SmcPublishContractAttachment;
 import com.apollocurrency.aplwallet.apl.crypto.Convert;
 import com.apollocurrency.aplwallet.apl.crypto.Crypto;
+import com.apollocurrency.aplwallet.apl.smc.model.AplAddress;
+import com.apollocurrency.aplwallet.apl.smc.service.SmcContractEventService;
+import com.apollocurrency.aplwallet.apl.smc.service.SmcContractTxBatchProcessor;
+import com.apollocurrency.aplwallet.apl.smc.service.SmcContractTxProcessor;
+import com.apollocurrency.aplwallet.apl.smc.service.tx.CallMethodTxValidator;
+import com.apollocurrency.aplwallet.apl.smc.service.tx.CallViewMethodTxProcessor;
+import com.apollocurrency.aplwallet.apl.smc.service.tx.PublishContractTxValidator;
 import com.apollocurrency.aplwallet.apl.util.Convert2;
 import com.apollocurrency.aplwallet.apl.util.api.parameter.FirstLastIndexBeanParam;
 import com.apollocurrency.aplwallet.apl.util.cdi.config.Property;
 import com.apollocurrency.aplwallet.apl.util.exception.ApiErrors;
 import com.apollocurrency.aplwallet.apl.util.io.PayloadResult;
 import com.apollocurrency.aplwallet.apl.util.io.Result;
-import com.apollocurrency.smc.blockchain.BlockchainIntegrator;
 import com.apollocurrency.smc.contract.AddressNotFoundException;
 import com.apollocurrency.smc.contract.ContractStatus;
 import com.apollocurrency.smc.contract.SmartContract;
@@ -61,6 +63,9 @@ import com.apollocurrency.smc.contract.SmartMethod;
 import com.apollocurrency.smc.contract.fuel.ContractFuel;
 import com.apollocurrency.smc.contract.vm.ExecutionLog;
 import com.apollocurrency.smc.contract.vm.ResultValue;
+import com.apollocurrency.smc.data.expr.Term;
+import com.apollocurrency.smc.data.expr.TrueTerm;
+import com.apollocurrency.smc.data.expr.parser.TermParser;
 import com.apollocurrency.smc.data.type.Address;
 import com.apollocurrency.smc.polyglot.SimpleVersion;
 import com.apollocurrency.smc.polyglot.Version;
@@ -90,6 +95,7 @@ public class SmcApiServiceImpl implements SmcApiService {
 
     private final AccountService accountService;
     private final SmcContractService contractService;
+    private final SmcContractEventService eventService;
     private final TransactionCreator transactionCreator;
     private final TxBContext txBContext;
     private final SmcBlockchainIntegratorFactory integratorFactory;
@@ -104,6 +110,7 @@ public class SmcApiServiceImpl implements SmcApiService {
     public SmcApiServiceImpl(BlockchainConfig blockchainConfig,
                              AccountService accountService,
                              SmcContractService contractService,
+                             SmcContractEventService eventService,
                              TransactionCreator transactionCreator,
                              SmcBlockchainIntegratorFactory integratorFactory,
                              SmcConfig smcConfig,
@@ -113,6 +120,7 @@ public class SmcApiServiceImpl implements SmcApiService {
                              @Property(name = "apl.maxAPIRecords", defaultValue = "100") int maxAPIRecords) {
         this.accountService = accountService;
         this.contractService = contractService;
+        this.eventService = eventService;
         this.transactionCreator = transactionCreator;
         this.txBContext = TxBContext.newInstance(blockchainConfig.getChain());
         this.integratorFactory = integratorFactory;
@@ -231,10 +239,9 @@ public class SmcApiServiceImpl implements SmcApiService {
             return builder.build();
         }
         SmartContract smartContract = contractService.createNewContract(transaction);
-
+        var context = SmcConfig.asContext(integratorFactory.createMockProcessor(transaction.getId()));
         //syntactical and semantic validation
-        BlockchainIntegrator integrator = integratorFactory.createMockProcessor(transaction.getId());
-        SmcContractTxProcessor processor = new PublishContractTxValidator(smartContract, integrator, smcConfig);
+        SmcContractTxProcessor processor = new PublishContractTxValidator(smartContract, context);
 
         BigInteger calculatedFuel = processor.getExecutionEnv().getPrice().forContractPublishing().calc(smartContract);
         if (!smartContract.getFuel().tryToCharge(calculatedFuel)) {
@@ -450,19 +457,12 @@ public class SmcApiServiceImpl implements SmcApiService {
             contractAddress,
             new ContractFuel(contractAddress, BigInteger.ZERO, BigInteger.ONE)
         );
-        //smartContract.setSender(new AplAddress(transaction.getSenderId()));
-
         var methods = methodMapper.convert(members);
-        SmcContractTxBatchProcessor processor = new CallViewMethodTxProcessor(
-            smartContract,
-            methods,
-            integratorFactory.createReadonlyProcessor(contractAddress),
-            smcConfig
-        );
+        var context = SmcConfig.asContext(integratorFactory.createReadonlyProcessor(contractAddress));
 
-        var result = processor.batchProcess(executionLog);
+        SmcContractTxBatchProcessor processor = new CallViewMethodTxProcessor(smartContract, methods, context);
 
-        return result;
+        return processor.batchProcess(executionLog);
     }
 
     @Override
@@ -500,12 +500,13 @@ public class SmcApiServiceImpl implements SmcApiService {
             .args(attachment.getMethodParams())
             .value(BigInteger.valueOf(transaction.getAmountATM()))
             .build();
+        var context = SmcConfig.asContext(integratorFactory.createMockProcessor(transaction.getId()));
+
         //syntactical and semantic validation
         SmcContractTxProcessor processor = new CallMethodTxValidator(
             smartContract,
             smartMethod,
-            integratorFactory.createMockProcessor(transaction.getId()),
-            smcConfig
+            context
         );
 
         BigInteger calculatedFuel = processor.getExecutionEnv().getPrice().forMethodCalling(smartMethod.getValue()).calc(smartMethod);
@@ -603,6 +604,67 @@ public class SmcApiServiceImpl implements SmcApiService {
 
         List<ContractDetails> contracts = contractService.loadContractsByOwner(address, 0, Integer.MAX_VALUE);
         response.setContracts(contracts);
+
+        return builder.bind(response).build();
+    }
+
+    @Override
+    public Response getSmcEvents(String address, ContractEventsRequest body, SecurityContext securityContext) throws NotFoundException {
+        ResponseBuilderV2 builder = ResponseBuilderV2.startTiming();
+        final AplAddress contract = AplAddress.valueOf(address);
+        if (!contractService.isContractExist(contract)) {
+            return ResponseBuilderV2.apiError(ApiErrors.CONTRACT_NOT_FOUND, address).build();
+        }
+        String eventName;
+        if (body.getEvent() == null || "allEvents".equals(body.getEvent())) {
+            eventName = null;
+        } else {
+            eventName = body.getEvent();
+        }
+        var filterStr = body.getFilter();
+        Term filter;
+        if (Strings.isNullOrEmpty(filterStr)) {
+            filter = new TrueTerm();
+        } else {
+            try {
+                filter = TermParser.parse(filterStr);
+            } catch (Exception e) {
+                return ResponseBuilderV2.apiError(ApiErrors.CONTRACT_EVENT_FILTER_ERROR, e.getMessage()).build();
+            }
+        }
+        int fromBlock = 0;
+        int toBlock = -1;
+        if (body.getFromBlock() != null) {
+            fromBlock = body.getFromBlock();
+        }
+        if (body.getToBlock() != null) {
+            toBlock = body.getToBlock();
+        }
+        int from = 0;
+        int to = -1;
+        String order;
+        if (body.getFrom() != null) {
+            from = body.getFrom();
+        }
+        if (body.getTo() != null) {
+            to = body.getTo();
+        }
+        if (!Strings.isNullOrEmpty(body.getOrder())) {
+            order = body.getOrder();
+            if (!"ASC".equals(order) && !"DESC".equals(order)) {
+                order = "ASC";
+            }
+        } else
+            order = "ASC";
+
+        ContractEventsResponse response = new ContractEventsResponse();
+        var rc = eventService.getEventsByFilter(contract.getLongId(), eventName,
+            filter,
+            fromBlock, toBlock,
+            from, to, order
+        );
+
+        response.setEvents(rc);
 
         return builder.bind(response).build();
     }

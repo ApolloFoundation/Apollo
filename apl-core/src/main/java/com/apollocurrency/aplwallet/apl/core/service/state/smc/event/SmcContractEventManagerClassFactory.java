@@ -27,8 +27,8 @@ public class SmcContractEventManagerClassFactory {
         this.hashSumProvider = hashSumProvider;
     }
 
-    public ContractEventManagerFactory createEventManagerFactory(Address transaction, TxLog txLog) {
-        return contract -> new AplContractEventManager(contract, transaction, hashSumProvider, txLog);
+    public ContractEventManagerFactory createEventManagerFactory(Address transaction, int height, TxLog txLog) {
+        return contract -> new AplContractEventManager(contract, transaction, height, hashSumProvider, txLog);
     }
 
     public ContractEventManagerFactory createMockEventManagerFactory() {

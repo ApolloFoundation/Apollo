@@ -6,10 +6,10 @@ package com.apollocurrency.aplwallet.apl.core.service.state.smc.impl;
 
 import com.apollocurrency.aplwallet.apl.core.dao.state.smc.SmcContractMappingTable;
 import com.apollocurrency.aplwallet.apl.core.entity.state.smc.SmcContractMappingEntity;
-import com.apollocurrency.aplwallet.apl.core.model.smc.AplAddress;
 import com.apollocurrency.aplwallet.apl.core.service.blockchain.Blockchain;
-import com.apollocurrency.aplwallet.apl.core.service.state.smc.SmcContractStorageService;
 import com.apollocurrency.aplwallet.apl.crypto.Convert;
+import com.apollocurrency.aplwallet.apl.smc.model.AplAddress;
+import com.apollocurrency.aplwallet.apl.smc.service.SmcContractStorageService;
 import com.apollocurrency.aplwallet.apl.util.Convert2;
 import com.apollocurrency.aplwallet.apl.util.db.DbClause;
 import com.apollocurrency.smc.data.type.Key;
@@ -57,7 +57,7 @@ class SmcContractStorageServiceImplTest {
         //GIVEN
         String json = "{}";
         String name = "mapping";
-        Key key = new AplAddress("0x0102030405");
+        Key key = AplAddress.valueOf("0x0102030405");
         SmcContractMappingEntity smcContractMappingEntity = SmcContractMappingEntity.builder()
             .address(contractAddress.getLongId())
             .key(key.key())
@@ -76,7 +76,7 @@ class SmcContractStorageServiceImplTest {
         //GIVEN
         String json = "{}";
         String name = "mapping";
-        Key key = new AplAddress("0x0102030405");
+        Key key = AplAddress.valueOf("0x0102030405");
         SmcContractMappingEntity smcContractMappingEntity = SmcContractMappingEntity.builder()
             .address(contractAddress.getLongId())
             .key(key.key())
@@ -96,7 +96,7 @@ class SmcContractStorageServiceImplTest {
         //GIVEN
         String json = "{}";
         String name = "mapping";
-        Key key = new AplAddress("0x0102030405");
+        Key key = AplAddress.valueOf("0x0102030405");
         SmcContractMappingEntity smcContractMappingEntity = SmcContractMappingEntity.builder()
             .address(contractAddress.getLongId())
             .key(key.key())
@@ -117,7 +117,7 @@ class SmcContractStorageServiceImplTest {
     @Test
     void deleteEntry_False() {
         //GIVEN
-        Key key = new AplAddress("0x0102030405");
+        Key key = AplAddress.valueOf("0x0102030405");
         String name = "mapping";
         when(smcContractMappingTable.get(SmcContractMappingTable.KEY_FACTORY.newKey(contractAddress.getLongId(), name, key.key())))
             .thenReturn(null);

@@ -9,16 +9,15 @@ import com.apollocurrency.aplwallet.apl.core.entity.state.account.Account;
 import com.apollocurrency.aplwallet.apl.core.entity.state.account.LedgerEvent;
 import com.apollocurrency.aplwallet.apl.core.model.Block;
 import com.apollocurrency.aplwallet.apl.core.model.Transaction;
-import com.apollocurrency.aplwallet.apl.core.model.smc.AplAddress;
 import com.apollocurrency.aplwallet.apl.core.rest.service.ServerInfoService;
 import com.apollocurrency.aplwallet.apl.core.service.blockchain.Blockchain;
 import com.apollocurrency.aplwallet.apl.core.service.state.account.AccountService;
+import com.apollocurrency.aplwallet.apl.core.service.state.smc.CachedAccountService;
 import com.apollocurrency.aplwallet.apl.core.service.state.smc.event.SmcContractEventManagerClassFactory;
-import com.apollocurrency.aplwallet.apl.core.service.state.smc.internal.CachedAccountService;
-import com.apollocurrency.aplwallet.apl.core.service.state.smc.internal.SmcCachedAccountService;
-import com.apollocurrency.aplwallet.apl.core.service.state.smc.storage.SmcMappingRepositoryClassFactory;
 import com.apollocurrency.aplwallet.apl.core.service.state.smc.txlog.TransferRecord;
 import com.apollocurrency.aplwallet.apl.core.transaction.messages.AbstractSmcAttachment;
+import com.apollocurrency.aplwallet.apl.smc.model.AplAddress;
+import com.apollocurrency.aplwallet.apl.smc.service.mapping.SmcMappingRepositoryClassFactory;
 import com.apollocurrency.aplwallet.apl.util.Convert2;
 import com.apollocurrency.aplwallet.apl.util.ThreadUtils;
 import com.apollocurrency.aplwallet.apl.util.api.converter.Converter;
@@ -223,7 +222,7 @@ public class SmcBlockchainIntegratorFactory {
             this.txLogProcessor = txLogProcessor;
             this.txLog = new ArrayTxLog(new AplAddress(originatorTransactionId), contract);
             this.cachedMappingRepositories = new HashSet<>();
-            this.eventManagerFactory = smcContractEventManagerClassFactory.createEventManagerFactory(currentTransaction, txLog);
+            this.eventManagerFactory = smcContractEventManagerClassFactory.createEventManagerFactory(currentTransaction, blockchain.getHeight(), txLog);
         }
 
         @Override
@@ -265,8 +264,8 @@ public class SmcBlockchainIntegratorFactory {
                     }
                 } else if (from.getLongId() == txRecipientAccount.getId()) {//case 2
                     log.debug("--send money ---2.2: ");
-                    //fromAddr - is a contract address
-                    //toAddr - is an arbitrary address
+                    //from - is a contract address
+                    //to - is an arbitrary address
                 } else {
                     throw new SendMsgException(contract, "Wrong sender address");
                 }
@@ -329,6 +328,7 @@ public class SmcBlockchainIntegratorFactory {
                 block.getCumulativeDifficulty(),
                 BigInteger.ZERO,//TODO: block fuel limit - is not implemented yet
                 block.getHeight(),
+
                 (int) (Convert2.fromEpochTime(block.getTimestamp()) / 1000)
             );
         }

@@ -25,18 +25,19 @@ public class SmcContractEventEntity extends DerivedEntity {
     private long id;
     private long contract; //contract address/id
     private long transactionId;
-
+    private String spec;
     private byte[] signature;//SHA256 hash(name+idxCount); 32 bytes
     private String name;
     private byte idxCount;//indexed fields count
     private boolean anonymous;//is anonymous event
 
     @Builder
-    public SmcContractEventEntity(Long dbId, Integer height, long id, long contract, long transactionId, byte[] signature, String name, int idxCount, boolean anonymous) {
+    public SmcContractEventEntity(Long dbId, Integer height, long id, long contract, long transactionId, String spec, byte[] signature, String name, int idxCount, boolean anonymous) {
         super(dbId, height);
         this.id = id;
         this.contract = contract;
         this.transactionId = transactionId;
+        this.spec = spec;
         this.signature = signature;
         this.name = name;
         this.idxCount = (byte) idxCount;
@@ -65,7 +66,7 @@ public class SmcContractEventEntity extends DerivedEntity {
             ", contract=" + contract +
             ", transactionId=" + transactionId +
             ", signature=" + toHex(signature) +
-            ", event=" + name + ':' + idxCount + ':' + anonymous +
+            ", event=" + spec + ':' + name + ':' + idxCount + ':' + anonymous +
             ", height" + getHeight() +
             "} ";
     }

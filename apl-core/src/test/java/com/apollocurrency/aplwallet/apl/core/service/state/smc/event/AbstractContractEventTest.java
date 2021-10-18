@@ -4,10 +4,10 @@
 
 package com.apollocurrency.aplwallet.apl.core.service.state.smc.event;
 
-import com.apollocurrency.aplwallet.apl.core.model.smc.AplAddress;
-import com.apollocurrency.aplwallet.apl.core.model.smc.AplContractEvent;
 import com.apollocurrency.aplwallet.apl.crypto.Convert;
 import com.apollocurrency.aplwallet.apl.crypto.Crypto;
+import com.apollocurrency.aplwallet.apl.smc.model.AplAddress;
+import com.apollocurrency.aplwallet.apl.smc.model.AplContractEvent;
 import com.apollocurrency.aplwallet.apl.util.Convert2;
 import com.apollocurrency.smc.blockchain.crypt.DigestWrapper;
 import com.apollocurrency.smc.blockchain.crypt.HashSumProvider;
@@ -33,48 +33,49 @@ class AbstractContractEventTest {
 
     @Mock
     HashSumProvider hashSumProvider;
-
+    int height = 10000;
     AplAddress contractAddress = new AplAddress(Convert.parseAccountId("APL-632K-TWX3-2ALQ-973CU"));
     AplAddress transactionAddress = new AplAddress(123L);
 
     final ContractEventType eventType = ContractEventType.builder()
-        .name("Transfer")
+        .spec("Transfer:from,to,amount")
         .indexedFieldsCount(2)
         .anonymous(false)
         .build();
-    final String signatureStr = "Transfer:2:false";
+    final String signatureStr = "Transfer:from,to,amount:2:false";
     final byte[] signature = {1, 2, 3, 4, 5, 6, 7, 8};
 
     AplContractEventManager manager;
 
-    SmcContractEvent createEvent() {
+    SmcContractEvent createEvent(String state) {
         return SmcContractEvent.builder()
             .contract(contractAddress)
             .transaction(transactionAddress)
-            .name(eventType.getName())
-            .indexedFieldsCount(eventType.getIndexedFieldsCount())
-            .anonymous(eventType.isAnonymous())
+            .height(height)
+            .eventType(eventType)
             .txIdx(0)
             .signature(signature)
-            .state("[1,2,3]")
+            .state(state != null ? state : "{}")
             .build();
     }
 
     AplContractEvent createAplEvent(long id) {
-        var event = createEvent();
+        return createAplEvent(id, null);
+    }
+
+    AplContractEvent createAplEvent(long id, String state) {
+        var event = createEvent(state);
         var aplEvent = AplContractEvent.builder()
             .event(event)
             .id(id)
-            .contractId(new AplAddress(event.getContract()).getLongId())
-            .transactionId(new AplAddress(event.getTransaction()).getLongId())
             .build();
 
         return aplEvent;
     }
 
-    AplContractEvent mockAplEvent() {
+    AplContractEvent mockAplEvent(String state) {
         var id = 987654321L;
-        var aplEvent = createAplEvent(id);
+        var aplEvent = createAplEvent(id, state);
 
         when(hashSumProvider.sha256(signatureStr.getBytes(StandardCharsets.UTF_8))).thenReturn(signature);
         when(hashSumProvider.sha256()).thenReturn(new DigestWrapper(Crypto.sha256()));

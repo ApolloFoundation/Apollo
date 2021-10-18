@@ -5,6 +5,7 @@
 package com.apollocurrency.aplwallet.apl.core.model.smc;
 
 import com.apollocurrency.aplwallet.apl.crypto.Convert;
+import com.apollocurrency.aplwallet.apl.smc.model.AplAddress;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.ValueSource;
 

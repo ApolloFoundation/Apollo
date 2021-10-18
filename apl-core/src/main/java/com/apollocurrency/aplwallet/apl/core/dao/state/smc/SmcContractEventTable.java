@@ -61,13 +61,14 @@ public class SmcContractEventTable extends EntityDbTable<SmcContractEventEntity>
     @Override
     public void save(Connection con, SmcContractEventEntity eventEntity) throws SQLException {
         try (final PreparedStatement stmt = con.prepareStatement("INSERT INTO " + TABLE_NAME +
-            " (id, transaction_id, contract, signature, name, idx_count, is_anonymous, height) " +
-            "VALUES(?, ?, ?, ?, ?, ?, ?, ?)", Statement.RETURN_GENERATED_KEYS)) {
+            " (id, transaction_id, contract, signature, spec, name, idx_count, is_anonymous, height) " +
+            "VALUES(?, ?, ?, ?, ?, ?, ?, ?, ?)", Statement.RETURN_GENERATED_KEYS)) {
             int i = 0;
             stmt.setLong(++i, eventEntity.getId());
             stmt.setLong(++i, eventEntity.getTransactionId());
             stmt.setLong(++i, eventEntity.getContract());
             stmt.setBytes(++i, eventEntity.getSignature());
+            stmt.setString(++i, eventEntity.getSpec());
             stmt.setString(++i, eventEntity.getName());
             stmt.setByte(++i, eventEntity.getIdxCount());
             stmt.setBoolean(++i, eventEntity.isAnonymous());

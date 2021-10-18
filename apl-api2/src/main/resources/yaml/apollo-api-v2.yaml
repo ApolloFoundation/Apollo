@@ -584,7 +584,6 @@ paths:
         400:
           $ref: '#/components/responses/BadRequest'
         404:
-          description: Transaction by given id was not found
           $ref: '#/components/responses/NotFound'
         500:
           $ref: '#/components/responses/ServerError'
@@ -888,6 +887,38 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/ContractListResponse'
+        400:
+          $ref: '#/components/responses/BadRequest'
+        500:
+          $ref: '#/components/responses/ServerError'
+
+  /@@smc/{address}/event:
+    post:
+      tags:
+        - smc
+      summary: Get the contract events fired in the past.
+      description: Returns the contract events fired in the past.
+      operationId: getSmcEvents
+      parameters:
+        - name: address
+          in: path
+          description: The contract address
+          required: true
+          schema:
+            type: string
+            example: 'APL-X5JH-TJKJ-DVGC-5T2V8'
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ContractEventsRequest'
+      responses:
+        200:
+          description: successful operation
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ContractEventsResponse'
         400:
           $ref: '#/components/responses/BadRequest'
         500:
@@ -1722,6 +1753,100 @@ components:
       allOf:
         - $ref: '#/components/schemas/BaseResponse'
         - $ref: '#/components/schemas/ContractDetails'
+
+    ContractEventsRequest:
+      type: object
+      properties:
+        event:
+          type: string
+          description: the event name or predefined value 'allEvents' for getting all possible events
+          example: Transfer
+        fromBlock:
+          type: integer
+          description: |
+            The block number/height (greater than or equal to) from which to get events;|
+            The default block number is 0, the block number -1 equivalents to the latest block.
+          default: 0
+        toBlock:
+          type: integer
+          description: |
+            The block number/height (less than or equal to) upto which to get events;|
+            The default block number is -1, it equivalents to the latest block.
+          default: -1
+        from:
+          type: integer
+          description: First matching entry index, inclusive. The maximum limit is 200.
+          example: 100
+          default: 0
+        to:
+          type: integer
+          description: Last matching entry index, inclusive.
+          example: 10500
+          default: -1
+        order:
+          type: string
+          description: the sorting direction, ASC/DESC
+          default: ASC
+        filter:
+          type: string
+          description: the complex expression to filter events
+          example: "{ from : {$eq: '0x123123123123'} }"
+
+    ContractEventsResponse:
+      allOf:
+        - $ref: '#/components/schemas/BaseResponse'
+        - type: object
+          properties:
+            events:
+              type: array
+              items:
+                $ref: '#/components/schemas/ContractEventDetails'
+
+    ContractEventDetails:
+      type: object
+      properties:
+        type:
+          type: string
+          description: the EVENT constatnt string
+          example: EVENT
+        contract:
+          type: string
+          description: the contract address as hex-string
+          example: 0x7306555ca0dd2890194d37960152eef5365f24
+        eventId:
+          type: string
+          description: the event id
+          example: 0x4d37960152eef5365f2473564231ee32ab3f01
+        name:
+          type: string
+          description: the event name
+          example: Transfer
+        spec:
+          type: string
+          description: the event specification
+          example: "Transfer:from,to,amount:2,false"
+        signature:
+          type: string
+          description: the event signature as a hex-string
+          example: 0xfd43ade1c09fade1c0d57a7af66ab4ead7c2c2eb7b11a91ffdd57a7af66ab4ead7
+        transactionIndex:
+          type: integer
+          description: the sequential transaction index within the block
+          example: 1
+        transaction:
+          type: string
+          description: the transaction address as a hex-string
+          example: 0x01047857c04a00539dc2e8
+        block:
+          type: string
+          description: the block address
+        height:
+          type: integer
+          description: the block height
+        state:
+          type: string
+          description: the event state as stringified json object
+
 
     ContractListResponse:
       allOf:

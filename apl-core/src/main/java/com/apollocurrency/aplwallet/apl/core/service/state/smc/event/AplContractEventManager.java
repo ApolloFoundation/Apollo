@@ -4,10 +4,9 @@
 
 package com.apollocurrency.aplwallet.apl.core.service.state.smc.event;
 
-import com.apollocurrency.aplwallet.apl.core.model.smc.AplAddress;
-import com.apollocurrency.aplwallet.apl.core.model.smc.AplContractEvent;
 import com.apollocurrency.aplwallet.apl.core.service.state.smc.txlog.EventLogRecord;
 import com.apollocurrency.aplwallet.apl.crypto.AplIdGenerator;
+import com.apollocurrency.aplwallet.apl.smc.model.AplContractEvent;
 import com.apollocurrency.smc.blockchain.crypt.HashSumProvider;
 import com.apollocurrency.smc.contract.vm.event.SmcContractEventManager;
 import com.apollocurrency.smc.data.type.Address;
@@ -24,8 +23,8 @@ import java.math.BigInteger;
 @Slf4j
 public class AplContractEventManager extends SmcContractEventManager {
 
-    public AplContractEventManager(Address contract, Address transaction, HashSumProvider hashSumProvider, TxLog txLog) {
-        super(contract, transaction, hashSumProvider, txLog);
+    public AplContractEventManager(Address contract, Address transaction, int height, HashSumProvider hashSumProvider, TxLog txLog) {
+        super(contract, transaction, height, hashSumProvider, txLog);
     }
 
     @Override
@@ -36,8 +35,6 @@ public class AplContractEventManager extends SmcContractEventManager {
         var smcEvent = AplContractEvent.builder()
             .event(event)
             .id(eventId)
-            .contractId(new AplAddress(getContract()).getLongId())
-            .transactionId(new AplAddress(getTransaction()).getLongId())
             .build();
 
         var rec = EventLogRecord.builder()

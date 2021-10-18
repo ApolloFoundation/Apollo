@@ -24,12 +24,19 @@ import java.util.StringTokenizer;
 
 @Slf4j
 public class DbPopulator {
+    public static final String DEFAULT_DELIMITER = ";";
     private final String schemaScriptPath;
     private final String dataScriptPath;
+    private final String stringTokenizerDelimiter;
 
     public DbPopulator(String schemaScriptPath, String dataScriptPath) {
+        this(schemaScriptPath, dataScriptPath, DEFAULT_DELIMITER);
+    }
+
+    public DbPopulator(String schemaScriptPath, String dataScriptPath, String stringTokenizerDelimiter) {
         this.schemaScriptPath = schemaScriptPath;
         this.dataScriptPath = dataScriptPath;
+        this.stringTokenizerDelimiter = StringUtils.isBlank(stringTokenizerDelimiter) ? DEFAULT_DELIMITER : stringTokenizerDelimiter;
     }
 
     public void initDb(TransactionalDataSource db) {
@@ -50,7 +57,7 @@ public class DbPopulator {
 
     private void loadSqlAndExecute(TransactionalDataSource dataSource, URI file) {
         int appliedResults = 0;
-        StringTokenizer tokenizer = new StringTokenizer(new String(readAllBytes(file)), ";");
+        StringTokenizer tokenizer = new StringTokenizer(new String(readAllBytes(file)), stringTokenizerDelimiter);
 
         try (Connection con = dataSource.getConnection();
              Statement stm = con.createStatement()) {
@@ -76,7 +83,6 @@ public class DbPopulator {
         }
     }
 
-
     public void populateDb(TransactionalDataSource dataSource) {
         findAndExecute(dataSource, dataScriptPath, "Data");
     }
@@ -99,6 +105,5 @@ public class DbPopulator {
         }
 
     }
-
 
 }

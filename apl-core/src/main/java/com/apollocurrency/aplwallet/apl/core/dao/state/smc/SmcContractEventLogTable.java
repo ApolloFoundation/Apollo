@@ -3,6 +3,8 @@
  */
 package com.apollocurrency.aplwallet.apl.core.dao.state.smc;
 
+import com.apollocurrency.aplwallet.api.v2.model.ContractEventDetails;
+import com.apollocurrency.aplwallet.apl.core.converter.db.smc.SmcContractEventLogDetailsRowMapper;
 import com.apollocurrency.aplwallet.apl.core.converter.db.smc.SmcContractEventLogRowMapper;
 import com.apollocurrency.aplwallet.apl.core.dao.state.derived.DerivedDbTable;
 import com.apollocurrency.aplwallet.apl.core.dao.state.keyfactory.DbKey;
@@ -14,6 +16,7 @@ import com.apollocurrency.aplwallet.apl.util.db.DbUtils;
 import com.apollocurrency.aplwallet.apl.util.db.TransactionalDataSource;
 import com.apollocurrency.aplwallet.apl.util.injectable.PropertiesHolder;
 import lombok.Getter;
+import lombok.extern.slf4j.Slf4j;
 
 import javax.inject.Inject;
 import javax.inject.Singleton;
@@ -28,12 +31,14 @@ import java.util.List;
 /**
  * Account ledger table
  */
+@Slf4j
 @Singleton
 public class SmcContractEventLogTable extends DerivedDbTable<SmcContractEventLogEntry> {
 
     private static final String TABLE_NAME = "smc_event_log";
 
     private static final SmcContractEventLogRowMapper MAPPER = new SmcContractEventLogRowMapper();
+    private static final SmcContractEventLogDetailsRowMapper detailsRowMapper = new SmcContractEventLogDetailsRowMapper();
 
     private final PropertiesHolder propertiesHolder;
 
@@ -152,14 +157,13 @@ public class SmcContractEventLogTable extends DerivedDbTable<SmcContractEventLog
     /**
      * Return the event log entries sorted in descending insert order
      *
-     * @param eventId    Event identifier
-     * @param signature  Event signature
-     * @param firstIndex First matching entry index, inclusive
-     * @param lastIndex  Last matching entry index, inclusive
+     * @param eventId   Event identifier
+     * @param signature Event signature
+     * @param from      First matching entry index, inclusive
+     * @param to        Last matching entry index, inclusive
      * @return List of event log entries
      */
-    public List<SmcContractEventLogEntry> getEntries(long eventId, byte[] signature,
-                                                     int firstIndex, int lastIndex) {
+    public List<SmcContractEventLogEntry> getEntries(long eventId, byte[] signature, int from, int to) {
 
         List<SmcContractEventLogEntry> entryList = new ArrayList<>();
         //
@@ -167,10 +171,10 @@ public class SmcContractEventLogTable extends DerivedDbTable<SmcContractEventLog
         StringBuilder sb = new StringBuilder(128);
         sb.append("SELECT * FROM " + TABLE_NAME + " WHERE event_id = ? ");
         if (signature != null) {
-            sb.append("AND entry = ? ");
+            sb.append("AND signature = ? ");
         }
         sb.append("ORDER BY db_id DESC ");
-        sb.append(DbUtils.limitsClause(firstIndex, lastIndex));
+        sb.append(DbUtils.limitsClause(from, to));
         //
         // Get the event log entries
         //
@@ -182,7 +186,7 @@ public class SmcContractEventLogTable extends DerivedDbTable<SmcContractEventLog
             if (signature != null) {
                 pstmt.setBytes(++i, signature);
             }
-            DbUtils.setLimits(++i, pstmt, firstIndex, lastIndex);
+            DbUtils.setLimits(++i, pstmt, from, to);
             try (ResultSet rs = pstmt.executeQuery()) {
                 while (rs.next()) {
                     entryList.add(MAPPER.map(rs, null));
@@ -193,4 +197,52 @@ public class SmcContractEventLogTable extends DerivedDbTable<SmcContractEventLog
         }
         return entryList;
     }
+
+    public List<ContractEventDetails> getEventsByFilter(Long contract, String name, int heightFrom, int heightTo, int from, int to, String order) {
+        StringBuilder sql = new StringBuilder(
+            "SELECT el.*, " +
+                "e.contract, e.name, e.spec " +
+                "FROM smc_event_log el " +
+                "LEFT JOIN smc_event AS e ON el.event_id = e.id " +
+                "WHERE e.contract = ? AND el.height >= ? ");
+
+        if (name != null) {
+            sql.append(" AND e.name = ? ");
+        }
+
+        if (heightTo > 0) {
+            sql.append(" AND el.height <= ? ");
+        }
+
+        sql.append("ORDER BY el.db_id ").append(order);
+        sql.append(DbUtils.limitsClause(from, to));
+        log.trace("Sql.query={}", sql);
+
+        try (Connection con = databaseManager.getDataSource().getConnection();
+             PreparedStatement pstm = con.prepareStatement(sql.toString())) {
+            int i = 0;
+            pstm.setLong(++i, contract);
+            pstm.setInt(++i, heightFrom);
+
+            if (name != null) {
+                pstm.setString(++i, name);
+            }
+
+            if (heightTo > 0) {
+                pstm.setInt(++i, heightTo);
+            }
+            DbUtils.setLimits(++i, pstm, from, to);
+            pstm.setFetchSize(50);
+            try (ResultSet rs = pstm.executeQuery()) {
+                List<ContractEventDetails> list = new ArrayList<>();
+                while (rs.next()) {
+                    list.add(detailsRowMapper.map(rs, null));
+                }
+                return list;
+            }
+        } catch (SQLException e) {
+            throw new RuntimeException(e);
+        }
+    }
+
 }
