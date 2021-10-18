@@ -23,6 +23,7 @@ import java.util.HashMap;
 import java.util.List;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
@@ -89,7 +90,9 @@ class SubscriptionManagerTest {
     void addSubscription() {
         //GIVEN empty container
         //WHEN
-        assertThrows(WebSocketException.class, () -> manager.addSubscription(address, socket, mock(SmcEventSubscriptionRequest.class)));
+        var rc = manager.addSubscription(address, socket, mock(SmcEventSubscriptionRequest.class));
+        //THEN
+        assertFalse(rc);
 
         //GIVEN
         var request = SmcEventSubscriptionRequest.builder()
@@ -99,7 +102,7 @@ class SubscriptionManagerTest {
             .build();
         container.register(address, socket);
         //WHEN
-        var rc = manager.addSubscription(address, socket, request);
+        rc = manager.addSubscription(address, socket, request);
         //THEN
         assertTrue(rc);
         assertEquals(1, container.size());
@@ -119,7 +122,9 @@ class SubscriptionManagerTest {
     void removeSubscription() {
         //GIVEN empty container
         //WHEN
-        assertThrows(WebSocketException.class, () -> manager.removeSubscription(address, socket, mock(SmcEventSubscriptionRequest.class)));
+        var rc = manager.removeSubscription(address, socket, mock(SmcEventSubscriptionRequest.class));
+        //THEN
+        assertFalse(rc);
 
         //GIVEN
         var request = SmcEventSubscriptionRequest.builder()
@@ -131,7 +136,7 @@ class SubscriptionManagerTest {
         container.register(address, socket);
         container.addSubscription(address, socket, subscription);
         //WHEN
-        var rc = manager.removeSubscription(address, socket, request);
+        rc = manager.removeSubscription(address, socket, request);
         //THEN
         assertTrue(rc);
         assertEquals(1, container.size());

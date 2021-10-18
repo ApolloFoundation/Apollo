@@ -33,7 +33,7 @@ class AbstractContractEventTest {
 
     @Mock
     HashSumProvider hashSumProvider;
-    int height = 123;
+    int height = 10000;
     AplAddress contractAddress = new AplAddress(Convert.parseAccountId("APL-632K-TWX3-2ALQ-973CU"));
     AplAddress transactionAddress = new AplAddress(123L);
 
@@ -47,7 +47,7 @@ class AbstractContractEventTest {
 
     AplContractEventManager manager;
 
-    SmcContractEvent createEvent() {
+    SmcContractEvent createEvent(String state) {
         return SmcContractEvent.builder()
             .contract(contractAddress)
             .transaction(transactionAddress)
@@ -55,12 +55,16 @@ class AbstractContractEventTest {
             .eventType(eventType)
             .txIdx(0)
             .signature(signature)
-            .state("[1,2,3]")
+            .state(state != null ? state : "{}")
             .build();
     }
 
     AplContractEvent createAplEvent(long id) {
-        var event = createEvent();
+        return createAplEvent(id, null);
+    }
+
+    AplContractEvent createAplEvent(long id, String state) {
+        var event = createEvent(state);
         var aplEvent = AplContractEvent.builder()
             .event(event)
             .id(id)
@@ -69,9 +73,9 @@ class AbstractContractEventTest {
         return aplEvent;
     }
 
-    AplContractEvent mockAplEvent() {
+    AplContractEvent mockAplEvent(String state) {
         var id = 987654321L;
-        var aplEvent = createAplEvent(id);
+        var aplEvent = createAplEvent(id, state);
 
         when(hashSumProvider.sha256(signatureStr.getBytes(StandardCharsets.UTF_8))).thenReturn(signature);
         when(hashSumProvider.sha256()).thenReturn(new DigestWrapper(Crypto.sha256()));

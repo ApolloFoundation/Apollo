@@ -23,6 +23,7 @@ import org.mockito.junit.jupiter.MockitoExtension;
 import javax.enterprise.event.Event;
 
 import static com.apollocurrency.aplwallet.apl.smc.events.SmcEventBinding.literal;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
@@ -48,8 +49,6 @@ class SmcContractEventServiceTest extends AbstractContractEventTest {
     ContractEventModelToEntityConverter entityConverter = new ContractEventModelToEntityConverter();
 
     SmcContractEventService eventService;
-
-    int height = 123;
 
     @BeforeEach
     void setUp() {
@@ -80,6 +79,16 @@ class SmcContractEventServiceTest extends AbstractContractEventTest {
         verify(contractEventTable).get(dbKey);
         verify(contractEventTable).insert(entity);
         verify(contractEventLogTable).insert(logEntry);
+    }
+
+    @Test
+    void saveEventDifferentHeight() {
+        //GIVEN
+        long id = 123456789L;
+        var event = createAplEvent(id);
+        when(blockchain.getHeight()).thenReturn(height + 100);
+        //WHEN //THEN
+        assertThrows(IllegalStateException.class, () -> eventService.saveEvent(event));
     }
 
     @Test
