@@ -35,7 +35,7 @@ public class AplBlockException extends AplCoreLogicException {
     }
 
     private static String constructErrorMessage(String message, Block block) {
-        return message + ", block: " + block.getStringId();
+        return message + ", block.id= " + block.getStringId() + ", block.height=" + block.getHeight();
     }
 
 }

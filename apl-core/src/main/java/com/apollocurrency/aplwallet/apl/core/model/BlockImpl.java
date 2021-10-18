@@ -4,6 +4,7 @@
 
 package com.apollocurrency.aplwallet.apl.core.model;
 
+import com.apollocurrency.aplwallet.apl.core.exception.AplBlockException;
 import com.apollocurrency.aplwallet.apl.core.exception.AplBlockTxErrorResultsMismatchException;
 import com.apollocurrency.aplwallet.apl.crypto.AplIdGenerator;
 import com.apollocurrency.aplwallet.apl.crypto.Convert;
@@ -270,9 +271,9 @@ public final class BlockImpl implements Block {
     @Override
     public long getGeneratorId() {
         if (generatorId == 0) {
-//            generatorId = AccountService.getId(getGeneratorPublicKey());
             String error = "GeneratorId should be assigned !";
-            throw new RuntimeException(error);
+            log.error(error);
+            throw new AplBlockException(error, this);
         }
         return generatorId;
     }
@@ -321,7 +322,9 @@ public final class BlockImpl implements Block {
                 buffer.put(blockSignature);
             }
             bytes = buffer.array();
-            log.debug("Calculated block bytes {}, id {}", Convert.toHexString(bytes), AplIdGenerator.BLOCK.getId(bytes));
+            if (log.isDebugEnabled()) {
+                log.debug("Calculated block bytes {}, id {}", Convert.toHexString(bytes), AplIdGenerator.BLOCK.getId(bytes));
+            }
         }
         return bytes;
     }
