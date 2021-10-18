@@ -4,13 +4,10 @@
 
 package com.apollocurrency.aplwallet.apl.core.dao.state.derived;
 
-import com.apollocurrency.aplwallet.apl.core.model.Block;
 import com.apollocurrency.aplwallet.apl.core.converter.rest.IteratorToStreamConverter;
 import com.apollocurrency.aplwallet.apl.core.dao.state.keyfactory.DbKey;
 import com.apollocurrency.aplwallet.apl.core.entity.state.derived.DerivedEntity;
-import com.apollocurrency.aplwallet.apl.core.service.blockchain.Blockchain;
 import com.apollocurrency.aplwallet.apl.core.utils.CollectionUtil;
-import com.apollocurrency.aplwallet.apl.data.BlockTestData;
 import com.apollocurrency.aplwallet.apl.testutil.DbUtils;
 import com.apollocurrency.aplwallet.apl.util.Filter;
 import com.apollocurrency.aplwallet.apl.util.db.DbClause;
@@ -36,7 +33,6 @@ import static org.junit.jupiter.api.Assertions.assertNotEquals;
 import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.Mockito.doReturn;
 import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.mock;
 
@@ -66,7 +62,6 @@ public abstract class EntityDbTableTest<T extends DerivedEntity> extends BasicDb
     public void setUp() {
         super.setUp();
         table = (EntityDbTable<T>) getDerivedDbTable();
-        getBlockchain().setLastBlock(new BlockTestData().LAST_BLOCK);
     }
 
     @AfterEach
@@ -135,9 +130,6 @@ public abstract class EntityDbTableTest<T extends DerivedEntity> extends BasicDb
     public void testGetByHeight() {
 
         if (table.isMultiversion()) {
-            Block mock = mock(Block.class);
-            doReturn(Integer.MAX_VALUE).when(mock).getHeight();
-            getBlockchain().setLastBlock(mock);
             Map.Entry<DbKey, List<T>> entries = getEntryWithListOfSize(getAll(), table.getDbKeyFactory(), 3, true);
             List<T> sorted = sortByHeightDesc(entries.getValue());
             T latest = sorted.get(0);
@@ -507,25 +499,16 @@ public abstract class EntityDbTableTest<T extends DerivedEntity> extends BasicDb
 
     @Test
     public void testGetCountByDbClauseWithLastHeight() {
-        Block mock = mock(Block.class);
-        doReturn(Integer.MAX_VALUE).when(mock).getHeight();
-        getBlockchain().setLastBlock(mock);
         testGetCountByDbClauseWithHeight(0);
     }
 
     @Test
     public void testGetCountByDbClauseWithNextHeight() {
-        Block mock = mock(Block.class);
-        doReturn(Integer.MAX_VALUE).when(mock).getHeight();
-        getBlockchain().setLastBlock(mock);
         testGetCountByDbClauseWithHeight(1);
     }
 
     @Test
     public void testGetCountByDbClauseWithMinHeight() {
-        Block mock = mock(Block.class);
-        doReturn(sortByHeightDesc(getAll()).get(0).getHeight() + 1).when(mock).getHeight();
-        getBlockchain().setLastBlock(mock);
         List<T> all = getAllLatest();
         testGetCountByDbClauseWithHeight(all.size() - 1);
     }
@@ -627,8 +610,6 @@ public abstract class EntityDbTableTest<T extends DerivedEntity> extends BasicDb
     public Comparator<T> getDefaultComparator() {
         return DB_ID_HEIGHT_COMPARATOR;
     }
-
-    public abstract Blockchain getBlockchain();
 
     public abstract T valueToInsert();
 }

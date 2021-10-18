@@ -62,9 +62,9 @@ public class ShufflingTestData {
     public final ShufflingParticipant PARTICIPANT_2_C_1_REGISTR = new ShufflingParticipant(1070L, 1001, SHUFFLING_2_1_ASSET_REGISTRATION.getId(), CHUCK_ID, 1, 0, ShufflingParticipantState.get((byte) 0), null, null, Convert.EMPTY_BYTES, Convert.EMPTY_BYTES);
     public final ShufflingParticipant NEW_PARTICIPANT = new ShufflingParticipant(1071L, 1000, SHUFFLING_3_3_APL_REGISTRATION.getId(), BOB_ID, 1, ALICE_ID, ShufflingParticipantState.get((byte) 0), null, null, Convert.EMPTY_BYTES, Convert.EMPTY_BYTES);
 
-    public final ShufflingData DATA_5_A = new ShufflingData(1000L, 1001, SHUFFLING_5_1_APL_PROCESSING.getId(), ALICE_ID, DATA, 800);
+    public final ShufflingData DATA_5_A = new ShufflingData(1000L, 1001, 10, SHUFFLING_5_1_APL_PROCESSING.getId(), ALICE_ID, DATA, 800);
 
-    public final ShufflingData NEW_DATA = new ShufflingData(1001L, 1002, SHUFFLING_5_1_APL_PROCESSING.getId(), BOB_ID, DATA, 821);
+    public final ShufflingData NEW_DATA = new ShufflingData(1001L, 1002, 20, SHUFFLING_5_1_APL_PROCESSING.getId(), BOB_ID, DATA, 821);
 
 
     public final List<ShufflingParticipant> ALL_PARTICIPANTS = new ArrayList<>(List.of(

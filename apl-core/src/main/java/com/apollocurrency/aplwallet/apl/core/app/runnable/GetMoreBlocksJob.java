@@ -12,6 +12,7 @@ import com.apollocurrency.aplwallet.api.p2p.response.GetMilestoneBlockIdsRespons
 import com.apollocurrency.aplwallet.api.p2p.response.GetNextBlockIdsResponse;
 import com.apollocurrency.aplwallet.apl.core.app.GetNextBlocksTask;
 import com.apollocurrency.aplwallet.apl.core.chainid.BlockchainConfig;
+import com.apollocurrency.aplwallet.apl.core.exception.AplBlockException;
 import com.apollocurrency.aplwallet.apl.core.model.Block;
 import com.apollocurrency.aplwallet.apl.core.model.BlockchainProcessorState;
 import com.apollocurrency.aplwallet.apl.core.model.PeerBlock;
@@ -521,7 +522,7 @@ public class GetMoreBlocksJob implements Runnable {
                 if (blockchain.getLastBlock().getId() == block.getPreviousBlockId()) {
                     try {
                         blockchainProcessor.pushBlock(block);
-                    } catch (BlockchainProcessor.BlockNotAcceptedException e) {
+                    } catch (BlockchainProcessor.BlockNotAcceptedException | AplBlockException e) {
                         peerBlock.getPeer().blacklist(e);
                     }
                 } else {
@@ -555,7 +556,7 @@ public class GetMoreBlocksJob implements Runnable {
                     try {
                         blockchainProcessor.pushBlock(block);
                         pushedForkBlocks += 1;
-                    } catch (BlockchainProcessor.BlockNotAcceptedException e) {
+                    } catch (BlockchainProcessor.BlockNotAcceptedException | AplBlockException e) {
                         peer.blacklist(e);
                         break;
                     }
@@ -579,7 +580,7 @@ public class GetMoreBlocksJob implements Runnable {
                 Block block = myPoppedOffBlocks.remove(i);
                 try {
                     blockchainProcessor.pushBlock(block);
-                } catch (BlockchainProcessor.BlockNotAcceptedException e) {
+                } catch (BlockchainProcessor.BlockNotAcceptedException | AplBlockException e) {
                     log.error("Popped off block no longer acceptable: " + blockSerializer.getJSONObject(block).toJSONString(), e);
                     break;
                 }

@@ -5,6 +5,7 @@
 package com.apollocurrency.aplwallet.apl.core.dao.state.shuffling;
 
 import com.apollocurrency.aplwallet.apl.core.entity.state.shuffling.Shuffling;
+import com.apollocurrency.aplwallet.apl.core.files.shards.ShardPresentData;
 import com.apollocurrency.aplwallet.apl.util.cdi.config.Property;
 import com.apollocurrency.aplwallet.apl.util.service.TaskDispatchManager;
 import com.apollocurrency.aplwallet.apl.util.task.Task;
@@ -13,6 +14,7 @@ import lombok.Getter;
 import lombok.extern.slf4j.Slf4j;
 
 import javax.annotation.PostConstruct;
+import javax.enterprise.event.Observes;
 import javax.enterprise.inject.Produces;
 import javax.inject.Inject;
 import javax.inject.Singleton;
@@ -61,6 +63,14 @@ public class ShufflingTableConfiguration {
                 .build());
         } else {
             log.info("Shuffling cache is TURNED OFF...");
+        }
+    }
+
+    public void onShardImported(@Observes ShardPresentData shardPresentData) {
+        try {
+            warmUp();
+        } catch (SQLException e) {
+            log.error("Unable to warmup in-memory shuffling cache after successful shard " + shardPresentData.getShardId() + " import", e);
         }
     }
 

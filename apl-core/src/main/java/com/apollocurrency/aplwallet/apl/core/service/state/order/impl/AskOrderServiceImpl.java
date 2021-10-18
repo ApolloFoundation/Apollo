@@ -14,7 +14,7 @@ import com.apollocurrency.aplwallet.apl.core.db.DatabaseManager;
 import com.apollocurrency.aplwallet.apl.core.service.blockchain.Blockchain;
 import com.apollocurrency.aplwallet.apl.core.service.state.order.OrderService;
 import com.apollocurrency.aplwallet.apl.core.service.state.qualifier.AskOrderService;
-import com.apollocurrency.aplwallet.apl.core.transaction.messages.ColoredCoinsAskOrderPlacement;
+import com.apollocurrency.aplwallet.apl.core.transaction.messages.CCAskOrderPlacementAttachment;
 import lombok.extern.slf4j.Slf4j;
 
 import javax.inject.Inject;
@@ -24,7 +24,7 @@ import java.util.stream.Stream;
 @Slf4j
 @Singleton
 @AskOrderService
-public class AskOrderServiceImpl implements OrderService<AskOrder, ColoredCoinsAskOrderPlacement> {
+public class AskOrderServiceImpl implements OrderService<AskOrder, CCAskOrderPlacementAttachment> {
     static final String ORDER = " ORDER BY price ASC, creation_height ASC, transaction_height ASC, transaction_index ASC ";
     private final DatabaseManager databaseManager;
     private final AskOrderTable askOrderTable;
@@ -116,7 +116,7 @@ public class AskOrderServiceImpl implements OrderService<AskOrder, ColoredCoinsA
     }
 
     @Override
-    public void addOrder(Transaction transaction, ColoredCoinsAskOrderPlacement attachment) {
+    public void addOrder(Transaction transaction, CCAskOrderPlacementAttachment attachment) {
         final AskOrder order = new AskOrder(transaction, attachment, blockchain.getHeight());
         log.trace(">> addOrder() askOrder={}", order);
         askOrderTable.insert(order);

@@ -8,10 +8,10 @@ import com.apollocurrency.aplwallet.apl.core.dao.state.derived.EntityDbTableInte
 import com.apollocurrency.aplwallet.apl.core.dao.state.keyfactory.DbKey;
 import com.apollocurrency.aplwallet.apl.core.dao.state.keyfactory.LongKey;
 import com.apollocurrency.aplwallet.apl.core.dao.state.keyfactory.LongKeyFactory;
+import com.apollocurrency.aplwallet.apl.core.service.fulltext.FullTextOperationData;
 import com.apollocurrency.aplwallet.apl.util.db.DbUtils;
 import com.apollocurrency.aplwallet.apl.core.entity.state.account.PublicKey;
 import com.apollocurrency.aplwallet.apl.core.db.DatabaseManager;
-import com.apollocurrency.aplwallet.apl.core.shard.observer.DeleteOnTrimData;
 import com.apollocurrency.aplwallet.apl.util.annotation.DatabaseSpecificDml;
 import com.apollocurrency.aplwallet.apl.util.annotation.DmlMarker;
 
@@ -37,8 +37,9 @@ public class PublicKeyTable extends EntityDbTable<PublicKey> implements EntityDb
     };
 
     public PublicKeyTable(DatabaseManager databaseManager,
-                          Event<DeleteOnTrimData> deleteOnTrimDataEvent) {
-        super("public_key", KEY_FACTORY, true, null, databaseManager, deleteOnTrimDataEvent);
+                          Event<FullTextOperationData> fullTextOperationDataEvent) {
+        super("public_key", KEY_FACTORY, true, null,
+            databaseManager, fullTextOperationDataEvent);
     }
 
     public DbKey newKey(long id) {

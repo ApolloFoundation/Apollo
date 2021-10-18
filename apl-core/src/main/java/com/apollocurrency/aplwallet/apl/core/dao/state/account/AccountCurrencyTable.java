@@ -7,6 +7,8 @@ package com.apollocurrency.aplwallet.apl.core.dao.state.account;
 import com.apollocurrency.aplwallet.apl.core.dao.state.derived.VersionedDeletableEntityDbTable;
 import com.apollocurrency.aplwallet.apl.core.dao.state.keyfactory.DbKey;
 import com.apollocurrency.aplwallet.apl.core.dao.state.keyfactory.LinkKeyFactory;
+import com.apollocurrency.aplwallet.apl.core.service.fulltext.FullTextOperationData;
+import com.apollocurrency.aplwallet.apl.core.service.fulltext.FullTextSearchUpdater;
 import com.apollocurrency.aplwallet.apl.util.db.DbClause;
 import com.apollocurrency.aplwallet.apl.util.db.DbIterator;
 import com.apollocurrency.aplwallet.apl.core.entity.state.account.AccountCurrency;
@@ -41,9 +43,9 @@ public class AccountCurrencyTable extends VersionedDeletableEntityDbTable<Accoun
 
     @Inject
     public AccountCurrencyTable(DatabaseManager databaseManager,
-                                Event<DeleteOnTrimData> deleteOnTrimDataEvent) {
+                                Event<FullTextOperationData> fullTextOperationDataEvent) {
         super("account_currency", accountCurrencyDbKeyFactory, null,
-                databaseManager, deleteOnTrimDataEvent);
+                databaseManager, fullTextOperationDataEvent);
     }
 
     public static DbKey newKey(long idA, long idB) {

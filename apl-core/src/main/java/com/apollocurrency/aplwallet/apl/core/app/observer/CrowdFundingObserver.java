@@ -145,7 +145,8 @@ public class CrowdFundingObserver {
         operationData.setDbIdValue(currency.getDbId());
         operationData.addColumnData(currency.getName()).addColumnData(currency.getDescription());
         // send data into Lucene index component
-        log.trace("Put lucene index update data = {}", operationData);
+        log.debug("Put lucene index update data = {}", operationData);
+        // call to update FullTextSearch index for record deletion (as we are in separate event loop thread)
         fullTextSearchUpdater.putFullTextOperationData(operationData);
     }
 }

@@ -28,7 +28,7 @@ import com.apollocurrency.aplwallet.apl.core.service.state.account.AccountPublic
 import com.apollocurrency.aplwallet.apl.core.service.state.account.AccountService;
 import com.apollocurrency.aplwallet.apl.core.transaction.messages.ShufflingAttachment;
 import com.apollocurrency.aplwallet.apl.core.transaction.messages.ShufflingCancellationAttachment;
-import com.apollocurrency.aplwallet.apl.core.transaction.messages.ShufflingCreation;
+import com.apollocurrency.aplwallet.apl.core.transaction.messages.ShufflingCreationAttachment;
 import com.apollocurrency.aplwallet.apl.core.transaction.messages.ShufflingProcessingAttachment;
 import com.apollocurrency.aplwallet.apl.core.transaction.messages.ShufflingRecipientsAttachment;
 import com.apollocurrency.aplwallet.apl.crypto.AnonymouslyEncryptedData;
@@ -104,14 +104,19 @@ public class ShufflingServiceImpl implements ShufflingService {
     }
 
     @Override
-    public void restoreData(long shufflingId, long accountId, byte[][] data, int timestamp, int height) {
-        shufflingDataTable.restoreData(shufflingId, accountId, data, timestamp, height);
+    public byte[][] getData(long transactionId) {
+        return shufflingDataTable.getData(transactionId);
     }
 
     @Override
-    public void setData(ShufflingParticipant participant, byte[][] data, int timestamp) {
-        if (data != null && timeService.getEpochTime() - timestamp < blockchainConfig.getMaxPrunableLifetime() && getData(participant.getShufflingId(), participant.getAccountId()) == null) {
-            shufflingDataTable.insert(new ShufflingData(participant.getShufflingId(), participant.getAccountId(), data, timestamp, blockchain.getHeight()));
+    public void restoreData(long transactionId, long shufflingId, long accountId, byte[][] data, int timestamp, int height) {
+        shufflingDataTable.restoreData(transactionId, shufflingId, accountId, data, timestamp, height);
+    }
+
+    @Override
+    public void setData(Transaction tx, ShufflingParticipant participant, byte[][] data) {
+        if (data != null && timeService.getEpochTime() - tx.getTimestamp() < blockchainConfig.getMaxPrunableLifetime() && shufflingDataTable.getData(tx.getId()) == null) {
+            shufflingDataTable.insert(new ShufflingData(tx.getId(), participant.getShufflingId(), participant.getAccountId(), data, tx.getTimestamp(), blockchain.getHeight()));
         }
     }
 
@@ -201,7 +206,7 @@ public class ShufflingServiceImpl implements ShufflingService {
     }
 
     @Override
-    public void addShuffling(Transaction transaction, ShufflingCreation attachment) {
+    public void addShuffling(Transaction transaction, ShufflingCreationAttachment attachment) {
         Shuffling shuffling = new Shuffling(transaction, attachment, blockchain.getHeight());
         shufflingRepository.insert(shuffling);
         addParticipant(shuffling.getId(), transaction.getSenderId(), 0);
@@ -523,7 +528,7 @@ public class ShufflingServiceImpl implements ShufflingService {
         long participantId = transaction.getSenderId();
         byte[][] data = attachment.getData();
         ShufflingParticipant participant = getParticipant(shuffling.getId(), participantId);
-        setData(participant, data, transaction.getTimestamp());
+        setData(transaction, participant, data);
         changeStatusToProcessed(participant, transaction.getFullHash(), attachment.getHash());
         if (data != null && data.length == 0) {
             // couldn't decrypt all data from previous participants

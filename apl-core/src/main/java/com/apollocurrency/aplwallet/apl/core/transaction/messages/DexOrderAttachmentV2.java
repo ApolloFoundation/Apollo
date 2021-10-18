@@ -28,6 +28,12 @@ public class DexOrderAttachmentV2 extends DexOrderAttachment {
         this.toAddress = order.getToAddress();
     }
 
+    public DexOrderAttachmentV2(byte type, byte orderCurrency, long orderAmount, byte pairCurrency, long pairRate, byte status, int finishTime, String fromAddress, String toAddress) {
+        super(type, orderCurrency, orderAmount, pairCurrency, pairRate, status, finishTime);
+        this.fromAddress = fromAddress;
+        this.toAddress = toAddress;
+    }
+
     public DexOrderAttachmentV2(ByteBuffer buffer) throws AplException.NotValidException {
         super(buffer);
         try {

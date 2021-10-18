@@ -46,7 +46,7 @@ public interface AccountAssetService {
 
     long getAssetBalanceATU(long accountId, long assetId, int height);
 
-    long getUnconfirmedAssetBalanceATU(Account account, long assetId);
+    long getUnconfirmedAssetBalanceATU(long accountId, long assetId);
 
     void addToAssetBalanceATU(Account account, LedgerEvent event, long eventId, long assetId, long quantityATU);
 

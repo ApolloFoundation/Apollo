@@ -5,7 +5,7 @@
 package com.apollocurrency.aplwallet.apl.core.service.state;
 
 import com.apollocurrency.aplwallet.apl.core.dao.state.derived.DerivedTableInterface;
-import com.apollocurrency.aplwallet.apl.core.dao.state.derived.SearchableTableInterface;
+import com.apollocurrency.aplwallet.apl.core.dao.state.derived.SearchableTableMarkerInterface;
 import com.apollocurrency.aplwallet.apl.core.service.fulltext.FullTextConfig;
 import com.apollocurrency.aplwallet.apl.util.cdi.config.Property;
 import lombok.extern.slf4j.Slf4j;
@@ -44,7 +44,7 @@ public class TableRegistryInitializer {
     private void init(DerivedTableInterface<?> table) {
         registry.registerDerivedTable(table);
         log.debug("Register derived class: {}", table.getClass().getName());
-        if (table instanceof SearchableTableInterface) {
+        if (table instanceof SearchableTableMarkerInterface) {
             log.debug("Register SearchableTable derived class: {}", table.getClass().getName());
             fullTextConfig.registerTable(table.getName(), table.getFullTextSearchColumns());
         }

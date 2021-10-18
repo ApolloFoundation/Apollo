@@ -36,6 +36,7 @@ import com.apollocurrency.aplwallet.apl.core.service.blockchain.BlockchainImpl;
 import com.apollocurrency.aplwallet.apl.core.service.blockchain.BlockchainProcessor;
 import com.apollocurrency.aplwallet.apl.core.service.blockchain.BlockchainProcessorImpl;
 import com.apollocurrency.aplwallet.apl.core.service.blockchain.DefaultBlockValidator;
+import com.apollocurrency.aplwallet.apl.core.service.blockchain.FailedTransactionVerificationService;
 import com.apollocurrency.aplwallet.apl.core.service.blockchain.MemPool;
 import com.apollocurrency.aplwallet.apl.core.service.blockchain.ShardingInitTaskBackgroundScheduler;
 import com.apollocurrency.aplwallet.apl.core.service.blockchain.TransactionProcessingTaskScheduler;
@@ -266,6 +267,7 @@ public final class AplCore {
             CDI.current().select(DexOperationService.class).get();
             CDI.current().select(TransactionProcessingTaskScheduler.class).get();
             CDI.current().select(ShardingInitTaskBackgroundScheduler.class).get();
+            CDI.current().select(FailedTransactionVerificationService.class).get();
 
             //start all background tasks
             taskDispatchManager.dispatch();

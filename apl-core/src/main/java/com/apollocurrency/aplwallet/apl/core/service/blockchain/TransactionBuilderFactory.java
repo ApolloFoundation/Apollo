@@ -141,7 +141,12 @@ public class TransactionBuilderFactory {
             txBContext.createSerializer(transaction.getVersion())
                 .serialize(TransactionWrapperHelper.createUnsignedTransaction(transaction), unsignedTxBytes);
             // incorrect deserialization case
-            throw new AplException.NotValidException("Transaction " + builder.toString() + ", unsigned bytes - " + Convert.toHexString(unsignedTxBytes.getBuffer().toByteArray()) +" has different id " + transaction.getId() + ", id from peer " + id + ", peer data " + transactionData.toJSONString());
+            throw new AplException.NotValidException("Transaction has different id, than peer, parsed: "
+                + transaction.getId()
+                + ", id from peer " + id
+                + " unsigned bytes - " + Convert.toHexString(unsignedTxBytes.getBuffer().toByteArray())
+                + ", peer data " + transactionData.toJSONString()
+                + "our tx data: " + builder.toString());
         }
         return transaction;
     }

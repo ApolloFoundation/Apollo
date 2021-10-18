@@ -13,7 +13,7 @@ import com.apollocurrency.aplwallet.apl.core.model.Transaction;
 import com.apollocurrency.aplwallet.apl.core.entity.state.asset.AssetTransfer;
 import com.apollocurrency.aplwallet.apl.core.service.state.BlockChainInfoService;
 import com.apollocurrency.aplwallet.apl.core.service.state.asset.AssetTransferService;
-import com.apollocurrency.aplwallet.apl.core.transaction.messages.ColoredCoinsAssetTransfer;
+import com.apollocurrency.aplwallet.apl.core.transaction.messages.CCAssetTransferAttachment;
 
 import javax.inject.Inject;
 import javax.inject.Singleton;
@@ -103,7 +103,7 @@ public class AssetTransferServiceImpl implements AssetTransferService {
     }
 
     @Override
-    public AssetTransfer addAssetTransfer(Transaction transaction, ColoredCoinsAssetTransfer attachment) {
+    public AssetTransfer addAssetTransfer(Transaction transaction, CCAssetTransferAttachment attachment) {
         Block lastBlock = blockChainInfoService.getLastBlock();
         AssetTransfer assetTransfer = new AssetTransfer(transaction, attachment,
             lastBlock.getTimestamp(), lastBlock.getHeight());

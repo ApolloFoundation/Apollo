@@ -24,13 +24,13 @@ public class ShufflingProcessingPrunableLoader implements PrunableLoader<Shuffli
     @Override
     public void loadPrunable(Transaction transaction, ShufflingProcessingAttachment appendix, boolean includeExpiredPrunable) {
         if (appendix.getData() == null && loadingChecker.shouldLoadPrunable(transaction, includeExpiredPrunable)) {
-            appendix.setData(shufflingService.getData(appendix.getShufflingId(), transaction.getSenderId()));
+            appendix.setData(shufflingService.getData(transaction.getId()));
         }
     }
 
     @Override
     public void restorePrunableData(Transaction transaction, ShufflingProcessingAttachment appendix, int blockTimestamp, int height) {
-        shufflingService.restoreData(appendix.getShufflingId(), transaction.getSenderId(), appendix.getData(), transaction.getTimestamp(), height);
+        shufflingService.restoreData(transaction.getId(), appendix.getShufflingId(), transaction.getSenderId(), appendix.getData(), transaction.getTimestamp(), height);
     }
 
     @Override

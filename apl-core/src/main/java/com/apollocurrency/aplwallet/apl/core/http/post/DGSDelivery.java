@@ -29,7 +29,7 @@ import com.apollocurrency.aplwallet.apl.core.http.JSONResponses;
 import com.apollocurrency.aplwallet.apl.core.http.ParameterException;
 import com.apollocurrency.aplwallet.apl.core.service.state.DGSService;
 import com.apollocurrency.aplwallet.apl.core.transaction.messages.Attachment;
-import com.apollocurrency.aplwallet.apl.core.transaction.messages.DigitalGoodsDelivery;
+import com.apollocurrency.aplwallet.apl.core.transaction.messages.DGSDeliveryAttachment;
 import com.apollocurrency.aplwallet.apl.crypto.Convert;
 import com.apollocurrency.aplwallet.apl.crypto.EncryptedData;
 import com.apollocurrency.aplwallet.apl.util.exception.AplException;
@@ -105,7 +105,7 @@ public final class DGSDelivery extends CreateTransactionHandler {
         if (encryptedGoods == null) {
             throw new ParameterException(JSONResponses.missing("encryptedGoods"));
         }
-        Attachment attachment = new DigitalGoodsDelivery(purchase.getId(), encryptedGoods, goodsIsText, discountATM);
+        Attachment attachment = new DGSDeliveryAttachment(purchase.getId(), encryptedGoods, goodsIsText, discountATM);
         return createTransaction(req, sellerAccount, buyerAccount.getId(), 0, attachment);
 
     }

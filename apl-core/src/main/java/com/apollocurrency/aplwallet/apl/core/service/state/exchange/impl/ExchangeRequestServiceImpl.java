@@ -14,7 +14,7 @@ import com.apollocurrency.aplwallet.apl.core.entity.state.exchange.ExchangeReque
 import com.apollocurrency.aplwallet.apl.core.service.state.BlockChainInfoService;
 import com.apollocurrency.aplwallet.apl.core.service.state.exchange.ExchangeRequestService;
 import com.apollocurrency.aplwallet.apl.core.transaction.messages.MonetarySystemExchangeBuyAttachment;
-import com.apollocurrency.aplwallet.apl.core.transaction.messages.MonetarySystemExchangeSell;
+import com.apollocurrency.aplwallet.apl.core.transaction.messages.MSExchangeSellAttachment;
 import lombok.extern.slf4j.Slf4j;
 
 import javax.inject.Inject;
@@ -117,7 +117,7 @@ public class ExchangeRequestServiceImpl implements ExchangeRequestService {
     }
 
     @Override
-    public void addExchangeRequest(Transaction transaction, MonetarySystemExchangeSell attachment) {
+    public void addExchangeRequest(Transaction transaction, MSExchangeSellAttachment attachment) {
         Block lastBlock = blockChainInfoService.getLastBlock();
         ExchangeRequest exchangeRequest = new ExchangeRequest(
             transaction, attachment, lastBlock.getTimestamp(), lastBlock.getHeight());

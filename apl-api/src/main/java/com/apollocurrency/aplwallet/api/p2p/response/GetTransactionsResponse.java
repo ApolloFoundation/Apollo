@@ -10,6 +10,7 @@ import lombok.Data;
 import lombok.EqualsAndHashCode;
 import lombok.NoArgsConstructor;
 
+import java.util.ArrayList;
 import java.util.List;
 
 /**
@@ -23,5 +24,5 @@ import java.util.List;
 @AllArgsConstructor
 @NoArgsConstructor
 public class GetTransactionsResponse extends BaseP2PResponse {
-    private List<TransactionDTO> transactions;
+    private List<TransactionDTO> transactions = new ArrayList<>();
 }

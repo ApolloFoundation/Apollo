@@ -19,7 +19,7 @@ import lombok.Getter;
 import lombok.Setter;
 import org.json.simple.JSONObject;
 
-import javax.inject.Inject;
+import javax.enterprise.inject.Vetoed;
 import java.util.Map;
 
 /**
@@ -28,13 +28,13 @@ import java.util.Map;
  * <br>
  * Each caller should instantiate new instance or just use CDI default Dependant Scope
  */
+@Vetoed
 public class UnconfirmedTransactionConverter implements Converter<Transaction, UnconfirmedTransactionDTO> {
     private final PrunableLoadingService prunableLoadingService;
     @Getter
     @Setter
     private volatile boolean priv = true;
 
-    @Inject
     public UnconfirmedTransactionConverter(PrunableLoadingService prunableLoadingService) {
         this.prunableLoadingService = prunableLoadingService;
     }

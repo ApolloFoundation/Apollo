@@ -7,7 +7,7 @@ package com.apollocurrency.aplwallet.apl.core.service.state.exchange;
 import com.apollocurrency.aplwallet.apl.core.model.Transaction;
 import com.apollocurrency.aplwallet.apl.core.entity.state.exchange.ExchangeRequest;
 import com.apollocurrency.aplwallet.apl.core.transaction.messages.MonetarySystemExchangeBuyAttachment;
-import com.apollocurrency.aplwallet.apl.core.transaction.messages.MonetarySystemExchangeSell;
+import com.apollocurrency.aplwallet.apl.core.transaction.messages.MSExchangeSellAttachment;
 import com.apollocurrency.aplwallet.apl.util.db.DbIterator;
 
 import java.util.stream.Stream;
@@ -48,6 +48,6 @@ public interface ExchangeRequestService {
 
     void addExchangeRequest(Transaction transaction, MonetarySystemExchangeBuyAttachment attachment);
 
-    void addExchangeRequest(Transaction transaction, MonetarySystemExchangeSell attachment);
+    void addExchangeRequest(Transaction transaction, MSExchangeSellAttachment attachment);
 
 }

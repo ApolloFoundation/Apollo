@@ -28,7 +28,7 @@ import com.apollocurrency.aplwallet.apl.core.service.state.account.impl.AccountS
 import com.apollocurrency.aplwallet.apl.core.service.state.order.OrderService;
 import com.apollocurrency.aplwallet.apl.core.service.state.order.impl.AskOrderServiceImpl;
 import com.apollocurrency.aplwallet.apl.core.service.state.qualifier.AskOrderService;
-import com.apollocurrency.aplwallet.apl.core.transaction.messages.ColoredCoinsAskOrderPlacement;
+import com.apollocurrency.aplwallet.apl.core.transaction.messages.CCAskOrderPlacementAttachment;
 import com.apollocurrency.aplwallet.apl.util.env.dirprovider.DirProvider;
 import com.apollocurrency.aplwallet.apl.util.injectable.PropertiesHolder;
 import com.apollocurrency.aplwallet.apl.util.service.ElGamalEncryptor;
@@ -69,7 +69,7 @@ class AccountEndpointTest extends AbstractEndpointTest {
 
     TwoFactorAuthService twoFactorAuthService = mock(TwoFactorAuthService.class);
 
-    OrderService<AskOrder, ColoredCoinsAskOrderPlacement> orderService = mock(AskOrderServiceImpl.class);
+    OrderService<AskOrder, CCAskOrderPlacementAttachment> orderService = mock(AskOrderServiceImpl.class);
 
     @WeldSetup
     public WeldInitiator weld = WeldInitiator.from(

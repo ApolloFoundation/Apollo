@@ -15,7 +15,7 @@ import com.apollocurrency.aplwallet.apl.core.db.DatabaseManager;
 import com.apollocurrency.aplwallet.apl.core.entity.blockchain.TransactionEntity;
 import com.apollocurrency.aplwallet.apl.core.entity.state.phasing.PhasingPoll;
 import com.apollocurrency.aplwallet.apl.core.model.TransactionDbInfo;
-import com.apollocurrency.aplwallet.apl.core.shard.observer.DeleteOnTrimData;
+import com.apollocurrency.aplwallet.apl.core.service.fulltext.FullTextOperationData;
 import com.apollocurrency.aplwallet.apl.util.annotation.DatabaseSpecificDml;
 import com.apollocurrency.aplwallet.apl.util.annotation.DmlMarker;
 import com.apollocurrency.aplwallet.apl.util.db.DbIterator;
@@ -52,9 +52,9 @@ public class PhasingPollTable extends EntityDbTable<PhasingPoll> {
     @Inject
     public PhasingPollTable(DatabaseManager databaseManager,
                             TransactionEntityRowMapper transactionRowMapper,
-                            Event<DeleteOnTrimData> deleteOnTrimDataEvent) {
+                            Event<FullTextOperationData> fullTextOperationDataEvent) {
         super("phasing_poll", KEY_FACTORY, false, null,
-                databaseManager, deleteOnTrimDataEvent);
+                databaseManager, fullTextOperationDataEvent);
         this.txQueryExecutionHelper = new JdbcQueryExecutionHelper<>(databaseManager.getDataSource(), (rs) -> transactionRowMapper.map(rs, null));
     }
 

@@ -1,5 +1,5 @@
 /*
- * Copyright (c)  2018-2019. Apollo Foundation.
+ * Copyright (c)  2018-2021. Apollo Foundation.
  */
 
 package com.apollocurrency.aplwallet.apl.core.dao.state.publickey;
@@ -10,7 +10,7 @@ import com.apollocurrency.aplwallet.apl.core.dao.state.derived.EntityDbTableInte
 import com.apollocurrency.aplwallet.apl.core.dao.state.keyfactory.DbKey;
 import com.apollocurrency.aplwallet.apl.core.entity.state.account.PublicKey;
 import com.apollocurrency.aplwallet.apl.core.db.DatabaseManager;
-import com.apollocurrency.aplwallet.apl.core.shard.observer.DeleteOnTrimData;
+import com.apollocurrency.aplwallet.apl.core.service.fulltext.FullTextOperationData;
 import com.apollocurrency.aplwallet.apl.util.cache.InMemoryCacheManager;
 import com.apollocurrency.aplwallet.apl.util.injectable.PropertiesHolder;
 import com.apollocurrency.aplwallet.apl.util.service.TaskDispatchManager;
@@ -46,11 +46,11 @@ public class PublicKeyTableProducer {
                                   InMemoryCacheManager cacheManager,
                                   TaskDispatchManager taskManager,
                                   DatabaseManager databaseManager,
-                                  Event<DeleteOnTrimData> deleteOnTrimDataEvent) {
+                                  Event<FullTextOperationData> fullTextOperationDataEvent) {
         this.cacheManager = Objects.requireNonNull(cacheManager, "Cache manager is NULL");
         Objects.requireNonNull(databaseManager);
-        this.publicKeyTable = new PublicKeyTable(databaseManager, deleteOnTrimDataEvent);
-        this.genesisPublicKeyTable = new GenesisPublicKeyTable(databaseManager, deleteOnTrimDataEvent);
+        this.publicKeyTable = new PublicKeyTable(databaseManager, fullTextOperationDataEvent);
+        this.genesisPublicKeyTable = new GenesisPublicKeyTable(databaseManager, fullTextOperationDataEvent);
         this.taskManager = taskManager;
         this.cacheEnabled = propertiesHolder.getBooleanProperty("apl.enablePublicKeyCache");
     }
