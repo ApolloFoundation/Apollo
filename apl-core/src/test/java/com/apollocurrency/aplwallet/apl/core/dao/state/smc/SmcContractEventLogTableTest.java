@@ -96,7 +96,7 @@ class SmcContractEventLogTableTest extends DbContainerBaseTest {
     @BeforeEach
     void setUp() {
 
-        table = new SmcContractEventLogTable(propertiesHolder, dbExtension.getDatabaseManager());
+        table = new SmcContractEventLogTable(propertiesHolder, dbExtension.getDatabaseManager(), null);
 
         mapper = new SmcContractEventLogRowMapper();
     }

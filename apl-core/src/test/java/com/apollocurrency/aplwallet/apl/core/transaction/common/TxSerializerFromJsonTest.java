@@ -120,10 +120,12 @@ class TxSerializerFromJsonTest {
         assertNotNull(jsonLegacy);
         //assertEquals(txId, txFromJson.getId());
         for (Object key : jsonLegacy.keySet()) {
-            String strKey = (String) key;
             Object value = jsonObject.get(key);
-            log.info("key={} typeExpected={}, typeActual={}", key, value != null ? value.getClass().getSimpleName() : "null", jsonLegacy.get(key).getClass().getSimpleName());
-            assertEquals(String.valueOf(value), String.valueOf(jsonLegacy.get(key)));
+            Object legacyValue = jsonLegacy.get(key);
+            log.info("key={} typeExpected={}, typeActual={}"
+                , key, value != null ? value.getClass().getSimpleName() : "null"
+                , legacyValue != null ? jsonLegacy.get(key).getClass().getSimpleName() : "null");
+            assertEquals(String.valueOf(value), String.valueOf(legacyValue));
         }
     }
 }

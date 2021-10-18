@@ -66,6 +66,7 @@ public class TransactionJsonSerializerImpl implements TransactionJsonSerializer 
         json.put("id", Long.toUnsignedString(transaction.getId()));
         TransactionType type = transaction.getType();
         TransactionTypes.TransactionTypeSpec spec = type.getSpec();
+        json.put("errorMessage", null);
         json.put("type", spec.getType());
         json.put("subtype", spec.getSubtype());
         json.put("timestamp", transaction.getTimestamp());
