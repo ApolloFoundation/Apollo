@@ -19,7 +19,6 @@ import com.apollocurrency.aplwallet.apl.core.service.state.smc.impl.SmcContractS
 import com.apollocurrency.aplwallet.apl.core.signature.Signature;
 import com.apollocurrency.aplwallet.apl.core.transaction.messages.SmcPublishContractAttachment;
 import com.apollocurrency.aplwallet.apl.core.utils.CollectionUtil;
-import com.apollocurrency.aplwallet.apl.crypto.Convert;
 import com.apollocurrency.aplwallet.apl.smc.model.AplAddress;
 import com.apollocurrency.aplwallet.apl.util.Convert2;
 import com.apollocurrency.smc.contract.AddressNotFoundException;
@@ -90,12 +89,9 @@ class SmcContractServiceTest {
 
     SmcPublishContractAttachment smcPublishContractAttachment;
     SmcTxData smcTxData;
-    AplAddress contractAddress;
     SmartContract smartContract;
     SmcContractEntity smcContractEntity;
     SmcContractStateEntity smcContractStateEntity;
-    AplAddress senderAddress;
-    AplAddress recipientAddress;
 
     SmcContractService contractService;
     SmartSource smartSource;
@@ -125,10 +121,6 @@ class SmcContractServiceTest {
             .secret("1")
             .build();
 
-        contractAddress = new AplAddress(Convert.parseAccountId(smcTxData.getAddress()));
-        senderAddress = new AplAddress(Convert.parseAccountId(smcTxData.getSender()));
-        recipientAddress = new AplAddress(Convert.parseAccountId(smcTxData.getRecipient()));
-
         smcPublishContractAttachment = SmcPublishContractAttachment.builder()
             .contractName(smcTxData.getName())
             .contractSource(smcTxData.getSource())
@@ -150,14 +142,15 @@ class SmcContractServiceTest {
         src.setParsedSourceCode(smcPublishContractAttachment.getContractSource());
 
         smartContract = SmartContract.builder()
-            .address(contractAddress)
-            .owner(senderAddress)
-            .sender(senderAddress)
+            .address(smcTxData.getContractAddress())
+            .owner(smcTxData.getSenderAddress())
+            .originator(smcTxData.getSenderAddress())
+            .caller(smcTxData.getSenderAddress())
             .txId(new AplAddress(TX_ID))
             .args(smcPublishContractAttachment.getConstructorParams())
             .code(src)
             .status(ContractStatus.CREATED)
-            .fuel(new ContractFuel(contractAddress, smcPublishContractAttachment.getFuelLimit(), smcPublishContractAttachment.getFuelPrice()))
+            .fuel(new ContractFuel(smcTxData.getSenderAddress(), smcPublishContractAttachment.getFuelLimit(), smcPublishContractAttachment.getFuelPrice()))
             .build();
 
         smcContractEntity = contractModelToEntityConverter.convert(smartContract);
@@ -181,16 +174,16 @@ class SmcContractServiceTest {
     @Test
     void loadContract() {
         //GIVEN
-        Fuel fuel = new ContractFuel(contractAddress, smcTxData.getFuelLimit(), smcTxData.getFuelPrice());
-        when(smcContractTable.get(SmcContractTable.KEY_FACTORY.newKey(recipientAddress.getLongId()))).thenReturn(smcContractEntity);
-        when(smcContractStateTable.get(SmcContractStateTable.KEY_FACTORY.newKey(recipientAddress.getLongId()))).thenReturn(smcContractStateEntity);
+        Fuel fuel = new ContractFuel(smcTxData.getSenderAddress(), smcTxData.getFuelLimit(), smcTxData.getFuelPrice());
+        when(smcContractTable.get(SmcContractTable.KEY_FACTORY.newKey(smcTxData.getRecipientAddress().getLongId()))).thenReturn(smcContractEntity);
+        when(smcContractStateTable.get(SmcContractStateTable.KEY_FACTORY.newKey(smcTxData.getRecipientAddress().getLongId()))).thenReturn(smcContractStateEntity);
 
         //WHEN
-        SmartContract loadContract = contractService.loadContract(contractAddress, fuel);
+        SmartContract loaded = contractService.loadContract(smcTxData.getContractAddress(), smcTxData.getSenderAddress(), fuel);
         //THEN
-        assertEquals(smartContract.getAddress(), loadContract.getAddress());
-        assertEquals(smartContract.getCode(), loadContract.getCode());
-        assertEquals(smartContract, loadContract);
+        assertEquals(smartContract.getAddress(), loaded.getAddress());
+        assertEquals(smartContract.getCode(), loaded.getCode());
+        assertEquals(smartContract, loaded);
     }
 
     @Test
@@ -212,10 +205,10 @@ class SmcContractServiceTest {
         //GIVEN
         String jsonObject = "{\"value\":6789}";
         smcContractStateEntity.setSerializedObject(jsonObject);
-        when(smcContractStateTable.get(SmcContractStateTable.KEY_FACTORY.newKey(recipientAddress.getLongId()))).thenReturn(smcContractStateEntity);
+        when(smcContractStateTable.get(SmcContractStateTable.KEY_FACTORY.newKey(smcTxData.getRecipientAddress().getLongId()))).thenReturn(smcContractStateEntity);
 
         //WHEN
-        String serializedObject = contractService.loadSerializedContract(contractAddress);
+        String serializedObject = contractService.loadSerializedContract(smcTxData.getContractAddress());
         //THEN
         assertEquals(jsonObject, serializedObject);
     }
@@ -239,10 +232,9 @@ class SmcContractServiceTest {
         //GIVEN
         Transaction smcTransaction = mock(Transaction.class);
         when(smcTransaction.getAttachment()).thenReturn(smcPublishContractAttachment);
-        when(smcTransaction.getRecipientId()).thenReturn(recipientAddress.getLongId());
-        when(smcTransaction.getSenderId()).thenReturn(senderAddress.getLongId());
+        when(smcTransaction.getRecipientId()).thenReturn(smcTxData.getRecipientAddress().getLongId());
+        when(smcTransaction.getSenderId()).thenReturn(smcTxData.getSenderAddress().getLongId());
         when(smcTransaction.getId()).thenReturn(TX_ID);
-        //when(preprocessor.parseContractType(smcPublishContractAttachment.getContractSource())).thenReturn(new ContractSpec.Item("newName", "Contract"));
         when(preprocessor.process(any())).thenReturn(smartSource);
         //WHEN
         SmartContract newContract = contractService.createNewContract(smcTransaction);
@@ -255,11 +247,11 @@ class SmcContractServiceTest {
         //GIVEN
         Transaction smcTransaction = mock(Transaction.class);
         when(smcTransaction.getAttachment()).thenReturn(smcPublishContractAttachment);
-        when(smcTransaction.getRecipientId()).thenReturn(recipientAddress.getLongId());
+        when(smcTransaction.getRecipientId()).thenReturn(smcTxData.getRecipientAddress().getLongId());
         when(smcTransaction.getSignature()).thenReturn(mock(Signature.class));
         when(smcTransaction.getBlockTimestamp()).thenReturn(1234567890);
-        when(smcContractTable.get(SmcContractTable.KEY_FACTORY.newKey(recipientAddress.getLongId()))).thenReturn(smcContractEntity);
-        when(smcContractStateTable.get(SmcContractStateTable.KEY_FACTORY.newKey(recipientAddress.getLongId()))).thenReturn(smcContractStateEntity);
+        when(smcContractTable.get(SmcContractTable.KEY_FACTORY.newKey(smcTxData.getRecipientAddress().getLongId()))).thenReturn(smcContractEntity);
+        when(smcContractStateTable.get(SmcContractStateTable.KEY_FACTORY.newKey(smcTxData.getRecipientAddress().getLongId()))).thenReturn(smcContractStateEntity);
         when(blockchain.getTransaction(TX_ID)).thenReturn(smcTransaction);
         //WHEN
         var response = contractService.getContractDetailsByTransaction(new AplAddress(TX_ID));
@@ -277,15 +269,15 @@ class SmcContractServiceTest {
             .thenReturn(CollectionUtil.toDbIterator(List.of(smcContractEntity)));
         Transaction smcTransaction = mock(Transaction.class);
         when(smcTransaction.getAttachment()).thenReturn(smcPublishContractAttachment);
-        when(smcTransaction.getRecipientId()).thenReturn(recipientAddress.getLongId());
+        when(smcTransaction.getRecipientId()).thenReturn(smcTxData.getRecipientAddress().getLongId());
         when(smcTransaction.getSignature()).thenReturn(mock(Signature.class));
         when(smcTransaction.getBlockTimestamp()).thenReturn(1234567890);
-        when(smcContractTable.get(SmcContractTable.KEY_FACTORY.newKey(recipientAddress.getLongId()))).thenReturn(smcContractEntity);
-        when(smcContractStateTable.get(SmcContractStateTable.KEY_FACTORY.newKey(recipientAddress.getLongId()))).thenReturn(smcContractStateEntity);
+        when(smcContractTable.get(SmcContractTable.KEY_FACTORY.newKey(smcTxData.getRecipientAddress().getLongId()))).thenReturn(smcContractEntity);
+        when(smcContractStateTable.get(SmcContractStateTable.KEY_FACTORY.newKey(smcTxData.getRecipientAddress().getLongId()))).thenReturn(smcContractStateEntity);
         when(blockchain.getTransaction(TX_ID)).thenReturn(smcTransaction);
 
         //WHEN
-        var loadedContracts = contractService.loadContractsByOwner(senderAddress, 0, Integer.MAX_VALUE);
+        var loadedContracts = contractService.loadContractsByOwner(smcTxData.getSenderAddress(), 0, Integer.MAX_VALUE);
         //THEN
         assertEquals(1, loadedContracts.size());
         assertEquals(convertToRS(smartContract.getAddress()), loadedContracts.get(0).getAddress());

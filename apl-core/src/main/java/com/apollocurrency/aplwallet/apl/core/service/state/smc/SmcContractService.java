@@ -35,10 +35,11 @@ public interface SmcContractService {
      * Load the saved contract by the given address or null if the given address doesn't correspond the smart contract
      *
      * @param address      given contract address
+     * @param originator   the origin transaction sender
      * @param contractFuel given fuel to execute method calling
      * @return loaded smart contract or null
      */
-    SmartContract loadContract(Address address, Fuel contractFuel);
+    SmartContract loadContract(Address address, Address originator, Fuel contractFuel);
 
     /**
      * Load the contract specification by given contract address

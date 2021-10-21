@@ -61,10 +61,10 @@ class SmcPublishContractTransactionTypeApplyTest extends AbstractSmcTransactionT
         SmcTxData txData = SmcTxData.builder()
             .sender("APL-X5JH-TJKJ-DVGC-5T2V8")
             .name("TestC")
-            .source("class TestC {}")
+            .source("class TestC extends Contract {}")
             .params(List.of("123"))
             .amountATM(10_00000000L)
-            .fuelLimit(20_000_000L)
+            .fuelLimit(50_000_000L)
             .fuelPrice(10_000L)
             .secret("1")
             .build();
@@ -73,7 +73,7 @@ class SmcPublishContractTransactionTypeApplyTest extends AbstractSmcTransactionT
             .contractName(txData.getName())
             .contractSource(txData.getSource())
             .constructorParams(String.join(",", txData.getParams()))
-            .languageName("javascript")
+            .languageName("js")
             .fuelLimit(BigInteger.valueOf(txData.getFuelLimit()))
             .fuelPrice(BigInteger.valueOf(txData.getFuelPrice()))
             .build();
@@ -98,6 +98,7 @@ class SmcPublishContractTransactionTypeApplyTest extends AbstractSmcTransactionT
         AplAddress contractAddress = new AplAddress(newTx.getRecipientId());
         SmartContract smartContract = contractService.loadContract(
             contractAddress,
+            new AplAddress(newTx.getSenderId()),
             new ContractFuel(contractAddress, attachment.getFuelLimit(), attachment.getFuelPrice())
         );
 
@@ -120,7 +121,7 @@ class SmcPublishContractTransactionTypeApplyTest extends AbstractSmcTransactionT
             .source(contractSource)
             .params(List.of("1400000000", "\"" + new AplAddress(senderAccountId2).getHex() + "\""))
             .amountATM(10_00000000L)
-            .fuelLimit(50_000_000L)
+            .fuelLimit(60_000_000L)
             .fuelPrice(100L)
             .secret("1")
             .build();
@@ -129,7 +130,7 @@ class SmcPublishContractTransactionTypeApplyTest extends AbstractSmcTransactionT
             .contractName(txData1.getName())
             .contractSource(txData1.getSource())
             .constructorParams(String.join(",", txData1.getParams()))
-            .languageName("javascript")
+            .languageName("js")
             .fuelLimit(BigInteger.valueOf(txData1.getFuelLimit()))
             .fuelPrice(BigInteger.valueOf(txData1.getFuelPrice()))
             .build();
@@ -154,6 +155,7 @@ class SmcPublishContractTransactionTypeApplyTest extends AbstractSmcTransactionT
         AplAddress contractAddress = new AplAddress(newTx.getRecipientId());
         SmartContract smartContract = contractService.loadContract(
             contractAddress,
+            new AplAddress(newTx.getSenderId()),
             new ContractFuel(contractAddress, attachment.getFuelLimit(), attachment.getFuelPrice())
         );
 
@@ -201,6 +203,7 @@ class SmcPublishContractTransactionTypeApplyTest extends AbstractSmcTransactionT
         AplAddress contractAddress2 = new AplAddress(newTx2.getRecipientId());
         SmartContract smartContract2 = contractService.loadContract(
             contractAddress,
+            new AplAddress(newTx2.getSenderId()),
             new ContractFuel(contractAddress2, attachment2.getFuelLimit(), attachment2.getFuelPrice())
         );
 
@@ -244,6 +247,7 @@ class SmcPublishContractTransactionTypeApplyTest extends AbstractSmcTransactionT
         AplAddress contractAddress3 = new AplAddress(newTx3.getRecipientId());
         SmartContract smartContract3 = contractService.loadContract(
             contractAddress3,
+            new AplAddress(newTx3.getSenderId()),
             new ContractFuel(contractAddress3, attachment3.getFuelLimit(), attachment3.getFuelPrice())
         );
 

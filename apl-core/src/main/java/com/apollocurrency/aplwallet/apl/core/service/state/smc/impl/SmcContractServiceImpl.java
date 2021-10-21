@@ -112,16 +112,17 @@ public class SmcContractServiceImpl implements SmcContractService {
      * Load the saved contract by the given address or null if the given address doesn't correspond the smart contract
      * The loaded smart contract instance hase an undefined fuel value.
      *
-     * @param address given contract address
+     * @param address    given contract address
+     * @param originator the origin transaction sender
      * @return loaded smart contract or throw {@link com.apollocurrency.smc.contract.AddressNotFoundException}
      */
     @Override
     @Transactional(readOnly = true)
-    public SmartContract loadContract(Address address, Fuel contractFuel) {
+    public SmartContract loadContract(Address address, Address originator, Fuel contractFuel) {
         SmcContractEntity smcEntity = loadContractEntity(address);
         SmcContractStateEntity smcStateEntity = loadContractStateEntity(address);
 
-        SmartContract contract = convert(smcEntity, smcStateEntity, contractFuel);
+        SmartContract contract = convert(smcEntity, smcStateEntity, originator, contractFuel);
         log.debug("Loaded contract={}", contract);
 
         return contract;
@@ -228,7 +229,7 @@ public class SmcContractServiceImpl implements SmcContractService {
         SmcPublishContractAttachment attachment = (SmcPublishContractAttachment) smcTransaction.getAttachment();
 
         final Address contractAddress = new AplAddress(smcTransaction.getRecipientId());
-        final Address sender = new AplAddress(smcTransaction.getSenderId());
+        final Address transactionSender = new AplAddress(smcTransaction.getSenderId());
         final Address txId = new AplAddress(smcTransaction.getId());
 
         final SmartSource smartSource = createSmartSource(attachment);
@@ -237,13 +238,14 @@ public class SmcContractServiceImpl implements SmcContractService {
 
         SmartContract contract = SmartContract.builder()
             .address(contractAddress)
-            .owner(sender)
-            .sender(sender)
+            .owner(transactionSender)
+            .originator(transactionSender)
+            .caller(transactionSender)
             .txId(txId)
             .args(attachment.getConstructorParams())
             .code(processedSrc)
             .status(ContractStatus.CREATED)
-            .fuel(new ContractFuel(contractAddress, attachment.getFuelLimit(), attachment.getFuelPrice()))
+            .fuel(new ContractFuel(transactionSender, attachment.getFuelLimit(), attachment.getFuelPrice()))
             .build();
 
         log.debug("Created contract={}", contract);
@@ -321,11 +323,12 @@ public class SmcContractServiceImpl implements SmcContractService {
         }
     }
 
-    public static SmartContract convert(SmcContractEntity entity, SmcContractStateEntity stateEntity, Fuel contractFuel) {
+    public static SmartContract convert(SmcContractEntity entity, SmcContractStateEntity stateEntity, Address originator, Fuel contractFuel) {
         return SmartContract.builder()
             .address(new AplAddress(entity.getAddress()))
             .owner(new AplAddress(entity.getOwner()))
-            .sender(new AplAddress(entity.getOwner()))
+            .originator(originator)
+            .caller(originator)
             .txId(new AplAddress(entity.getTransactionId()))
             .args(entity.getArgs())
             .code(ContractSource.builder()

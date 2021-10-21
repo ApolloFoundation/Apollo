@@ -4,6 +4,7 @@
 
 package com.apollocurrency.aplwallet.apl.core.transaction.types.smc;
 
+import com.apollocurrency.aplwallet.apl.core.app.GenesisAccounts;
 import com.apollocurrency.aplwallet.apl.core.chainid.BlockchainConfig;
 import com.apollocurrency.aplwallet.apl.core.config.DaoConfig;
 import com.apollocurrency.aplwallet.apl.core.config.NtpTimeConfig;
@@ -23,6 +24,7 @@ import com.apollocurrency.aplwallet.apl.core.dao.state.smc.SmcContractMappingTab
 import com.apollocurrency.aplwallet.apl.core.dao.state.smc.SmcContractStateTable;
 import com.apollocurrency.aplwallet.apl.core.dao.state.smc.SmcContractTable;
 import com.apollocurrency.aplwallet.apl.core.db.DatabaseManager;
+import com.apollocurrency.aplwallet.apl.core.db.JdbiConfiguration;
 import com.apollocurrency.aplwallet.apl.core.entity.state.account.Account;
 import com.apollocurrency.aplwallet.apl.core.model.Block;
 import com.apollocurrency.aplwallet.apl.core.model.CreateTransactionRequest;
@@ -57,9 +59,11 @@ import com.apollocurrency.aplwallet.apl.core.service.state.account.impl.AccountP
 import com.apollocurrency.aplwallet.apl.core.service.state.account.impl.AccountServiceImpl;
 import com.apollocurrency.aplwallet.apl.core.service.state.smc.SmcContractService;
 import com.apollocurrency.aplwallet.apl.core.service.state.smc.SmcFuelValidator;
+import com.apollocurrency.aplwallet.apl.core.service.state.smc.event.SmcContractEventManagerClassFactory;
 import com.apollocurrency.aplwallet.apl.core.service.state.smc.impl.SmcBlockchainIntegratorFactory;
 import com.apollocurrency.aplwallet.apl.core.service.state.smc.impl.SmcContractServiceImpl;
 import com.apollocurrency.aplwallet.apl.core.service.state.smc.impl.SmcContractStorageServiceImpl;
+import com.apollocurrency.aplwallet.apl.core.service.state.smc.txlog.SmcTxLogProcessor;
 import com.apollocurrency.aplwallet.apl.core.signature.MultiSigCredential;
 import com.apollocurrency.aplwallet.apl.core.transaction.CachedTransactionTypeFactory;
 import com.apollocurrency.aplwallet.apl.core.transaction.FeeCalculator;
@@ -79,13 +83,16 @@ import com.apollocurrency.aplwallet.apl.crypto.Crypto;
 import com.apollocurrency.aplwallet.apl.data.BlockTestData;
 import com.apollocurrency.aplwallet.apl.data.TransactionTestData;
 import com.apollocurrency.aplwallet.apl.extension.DbExtension;
+import com.apollocurrency.aplwallet.apl.smc.service.mapping.SmcMappingRepositoryClassFactory;
 import com.apollocurrency.aplwallet.apl.util.Convert2;
 import com.apollocurrency.aplwallet.apl.util.NtpTime;
 import com.apollocurrency.aplwallet.apl.util.cache.InMemoryCacheManager;
+import com.apollocurrency.aplwallet.apl.util.cdi.transaction.JdbiHandleFactory;
 import com.apollocurrency.aplwallet.apl.util.env.config.Chain;
 import com.apollocurrency.aplwallet.apl.util.injectable.PropertiesHolder;
 import com.apollocurrency.aplwallet.apl.util.service.TaskDispatchManager;
 import com.apollocurrency.smc.contract.fuel.FuelValidator;
+import com.apollocurrency.smc.txlog.TxLogProcessor;
 import org.jboss.weld.junit.MockBean;
 import org.jboss.weld.junit5.EnableWeld;
 import org.jboss.weld.junit5.WeldInitiator;
@@ -135,21 +142,22 @@ abstract class AbstractSmcTransactionTypeApplyTest extends DbContainerBaseTest {
 
     @WeldSetup
     WeldInitiator weldInitiator = WeldInitiator.from(
-        GlobalSyncImpl.class, DaoConfig.class,
-            AccountGuaranteedBalanceTable.class, PublicKeyTableProducer.class,
+            GlobalSyncImpl.class, DaoConfig.class, JdbiHandleFactory.class, JdbiConfiguration.class,
+            AccountGuaranteedBalanceTable.class, PublicKeyTableProducer.class, GenesisAccounts.class,
             AccountServiceImpl.class, BlockChainInfoServiceImpl.class, AccountPublicKeyServiceImpl.class,
             FullTextConfigImpl.class, DerivedDbTablesRegistryImpl.class, PropertiesHolder.class,
             DefaultBlockValidator.class, ReferencedTransactionService.class,
             PublicKeyAnnouncementAppendixApplier.class, AppendixApplierRegistry.class,
-        AppendixValidatorRegistry.class, NtpTime.class,
-        //TransactionRowMapper.class, TxReceiptRowMapper.class, PrunableTxRowMapper.class,
-        ReferencedTransactionDaoImpl.class, TransactionSignerImpl.class,
-        TransactionValidator.class, TransactionApplier.class,
-        SmcConfig.class, SmcBlockchainIntegratorFactory.class,
-        SmcContractTable.class, SmcContractStateTable.class, SmcContractMappingTable.class,
-        ContractModelToEntityConverter.class, ContractModelToStateEntityConverter.class,
-        SmcContractServiceImpl.class, SmcContractStorageServiceImpl.class
-    )
+            AppendixValidatorRegistry.class, NtpTime.class,
+            ReferencedTransactionDaoImpl.class, TransactionSignerImpl.class,
+            TransactionValidator.class, TransactionApplier.class,
+            SmcConfig.class, SmcBlockchainIntegratorFactory.class,
+            SmcContractTable.class, SmcContractStateTable.class, SmcContractMappingTable.class,
+            ContractModelToEntityConverter.class, ContractModelToStateEntityConverter.class,
+            SmcContractServiceImpl.class, SmcContractStorageServiceImpl.class,
+            SmcMappingRepositoryClassFactory.class, SmcContractEventManagerClassFactory.class
+
+        )
         .addBeans(MockBean.of(extension.getDatabaseManager(), DatabaseManager.class))
         //.addBeans(MockBean.of(extension.getDatabaseManager().getJdbi(), Jdbi.class))
         //.addBeans(MockBean.of(extension.getDatabaseManager().getJdbiHandleFactory(), JdbiHandleFactory.class))
@@ -173,6 +181,7 @@ abstract class AbstractSmcTransactionTypeApplyTest extends DbContainerBaseTest {
         .addBeans(MockBean.of(blockchain, Blockchain.class, BlockchainImpl.class))
         .addBeans(MockBean.of(mock(AccountControlPhasingService.class), AccountControlPhasingService.class, AccountControlPhasingServiceImpl.class))
         .addBeans(MockBean.of(calculator, FeeCalculator.class))
+        .addBeans(MockBean.of(mock(SmcTxLogProcessor.class), TxLogProcessor.class))
         .build();
 
     @Inject

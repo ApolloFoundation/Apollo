@@ -69,7 +69,7 @@ public class SmcTxLogProcessor implements TxLogProcessor {
             var recipient = accountService.getAccount(data.getRecipient());
             accountService.addToBalanceAndUnconfirmedBalanceATM(sender, data.getEvent(), data.getTransaction(), -data.getValue());
             accountService.addToBalanceAndUnconfirmedBalanceATM(recipient, data.getEvent(), data.getTransaction(), data.getValue());
-            log.debug("Apply the transferring command, contract={} sender={} recipient={} amount={}", header.getContract(), data.getSender(), data.getRecipient(), data.getValue());
+            log.debug("Apply the transferring command, contract={} sender={} recipient={} amount={}", data.getContract(), data.getSender(), data.getRecipient(), data.getValue());
         };
     }
 
@@ -78,7 +78,7 @@ public class SmcTxLogProcessor implements TxLogProcessor {
             final AplContractEvent event = data.getEvent();
             contractEventService.saveEvent(event);
             contractEventService.fireCdiEvent(event);
-            log.debug("Apply the firing event command, contract={} event={}", header.getContract(), event);
+            log.debug("Apply the firing event command, contract={} event={}", event.getContract(), event);
         };
     }
 

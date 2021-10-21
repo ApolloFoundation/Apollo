@@ -97,13 +97,14 @@ public class SmcCallMethodTransactionType extends AbstractSmcTransactionType {
         log.debug("SMC: doStateDependentValidation = ...");
         Address address = new AplAddress(transaction.getRecipientId());
         SmcCallMethodAttachment attachment = (SmcCallMethodAttachment) transaction.getAttachment();
+        final AplAddress transactionSender = new AplAddress(transaction.getSenderId());
         SmartContract smartContract;
         try {
             smartContract = contractService.loadContract(
                 address,
+                transactionSender,
                 new ContractFuel(address, attachment.getFuelLimit(), attachment.getFuelPrice())
             );
-            smartContract.setSender(new AplAddress(transaction.getSenderId()));
         } catch (AddressNotFoundException e) {
             throw new AplAcceptableTransactionValidationException("Contract doesn't exist at address " + address, transaction);
         }
@@ -165,33 +166,30 @@ public class SmcCallMethodTransactionType extends AbstractSmcTransactionType {
         log.debug("SMC: applyAttachment: call method. ");
         SmcCallMethodAttachment attachment = (SmcCallMethodAttachment) transaction.getAttachment();
         Address address = new AplAddress(transaction.getRecipientId());
-
+        final AplAddress transactionSender = new AplAddress(transaction.getSenderId());
         SmartContract smartContract = contractService.loadContract(
             address,
+            transactionSender,
             new ContractFuel(address, attachment.getFuelLimit(), attachment.getFuelPrice())
         );
-        smartContract.setSender(new AplAddress(transaction.getSenderId()));
         SmartMethod smartMethod = SmartMethod.builder()
             .name(attachment.getMethodName())
             .args(attachment.getMethodParams())
             .value(BigInteger.valueOf(transaction.getAmountATM()))
             .build();
         log.debug("Before processing Address={} Fuel={}", smartContract.getAddress(), smartContract.getFuel());
-        var context = SmcConfig.asContext(
-            integratorFactory.createProcessor(transaction,
-                smartContract.getAddress(), attachment, senderAccount, recipientAccount, getLedgerEvent())
+        var context = SmcConfig.asContext(integratorFactory.createProcessor(transaction, attachment,
+            senderAccount, recipientAccount, getLedgerEvent())
         );
 
-        SmcContractTxProcessor processor = new CallMethodTxProcessor(smartContract, smartMethod, context);
-
-        executeContract(transaction, senderAccount, smartContract, processor);
+        executeContract(transaction, senderAccount, smartContract, new CallMethodTxProcessor(smartContract, smartMethod, context));
 
         //update contract and contract state
         contractService.updateContractState(smartContract);
-        log.info("Called method {} on contract={}, txId={}, fuel={}, amountATM={}, sender={}",
+        log.info("Called method {} on contract={}, txId={}, fuel={}, amountATM={}, tx.sender={}",
             smartMethod.getMethodWithParams(),
             smartContract.getAddress(), Long.toUnsignedString(transaction.getId()),
-            smartContract.getFuel(), transaction.getAmountATM(), smartContract.getSender());
+            smartContract.getFuel(), transaction.getAmountATM(), transactionSender);
     }
 
     private Fee.FuelBasedFee getFuelBasedFee(Transaction transaction) {

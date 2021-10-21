@@ -136,13 +136,11 @@ public class SmcPublishContractTransactionType extends AbstractSmcTransactionTyp
         log.debug("SMC: applyAttachment: publish smart contract and call constructor.");
         SmartContract smartContract = contractService.createNewContract(transaction);
         SmcPublishContractAttachment attachment = (SmcPublishContractAttachment) transaction.getAttachment();
-        var context = SmcConfig.asContext(
-            integratorFactory.createProcessor(transaction,
-                smartContract.getAddress(), attachment, senderAccount, recipientAccount, getLedgerEvent()));
+        var context = SmcConfig.asContext(integratorFactory.createProcessor(transaction, attachment,
+            senderAccount, recipientAccount, getLedgerEvent()));
         log.debug("Before processing Address={} Fuel={}", smartContract.getAddress(), smartContract.getFuel());
-        SmcContractTxProcessor processor = new PublishContractTxProcessor(smartContract, context);
 
-        executeContract(transaction, senderAccount, smartContract, processor);
+        executeContract(transaction, senderAccount, smartContract, new PublishContractTxProcessor(smartContract, context));
 
         //save contract and contract state
         contractService.saveContract(smartContract);

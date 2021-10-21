@@ -5,6 +5,7 @@
 package com.apollocurrency.aplwallet.apl.core.service.state.smc.txlog;
 
 import com.apollocurrency.aplwallet.apl.core.entity.state.account.LedgerEvent;
+import com.apollocurrency.smc.data.type.Address;
 import com.apollocurrency.smc.txlog.Record;
 import lombok.Builder;
 import lombok.EqualsAndHashCode;
@@ -19,6 +20,7 @@ import lombok.ToString;
 @ToString
 @EqualsAndHashCode
 public class TransferRecord implements Record {
+    private final Address contract;
     private final long sender;
     private final long recipient;
     private final long value;

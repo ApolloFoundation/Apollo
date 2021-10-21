@@ -455,10 +455,11 @@ public class SmcApiServiceImpl implements SmcApiService {
     private List<ResultValue> processAllMethods(Address contractAddress, List<ContractMethod> members, ExecutionLog executionLog) {
         SmartContract smartContract = contractService.loadContract(
             contractAddress,
+            contractAddress,
             new ContractFuel(contractAddress, BigInteger.ZERO, BigInteger.ONE)
         );
         var methods = methodMapper.convert(members);
-        var context = SmcConfig.asContext(integratorFactory.createReadonlyProcessor(contractAddress));
+        var context = SmcConfig.asContext(integratorFactory.createReadonlyProcessor());
 
         SmcContractTxBatchProcessor processor = new CallViewMethodTxProcessor(smartContract, methods, context);
 
@@ -485,12 +486,13 @@ public class SmcApiServiceImpl implements SmcApiService {
         SmcCallMethodAttachment attachment = (SmcCallMethodAttachment) transaction.getAttachment();
         SmartContract smartContract;
         AplAddress contractAddress = new AplAddress(transaction.getRecipientId());
+        final AplAddress transactionSender = new AplAddress(transaction.getSenderId());
         try {
             smartContract = contractService.loadContract(
                 contractAddress,
+                transactionSender,
                 new ContractFuel(contractAddress, attachment.getFuelLimit(), attachment.getFuelPrice())
             );
-            smartContract.setSender(new AplAddress(transaction.getSenderId()));
         } catch (AddressNotFoundException e) {
             return ResponseBuilderV2.apiError(ApiErrors.CONTRACT_NOT_FOUND, contractAddress.getHex(), body.getSender()).build();
         }
