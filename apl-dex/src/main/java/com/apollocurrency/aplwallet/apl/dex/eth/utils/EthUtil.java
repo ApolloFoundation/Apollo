@@ -52,6 +52,10 @@ public class EthUtil {
         return convertToWei(gwei, EthUnit.GWEI);
     }
 
+    public static BigDecimal weiToGwei(BigDecimal wei) {
+        return Convert.fromWei(wei, Convert.Unit.GWEI);
+    }
+
     public static BigDecimal gweiToEth(Long gwei) {
         return weiToEther(gweiToWei(gwei));
     }
