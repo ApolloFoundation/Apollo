@@ -51,6 +51,7 @@ public class DexEthService {
                 ethGasInfo = ethGasStationInfoService.getEthPriceInfo();
 
                 if (ethGasInfo != null) {
+                    log.info("Received new gas price info from ETH Gas Station {}", ethGasInfo);
                     return ethGasInfo;
                 }
             } catch (Exception e) {
@@ -60,6 +61,7 @@ public class DexEthService {
                 ethGasInfo = ethGasStationInfoService.getEthChainPriceInfo();
 
                 if (ethGasInfo != null) {
+                    log.info("Received new gas price info from Etherchain {}", ethGasInfo);
                     return ethGasInfo;
                 }
             } catch (Exception e) {
