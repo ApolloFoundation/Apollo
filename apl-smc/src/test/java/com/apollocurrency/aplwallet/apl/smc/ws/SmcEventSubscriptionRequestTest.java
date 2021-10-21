@@ -36,7 +36,7 @@ class SmcEventSubscriptionRequestTest {
                 .subscriptionId("0x01")
                 .name("Transfer")
                 .signature("0x1234567890")
-                .fromBlock("0")
+                .fromBlock(0)
                 .build()))
             .build();
         //WHEN

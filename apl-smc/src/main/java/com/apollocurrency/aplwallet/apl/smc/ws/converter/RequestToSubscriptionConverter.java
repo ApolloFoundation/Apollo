@@ -24,7 +24,7 @@ public class RequestToSubscriptionConverter implements Converter<SmcEventSubscri
             .requestId(model.getRequestId())
             .name(event.getName())
             .filter(event.getFilter() == null ? new TrueTerm() : event.getFilter())
-            .fromBlock(Long.parseUnsignedLong(event.getFromBlock()))
+            .fromBlock(event.getFromBlock() == null ? 0 : event.getFromBlock())
             .signature(event.getSignature())
             .subscriptionId(event.getSubscriptionId())
             .build();

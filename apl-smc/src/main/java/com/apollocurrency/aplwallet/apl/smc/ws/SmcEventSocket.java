@@ -63,11 +63,15 @@ public class SmcEventSocket extends WebSocketAdapter {
         } else {
             try {
                 var request = deserializeMessage(message);
-                if (request.getEvents().isEmpty()) {
-                    sendWebSocketText(serializeMessage(SmcErrorReceipt.error(request.getRequestId(),
-                        SmcEventServerErrors.INVALID_REQUEST_ARGUMENTS)));
+                if (request.getEvents() != null) {
+                    if (request.getEvents().isEmpty()) {
+                        sendWebSocketText(serializeMessage(SmcErrorReceipt.error(request.getRequestId(),
+                            SmcEventServerErrors.INVALID_REQUEST_ARGUMENTS)));
+                    } else {
+                        listener.onMessage(this, request);
+                    }
                 } else {
-                    listener.onMessage(this, request);
+                    sendWebSocketText(INVALID_REQUEST_FORMAT_RESPONSE);
                 }
             } catch (JsonProcessingException e) {
                 sendWebSocketText(INVALID_REQUEST_FORMAT_RESPONSE);
