@@ -18,13 +18,11 @@ import javax.inject.Singleton;
 
 @Singleton
 public class UnconfirmedTransactionCreator {
-    private final BlockchainConfig blockchainConfig;
     private final TimeService timeService;
     private final TxBContext txBContext;
 
     @Inject
     public UnconfirmedTransactionCreator(BlockchainConfig blockchainConfig, TimeService timeService) {
-        this.blockchainConfig = blockchainConfig;
         this.timeService = timeService;
         this.txBContext = TxBContext.newInstance(blockchainConfig.getChain());
     }

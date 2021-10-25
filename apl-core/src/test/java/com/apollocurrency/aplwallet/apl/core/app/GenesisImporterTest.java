@@ -1,12 +1,12 @@
 package com.apollocurrency.aplwallet.apl.core.app;
 
 import com.apollocurrency.aplwallet.api.dto.DurableTaskInfo;
-import com.apollocurrency.aplwallet.apl.core.model.Block;
-import com.apollocurrency.aplwallet.apl.core.service.blockchain.TransactionBuilderFactory;
 import com.apollocurrency.aplwallet.apl.core.chainid.BlockchainConfig;
 import com.apollocurrency.aplwallet.apl.core.chainid.BlockchainConfigUpdater;
 import com.apollocurrency.aplwallet.apl.core.chainid.HeightConfig;
 import com.apollocurrency.aplwallet.apl.core.config.DaoConfig;
+import com.apollocurrency.aplwallet.apl.core.config.JdbiConfiguration;
+import com.apollocurrency.aplwallet.apl.core.config.ResourceLocatorProducer;
 import com.apollocurrency.aplwallet.apl.core.converter.db.BlockEntityRowMapper;
 import com.apollocurrency.aplwallet.apl.core.converter.db.BlockEntityToModelConverter;
 import com.apollocurrency.aplwallet.apl.core.converter.db.BlockModelToEntityConverter;
@@ -26,25 +26,25 @@ import com.apollocurrency.aplwallet.apl.core.dao.state.account.AccountTableInter
 import com.apollocurrency.aplwallet.apl.core.dao.state.derived.DerivedTableData;
 import com.apollocurrency.aplwallet.apl.core.dao.state.publickey.PublicKeyTableProducer;
 import com.apollocurrency.aplwallet.apl.core.db.DatabaseManager;
-import com.apollocurrency.aplwallet.apl.core.db.JdbiConfiguration;
-import com.apollocurrency.aplwallet.apl.util.db.TransactionalDataSource;
 import com.apollocurrency.aplwallet.apl.core.entity.state.account.Account;
 import com.apollocurrency.aplwallet.apl.core.entity.state.account.AccountGuaranteedBalance;
+import com.apollocurrency.aplwallet.apl.core.model.Block;
 import com.apollocurrency.aplwallet.apl.core.service.appdata.TimeService;
 import com.apollocurrency.aplwallet.apl.core.service.blockchain.BlockchainImpl;
 import com.apollocurrency.aplwallet.apl.core.service.blockchain.GlobalSync;
 import com.apollocurrency.aplwallet.apl.core.service.blockchain.GlobalSyncImpl;
+import com.apollocurrency.aplwallet.apl.core.service.blockchain.TransactionBuilderFactory;
 import com.apollocurrency.aplwallet.apl.core.service.blockchain.TransactionServiceImpl;
 import com.apollocurrency.aplwallet.apl.core.service.fulltext.FullTextConfigImpl;
 import com.apollocurrency.aplwallet.apl.core.service.fulltext.FullTextSearchEngine;
 import com.apollocurrency.aplwallet.apl.core.service.fulltext.FullTextSearchService;
+import com.apollocurrency.aplwallet.apl.core.service.state.BlockChainInfoServiceImpl;
 import com.apollocurrency.aplwallet.apl.core.service.state.DerivedDbTablesRegistryImpl;
 import com.apollocurrency.aplwallet.apl.core.service.state.account.AccountPublicKeyService;
 import com.apollocurrency.aplwallet.apl.core.service.state.account.AccountService;
-import com.apollocurrency.aplwallet.apl.core.service.state.account.impl.TwoTablesPublicKeyDao;
 import com.apollocurrency.aplwallet.apl.core.service.state.account.impl.AccountPublicKeyServiceImpl;
 import com.apollocurrency.aplwallet.apl.core.service.state.account.impl.AccountServiceImpl;
-import com.apollocurrency.aplwallet.apl.core.service.state.BlockChainInfoServiceImpl;
+import com.apollocurrency.aplwallet.apl.core.service.state.account.impl.TwoTablesPublicKeyDao;
 import com.apollocurrency.aplwallet.apl.core.shard.BlockIndexService;
 import com.apollocurrency.aplwallet.apl.core.shard.BlockIndexServiceImpl;
 import com.apollocurrency.aplwallet.apl.core.shard.ShardDbExplorerImpl;
@@ -58,9 +58,9 @@ import com.apollocurrency.aplwallet.apl.extension.DbExtension;
 import com.apollocurrency.aplwallet.apl.extension.TemporaryFolderExtension;
 import com.apollocurrency.aplwallet.apl.util.cache.InMemoryCacheManager;
 import com.apollocurrency.aplwallet.apl.util.cdi.transaction.JdbiHandleFactory;
+import com.apollocurrency.aplwallet.apl.util.db.TransactionalDataSource;
 import com.apollocurrency.aplwallet.apl.util.env.config.Chain;
 import com.apollocurrency.aplwallet.apl.util.env.config.ResourceLocator;
-import com.apollocurrency.aplwallet.apl.util.env.config.UserResourceLocator;
 import com.apollocurrency.aplwallet.apl.util.env.dirprovider.ConfigDirProvider;
 import com.apollocurrency.aplwallet.apl.util.env.dirprovider.ConfigDirProviderFactory;
 import com.apollocurrency.aplwallet.apl.util.injectable.PropertiesHolder;
@@ -73,7 +73,6 @@ import org.jboss.weld.junit.MockBean;
 import org.jboss.weld.junit5.EnableWeld;
 import org.jboss.weld.junit5.WeldInitiator;
 import org.jboss.weld.junit5.WeldSetup;
-import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
@@ -81,7 +80,6 @@ import org.junit.jupiter.api.extension.RegisterExtension;
 import org.junit.jupiter.api.function.Executable;
 import org.mockito.Mockito;
 
-import javax.enterprise.context.ApplicationScoped;
 import javax.enterprise.event.Event;
 import javax.enterprise.inject.spi.Bean;
 import javax.inject.Inject;
@@ -135,7 +133,6 @@ class GenesisImporterTest extends DbContainerBaseTest {
     private AplAppStatus aplAppStatus = mock(AplAppStatus.class);
     private PropertiesHolder envConfig = new PropertiesHolder();
     TransactionTestData td = new TransactionTestData();
-    private ResourceLocator resourceLocator;
 
     {
         doReturn(config).when(blockchainConfig).getCurrentConfig();
@@ -144,25 +141,20 @@ class GenesisImporterTest extends DbContainerBaseTest {
 
     }
 
-    @BeforeAll
-    public static void beforeAll() {
-        ConfigDirProviderFactory.setup(false, "Apollo", 0, "", null);
-    }
 
     static Bean<?> createCfgdDirProviderBean() {
+        ConfigDirProviderFactory.setup(false, "Apollo", 0, "", null);
+        ConfigDirProvider instance = ConfigDirProviderFactory.getConfigDirProvider();
         return MockBean.builder()
             .types(ConfigDirProvider.class)
-            .scope(ApplicationScoped.class)
-            .creating(
-                ConfigDirProviderFactory.getConfigDirProvider()
-            )
+            .creating(instance)
             .build();
     }
 
     @WeldSetup
     public WeldInitiator weld = WeldInitiator.from(AccountGuaranteedBalanceTable.class, PublicKeyTableProducer.class,
         AccountServiceImpl.class, GenesisAccounts.class, BlockChainInfoServiceImpl.class, AccountPublicKeyServiceImpl.class,
-        FullTextConfigImpl.class, DerivedDbTablesRegistryImpl.class, PropertiesHolder.class,
+        FullTextConfigImpl.class, DerivedDbTablesRegistryImpl.class,
         ShardRecoveryDaoJdbcImpl.class, GenesisImporter.class,
         TransactionServiceImpl.class, ShardDbExplorerImpl.class,
         TransactionEntityRowMapper.class, TransactionEntityRowMapper.class, TxReceiptRowMapper.class, PrunableTxRowMapper.class,
@@ -175,7 +167,7 @@ class GenesisImporterTest extends DbContainerBaseTest {
         TransactionIndexDao.class,
         DaoConfig.class,
         ApplicationJsonFactory.class,
-        UserResourceLocator.class,JdbiHandleFactory.class, JdbiConfiguration.class
+        ResourceLocatorProducer.class, JdbiHandleFactory.class, JdbiConfiguration.class
     )
         .addBeans(MockBean.of(mock(TimeService.class), TimeService.class))
         .addBeans(MockBean.of(mock(InMemoryCacheManager.class), InMemoryCacheManager.class))
@@ -202,6 +194,9 @@ class GenesisImporterTest extends DbContainerBaseTest {
 //        extension.
 //    }
 
+    @Inject
+    ResourceLocator resourceLocator;
+
     @BeforeEach
     void setUp() {
         doReturn(3000000000000000000L).when(config).getMaxBalanceATM();
@@ -211,7 +206,6 @@ class GenesisImporterTest extends DbContainerBaseTest {
         propertiesHolder = new PropertiesHolder(
             getGenesisAccountTotalProperties("230730", "84832")
         );
-        resourceLocator = weld.select(ResourceLocator.class).get();
     }
 
     @SneakyThrows

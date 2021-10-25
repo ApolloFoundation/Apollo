@@ -21,7 +21,7 @@ import com.apollocurrency.aplwallet.apl.core.dao.blockchain.TransactionDaoImpl;
 import com.apollocurrency.aplwallet.apl.core.dao.state.derived.DerivedDbTable;
 import com.apollocurrency.aplwallet.apl.core.dao.state.derived.EntityDbTableTest;
 import com.apollocurrency.aplwallet.apl.core.db.DatabaseManager;
-import com.apollocurrency.aplwallet.apl.core.db.JdbiConfiguration;
+import com.apollocurrency.aplwallet.apl.core.config.JdbiConfiguration;
 import com.apollocurrency.aplwallet.apl.core.entity.state.derived.VersionedDerivedEntity;
 import com.apollocurrency.aplwallet.apl.core.entity.state.dgs.DGSPurchase;
 import com.apollocurrency.aplwallet.apl.core.service.appdata.TimeService;
@@ -126,11 +126,6 @@ public class DGSPurchaseTableTest extends EntityDbTableTest<DGSPurchase> {
     public void setUp() {
         dtd = new DGSTestData();
         super.setUp();
-    }
-
-    @Override
-    public Blockchain getBlockchain() {
-        return blockchain;
     }
 
     @Override

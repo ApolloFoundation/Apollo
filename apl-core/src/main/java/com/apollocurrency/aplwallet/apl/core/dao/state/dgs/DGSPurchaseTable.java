@@ -11,7 +11,7 @@ import com.apollocurrency.aplwallet.apl.core.dao.state.keyfactory.LongKey;
 import com.apollocurrency.aplwallet.apl.core.dao.state.keyfactory.LongKeyFactory;
 import com.apollocurrency.aplwallet.apl.core.entity.state.dgs.DGSPurchase;
 import com.apollocurrency.aplwallet.apl.core.db.DatabaseManager;
-import com.apollocurrency.aplwallet.apl.core.shard.observer.DeleteOnTrimData;
+import com.apollocurrency.aplwallet.apl.core.service.fulltext.FullTextOperationData;
 import com.apollocurrency.aplwallet.apl.core.utils.EncryptedDataUtil;
 import com.apollocurrency.aplwallet.apl.util.annotation.DatabaseSpecificDml;
 import com.apollocurrency.aplwallet.apl.util.annotation.DmlMarker;
@@ -42,9 +42,9 @@ public class DGSPurchaseTable extends EntityDbTable<DGSPurchase> {
 
     @Inject
     public DGSPurchaseTable(DatabaseManager databaseManager,
-                            Event<DeleteOnTrimData> deleteOnTrimDataEvent) {
+                            Event<FullTextOperationData> fullTextOperationDataEvent) {
         super(TABLE, KEY_FACTORY, true, null,
-                databaseManager, deleteOnTrimDataEvent);
+                databaseManager, fullTextOperationDataEvent);
     }
 
     @Override

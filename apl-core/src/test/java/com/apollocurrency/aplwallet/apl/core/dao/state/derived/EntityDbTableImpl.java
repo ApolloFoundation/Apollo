@@ -18,7 +18,8 @@ import static org.mockito.Mockito.mock;
 
 public class EntityDbTableImpl extends EntityDbTable<DerivedIdEntity> {
     public EntityDbTableImpl(DatabaseManager databaseManager) {
-        super("derived_entity", new DerivedEntityKeyFactory(), false, null, databaseManager, mock(Event.class));
+        super("derived_entity", new DerivedEntityKeyFactory(), false,
+            null, databaseManager, mock(Event.class));
     }
 
     @Override

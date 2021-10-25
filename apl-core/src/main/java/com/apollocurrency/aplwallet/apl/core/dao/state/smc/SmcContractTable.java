@@ -12,7 +12,7 @@ import com.apollocurrency.aplwallet.apl.core.dao.state.keyfactory.DbKey;
 import com.apollocurrency.aplwallet.apl.core.dao.state.keyfactory.LongKeyFactory;
 import com.apollocurrency.aplwallet.apl.core.db.DatabaseManager;
 import com.apollocurrency.aplwallet.apl.core.entity.state.smc.SmcContractEntity;
-import com.apollocurrency.aplwallet.apl.core.shard.observer.DeleteOnTrimData;
+import com.apollocurrency.aplwallet.apl.core.service.fulltext.FullTextOperationData;
 import com.apollocurrency.aplwallet.apl.util.db.DbUtils;
 import com.apollocurrency.aplwallet.apl.util.db.TransactionalDataSource;
 
@@ -47,8 +47,8 @@ public class SmcContractTable extends EntityDbTable<SmcContractEntity> {
     private final SmcContractDetailsRowMapper smcContractDetailsRowMapper;
 
     @Inject
-    public SmcContractTable(DatabaseManager databaseManager, Event<DeleteOnTrimData> deleteOnTrimDataEvent, SmcContractDetailsRowMapper smcContractDetailsRowMapper) {
-        super(TABLE_NAME, KEY_FACTORY, false, null, databaseManager, deleteOnTrimDataEvent);
+    public SmcContractTable(DatabaseManager databaseManager, Event<FullTextOperationData> fullTextOperationDataEvent, SmcContractDetailsRowMapper smcContractDetailsRowMapper) {
+        super(TABLE_NAME, KEY_FACTORY, false, null, databaseManager, fullTextOperationDataEvent);
         this.smcContractDetailsRowMapper = smcContractDetailsRowMapper;
     }
 

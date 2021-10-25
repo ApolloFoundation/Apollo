@@ -24,7 +24,7 @@ import com.apollocurrency.aplwallet.apl.core.dao.prunable.TaggedDataTable;
 import com.apollocurrency.aplwallet.apl.core.dao.state.tagged.TaggedDataExtendDao;
 import com.apollocurrency.aplwallet.apl.core.dao.state.tagged.TaggedDataTimestampDao;
 import com.apollocurrency.aplwallet.apl.core.db.DatabaseManager;
-import com.apollocurrency.aplwallet.apl.core.db.JdbiConfiguration;
+import com.apollocurrency.aplwallet.apl.core.config.JdbiConfiguration;
 import com.apollocurrency.aplwallet.apl.core.service.appdata.TimeService;
 import com.apollocurrency.aplwallet.apl.core.service.appdata.impl.TimeServiceImpl;
 import com.apollocurrency.aplwallet.apl.core.service.blockchain.BlockchainImpl;
@@ -77,7 +77,7 @@ class FullTextSearchServiceTest extends DbContainerBaseTest {
     @WeldSetup
     public WeldInitiator weld = WeldInitiator.from(
         BlockchainImpl.class, DaoConfig.class,
-        TaggedDataServiceImpl.class, FullTextSearchUpdater.class,
+        TaggedDataServiceImpl.class, FullTextSearchUpdaterImpl.class,
         GlobalSyncImpl.class,
         TransactionServiceImpl.class, ShardDbExplorerImpl.class,
         TransactionEntityRowMapper.class, TxReceiptRowMapper.class, PrunableTxRowMapper.class,

@@ -22,7 +22,7 @@ import com.apollocurrency.aplwallet.apl.core.dao.state.derived.DerivedDbTable;
 import com.apollocurrency.aplwallet.apl.core.dao.state.derived.EntityDbTableTest;
 import com.apollocurrency.aplwallet.apl.core.dao.state.publickey.GenesisPublicKeyTable;
 import com.apollocurrency.aplwallet.apl.core.db.DatabaseManager;
-import com.apollocurrency.aplwallet.apl.core.db.JdbiConfiguration;
+import com.apollocurrency.aplwallet.apl.core.config.JdbiConfiguration;
 import com.apollocurrency.aplwallet.apl.core.entity.state.derived.VersionedDerivedEntity;
 import com.apollocurrency.aplwallet.apl.core.entity.state.dgs.DGSTag;
 import com.apollocurrency.aplwallet.apl.core.service.appdata.TimeService;
@@ -153,11 +153,6 @@ public class DGSTagTableTest extends EntityDbTableTest<DGSTag> {
     @Override
     public Comparator<DGSTag> getDefaultComparator() {
         return Comparator.comparing(DGSTag::getInStockCount).thenComparing(DGSTag::getTotalCount).reversed().thenComparing(DGSTag::getTag);
-    }
-
-    @Override
-    public Blockchain getBlockchain() {
-        return blockchain;
     }
 
     @Test

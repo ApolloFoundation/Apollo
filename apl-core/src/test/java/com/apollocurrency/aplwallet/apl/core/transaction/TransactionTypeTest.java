@@ -4,6 +4,7 @@ import com.apollocurrency.aplwallet.apl.core.chainid.BlockchainConfig;
 import com.apollocurrency.aplwallet.apl.core.chainid.HeightConfig;
 import com.apollocurrency.aplwallet.apl.core.entity.state.account.Account;
 import com.apollocurrency.aplwallet.apl.core.entity.state.account.LedgerEvent;
+import com.apollocurrency.aplwallet.apl.core.entity.state.account.PublicKey;
 import com.apollocurrency.aplwallet.apl.core.exception.AplAcceptableTransactionValidationException;
 import com.apollocurrency.aplwallet.apl.core.exception.AplUnacceptableTransactionValidationException;
 import com.apollocurrency.aplwallet.apl.core.model.Transaction;
@@ -13,6 +14,7 @@ import com.apollocurrency.aplwallet.apl.core.transaction.messages.Appendix;
 import com.apollocurrency.aplwallet.apl.core.transaction.messages.EmptyAttachment;
 import com.apollocurrency.aplwallet.apl.util.annotation.FeeMarker;
 import com.apollocurrency.aplwallet.apl.util.annotation.TransactionFee;
+import com.apollocurrency.aplwallet.apl.util.exception.AplException;
 import lombok.EqualsAndHashCode;
 import lombok.Getter;
 import lombok.SneakyThrows;
@@ -38,6 +40,7 @@ import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.verifyNoInteractions;
+import static org.mockito.Mockito.when;
 
 @ExtendWith(MockitoExtension.class)
 class TransactionTypeTest {
@@ -54,6 +57,8 @@ class TransactionTypeTest {
     Account recipient;
     @Mock
     HeightConfig heightConfig;
+    @Mock
+    PublicKey publicKey;
 
     @Test
     void isDuplicate_withTwoMaxPossible() {
@@ -222,7 +227,6 @@ class TransactionTypeTest {
     @Test
     void apply_recipientAndSenderAreDifferent() {
         mockTxAmounts();
-        doReturn(SENDER_ID).when(sender).getId();
         FallibleTransactionType type = prepareTransactionType();
 
         type.apply(transaction, sender, recipient);
@@ -236,14 +240,12 @@ class TransactionTypeTest {
     @Test
     void apply_recipientAndSenderAreEquals() {
         mockTxAmounts();
-        doReturn(200L).when(sender).getBalanceATM();
         FallibleTransactionType type = prepareTransactionType();
 
-        type.apply(transaction, sender, recipient);
+        type.apply(transaction, sender, sender);
 
         verify(type.getAccountService()).addToBalanceATM(sender, type.getLedgerEvent(), 0, -100, -10);
-        verify(type.getAccountService()).addToBalanceAndUnconfirmedBalanceATM(recipient, type.getLedgerEvent(), 0, 100);
-        verify(recipient).setBalanceATM(200);
+        verify(type.getAccountService()).addToBalanceAndUnconfirmedBalanceATM(sender, type.getLedgerEvent(), 0, 100);
         assertEquals(1, type.getApplicationCounter());
     }
 
@@ -292,16 +294,14 @@ class TransactionTypeTest {
     @Test
     void undoApply_sameSenderAndRecipientAccount() {
         mockTxAmounts();
-        doReturn(210L).when(sender).getBalanceATM();
         doReturn(false).when(transaction).attachmentIsPhased();
         FallibleTransactionType type = prepareTransactionType();
 
-        type.undoApply(transaction, sender, recipient);
+        type.undoApply(transaction, sender, sender);
 
         assertEquals(-1, type.getApplicationCounter());
         verify(accountService).addToBalanceATM(sender, LedgerEvent.ORDINARY_PAYMENT, 0L, 100, 10);
-        verify(accountService).addToBalanceAndUnconfirmedBalanceATM(recipient, LedgerEvent.ORDINARY_PAYMENT, 0L, -100);
-        verify(recipient).setBalanceATM(210L); // update balance of the same account
+        verify(accountService).addToBalanceAndUnconfirmedBalanceATM(sender, LedgerEvent.ORDINARY_PAYMENT, 0L, -100);
     }
 
     @Test
@@ -462,6 +462,31 @@ class TransactionTypeTest {
         long fee = customFee.getFee(transaction, mock(Appendix.class));
 
         assertEquals(100, fee);
+    }
+
+
+    @Test
+    void verifyAccountBalanceSufficiency_notEnoughFunds() {
+        FallibleTransactionType type = prepareTransactionType();
+        mockTxAndSender();
+        when(sender.getUnconfirmedBalanceATM()).thenReturn(209L);
+
+        AplException.NotCurrentlyValidException ex = assertThrows(AplException.NotCurrentlyValidException.class
+            , () -> type.verifyAccountBalanceSufficiency(transaction, 100));
+
+        assertEquals("Sender 1 has not enough funds: required 210, but only has 209", ex.getMessage());
+    }
+
+    @SneakyThrows
+    @Test
+    void verifyAccountBalanceSufficiency_OK() {
+        FallibleTransactionType type = prepareTransactionType();
+        mockTxAndSender();
+        when(sender.getUnconfirmedBalanceATM()).thenReturn(210L);
+
+        type.verifyAccountBalanceSufficiency(transaction, 100);
+
+        verify(sender).getUnconfirmedBalanceATM();
     }
 
 

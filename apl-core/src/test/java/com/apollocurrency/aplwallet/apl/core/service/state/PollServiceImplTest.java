@@ -4,6 +4,7 @@
 package com.apollocurrency.aplwallet.apl.core.service.state;
 
 import com.apollocurrency.aplwallet.apl.core.app.VoteWeighting;
+import com.apollocurrency.aplwallet.apl.core.app.observer.events.TrimEvent;
 import com.apollocurrency.aplwallet.apl.core.converter.rest.IteratorToStreamConverter;
 import com.apollocurrency.aplwallet.apl.core.dao.state.poll.PollResultTable;
 import com.apollocurrency.aplwallet.apl.core.dao.state.poll.PollTable;
@@ -15,7 +16,6 @@ import com.apollocurrency.aplwallet.apl.core.entity.state.poll.PollOptionResult;
 import com.apollocurrency.aplwallet.apl.core.service.blockchain.BlockchainImpl;
 import com.apollocurrency.aplwallet.apl.core.service.fulltext.FullTextOperationData;
 import com.apollocurrency.aplwallet.apl.core.service.fulltext.FullTextSearchService;
-import com.apollocurrency.aplwallet.apl.core.service.fulltext.FullTextSearchUpdater;
 import com.apollocurrency.aplwallet.apl.core.transaction.messages.MessagingPollCreation;
 import com.apollocurrency.aplwallet.apl.util.exception.AplException;
 import org.junit.jupiter.api.BeforeEach;
@@ -34,11 +34,13 @@ import java.util.stream.Stream;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
-import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.doReturn;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
+
+import javax.enterprise.event.Event;
+import javax.enterprise.util.AnnotationLiteral;
 
 /**
  * @author silaev-firstbridge on 6/12/2020
@@ -65,7 +67,7 @@ class PollServiceImplTest {
     @Mock
     private BlockchainImpl blockchain;
     @Mock
-    private FullTextSearchUpdater fullTextSearchUpdater;
+    private Event<FullTextOperationData> fullTextOperationDataEvent;
     @Mock
     private FullTextSearchService fullTextSearchService;
 
@@ -81,7 +83,7 @@ class PollServiceImplTest {
             pollOptionResultService,
             voteTable,
             blockchain,
-            fullTextSearchUpdater,
+            fullTextOperationDataEvent,
             fullTextSearchService
         );
     }
@@ -280,13 +282,15 @@ class PollServiceImplTest {
         Poll poll = mock(Poll.class);
         doReturn(10L).when(poll).getDbId();
         doReturn(poll).when(pollTable).addPoll(transaction, attachment, timestamp, height);
+        Event mockEvent = mock(Event.class);
+        when(fullTextOperationDataEvent.select(new AnnotationLiteral<TrimEvent>() {})).thenReturn(mockEvent);
 
         //WHEN
         pollService.addPoll(transaction, attachment);
 
         //THEN
         verify(pollTable).addPoll(transaction, attachment, timestamp, height);
-        verify(fullTextSearchUpdater).putFullTextOperationData(any(FullTextOperationData.class));
+        verify(fullTextOperationDataEvent).select(new AnnotationLiteral<TrimEvent>() {});
     }
 
     @ParameterizedTest

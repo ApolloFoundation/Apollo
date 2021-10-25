@@ -1,12 +1,10 @@
 package com.apollocurrency.aplwallet.apl.util;
 
-import javax.enterprise.inject.Vetoed;
 import java.util.Objects;
 
 /**
  * Util class, which provides common validation of strings without outer dependencies
  */
-@Vetoed
 public class StringValidator {
 
     private static final String DEFAULT_STRING_NAME = "String parameter";

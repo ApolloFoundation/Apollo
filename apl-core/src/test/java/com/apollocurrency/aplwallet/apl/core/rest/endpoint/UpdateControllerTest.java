@@ -8,6 +8,7 @@ import com.apollocurrency.aplwallet.apl.core.model.Transaction;
 import com.apollocurrency.aplwallet.apl.core.model.TransactionImpl;
 import com.apollocurrency.aplwallet.apl.core.rest.TransactionCreator;
 import com.apollocurrency.aplwallet.apl.core.rest.converter.UnconfirmedTransactionConverter;
+import com.apollocurrency.aplwallet.apl.core.rest.converter.UnconfirmedTransactionConverterCreator;
 import com.apollocurrency.aplwallet.apl.core.rest.exception.LegacyParameterExceptionMapper;
 import com.apollocurrency.aplwallet.apl.core.rest.utils.AccountParametersParser;
 import com.apollocurrency.aplwallet.apl.core.service.appdata.TimeService;
@@ -84,6 +85,9 @@ class UpdateControllerTest extends AbstractEndpointTest {
     @Mock
     KMSService KMSService = mock(KMSService.class);
 
+    @Mock
+    UnconfirmedTransactionConverterCreator creator;
+
     UpdateV2TransactionType v2Transaction;
 
     @Override
@@ -92,13 +96,16 @@ class UpdateControllerTest extends AbstractEndpointTest {
         super.setUp();
         v2Transaction = new UpdateV2TransactionType(blockchainConfig, accountService);
         UnconfirmedTransactionConverter converter = new UnconfirmedTransactionConverter(mock(PrunableLoadingService.class));
+        when(creator.create(false)).thenReturn(converter);
         CachedTransactionTypeFactory txTypeFactory = new CachedTransactionTypeFactory(List.of(v2Transaction));
-        transactionCreator = new TransactionCreator(validator, new PropertiesHolder(), timeService, new FeeCalculator(mock(PrunableLoadingService.class), blockchainConfig), blockchain, processor, txTypeFactory, new TransactionBuilderFactory(txTypeFactory, blockchainConfig), transactionSigner, blockchainConfig);
+        transactionCreator = new TransactionCreator(validator, new PropertiesHolder(), timeService,
+            new FeeCalculator(mock(PrunableLoadingService.class), blockchainConfig), blockchain, processor, txTypeFactory,
+            new TransactionBuilderFactory(txTypeFactory, blockchainConfig), transactionSigner, blockchainConfig);
         dispatcher.getProviderFactory()
             .register(ByteArrayConverterProvider.class)
             .register(LegacyParameterExceptionMapper.class)
             .register(PlatformSpecConverterProvider.class);
-        UpdateController updateController = new UpdateController(new AccountParametersParser(accountService, elGamal, KMSService), transactionCreator, converter, blockchainConfig);
+        UpdateController updateController = new UpdateController(new AccountParametersParser(accountService, elGamal, KMSService), transactionCreator, creator, blockchainConfig);
         dispatcher.getRegistry().addSingletonResource(updateController);
         dispatcher.getDefaultContextObjects().put(HttpServletRequest.class, req);
         Convert2.init("TEST", 0);

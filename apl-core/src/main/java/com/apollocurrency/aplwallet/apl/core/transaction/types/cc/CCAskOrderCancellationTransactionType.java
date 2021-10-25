@@ -14,7 +14,7 @@ import com.apollocurrency.aplwallet.apl.core.service.state.order.OrderService;
 import com.apollocurrency.aplwallet.apl.core.service.state.qualifier.AskOrderService;
 import com.apollocurrency.aplwallet.apl.core.transaction.TransactionTypes;
 import com.apollocurrency.aplwallet.apl.core.transaction.messages.ColoredCoinsAskOrderCancellation;
-import com.apollocurrency.aplwallet.apl.core.transaction.messages.ColoredCoinsAskOrderPlacement;
+import com.apollocurrency.aplwallet.apl.core.transaction.messages.CCAskOrderPlacementAttachment;
 import com.apollocurrency.aplwallet.apl.util.exception.AplException;
 import org.json.simple.JSONObject;
 
@@ -24,11 +24,11 @@ import java.nio.ByteBuffer;
 
 @Singleton
 class CCAskOrderCancellationTransactionType extends CCOrderCancellationTransactionType {
-    private final OrderService<AskOrder, ColoredCoinsAskOrderPlacement> askOrderService;
+    private final OrderService<AskOrder, CCAskOrderPlacementAttachment> askOrderService;
     private final AccountAssetService accountAssetService;
 
     @Inject
-    public CCAskOrderCancellationTransactionType(BlockchainConfig blockchainConfig, AccountService accountService, @AskOrderService OrderService<AskOrder, ColoredCoinsAskOrderPlacement> askOrderService, AccountAssetService accountAssetService) {
+    public CCAskOrderCancellationTransactionType(BlockchainConfig blockchainConfig, AccountService accountService, @AskOrderService OrderService<AskOrder, CCAskOrderPlacementAttachment> askOrderService, AccountAssetService accountAssetService) {
         super(blockchainConfig, accountService);
         this.askOrderService = askOrderService;
         this.accountAssetService = accountAssetService;

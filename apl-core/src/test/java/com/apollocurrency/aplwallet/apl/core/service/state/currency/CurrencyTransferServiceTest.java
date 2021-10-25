@@ -12,7 +12,7 @@ import com.apollocurrency.aplwallet.apl.core.model.Transaction;
 import com.apollocurrency.aplwallet.apl.core.entity.state.currency.CurrencyTransfer;
 import com.apollocurrency.aplwallet.apl.core.service.state.BlockChainInfoService;
 import com.apollocurrency.aplwallet.apl.core.service.state.currency.impl.CurrencyTransferServiceImpl;
-import com.apollocurrency.aplwallet.apl.core.transaction.messages.MonetarySystemCurrencyTransfer;
+import com.apollocurrency.aplwallet.apl.core.transaction.messages.MSCurrencyTransferAttachment;
 import com.apollocurrency.aplwallet.apl.data.BlockTestData;
 import com.apollocurrency.aplwallet.apl.data.CurrencyTransferTestData;
 import org.junit.jupiter.api.BeforeEach;
@@ -148,7 +148,7 @@ class CurrencyTransferServiceTest {
     void addTransfer() {
         blockTestData = new BlockTestData();
         Transaction transaction = mock(Transaction.class);
-        MonetarySystemCurrencyTransfer attachment = mock(MonetarySystemCurrencyTransfer.class);
+        MSCurrencyTransferAttachment attachment = mock(MSCurrencyTransferAttachment.class);
         doReturn(blockTestData.BLOCK_10).when(blockChainInfoService).getLastBlock();
 
         //WHEN

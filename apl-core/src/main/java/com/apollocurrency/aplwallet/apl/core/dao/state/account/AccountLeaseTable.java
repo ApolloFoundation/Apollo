@@ -3,6 +3,7 @@
  */
 package com.apollocurrency.aplwallet.apl.core.dao.state.account;
 
+import com.apollocurrency.aplwallet.apl.core.service.fulltext.FullTextOperationData;
 import com.apollocurrency.aplwallet.apl.util.db.TransactionalDataSource;
 import com.apollocurrency.aplwallet.apl.core.dao.state.derived.VersionedDeletableEntityDbTable;
 import com.apollocurrency.aplwallet.apl.core.dao.state.keyfactory.DbKey;
@@ -10,7 +11,6 @@ import com.apollocurrency.aplwallet.apl.core.dao.state.keyfactory.LongKeyFactory
 import com.apollocurrency.aplwallet.apl.util.db.DbUtils;
 import com.apollocurrency.aplwallet.apl.core.entity.state.account.AccountLease;
 import com.apollocurrency.aplwallet.apl.core.db.DatabaseManager;
-import com.apollocurrency.aplwallet.apl.core.shard.observer.DeleteOnTrimData;
 import com.apollocurrency.aplwallet.apl.util.annotation.DatabaseSpecificDml;
 import com.apollocurrency.aplwallet.apl.util.annotation.DmlMarker;
 import lombok.extern.slf4j.Slf4j;
@@ -44,9 +44,9 @@ public class AccountLeaseTable extends VersionedDeletableEntityDbTable<AccountLe
 
     @Inject
     public AccountLeaseTable(DatabaseManager databaseManager,
-                             Event<DeleteOnTrimData> deleteOnTrimDataEvent) {
+                             Event<FullTextOperationData> fullTextOperationDataEvent) {
         super("account_lease", accountLeaseDbKeyFactory, null,
-                databaseManager, deleteOnTrimDataEvent);
+                databaseManager, fullTextOperationDataEvent);
     }
 
     public static DbKey newKey(long id) {

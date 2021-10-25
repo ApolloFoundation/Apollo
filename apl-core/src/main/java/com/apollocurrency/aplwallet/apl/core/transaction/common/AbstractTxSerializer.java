@@ -94,6 +94,7 @@ public abstract class AbstractTxSerializer implements TxSerializer {
         }
         json.put("ecBlockHeight", transaction.getECBlockHeight());
         json.put("ecBlockId", Long.toUnsignedString(transaction.getECBlockId()));
+        json.put("errorMessage", transaction.getErrorMessage().orElse(null));
         Signature signature = transaction.getSignature();
         if (signature != null) {
             json.put("signature", Convert.toHexString(signature.bytes()));

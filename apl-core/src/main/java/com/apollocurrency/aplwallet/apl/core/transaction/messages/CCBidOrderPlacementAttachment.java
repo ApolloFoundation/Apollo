@@ -13,7 +13,7 @@ import java.nio.ByteBuffer;
  * @author al
  */
 @EqualsAndHashCode(callSuper = true)
-public final class CCBidOrderPlacementAttachment extends ColoredCoinsOrderPlacementAttachment {
+public final class CCBidOrderPlacementAttachment extends CCOrderPlacementAttachment {
 
     public CCBidOrderPlacementAttachment(ByteBuffer buffer) {
         super(buffer);

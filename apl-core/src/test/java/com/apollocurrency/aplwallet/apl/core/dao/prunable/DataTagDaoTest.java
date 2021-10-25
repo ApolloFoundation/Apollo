@@ -22,7 +22,7 @@ import com.apollocurrency.aplwallet.apl.core.dao.blockchain.TransactionDaoImpl;
 import com.apollocurrency.aplwallet.apl.core.dao.state.keyfactory.DbKey;
 import com.apollocurrency.aplwallet.apl.core.dao.state.tagged.TaggedDataTimestampDao;
 import com.apollocurrency.aplwallet.apl.core.db.DatabaseManager;
-import com.apollocurrency.aplwallet.apl.core.db.JdbiConfiguration;
+import com.apollocurrency.aplwallet.apl.core.config.JdbiConfiguration;
 import com.apollocurrency.aplwallet.apl.core.entity.prunable.DataTag;
 import com.apollocurrency.aplwallet.apl.core.entity.prunable.TaggedData;
 import com.apollocurrency.aplwallet.apl.core.service.appdata.TimeService;

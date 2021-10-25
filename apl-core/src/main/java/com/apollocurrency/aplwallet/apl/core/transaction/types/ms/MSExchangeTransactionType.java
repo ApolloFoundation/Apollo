@@ -19,7 +19,7 @@ public abstract class MSExchangeTransactionType extends MSTransactionType {
     }
 
     @Override
-    public final void doStateDependentValidation(Transaction transaction) throws AplException.ValidationException {
+    public void doStateDependentValidation(Transaction transaction) throws AplException.ValidationException {
         MonetarySystemExchangeAttachment attachment = (MonetarySystemExchangeAttachment) transaction.getAttachment();
         Currency currency = currencyService.getCurrency(attachment.getCurrencyId());
         currencyService.validate(currency, transaction);

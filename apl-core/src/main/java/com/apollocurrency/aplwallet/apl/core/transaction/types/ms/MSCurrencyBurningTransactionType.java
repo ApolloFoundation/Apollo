@@ -64,6 +64,12 @@ public class MSCurrencyBurningTransactionType extends MSTransactionType {
         if (!currencyService.isActive(currency)) {
             throw new AplException.NotCurrentlyValidException("Currency not currently active, unable to burn: " + attachment.getJSONObject());
         }
+        long accountCurrencyBalance = accountCurrencyService.getUnconfirmedCurrencyUnits(transaction.getSenderId(), attachment.getCurrencyId());
+        if (accountCurrencyBalance < attachment.getUnits()) {
+            throw new AplException.NotCurrentlyValidException("Sender " + Long.toUnsignedString(transaction.getSenderId())
+                + " has not enough  " +Long.toUnsignedString(attachment.getCurrencyId())
+                + " currency to burn: required " + attachment.getUnits() + ", but has only " + accountCurrencyBalance);
+        }
     }
 
     @Override

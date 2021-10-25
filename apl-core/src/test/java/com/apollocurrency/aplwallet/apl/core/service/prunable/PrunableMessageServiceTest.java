@@ -72,7 +72,6 @@ class PrunableMessageServiceTest extends DbContainerBaseTest {
         DerivedDbTablesRegistryImpl.class,
         PrunableMessageServiceImpl.class,
         FullTextConfigImpl.class,
-        PropertiesHolder.class,
         AccountPublicKeyServiceImpl.class,
         PublicKeyTableProducer.class,
         TwoTablesPublicKeyDao.class,

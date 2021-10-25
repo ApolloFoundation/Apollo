@@ -61,6 +61,8 @@ public class MSReserveIncreaseTransactionType extends MSTransactionType {
         MonetarySystemReserveIncreaseAttachment attachment = (MonetarySystemReserveIncreaseAttachment) transaction.getAttachment();
         Currency currency = currencyService.getCurrency(attachment.getCurrencyId());
         currencyService.validate(currency, transaction);
+        long reservedATMs = Math.multiplyExact(currency.getReserveSupply(), attachment.getAmountPerUnitATM());
+        verifyAccountBalanceSufficiency(transaction, reservedATMs);
     }
 
     @Override

@@ -8,6 +8,7 @@ import com.apollocurrency.aplwallet.apl.core.model.dex.DexOrder;
 import com.apollocurrency.aplwallet.apl.core.transaction.TransactionTypes;
 import com.apollocurrency.aplwallet.apl.crypto.Convert;
 import com.apollocurrency.aplwallet.apl.dex.eth.utils.EthUtil;
+import lombok.AllArgsConstructor;
 import lombok.EqualsAndHashCode;
 import lombok.Getter;
 import lombok.ToString;
@@ -18,6 +19,7 @@ import java.nio.ByteBuffer;
 @EqualsAndHashCode(callSuper = true)
 @Getter
 @ToString
+@AllArgsConstructor
 public class DexOrderAttachment extends AbstractAttachment {
     private final byte type;
     private final byte orderCurrency;

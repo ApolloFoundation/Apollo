@@ -26,7 +26,7 @@ import com.apollocurrency.aplwallet.apl.core.http.AbstractAPIRequestHandler;
 import com.apollocurrency.aplwallet.apl.core.http.HttpParameterParserUtil;
 import com.apollocurrency.aplwallet.apl.core.http.JSONData;
 import com.apollocurrency.aplwallet.apl.core.transaction.TransactionTypes;
-import com.apollocurrency.aplwallet.apl.core.transaction.messages.MonetarySystemCurrencyTransfer;
+import com.apollocurrency.aplwallet.apl.core.transaction.messages.MSCurrencyTransferAttachment;
 import com.apollocurrency.aplwallet.apl.util.Filter;
 import com.apollocurrency.aplwallet.apl.util.exception.AplException;
 import org.json.simple.JSONArray;
@@ -58,7 +58,7 @@ public final class GetExpectedCurrencyTransfers extends AbstractAPIRequestHandle
             if (accountId != 0 && transaction.getSenderId() != accountId && transaction.getRecipientId() != accountId) {
                 return false;
             }
-            MonetarySystemCurrencyTransfer attachment = (MonetarySystemCurrencyTransfer) transaction.getAttachment();
+            MSCurrencyTransferAttachment attachment = (MSCurrencyTransferAttachment) transaction.getAttachment();
             return currencyId == 0 || attachment.getCurrencyId() == currencyId;
         };
 

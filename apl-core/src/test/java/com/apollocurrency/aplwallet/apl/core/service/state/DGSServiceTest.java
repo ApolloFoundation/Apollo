@@ -19,7 +19,7 @@ import com.apollocurrency.aplwallet.apl.core.dao.state.dgs.DGSPublicFeedbackTabl
 import com.apollocurrency.aplwallet.apl.core.dao.state.dgs.DGSPurchaseTable;
 import com.apollocurrency.aplwallet.apl.core.dao.state.dgs.DGSTagTable;
 import com.apollocurrency.aplwallet.apl.core.db.DatabaseManager;
-import com.apollocurrency.aplwallet.apl.core.db.JdbiConfiguration;
+import com.apollocurrency.aplwallet.apl.core.config.JdbiConfiguration;
 import com.apollocurrency.aplwallet.apl.core.entity.state.account.Account;
 import com.apollocurrency.aplwallet.apl.core.entity.state.account.LedgerEvent;
 import com.apollocurrency.aplwallet.apl.core.entity.state.dgs.DGSFeedback;
@@ -36,6 +36,7 @@ import com.apollocurrency.aplwallet.apl.core.service.fulltext.FullTextConfigImpl
 import com.apollocurrency.aplwallet.apl.core.service.fulltext.FullTextSearchEngine;
 import com.apollocurrency.aplwallet.apl.core.service.fulltext.FullTextSearchService;
 import com.apollocurrency.aplwallet.apl.core.service.fulltext.FullTextSearchUpdater;
+import com.apollocurrency.aplwallet.apl.core.service.fulltext.FullTextSearchUpdaterImpl;
 import com.apollocurrency.aplwallet.apl.core.service.prunable.PrunableMessageService;
 import com.apollocurrency.aplwallet.apl.core.service.state.account.AccountLedgerService;
 import com.apollocurrency.aplwallet.apl.core.service.state.account.AccountPublicKeyService;
@@ -43,9 +44,9 @@ import com.apollocurrency.aplwallet.apl.core.service.state.account.AccountServic
 import com.apollocurrency.aplwallet.apl.core.service.state.account.impl.AccountLedgerServiceImpl;
 import com.apollocurrency.aplwallet.apl.core.service.state.account.impl.AccountPublicKeyServiceImpl;
 import com.apollocurrency.aplwallet.apl.core.service.state.account.impl.AccountServiceImpl;
-import com.apollocurrency.aplwallet.apl.core.transaction.messages.DigitalGoodsDelivery;
-import com.apollocurrency.aplwallet.apl.core.transaction.messages.DigitalGoodsListing;
-import com.apollocurrency.aplwallet.apl.core.transaction.messages.DigitalGoodsPurchaseAttachment;
+import com.apollocurrency.aplwallet.apl.core.transaction.messages.DGSDeliveryAttachment;
+import com.apollocurrency.aplwallet.apl.core.transaction.messages.DGSListingAttachment;
+import com.apollocurrency.aplwallet.apl.core.transaction.messages.DGSPurchaseAttachment;
 import com.apollocurrency.aplwallet.apl.core.transaction.messages.EncryptedMessageAppendix;
 import com.apollocurrency.aplwallet.apl.core.transaction.messages.MessageAppendix;
 import com.apollocurrency.aplwallet.apl.core.transaction.messages.PrunablePlainMessageAppendix;
@@ -129,7 +130,7 @@ public class DGSServiceTest extends DbContainerBaseTest {
         .addBeans(MockBean.of(mock(BlockchainProcessor.class), BlockchainProcessor.class, BlockchainProcessorImpl.class))
         .addBeans(MockBean.of(mock(AccountPublicKeyService.class), AccountPublicKeyServiceImpl.class, AccountPublicKeyService.class))
         .addBeans(MockBean.of(mock(AccountLedgerService.class), AccountLedgerService.class, AccountLedgerServiceImpl.class))
-        .addBeans(MockBean.of(mock(FullTextSearchUpdater.class), FullTextSearchUpdater.class))
+        .addBeans(MockBean.of(mock(FullTextSearchUpdater.class), FullTextSearchUpdater.class, FullTextSearchUpdaterImpl.class))
         .addBeans(MockBean.of(mock(BlockchainConfig.class), BlockchainConfig.class))
         .build();
     Block lastBlock = mock(Block.class);
@@ -956,7 +957,7 @@ public class DGSServiceTest extends DbContainerBaseTest {
         doReturn(senderId).when(listTransaction).getSenderId();
         String tags = String.join(",", List.of(tag1, tag2, tag3, tag4));
         DGSGoods expected = new DGSGoods(dtd.GOODS_13.getDbId() + 1, height, txId, senderId, "Test goods", "Test", tags, new String[]{tag1, tag2, tag3}, 100_000, true, 2, 100_000_000, false);
-        DigitalGoodsListing digitalGoodsListing = new DigitalGoodsListing("Test goods", "Test", tags, 2, 100_000_000);
+        DGSListingAttachment digitalGoodsListing = new DGSListingAttachment("Test goods", "Test", tags, 2, 100_000_000);
         DbUtils.inTransaction(extension, (con) -> {
             service.listGoods(listTransaction, digitalGoodsListing);
         });
@@ -1181,7 +1182,7 @@ public class DGSServiceTest extends DbContainerBaseTest {
         doReturn(txId).when(purchaseTransaction).getId();
         doReturn(senderId).when(purchaseTransaction).getSenderId();
 
-        DigitalGoodsPurchaseAttachment digitalGoodsPurchase = new DigitalGoodsPurchaseAttachment(dtd.GOODS_12.getId(), 3, dtd.GOODS_12.getPriceATM(), 1_000_000);
+        DGSPurchaseAttachment digitalGoodsPurchase = new DGSPurchaseAttachment(dtd.GOODS_12.getId(), 3, dtd.GOODS_12.getPriceATM(), 1_000_000);
         DbUtils.inTransaction(extension, (con) -> {
             service.purchase(purchaseTransaction, digitalGoodsPurchase);
         });
@@ -1215,7 +1216,7 @@ public class DGSServiceTest extends DbContainerBaseTest {
         doReturn(50L).when(purchaseTransaction).getSenderId();
         Account account = accountService.getAccount(50);
         long initialUnconfirmedBalance = account.getUnconfirmedBalanceATM();
-        DigitalGoodsPurchaseAttachment digitalGoodsPurchase = new DigitalGoodsPurchaseAttachment(dtd.GOODS_8.getId(), 4, dtd.GOODS_8.getPriceATM(), 1_000_000);
+        DGSPurchaseAttachment digitalGoodsPurchase = new DGSPurchaseAttachment(dtd.GOODS_8.getId(), 4, dtd.GOODS_8.getPriceATM(), 1_000_000);
         DbUtils.inTransaction(extension, (con) -> {
             service.purchase(purchaseTransaction, digitalGoodsPurchase);
         });
@@ -1233,7 +1234,7 @@ public class DGSServiceTest extends DbContainerBaseTest {
         doReturn(50L).when(purchaseTransaction).getSenderId();
         Account account = accountService.getAccount(50);
         long initialUnconfirmedBalance = account.getUnconfirmedBalanceATM();
-        DigitalGoodsPurchaseAttachment digitalGoodsPurchase = new DigitalGoodsPurchaseAttachment(dtd.GOODS_12.getId(), 2, dtd.GOODS_12.getPriceATM() + 1, 1_000_000);
+        DGSPurchaseAttachment digitalGoodsPurchase = new DGSPurchaseAttachment(dtd.GOODS_12.getId(), 2, dtd.GOODS_12.getPriceATM() + 1, 1_000_000);
         DbUtils.inTransaction(extension, (con) -> service.purchase(purchaseTransaction, digitalGoodsPurchase));
         verifyAccountBalance(50, initialUnconfirmedBalance + 2 * (dtd.GOODS_12.getPriceATM() + 1), null);
     }
@@ -1249,7 +1250,7 @@ public class DGSServiceTest extends DbContainerBaseTest {
         doReturn(50L).when(purchaseTransaction).getSenderId();
         Account account = accountService.getAccount(50);
         long initialUnconfirmedBalance = account.getUnconfirmedBalanceATM();
-        DigitalGoodsPurchaseAttachment digitalGoodsPurchase = new DigitalGoodsPurchaseAttachment(dtd.GOODS_9.getId(), 2, dtd.GOODS_9.getPriceATM(), 1_000_000);
+        DGSPurchaseAttachment digitalGoodsPurchase = new DGSPurchaseAttachment(dtd.GOODS_9.getId(), 2, dtd.GOODS_9.getPriceATM(), 1_000_000);
         DbUtils.inTransaction(extension, (con) -> service.purchase(purchaseTransaction, digitalGoodsPurchase));
         verifyAccountBalance(50, initialUnconfirmedBalance + 2 * (dtd.GOODS_9.getPriceATM()), null);
     }
@@ -1271,7 +1272,7 @@ public class DGSServiceTest extends DbContainerBaseTest {
         doReturn(senderId).when(deliverTransaction).getSenderId();
 
         long testLocalOneAPL = 100000000L;
-        DigitalGoodsDelivery deliveryAttachment = new DigitalGoodsDelivery(dtd.PURCHASE_2.getId(), new EncryptedData("goods".getBytes(), new byte[32]), true, testLocalOneAPL * 2);
+        DGSDeliveryAttachment deliveryAttachment = new DGSDeliveryAttachment(dtd.PURCHASE_2.getId(), new EncryptedData("goods".getBytes(), new byte[32]), true, testLocalOneAPL * 2);
         DbUtils.inTransaction(extension, (con) -> {
             service.deliver(deliverTransaction, deliveryAttachment);
         });

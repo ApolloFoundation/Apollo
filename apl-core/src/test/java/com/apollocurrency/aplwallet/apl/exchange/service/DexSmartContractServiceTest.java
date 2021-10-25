@@ -61,7 +61,6 @@ import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.spy;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.verifyNoInteractions;
-import static org.mockito.Mockito.verifyZeroInteractions;
 import static org.mockito.Mockito.when;
 
 @ExtendWith(MockitoExtension.class)
@@ -107,7 +106,7 @@ class DexSmartContractServiceTest {
         service = spy(new DexSmartContractService(holder, dexEthService, ethereumWalletService, dexTransactionDao,
             dexBeanProducer, null, KMSService, chainId));
         walletCredentials = Credentials.create(ECKeyPair.create(Convert.parseHexString(ALICE_PRIV_KEY)));
-        gasInfo = new EthChainGasInfoImpl(100.5, 82.3, 53.9);
+        gasInfo = new EthChainGasInfoImpl(100L, 82L, 53L);
     }
 
 

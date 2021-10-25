@@ -5,6 +5,7 @@
 package com.apollocurrency.aplwallet.apl.core.transaction.types.shuffling;
 
 import com.apollocurrency.aplwallet.apl.core.chainid.BlockchainConfig;
+import com.apollocurrency.aplwallet.apl.core.exception.AplUnacceptableTransactionValidationException;
 import com.apollocurrency.aplwallet.apl.core.model.Transaction;
 import com.apollocurrency.aplwallet.apl.core.entity.state.account.Account;
 import com.apollocurrency.aplwallet.apl.core.entity.state.account.LedgerEvent;
@@ -123,15 +124,18 @@ public class ShufflingProcessingTransactionType extends ShufflingTransactionType
                 }
             }
         }
+        // validate prunable data existence when state-dependent validation was completed (transaction is not failed)
+        // and data should be present for a min prunable lifetime
+        validateDataExistence(transaction, data);
     }
 
     @Override
     public void doStateIndependentValidation(Transaction transaction) throws AplException.ValidationException {
         ShufflingProcessingAttachment attachment = (ShufflingProcessingAttachment) transaction.getAttachment();
         byte[][] data = attachment.getData();
-        if (data == null && timeService.getEpochTime() - transaction.getTimestamp() < getBlockchainConfig().getMinPrunableLifetime()) {
-            throw new AplException.NotCurrentlyValidException("Data has been pruned prematurely");
-        }
+        // skip data existence validation here to let the possible failed transaction to be validated entirely
+        // without the data included, cause failed transaction may not contain prunable data (during blockchain downloading),
+        // but contain during block processing via p2p processBlock API
         if (data != null) {
             byte[] previous = null;
             for (byte[] bytes : data) {
@@ -177,6 +181,12 @@ public class ShufflingProcessingTransactionType extends ShufflingTransactionType
 
         ShufflingProcessingAttachment attachment = (ShufflingProcessingAttachment) transaction.getAttachment();
         return shufflingService.getData(attachment.getShufflingId(), transaction.getSenderId()) == null;
+    }
+
+    private void validateDataExistence(Transaction transaction, byte[][] data) {
+        if (data == null && timeService.getEpochTime() - transaction.getTimestamp() < getBlockchainConfig().getMinPrunableLifetime()) {
+            throw new AplUnacceptableTransactionValidationException("Data has been pruned prematurely", transaction);
+        }
     }
 
 }

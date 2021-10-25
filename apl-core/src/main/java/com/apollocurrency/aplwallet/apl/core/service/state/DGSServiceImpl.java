@@ -4,6 +4,7 @@
 
 package com.apollocurrency.aplwallet.apl.core.service.state;
 
+import com.apollocurrency.aplwallet.apl.core.app.observer.events.TrimEvent;
 import com.apollocurrency.aplwallet.apl.core.model.Block;
 import com.apollocurrency.aplwallet.apl.core.model.Transaction;
 import com.apollocurrency.aplwallet.apl.core.dao.state.dgs.DGSFeedbackTable;
@@ -25,11 +26,10 @@ import com.apollocurrency.aplwallet.apl.core.entity.state.dgs.DGSTag;
 import com.apollocurrency.aplwallet.apl.core.service.blockchain.Blockchain;
 import com.apollocurrency.aplwallet.apl.core.service.fulltext.FullTextOperationData;
 import com.apollocurrency.aplwallet.apl.core.service.fulltext.FullTextSearchService;
-import com.apollocurrency.aplwallet.apl.core.service.fulltext.FullTextSearchUpdater;
 import com.apollocurrency.aplwallet.apl.core.service.state.account.AccountService;
-import com.apollocurrency.aplwallet.apl.core.transaction.messages.DigitalGoodsDelivery;
-import com.apollocurrency.aplwallet.apl.core.transaction.messages.DigitalGoodsListing;
-import com.apollocurrency.aplwallet.apl.core.transaction.messages.DigitalGoodsPurchaseAttachment;
+import com.apollocurrency.aplwallet.apl.core.transaction.messages.DGSDeliveryAttachment;
+import com.apollocurrency.aplwallet.apl.core.transaction.messages.DGSListingAttachment;
+import com.apollocurrency.aplwallet.apl.core.transaction.messages.DGSPurchaseAttachment;
 import com.apollocurrency.aplwallet.apl.core.transaction.messages.EncryptedMessageAppendix;
 import com.apollocurrency.aplwallet.apl.core.transaction.messages.MessageAppendix;
 import com.apollocurrency.aplwallet.apl.core.utils.CollectionUtil;
@@ -45,6 +45,8 @@ import com.apollocurrency.aplwallet.apl.util.db.DbUtils;
 import com.apollocurrency.aplwallet.apl.util.db.TransactionalDataSource;
 import lombok.extern.slf4j.Slf4j;
 
+import javax.enterprise.event.Event;
+import javax.enterprise.util.AnnotationLiteral;
 import javax.inject.Inject;
 import javax.inject.Singleton;
 import java.sql.Connection;
@@ -71,7 +73,7 @@ public class DGSServiceImpl implements DGSService {
     private final DGSGoodsTable goodsTable;
     private final DGSTagTable tagTable;
     private final AccountService accountService;
-    private final FullTextSearchUpdater fullTextSearchUpdater;
+    private final Event<FullTextOperationData> fullTextOperationDataEvent;
     private final FullTextSearchService fullTextSearchService;
 
     @Inject
@@ -82,7 +84,7 @@ public class DGSServiceImpl implements DGSService {
                           DGSGoodsTable goodsTable,
                           DGSTagTable tagTable,
                           AccountService accountService,
-                          FullTextSearchUpdater fullTextSearchUpdater,
+                          Event<FullTextOperationData> fullTextOperationDataEvent,
                           FullTextSearchService fullTextSearchService) {
         this.publicFeedbackTable = publicFeedbackTable;
         this.purchaseTable = purchaseTable;
@@ -91,7 +93,7 @@ public class DGSServiceImpl implements DGSService {
         this.goodsTable = goodsTable;
         this.tagTable = tagTable;
         this.accountService = accountService;
-        this.fullTextSearchUpdater = fullTextSearchUpdater;
+        this.fullTextOperationDataEvent = fullTextOperationDataEvent;
         this.fullTextSearchService = fullTextSearchService;
     }
 
@@ -259,7 +261,7 @@ public class DGSServiceImpl implements DGSService {
         purchaseTable.insert(dgsPurchase);
     }
 
-    public void listGoods(Transaction transaction, DigitalGoodsListing attachment) {
+    public void listGoods(Transaction transaction, DGSListingAttachment attachment) {
         DGSGoods goods = new DGSGoods(transaction, attachment, blockchain.getLastBlockTimestamp());
         addTag(goods);
         goodsTable.insert(goods);
@@ -345,7 +347,7 @@ public class DGSServiceImpl implements DGSService {
         }
     }
 
-    public void purchase(Transaction transaction, DigitalGoodsPurchaseAttachment attachment) {
+    public void purchase(Transaction transaction, DGSPurchaseAttachment attachment) {
         DGSGoods goods = goodsTable.get(attachment.getGoodsId());
         if (!goods.isDelisted()
             && attachment.getQuantity() <= goods.getQuantity()
@@ -362,7 +364,7 @@ public class DGSServiceImpl implements DGSService {
         }
     }
 
-    public void deliver(Transaction transaction, DigitalGoodsDelivery attachment) {
+    public void deliver(Transaction transaction, DGSDeliveryAttachment attachment) {
         DGSPurchase purchase = getPendingPurchase(attachment.getPurchaseId());
         purchase.setHeight(blockchain.getHeight());
         setPending(purchase, false);
@@ -558,10 +560,10 @@ public class DGSServiceImpl implements DGSService {
             DEFAULT_SCHEMA, goodsTable.getTableName(), Thread.currentThread().getName());
         operationData.setOperationType(operationType);
         operationData.setDbIdValue(goods.getDbId());
-        operationData.addColumnData(goods.getName()).addColumnData(goods.getDescription());
+        operationData.addColumnData(goods.getName()).addColumnData(goods.getDescription()).addColumnData(goods.getTags());
         // send data into Lucene index component
         log.trace("Put lucene index update data = {}", operationData);
-        fullTextSearchUpdater.putFullTextOperationData(operationData);
+        this.fullTextOperationDataEvent.select(new AnnotationLiteral<TrimEvent>() {}).fire(operationData);
     }
 
 }

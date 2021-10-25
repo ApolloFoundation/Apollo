@@ -7,7 +7,6 @@ package com.apollocurrency.aplwallet.vault.model;
 import com.apollocurrency.aplwallet.apl.crypto.Convert;
 import com.apollocurrency.aplwallet.apl.crypto.Crypto;
 import com.apollocurrency.aplwallet.apl.util.Convert2;
-import com.apollocurrency.aplwallet.apl.util.model.account.BasicAccount;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import org.json.simple.JSONObject;
 

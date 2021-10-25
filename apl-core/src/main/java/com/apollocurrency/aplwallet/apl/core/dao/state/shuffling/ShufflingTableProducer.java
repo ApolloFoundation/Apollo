@@ -5,7 +5,7 @@
 package com.apollocurrency.aplwallet.apl.core.dao.state.shuffling;
 
 import com.apollocurrency.aplwallet.apl.core.db.DatabaseManager;
-import com.apollocurrency.aplwallet.apl.core.shard.observer.DeleteOnTrimData;
+import com.apollocurrency.aplwallet.apl.core.service.fulltext.FullTextOperationData;
 
 import javax.enterprise.event.Event;
 import javax.inject.Inject;
@@ -16,10 +16,10 @@ public class ShufflingTableProducer {
     @Inject
     DatabaseManager databaseManager;
     @Inject
-    Event<DeleteOnTrimData> deleteOnTrimDataEvent;
+    Event<FullTextOperationData> fullTextOperationDataEvent;
 
 
     public ShufflingTable shufflingTable() {
-        return new ShufflingTable(databaseManager, deleteOnTrimDataEvent);
+        return new ShufflingTable(databaseManager, fullTextOperationDataEvent);
     }
 }

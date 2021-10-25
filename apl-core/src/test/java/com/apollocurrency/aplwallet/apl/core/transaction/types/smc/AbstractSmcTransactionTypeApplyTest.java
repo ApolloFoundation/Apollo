@@ -4,12 +4,16 @@
 
 package com.apollocurrency.aplwallet.apl.core.transaction.types.smc;
 
+import com.apollocurrency.aplwallet.apl.core.app.GenesisAccounts;
 import com.apollocurrency.aplwallet.apl.core.chainid.BlockchainConfig;
 import com.apollocurrency.aplwallet.apl.core.config.DaoConfig;
+import com.apollocurrency.aplwallet.apl.core.config.JdbiConfiguration;
 import com.apollocurrency.aplwallet.apl.core.config.NtpTimeConfig;
 import com.apollocurrency.aplwallet.apl.core.config.SmcConfig;
 import com.apollocurrency.aplwallet.apl.core.converter.db.TransactionEntityRowMapper;
 import com.apollocurrency.aplwallet.apl.core.converter.db.TransactionEntityToModelConverter;
+import com.apollocurrency.aplwallet.apl.core.converter.db.smc.ContractEventLogModelToLogEntryConverter;
+import com.apollocurrency.aplwallet.apl.core.converter.db.smc.ContractEventModelToEntityConverter;
 import com.apollocurrency.aplwallet.apl.core.converter.db.smc.ContractModelToEntityConverter;
 import com.apollocurrency.aplwallet.apl.core.converter.db.smc.ContractModelToStateEntityConverter;
 import com.apollocurrency.aplwallet.apl.core.converter.db.smc.SmcContractDetailsRowMapper;
@@ -19,6 +23,8 @@ import com.apollocurrency.aplwallet.apl.core.dao.state.account.AccountGuaranteed
 import com.apollocurrency.aplwallet.apl.core.dao.state.account.AccountTable;
 import com.apollocurrency.aplwallet.apl.core.dao.state.account.AccountTableInterface;
 import com.apollocurrency.aplwallet.apl.core.dao.state.publickey.PublicKeyTableProducer;
+import com.apollocurrency.aplwallet.apl.core.dao.state.smc.SmcContractEventLogTable;
+import com.apollocurrency.aplwallet.apl.core.dao.state.smc.SmcContractEventTable;
 import com.apollocurrency.aplwallet.apl.core.dao.state.smc.SmcContractMappingTable;
 import com.apollocurrency.aplwallet.apl.core.dao.state.smc.SmcContractStateTable;
 import com.apollocurrency.aplwallet.apl.core.dao.state.smc.SmcContractTable;
@@ -57,9 +63,12 @@ import com.apollocurrency.aplwallet.apl.core.service.state.account.impl.AccountP
 import com.apollocurrency.aplwallet.apl.core.service.state.account.impl.AccountServiceImpl;
 import com.apollocurrency.aplwallet.apl.core.service.state.smc.SmcContractService;
 import com.apollocurrency.aplwallet.apl.core.service.state.smc.SmcFuelValidator;
+import com.apollocurrency.aplwallet.apl.core.service.state.smc.event.SmcContractEventManagerClassFactory;
 import com.apollocurrency.aplwallet.apl.core.service.state.smc.impl.SmcBlockchainIntegratorFactory;
+import com.apollocurrency.aplwallet.apl.core.service.state.smc.impl.SmcContractEventServiceImpl;
 import com.apollocurrency.aplwallet.apl.core.service.state.smc.impl.SmcContractServiceImpl;
 import com.apollocurrency.aplwallet.apl.core.service.state.smc.impl.SmcContractStorageServiceImpl;
+import com.apollocurrency.aplwallet.apl.core.service.state.smc.txlog.SmcTxLogProcessor;
 import com.apollocurrency.aplwallet.apl.core.signature.MultiSigCredential;
 import com.apollocurrency.aplwallet.apl.core.transaction.CachedTransactionTypeFactory;
 import com.apollocurrency.aplwallet.apl.core.transaction.FeeCalculator;
@@ -79,9 +88,11 @@ import com.apollocurrency.aplwallet.apl.crypto.Crypto;
 import com.apollocurrency.aplwallet.apl.data.BlockTestData;
 import com.apollocurrency.aplwallet.apl.data.TransactionTestData;
 import com.apollocurrency.aplwallet.apl.extension.DbExtension;
+import com.apollocurrency.aplwallet.apl.smc.service.mapping.SmcMappingRepositoryClassFactory;
 import com.apollocurrency.aplwallet.apl.util.Convert2;
 import com.apollocurrency.aplwallet.apl.util.NtpTime;
 import com.apollocurrency.aplwallet.apl.util.cache.InMemoryCacheManager;
+import com.apollocurrency.aplwallet.apl.util.cdi.transaction.JdbiHandleFactory;
 import com.apollocurrency.aplwallet.apl.util.env.config.Chain;
 import com.apollocurrency.aplwallet.apl.util.injectable.PropertiesHolder;
 import com.apollocurrency.aplwallet.apl.util.service.TaskDispatchManager;
@@ -135,24 +146,24 @@ abstract class AbstractSmcTransactionTypeApplyTest extends DbContainerBaseTest {
 
     @WeldSetup
     WeldInitiator weldInitiator = WeldInitiator.from(
-        GlobalSyncImpl.class, DaoConfig.class,
+            GlobalSyncImpl.class, DaoConfig.class, JdbiHandleFactory.class, JdbiConfiguration.class,
             AccountGuaranteedBalanceTable.class, PublicKeyTableProducer.class,
-            AccountServiceImpl.class, BlockChainInfoServiceImpl.class, AccountPublicKeyServiceImpl.class,
-            FullTextConfigImpl.class, DerivedDbTablesRegistryImpl.class, PropertiesHolder.class,
+            AccountServiceImpl.class, GenesisAccounts.class, BlockChainInfoServiceImpl.class, AccountPublicKeyServiceImpl.class,
+            FullTextConfigImpl.class, DerivedDbTablesRegistryImpl.class,
             DefaultBlockValidator.class, ReferencedTransactionService.class,
             PublicKeyAnnouncementAppendixApplier.class, AppendixApplierRegistry.class,
-        AppendixValidatorRegistry.class, NtpTime.class,
-        //TransactionRowMapper.class, TxReceiptRowMapper.class, PrunableTxRowMapper.class,
-        ReferencedTransactionDaoImpl.class, TransactionSignerImpl.class,
-        TransactionValidator.class, TransactionApplier.class,
-        SmcConfig.class, SmcBlockchainIntegratorFactory.class,
-        SmcContractTable.class, SmcContractStateTable.class, SmcContractMappingTable.class,
-        ContractModelToEntityConverter.class, ContractModelToStateEntityConverter.class,
-        SmcContractServiceImpl.class, SmcContractStorageServiceImpl.class
-    )
+            AppendixValidatorRegistry.class, NtpTime.class,
+            //TransactionRowMapper.class, TxReceiptRowMapper.class, PrunableTxRowMapper.class,
+            ReferencedTransactionDaoImpl.class, TransactionSignerImpl.class,
+            TransactionValidator.class, TransactionApplier.class,
+            SmcConfig.class, SmcBlockchainIntegratorFactory.class,
+            SmcContractTable.class, SmcContractStateTable.class, SmcContractMappingTable.class, SmcContractEventTable.class, SmcContractEventLogTable.class,
+            ContractModelToEntityConverter.class, ContractModelToStateEntityConverter.class,
+            ContractEventLogModelToLogEntryConverter.class, ContractEventModelToEntityConverter.class,
+            SmcContractServiceImpl.class, SmcContractStorageServiceImpl.class, SmcContractEventServiceImpl.class,
+            SmcTxLogProcessor.class, SmcMappingRepositoryClassFactory.class, SmcContractEventManagerClassFactory.class
+        )
         .addBeans(MockBean.of(extension.getDatabaseManager(), DatabaseManager.class))
-        //.addBeans(MockBean.of(extension.getDatabaseManager().getJdbi(), Jdbi.class))
-        //.addBeans(MockBean.of(extension.getDatabaseManager().getJdbiHandleFactory(), JdbiHandleFactory.class))
         .addBeans(MockBean.of(mock(InMemoryCacheManager.class), InMemoryCacheManager.class))
         .addBeans(MockBean.of(mock(TaskDispatchManager.class), TaskDispatchManager.class))
         .addBeans(MockBean.of(blockchainConfig, BlockchainConfig.class))

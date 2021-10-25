@@ -33,10 +33,12 @@ import static org.mockito.Mockito.doReturn;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.verifyNoInteractions;
+import static org.mockito.Mockito.when;
 
 @ExtendWith(MockitoExtension.class)
 class MSReserveIncreaseTransactionTypeTest {
     public static final long CURRENCY_ID = 1L;
+    public static final long SENDER_ID = 1000;
     @Mock
     BlockchainConfig blockchainConfig;
     @Mock
@@ -97,9 +99,28 @@ class MSReserveIncreaseTransactionTypeTest {
     }
 
     @Test
+    void doStateDependentValidation_notEnoughFunds() throws AplException.ValidationException {
+        mockAttachment(50);
+        doReturn(currency).when(currencyService).getCurrency(CURRENCY_ID);
+        when(tx.getSenderId()).thenReturn(SENDER_ID);
+        when(accountService.getAccount(SENDER_ID)).thenReturn(sender);
+        when(sender.getUnconfirmedBalanceATM()).thenReturn(49_999L);
+        when(currency.getReserveSupply()).thenReturn(1000L);
+
+        AplException.NotCurrentlyValidException ex = assertThrows(AplException.NotCurrentlyValidException.class, () -> type.doStateDependentValidation(tx));
+
+        assertEquals("Sender 1000 has not enough funds: required 50000, but only has 49999", ex.getMessage());
+        verify(currencyService).validate(currency, tx); // will validate reserve overflow inside the CurrencyType.RESERVABLE, see CurrencyTypeReservableTest
+    }
+
+    @Test
     void doStateDependentValidation() throws AplException.ValidationException {
         mockAttachment(50);
         doReturn(currency).when(currencyService).getCurrency(CURRENCY_ID);
+        when(tx.getSenderId()).thenReturn(SENDER_ID);
+        when(accountService.getAccount(SENDER_ID)).thenReturn(sender);
+        when(sender.getUnconfirmedBalanceATM()).thenReturn(50_000L);
+        when(currency.getReserveSupply()).thenReturn(1000L);
 
         type.doStateDependentValidation(tx);
 
