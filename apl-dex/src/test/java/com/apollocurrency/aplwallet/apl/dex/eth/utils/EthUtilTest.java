@@ -55,4 +55,18 @@ class EthUtilTest {
         Long apl = EthUtil.gweiToAtm(GWEI);
         assertEquals(ATM, apl);
     }
+
+    @Test
+    void weiToGwei_fractional() {
+        BigDecimal gwei = EthUtil.weiToGwei(new BigDecimal("10.2"));
+
+        assertEquals(new BigDecimal("0.0000000102"), gwei);
+    }
+
+    @Test
+    void weiToGwei_realValue() {
+        BigDecimal gwei = EthUtil.weiToGwei(new BigDecimal("2830000000000"));
+
+        assertEquals(new BigDecimal("2830"), gwei);
+    }
 }
