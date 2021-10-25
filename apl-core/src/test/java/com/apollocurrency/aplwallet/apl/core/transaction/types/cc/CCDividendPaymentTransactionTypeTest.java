@@ -39,6 +39,7 @@ import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.verifyNoInteractions;
 import static org.mockito.Mockito.verifyNoMoreInteractions;
+import static org.mockito.Mockito.when;
 
 @ExtendWith(MockitoExtension.class)
 class CCDividendPaymentTransactionTypeTest {
@@ -255,8 +256,29 @@ class CCDividendPaymentTransactionTypeTest {
         doReturn(44L).when(tx).getSenderId();
         doReturn(type).when(tx).getType();
         doReturn(1000L).when(accountAssetService).getAssetBalanceATU(44L, ASSET_ID, 1000);
+        when(accountService.getAccount(44L)).thenReturn(sender);
+        when(sender.getUnconfirmedBalanceATM()).thenReturn(15_000L);
 
         type.doStateDependentValidation(tx);
+    }
+
+    @Test
+    void doStateDependentValidation_noLastDividend_notEnoughFunds() throws AplException.ValidationException {
+        mockAttachment(1000, 5);
+        doReturn(44L).when(asset).getAccountId();
+        doReturn(4000L).when(asset).getQuantityATU();
+        doReturn(1L).when(asset).getId();
+        doReturn(asset).when(assetService).getAsset(ASSET_ID, 1000);
+        doReturn(44L).when(tx).getSenderId();
+        when(tx.getFeeATM()).thenReturn(1000L);
+        doReturn(type).when(tx).getType();
+        doReturn(1000L).when(accountAssetService).getAssetBalanceATU(44L, ASSET_ID, 1000);
+        when(accountService.getAccount(44L)).thenReturn(sender);
+        when(sender.getUnconfirmedBalanceATM()).thenReturn(15_000L);
+
+        AplException.NotCurrentlyValidException ex = assertThrows(AplException.NotCurrentlyValidException.class, () -> type.doStateDependentValidation(tx));
+
+        assertEquals("Sender 44 has not enough funds: required 16000, but only has 15000", ex.getMessage());
     }
 
     @Test

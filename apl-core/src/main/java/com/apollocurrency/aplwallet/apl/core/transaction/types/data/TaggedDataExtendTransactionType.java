@@ -5,10 +5,11 @@
 package com.apollocurrency.aplwallet.apl.core.transaction.types.data;
 
 import com.apollocurrency.aplwallet.apl.core.chainid.BlockchainConfig;
-import com.apollocurrency.aplwallet.apl.core.model.Transaction;
 import com.apollocurrency.aplwallet.apl.core.entity.prunable.TaggedData;
 import com.apollocurrency.aplwallet.apl.core.entity.state.account.Account;
 import com.apollocurrency.aplwallet.apl.core.entity.state.account.LedgerEvent;
+import com.apollocurrency.aplwallet.apl.core.exception.AplUnacceptableTransactionValidationException;
+import com.apollocurrency.aplwallet.apl.core.model.Transaction;
 import com.apollocurrency.aplwallet.apl.core.service.appdata.TimeService;
 import com.apollocurrency.aplwallet.apl.core.service.blockchain.Blockchain;
 import com.apollocurrency.aplwallet.apl.core.service.state.TaggedDataService;
@@ -70,15 +71,13 @@ public class TaggedDataExtendTransactionType extends DataTransactionType {
         if (taggedData != null && taggedData.getTransactionTimestamp() > timeService.getEpochTime() + 6 * blockchainConfig.getMinPrunableLifetime()) {
             throw new AplException.NotCurrentlyValidException("Data already extended, timestamp is " + taggedData.getTransactionTimestamp());
         }
+        // Transaction is validated and not failed, so that data should be present for at least a minPrunableLifetime
+        // transaction can not be failed by 'no data' reason
+        validateDataExistence(transaction, attachment);
     }
 
     @Override
     public void doStateIndependentValidation(Transaction transaction) throws AplException.ValidationException {
-        TaggedDataExtendAttachment attachment = (TaggedDataExtendAttachment) transaction.getAttachment();
-        BlockchainConfig blockchainConfig = getBlockchainConfig();
-        if ((attachment.jsonIsPruned() || attachment.getData() == null) && timeService.getEpochTime() - transaction.getTimestamp() < blockchainConfig.getMinPrunableLifetime()) {
-            throw new AplException.NotCurrentlyValidException("Data has been pruned prematurely");
-        }
     }
 
     @Override
@@ -96,5 +95,11 @@ public class TaggedDataExtendTransactionType extends DataTransactionType {
     @Override
     public boolean isPruned(long transactionId) {
         return false;
+    }
+
+    private void validateDataExistence(Transaction transaction, TaggedDataExtendAttachment attachment) {
+        if ((attachment.jsonIsPruned() || attachment.getData() == null) && timeService.getEpochTime() - transaction.getTimestamp() < getBlockchainConfig().getMinPrunableLifetime()) {
+            throw new AplUnacceptableTransactionValidationException("Data has been pruned prematurely", transaction);
+        }
     }
 }

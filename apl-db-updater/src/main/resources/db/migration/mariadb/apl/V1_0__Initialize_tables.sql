@@ -1036,12 +1036,14 @@ CREATE TABLE IF NOT EXISTS `shuffling`
 CREATE TABLE IF NOT EXISTS `shuffling_data`
 (
     `db_id`                 bigint(20) unsigned NOT NULL AUTO_INCREMENT primary key,
+    `transaction_id`        bigint(20) NOT NULL,
     `shuffling_id`          bigint(20) NOT NULL,
     `account_id`            bigint(20) NOT NULL,
     `data`                  blob NOT NULL,
     `transaction_timestamp` int(11)    NOT NULL,
     `height`                int(11)    NOT NULL,
     UNIQUE KEY `shuffling_data_id_height_idx` (`shuffling_id`,`height`),
+    UNIQUE KEY `shuffling_data_transaction_id_idx` (`transaction_id`),
     KEY                     `shuffling_data_transaction_timestamp_idx` (`transaction_timestamp`)
 ) ;
 

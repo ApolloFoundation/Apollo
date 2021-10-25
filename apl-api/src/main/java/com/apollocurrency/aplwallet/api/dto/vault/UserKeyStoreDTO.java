@@ -4,6 +4,11 @@
 
 package com.apollocurrency.aplwallet.api.dto.vault;
 
+import lombok.Data;
+import lombok.NoArgsConstructor;
+
+@Data
+@NoArgsConstructor
 public class UserKeyStoreDTO {
     private byte[] file;
     private String fileName;

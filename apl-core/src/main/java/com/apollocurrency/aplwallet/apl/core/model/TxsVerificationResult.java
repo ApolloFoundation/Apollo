@@ -4,7 +4,6 @@
 
 package com.apollocurrency.aplwallet.apl.core.model;
 
-import com.apollocurrency.aplwallet.apl.core.service.blockchain.FailedTransactionVerificationServiceImpl;
 import lombok.EqualsAndHashCode;
 import lombok.Getter;
 import lombok.Setter;
@@ -21,7 +20,7 @@ import java.util.stream.Collectors;
  * Failed transaction's verification container, consisting of fully verified and not verified transactions
  * @author Andrii Boiarskyi
  * @see VerifiedTransaction
- * @see FailedTransactionVerificationServiceImpl
+ * @see com.apollocurrency.aplwallet.apl.core.service.blockchain.FailedTransactionVerificationServiceImpl
  * @since 1.48.4
  */
 @EqualsAndHashCode

@@ -31,6 +31,7 @@ import org.apache.lucene.search.TopDocs;
 import org.apache.lucene.store.Directory;
 import org.apache.lucene.store.FSDirectory;
 
+import javax.annotation.PreDestroy;
 import javax.inject.Inject;
 import javax.inject.Named;
 import javax.inject.Singleton;
@@ -331,6 +332,7 @@ public class LuceneFullTextSearchEngine implements FullTextSearchEngine {
     /**
      * {@inheritDoc}
      */
+    @PreDestroy
     @Override
     public void shutdown() {
         log.trace("LuceneFullTextSearchEngine shutdown start...");

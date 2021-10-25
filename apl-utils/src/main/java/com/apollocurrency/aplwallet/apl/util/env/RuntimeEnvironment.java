@@ -20,13 +20,11 @@ package com.apollocurrency.aplwallet.apl.util.env;
 
 import com.apollocurrency.aplwallet.apl.util.env.dirprovider.DirProvider;
 
-import javax.enterprise.inject.Vetoed;
 import java.io.PrintStream;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.util.prefs.Preferences;
 
-@Vetoed
 public class RuntimeEnvironment {
 
     public static final String RUNTIME_MODE_ARG = "apl.runtime.mode";

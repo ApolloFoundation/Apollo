@@ -23,11 +23,11 @@ package com.apollocurrency.aplwallet.apl.core.dao.state;
 import com.apollocurrency.aplwallet.apl.core.dao.state.derived.EntityDbTable;
 import com.apollocurrency.aplwallet.apl.core.dao.state.keyfactory.DbKey;
 import com.apollocurrency.aplwallet.apl.core.dao.state.keyfactory.LinkKeyFactory;
+import com.apollocurrency.aplwallet.apl.core.service.fulltext.FullTextOperationData;
 import com.apollocurrency.aplwallet.apl.util.db.DbIterator;
 import com.apollocurrency.aplwallet.apl.util.db.DbUtils;
 import com.apollocurrency.aplwallet.apl.core.entity.state.Trade;
 import com.apollocurrency.aplwallet.apl.core.db.DatabaseManager;
-import com.apollocurrency.aplwallet.apl.core.shard.observer.DeleteOnTrimData;
 
 import javax.enterprise.event.Event;
 import javax.inject.Inject;
@@ -54,9 +54,9 @@ public class TradeTable extends EntityDbTable<Trade> {
 
     @Inject
     public TradeTable(DatabaseManager databaseManager,
-                      Event<DeleteOnTrimData> deleteOnTrimDataEvent) {
+                      Event<FullTextOperationData> fullTextOperationDataEvent) {
         super("trade", TRADE_DB_KEY_FACTORY, false, null,
-                databaseManager, deleteOnTrimDataEvent);
+                databaseManager, fullTextOperationDataEvent);
     }
 
     public void save(final Connection con, final Trade trade) throws SQLException {

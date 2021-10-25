@@ -12,8 +12,8 @@ import java.util.Objects;
 
 @ToString(callSuper = true)
 public abstract class VersionedDerivedEntity extends DerivedEntity {
-    private boolean latest = true;
-    private int prevHeight = -1;
+    private volatile boolean latest = true;
+    private volatile int prevHeight = -1;
 
     public VersionedDerivedEntity(Long dbId, Integer height) {
         super(dbId, height);

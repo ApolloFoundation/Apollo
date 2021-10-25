@@ -27,6 +27,9 @@ public class PrunableLoadingService {
     }
 
     public <T extends Appendix> void loadPrunable(Transaction transaction, T prunable, boolean includeExpiredPrunable) {
+        if (transaction.isFailed()) {
+            return;
+        }
         doForExistingLoader(prunable, loader -> loader.loadPrunable(transaction, prunable, includeExpiredPrunable));
     }
 
@@ -39,12 +42,18 @@ public class PrunableLoadingService {
     }
 
     public void loadTransactionPrunables(Transaction transaction) {
+        if (transaction.isFailed()) {
+            return;
+        }
         for (AbstractAppendix appendage : transaction.getAppendages()) {
             loadPrunable(transaction, appendage, false);
         }
     }
 
     public <T extends Appendix> void restorePrunable(Transaction transaction, T prunable, int blockTimestamp, int height) {
+        if (transaction.isFailed()) {
+            return;
+        }
         doForExistingLoader(prunable, (loader) -> loader.restorePrunableData(transaction, prunable, blockTimestamp, height));
     }
 }

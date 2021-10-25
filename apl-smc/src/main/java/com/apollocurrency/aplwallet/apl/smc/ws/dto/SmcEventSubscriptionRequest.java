@@ -62,7 +62,7 @@ public class SmcEventSubscriptionRequest {
         @JsonProperty
         private String signature;
         @JsonProperty
-        private String fromBlock;
+        private Integer fromBlock;
         @JsonProperty
         private Term filter;
 
@@ -71,7 +71,7 @@ public class SmcEventSubscriptionRequest {
         public Event(@JsonProperty("subscriptionId") String subscriptionId
             , @JsonProperty("name") String name
             , @JsonProperty("signature") String signature
-            , @JsonProperty("fromBlock") String fromBlock
+            , @JsonProperty("fromBlock") Integer fromBlock
             , @JsonProperty("filter") Term filter) {
             this.subscriptionId = subscriptionId;
             this.name = name;

@@ -54,7 +54,6 @@ public class ShufflerObserver {
                     shuffler.setFailedTransaction(null);
                     shuffler.setFailureCause(null);
                 } catch (AplTransactionValidationException | AplMemPoolFullException ignore) {
-                    log.debug("");
                 }
             }
         }));

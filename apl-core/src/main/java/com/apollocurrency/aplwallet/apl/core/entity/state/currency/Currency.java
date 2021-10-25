@@ -147,4 +147,5 @@ public class Currency extends VersionedDeletableEntity {
             ", height=" + getHeight() +
             '}';
     }
+
 }

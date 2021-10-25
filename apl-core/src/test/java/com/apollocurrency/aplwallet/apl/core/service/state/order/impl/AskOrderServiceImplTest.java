@@ -10,7 +10,7 @@ import com.apollocurrency.aplwallet.apl.core.entity.state.order.AskOrder;
 import com.apollocurrency.aplwallet.apl.core.db.DatabaseManager;
 import com.apollocurrency.aplwallet.apl.core.service.blockchain.Blockchain;
 import com.apollocurrency.aplwallet.apl.core.service.state.order.OrderService;
-import com.apollocurrency.aplwallet.apl.core.transaction.messages.ColoredCoinsAskOrderPlacement;
+import com.apollocurrency.aplwallet.apl.core.transaction.messages.CCAskOrderPlacementAttachment;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -43,7 +43,7 @@ class AskOrderServiceImplTest {
     @Mock
     private Blockchain blockchain;
 
-    private OrderService<AskOrder, ColoredCoinsAskOrderPlacement> orderService;
+    private OrderService<AskOrder, CCAskOrderPlacementAttachment> orderService;
 
     @BeforeEach
     void setUp() {
@@ -185,7 +185,7 @@ class AskOrderServiceImplTest {
     void shouldAddOrder() {
         //GIVEN
         final Transaction transaction = mock(Transaction.class);
-        final ColoredCoinsAskOrderPlacement attachment = mock(ColoredCoinsAskOrderPlacement.class);
+        final CCAskOrderPlacementAttachment attachment = mock(CCAskOrderPlacementAttachment.class);
         final long txId = 10L;
         when(transaction.getId()).thenReturn(txId);
         final int height = 1040;

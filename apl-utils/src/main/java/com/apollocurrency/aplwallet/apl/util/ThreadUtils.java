@@ -4,7 +4,6 @@
 
 package com.apollocurrency.aplwallet.apl.util;
 
-import javax.enterprise.inject.Vetoed;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.PrintWriter;
@@ -12,7 +11,6 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.TimeUnit;
 
-@Vetoed
 public class ThreadUtils {
     private ThreadUtils() {
     }

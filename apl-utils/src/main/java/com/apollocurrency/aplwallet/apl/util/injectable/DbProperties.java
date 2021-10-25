@@ -8,11 +8,9 @@ import lombok.Builder;
 import lombok.Data;
 import lombok.ToString;
 
-import javax.enterprise.inject.Vetoed;
 import java.util.Optional;
 import java.util.UUID;
 
-@Vetoed
 @ToString
 @Builder
 @Data

@@ -7,7 +7,7 @@ package com.apollocurrency.aplwallet.apl.core.entity.state.currency;
 import com.apollocurrency.aplwallet.apl.core.dao.state.currency.CurrencySellOfferTable;
 import com.apollocurrency.aplwallet.apl.core.dao.state.keyfactory.DbKey;
 import com.apollocurrency.aplwallet.apl.core.model.Transaction;
-import com.apollocurrency.aplwallet.apl.core.transaction.messages.MonetarySystemPublishExchangeOffer;
+import com.apollocurrency.aplwallet.apl.core.transaction.messages.MSPublishExchangeOfferAttachment;
 import lombok.ToString;
 
 import java.sql.ResultSet;
@@ -16,7 +16,7 @@ import java.sql.SQLException;
 @ToString(callSuper = true)
 public class CurrencySellOffer extends CurrencyExchangeOffer {
 
-    public CurrencySellOffer(Transaction transaction, MonetarySystemPublishExchangeOffer attachment, int height) {
+    public CurrencySellOffer(Transaction transaction, MSPublishExchangeOfferAttachment attachment, int height) {
         super(transaction.getId(), attachment.getCurrencyId(), transaction.getSenderId(), attachment.getSellRateATM(),
             attachment.getTotalSellLimit(), attachment.getInitialSellSupply(), attachment.getExpirationHeight(), transaction.getHeight(),
             transaction.getIndex(), height);

@@ -65,7 +65,7 @@ class SmcPublishContractTransactionTypeApplyTest extends AbstractSmcTransactionT
             .params(List.of("123"))
             .amountATM(10_00000000L)
             .fuelLimit(50_000_000L)
-            .fuelPrice(10_000L)
+            .fuelPrice(100L)
             .secret("1")
             .build();
 

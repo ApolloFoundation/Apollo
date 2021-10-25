@@ -4,9 +4,12 @@
 
 package com.apollocurrency.aplwallet.apl.core.model;
 
+import com.apollocurrency.aplwallet.apl.core.exception.AplBlockException;
+import com.apollocurrency.aplwallet.apl.core.exception.AplBlockTxErrorResultsMismatchException;
 import com.apollocurrency.aplwallet.apl.crypto.AplIdGenerator;
 import com.apollocurrency.aplwallet.apl.crypto.Convert;
 import com.apollocurrency.aplwallet.apl.crypto.Crypto;
+import lombok.extern.slf4j.Slf4j;
 
 import java.math.BigInteger;
 import java.nio.ByteBuffer;
@@ -14,7 +17,10 @@ import java.nio.ByteOrder;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
+import java.util.stream.Collectors;
+
 //TODO RawBlock impl (without consensus data)
+@Slf4j
 public final class BlockImpl implements Block {
     private final int version;
     private final int timestamp;
@@ -28,6 +34,7 @@ public final class BlockImpl implements Block {
     private final int timeout;
     private volatile byte[] generatorPublicKey;
     private volatile List<Transaction> blockTransactions = Collections.emptyList();
+    private volatile List<TxErrorHash> txErrorHashes = Collections.emptyList();
 
     private byte[] blockSignature;
     private BigInteger cumulativeDifficulty;
@@ -136,6 +143,12 @@ public final class BlockImpl implements Block {
     @Override
     public long getPreviousBlockId() {
         return previousBlockId;
+    }
+
+
+    @Override
+    public List<TxErrorHash> getTxErrorHashes() {
+        return txErrorHashes;
     }
 
     @Override
@@ -258,9 +271,9 @@ public final class BlockImpl implements Block {
     @Override
     public long getGeneratorId() {
         if (generatorId == 0) {
-//            generatorId = AccountService.getId(getGeneratorPublicKey());
             String error = "GeneratorId should be assigned !";
-            throw new RuntimeException(error);
+            log.error(error);
+            throw new AplBlockException(error, this);
         }
         return generatorId;
     }
@@ -284,13 +297,13 @@ public final class BlockImpl implements Block {
         if (bytes == null) {
             ByteBuffer buffer =
                 ByteBuffer.allocate(4 + 4 + 8 + 4 + 8 + 8 + 4 + 32 + 32 + 32 + 32 +
-                    (requireTimeout(version) ? 4 : 0) + (blockSignature != null ? 64 :
+                    (requireTimeout(version) ? 4 : 0)  + (40 * txErrorHashes.size()) + (blockSignature != null ? 64 :
                     0));
             buffer.order(ByteOrder.LITTLE_ENDIAN);
             buffer.putInt(version);
             buffer.putInt(timestamp);
             buffer.putLong(previousBlockId);
-            buffer.putInt(blockTransactions != null ? blockTransactions.size() : /*getOrLoadTransactions().size()*/ 0);
+            buffer.putInt(blockTransactions.size());
             buffer.putLong(totalAmountATM);
             buffer.putLong(totalFeeATM);
             buffer.putInt(payloadLength);
@@ -301,10 +314,17 @@ public final class BlockImpl implements Block {
             if (requireTimeout(version)) {
                 buffer.putInt(timeout);
             }
+            txErrorHashes.forEach(e -> { // only when failed txs are present
+                buffer.putLong(e.getId());
+                buffer.put(e.getErrorHash());
+            });
             if (blockSignature != null) {
                 buffer.put(blockSignature);
             }
             bytes = buffer.array();
+            if (log.isDebugEnabled()) {
+                log.debug("Calculated block bytes {}, id {}", Convert.toHexString(bytes), AplIdGenerator.BLOCK.getId(bytes));
+            }
         }
         return bytes;
     }
@@ -319,6 +339,15 @@ public final class BlockImpl implements Block {
     }
 
     @Override
+    public void checkFailedTxsExecution() {
+        // assuming transactions statuses were obtained by the node block txs execution with own statuses
+        List<TxErrorHash> actualErrors = obtainTxErrorHashes(blockTransactions);
+        if (!actualErrors.equals(txErrorHashes)) {
+            throw new AplBlockTxErrorResultsMismatchException(this, actualErrors);
+        }
+    }
+
+    @Override
     public String toString() {
         final StringBuffer sb = new StringBuffer("BlockImpl{");
         sb.append("version=").append(version);
@@ -327,7 +356,8 @@ public final class BlockImpl implements Block {
         sb.append(", totalAmountATM=").append(totalAmountATM);
         sb.append(", totalFeeATM=").append(totalFeeATM);
         sb.append(", timeout=").append(timeout);
-        sb.append(", blockTransactions=[").append(blockTransactions != null ? blockTransactions.size() : -1);
+        sb.append(", blockTransactions=[").append(blockTransactions.size());
+        sb.append(", txErrorHashes=[").append(txErrorHashes.stream().map(TxErrorHash::toString).collect(Collectors.joining(",")));
         sb.append("], baseTarget=").append(baseTarget);
         sb.append(", nextBlockId=").append(nextBlockId);
         sb.append(", height=").append(height);
@@ -346,6 +376,7 @@ public final class BlockImpl implements Block {
     @Override
     public void assignBlockData(List<Transaction> txs, byte[] generatorPublicKey) {
         this.blockTransactions = Collections.unmodifiableList(txs);
+        this.txErrorHashes = obtainTxErrorHashes(txs);
         this.generatorPublicKey = generatorPublicKey;
         if (generatorPublicKey != null) {
             this.generatorId = Convert.getId(generatorPublicKey);
@@ -362,4 +393,13 @@ public final class BlockImpl implements Block {
             transaction.setIndex(index++);
         }
     }
+
+    private List<TxErrorHash> obtainTxErrorHashes(List<Transaction> blockTransactions) {
+        return blockTransactions.stream()
+            .filter(Transaction::isFailed)
+            .map(tx -> new TxErrorHash(tx.getId(), tx.getErrorMessage()
+                .orElseThrow(() -> new IllegalStateException("Only failed txs should be added to the list of tx hashed errors"))))
+            .collect(Collectors.toList());
+    }
+
 }

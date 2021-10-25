@@ -25,8 +25,8 @@ import com.apollocurrency.aplwallet.apl.core.service.state.account.AccountServic
 import com.apollocurrency.aplwallet.apl.core.transaction.FeeCalculator;
 import com.apollocurrency.aplwallet.apl.core.service.blockchain.TransactionBuilderFactory;
 import com.apollocurrency.aplwallet.apl.core.transaction.messages.Attachment;
-import com.apollocurrency.aplwallet.apl.core.transaction.messages.ColoredCoinsAssetTransfer;
-import com.apollocurrency.aplwallet.apl.core.transaction.messages.MonetarySystemCurrencyTransfer;
+import com.apollocurrency.aplwallet.apl.core.transaction.messages.CCAssetTransferAttachment;
+import com.apollocurrency.aplwallet.apl.core.transaction.messages.MSCurrencyTransferAttachment;
 import com.apollocurrency.aplwallet.apl.crypto.Convert;
 import com.apollocurrency.aplwallet.apl.crypto.Crypto;
 import com.apollocurrency.aplwallet.apl.util.Convert2;
@@ -569,7 +569,7 @@ public class FundingMonitorServiceImpl implements FundingMonitorService {
             log.warn("Funding account {} has insufficient quantity for asset {}; funding transaction discarded",
                     monitor.getAccountName(), monitor.getHoldingId());
         } else if (targetAsset == null || targetAsset.getQuantityATU() < monitoredAccount.getThreshold()) {
-            Attachment attachment = new ColoredCoinsAssetTransfer(monitor.getHoldingId(), monitoredAccount.getAmount());
+            Attachment attachment = new CCAssetTransferAttachment(monitor.getHoldingId(), monitoredAccount.getAmount());
             int timestamp = blockchain.getLastBlockTimestamp();
             Transaction.Builder builder = transactionBuilderFactory.newUnsignedTransactionBuilder(transactionVersion, monitor.getPublicKey(),
                 0, 0, (short) 1440, attachment, timestamp)
@@ -615,7 +615,7 @@ public class FundingMonitorServiceImpl implements FundingMonitorService {
             log.warn("Funding account {} has insufficient quantity for currency {}; funding transaction discarded",
                     monitor.getAccountName(), monitor.getHoldingId());
         } else if (targetCurrency == null || targetCurrency.getUnits() < monitoredAccount.getThreshold()) {
-            Attachment attachment = new MonetarySystemCurrencyTransfer(monitor.getHoldingId(), monitoredAccount.getAmount());
+            Attachment attachment = new MSCurrencyTransferAttachment(monitor.getHoldingId(), monitoredAccount.getAmount());
             int timestamp = blockchain.getLastBlockTimestamp();
             Transaction.Builder builder = transactionBuilderFactory.newUnsignedTransactionBuilder(transactionVersion, monitor.getPublicKey(),
                 0, 0, (short) 1440, attachment, timestamp)

@@ -7,11 +7,10 @@ package com.apollocurrency.aplwallet.apl.util.db;
 import com.apollocurrency.aplwallet.apl.util.injectable.DbProperties;
 import com.apollocurrency.aplwallet.apl.util.injectable.PropertiesHolder;
 import lombok.Data;
+import lombok.Getter;
 import net.sf.log4jdbc.ConnectionSpy;
 import org.slf4j.Logger;
 
-import javax.enterprise.inject.Vetoed;
-import javax.inject.Inject;
 import java.sql.Connection;
 import java.sql.SQLException;
 import java.util.HashSet;
@@ -25,7 +24,6 @@ import static org.slf4j.LoggerFactory.getLogger;
  * Data source with Transaction support implemented by ThreadLocal connection management.
  * Should not be retrieved from CDI directly.
  */
-@Vetoed
 public class TransactionalDataSource extends DataSourceWrapper implements TransactionManagement {
     private static final Logger log = getLogger(TransactionalDataSource.class);
     private final ThreadLocal<DbConnectionWrapper> localConnection = new ThreadLocal<>();
@@ -48,7 +46,6 @@ public class TransactionalDataSource extends DataSourceWrapper implements Transa
      * @param dbProperties     main db properties
      * @param propertiesHolder the rest of properties
      */
-    @Inject
     public TransactionalDataSource(DbProperties dbProperties, PropertiesHolder propertiesHolder) {
         this(dbProperties,
             propertiesHolder.getIntProperty("apl.statementLogThreshold", 1000),
@@ -246,7 +243,7 @@ public class TransactionalDataSource extends DataSourceWrapper implements Transa
     }
 
     /**
-     * Used by FullTestSearch triggers
+     * Used by FullTextSearch triggers
      *
      * @param callback will be called later
      */
@@ -280,6 +277,7 @@ public class TransactionalDataSource extends DataSourceWrapper implements Transa
     }
     @Data
     public static class StartedConnection {
+        @Getter
         private final Connection connection;
         private final boolean alreadyStarted;
     }

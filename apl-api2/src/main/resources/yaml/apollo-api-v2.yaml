@@ -1604,7 +1604,7 @@ components:
       required:
         - address
         - sender
-        - secret
+        - secretPhrase
       type: object
       properties:
         address:
@@ -1615,10 +1615,9 @@ components:
           type: string
           description: sender account id
           example: 'APL-X5JH-TJKJ-DVGC-5T2V8'
-        secret:
+        secretPhrase:
           type: string
-          description: sender secret phrase
-          example: 'topSecretPhrase'
+          description: sender secret phrase encrypted by ElGamal encryption
         value:
           type: string
           description: the scalar value of ATM
@@ -2172,17 +2171,16 @@ components:
     PublishContractReq:
       required:
         - sender
-        - secret
+        - secretPhrase
       type: object
       properties:
         sender:
           type: string
           description: sender account id
           example: 'APL-X5JH-TJKJ-DVGC-5T2V8'
-        secret:
+        secretPhrase:
           type: string
-          description: sender secret phrase
-          example: '1'
+          description: sender secret phrase encrypted by ElGamal encryption
         source:
           type: string
           description: the contract source code

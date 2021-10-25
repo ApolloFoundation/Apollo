@@ -26,7 +26,7 @@ import com.apollocurrency.aplwallet.apl.core.http.APITag;
 import com.apollocurrency.aplwallet.apl.core.http.HttpParameterParserUtil;
 import com.apollocurrency.aplwallet.apl.core.service.state.DGSService;
 import com.apollocurrency.aplwallet.apl.core.transaction.messages.Attachment;
-import com.apollocurrency.aplwallet.apl.core.transaction.messages.DigitalGoodsDelisting;
+import com.apollocurrency.aplwallet.apl.core.transaction.messages.DGSDelistingAttachment;
 import com.apollocurrency.aplwallet.apl.util.exception.AplException;
 import org.json.simple.JSONStreamAware;
 
@@ -52,7 +52,7 @@ public final class DGSDelisting extends CreateTransactionHandler {
         if (goods.isDelisted() || goods.getSellerId() != account.getId()) {
             return UNKNOWN_GOODS;
         }
-        Attachment attachment = new DigitalGoodsDelisting(goods.getId());
+        Attachment attachment = new DGSDelistingAttachment(goods.getId());
         return createTransaction(req, account, attachment);
     }
 

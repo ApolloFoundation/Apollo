@@ -58,7 +58,7 @@ class SubscriptionManagerTest {
         .subscriptionId(subscription.getSubscriptionId())
         .name("Transfer")
         .signature(signature)
-        .fromBlock("0")
+        .fromBlock(0)
         .build();
 
     @BeforeEach

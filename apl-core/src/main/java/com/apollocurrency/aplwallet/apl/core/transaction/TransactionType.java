@@ -277,10 +277,6 @@ public abstract class TransactionType {
             accountService.addToBalanceATM(senderAccount, getLedgerEvent(), transactionId, -amount);
         }
         if (recipientAccount != null) {
-            //refresh balance in case a debit account is equal to a credit one
-            if (Objects.equals(senderAccount.getId(), recipientAccount.getId())) {
-                recipientAccount.setBalanceATM(senderAccount.getBalanceATM());
-            }
             accountService.addToBalanceAndUnconfirmedBalanceATM(recipientAccount, getLedgerEvent(), transactionId, amount);
             log.info("{} transferred {} ATM to the recipient {}", senderAccount.balanceString(), transaction.getAmountATM(), recipientAccount.balanceString());
         }
@@ -593,13 +589,18 @@ public abstract class TransactionType {
         }
     }
 
-    public boolean isSmartContractAddressed(Transaction transaction){
-        return transaction.getType().getSpec() == TransactionTypes.TransactionTypeSpec.SMC_PUBLISH
-            || transaction.getType().getSpec() == TransactionTypes.TransactionTypeSpec.SMC_CALL_METHOD;
+    protected void verifyAccountBalanceSufficiency(Transaction tx, long additionalAmount) throws AplException.NotCurrentlyValidException {
+        TransactionAmounts amounts = new TransactionAmounts(tx);
+        long transactionTotal = Math.addExact(amounts.getTotalAmountATM(), additionalAmount);
+        Account account = getAccountService().getAccount(tx.getSenderId());
+        if (account.getUnconfirmedBalanceATM() < transactionTotal) {
+            throw new AplException.NotCurrentlyValidException("Sender " + Long.toUnsignedString(tx.getSenderId()) +
+                " has not enough funds: required " + transactionTotal + ", but only has " + account.getUnconfirmedBalanceATM());
+        }
     }
 
     @Getter
-    private class TransactionAmounts {
+    protected class TransactionAmounts {
         private final long feeATM;
         private final long amountATM;
 
@@ -618,5 +619,10 @@ public abstract class TransactionType {
         public long getTotalAmountATM() {
             return Math.addExact(amountATM, feeATM);
         }
+    }
+
+    public boolean isSmartContractAddressed(Transaction transaction){
+        return transaction.getType().getSpec() == TransactionTypes.TransactionTypeSpec.SMC_PUBLISH
+            || transaction.getType().getSpec() == TransactionTypes.TransactionTypeSpec.SMC_CALL_METHOD;
     }
 }

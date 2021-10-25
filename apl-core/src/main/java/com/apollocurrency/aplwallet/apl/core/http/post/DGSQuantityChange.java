@@ -26,7 +26,7 @@ import com.apollocurrency.aplwallet.apl.core.http.APITag;
 import com.apollocurrency.aplwallet.apl.core.http.HttpParameterParserUtil;
 import com.apollocurrency.aplwallet.apl.core.service.state.DGSService;
 import com.apollocurrency.aplwallet.apl.core.transaction.messages.Attachment;
-import com.apollocurrency.aplwallet.apl.core.transaction.messages.DigitalGoodsQuantityChange;
+import com.apollocurrency.aplwallet.apl.core.transaction.messages.DGSQuantityChangeAttachment;
 import com.apollocurrency.aplwallet.apl.crypto.Convert;
 import com.apollocurrency.aplwallet.apl.util.Constants;
 import com.apollocurrency.aplwallet.apl.util.exception.AplException;
@@ -73,7 +73,7 @@ public final class DGSQuantityChange extends CreateTransactionHandler {
             return INCORRECT_DELTA_QUANTITY;
         }
 
-        Attachment attachment = new DigitalGoodsQuantityChange(goods.getId(), deltaQuantity);
+        Attachment attachment = new DGSQuantityChangeAttachment(goods.getId(), deltaQuantity);
         return createTransaction(req, account, attachment);
 
     }

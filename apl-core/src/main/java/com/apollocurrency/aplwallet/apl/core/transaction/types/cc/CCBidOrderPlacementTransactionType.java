@@ -59,6 +59,14 @@ public class CCBidOrderPlacementTransactionType extends CCOrderPlacementTransact
     }
 
     @Override
+    public void doStateDependentValidation(Transaction transaction) throws AplException.ValidationException {
+        super.doStateDependentValidation(transaction);
+        CCBidOrderPlacementAttachment attachment = (CCBidOrderPlacementAttachment) transaction.getAttachment();
+        long orderTotal = Math.multiplyExact(attachment.getQuantityATU(), attachment.getPriceATM());
+        verifyAccountBalanceSufficiency(transaction, orderTotal);
+    }
+
+    @Override
     public boolean applyAttachmentUnconfirmed(Transaction transaction, Account senderAccount) {
         CCBidOrderPlacementAttachment attachment = (CCBidOrderPlacementAttachment) transaction.getAttachment();
         if (senderAccount.getUnconfirmedBalanceATM() >= Math.multiplyExact(attachment.getQuantityATU(), attachment.getPriceATM())) {

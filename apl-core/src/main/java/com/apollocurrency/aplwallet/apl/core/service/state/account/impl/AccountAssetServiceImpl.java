@@ -173,8 +173,8 @@ public class AccountAssetServiceImpl implements AccountAssetService {
     }
 
     @Override
-    public long getUnconfirmedAssetBalanceATU(Account account, long assetId) {
-        AccountAsset accountAsset = accountAssetTable.get(AccountAssetTable.newKey(account.getId(), assetId));
+    public long getUnconfirmedAssetBalanceATU(long accountId, long assetId) {
+        AccountAsset accountAsset = accountAssetTable.get(AccountAssetTable.newKey(accountId, assetId));
         return accountAsset == null ? 0 : accountAsset.getUnconfirmedQuantityATU();
     }
 

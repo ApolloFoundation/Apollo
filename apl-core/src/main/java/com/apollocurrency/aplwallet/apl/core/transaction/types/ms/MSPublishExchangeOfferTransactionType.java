@@ -14,7 +14,7 @@ import com.apollocurrency.aplwallet.apl.core.service.state.currency.CurrencyExch
 import com.apollocurrency.aplwallet.apl.core.service.state.currency.CurrencyService;
 import com.apollocurrency.aplwallet.apl.core.transaction.TransactionTypes;
 import com.apollocurrency.aplwallet.apl.core.transaction.TransactionValidator;
-import com.apollocurrency.aplwallet.apl.core.transaction.messages.MonetarySystemPublishExchangeOffer;
+import com.apollocurrency.aplwallet.apl.core.transaction.messages.MSPublishExchangeOfferAttachment;
 import com.apollocurrency.aplwallet.apl.core.utils.MathUtils;
 import com.apollocurrency.aplwallet.apl.util.exception.AplException;
 import org.json.simple.JSONObject;
@@ -53,28 +53,35 @@ public class MSPublishExchangeOfferTransactionType extends MSTransactionType {
     }
 
     @Override
-    public MonetarySystemPublishExchangeOffer parseAttachment(ByteBuffer buffer) throws AplException.NotValidException {
-        return new MonetarySystemPublishExchangeOffer(buffer);
+    public MSPublishExchangeOfferAttachment parseAttachment(ByteBuffer buffer) throws AplException.NotValidException {
+        return new MSPublishExchangeOfferAttachment(buffer);
     }
 
     @Override
-    public MonetarySystemPublishExchangeOffer parseAttachment(JSONObject attachmentData) throws AplException.NotValidException {
-        return new MonetarySystemPublishExchangeOffer(attachmentData);
+    public MSPublishExchangeOfferAttachment parseAttachment(JSONObject attachmentData) throws AplException.NotValidException {
+        return new MSPublishExchangeOfferAttachment(attachmentData);
     }
 
     @Override
     public void doStateDependentValidation(Transaction transaction) throws AplException.ValidationException {
-        MonetarySystemPublishExchangeOffer attachment = (MonetarySystemPublishExchangeOffer) transaction.getAttachment();
+        MSPublishExchangeOfferAttachment attachment = (MSPublishExchangeOfferAttachment) transaction.getAttachment();
         Currency currency = currencyService.getCurrency(attachment.getCurrencyId());
         currencyService.validate(currency, transaction);
         if (!currencyService.isActive(currency)) {
             throw new AplException.NotCurrentlyValidException("Currency not currently active: " + attachment.getJSONObject());
         }
+        verifyAccountBalanceSufficiency(transaction, Math.multiplyExact(attachment.getInitialBuySupply(), attachment.getBuyRateATM()));
+        long accountCurrencyBalance = accountCurrencyService.getUnconfirmedCurrencyUnits(transaction.getSenderId(), attachment.getCurrencyId());
+        if (accountCurrencyBalance < attachment.getInitialSellSupply()) {
+            throw new AplException.NotCurrentlyValidException("Account " + Long.toUnsignedString(transaction.getSenderId())
+                + " has not enough " + Long.toUnsignedString(attachment.getCurrencyId()) + " currency to publish currency " +
+                " exchange offer: required " + attachment.getInitialSellSupply() + ", but has only " + accountCurrencyBalance);
+        }
     }
 
     @Override
     public void doStateIndependentValidation(Transaction transaction) throws AplException.ValidationException {
-        MonetarySystemPublishExchangeOffer attachment = (MonetarySystemPublishExchangeOffer) transaction.getAttachment();
+        MSPublishExchangeOfferAttachment attachment = (MSPublishExchangeOfferAttachment) transaction.getAttachment();
         if (attachment.getBuyRateATM() <= 0 || attachment.getSellRateATM() <= 0 || attachment.getBuyRateATM() > attachment.getSellRateATM()) {
             throw new AplException.NotValidException(String.format("Invalid exchange offer, buy rate %d and sell rate %d has to be larger than 0, buy rate cannot be larger than sell rate", attachment.getBuyRateATM(), attachment.getSellRateATM()));
         }
@@ -98,7 +105,7 @@ public class MSPublishExchangeOfferTransactionType extends MSTransactionType {
 
     @Override
     public boolean applyAttachmentUnconfirmed(Transaction transaction, Account senderAccount) {
-        MonetarySystemPublishExchangeOffer attachment = (MonetarySystemPublishExchangeOffer) transaction.getAttachment();
+        MSPublishExchangeOfferAttachment attachment = (MSPublishExchangeOfferAttachment) transaction.getAttachment();
         if (senderAccount.getUnconfirmedBalanceATM() >= Math.multiplyExact(attachment.getInitialBuySupply(), attachment.getBuyRateATM())
             && accountCurrencyService.getUnconfirmedCurrencyUnits(senderAccount, attachment.getCurrencyId()) >= attachment.getInitialSellSupply()) {
             getAccountService().addToUnconfirmedBalanceATM(senderAccount, getLedgerEvent(), transaction.getId(),
@@ -112,7 +119,7 @@ public class MSPublishExchangeOfferTransactionType extends MSTransactionType {
 
     @Override
     public void undoAttachmentUnconfirmed(Transaction transaction, Account senderAccount) {
-        MonetarySystemPublishExchangeOffer attachment = (MonetarySystemPublishExchangeOffer) transaction.getAttachment();
+        MSPublishExchangeOfferAttachment attachment = (MSPublishExchangeOfferAttachment) transaction.getAttachment();
         getAccountService().addToUnconfirmedBalanceATM(senderAccount, getLedgerEvent(), transaction.getId(), Math.multiplyExact(attachment.getInitialBuySupply(), attachment.getBuyRateATM()));
         Currency currency = currencyService.getCurrency(attachment.getCurrencyId());
         if (currency != null) {
@@ -122,7 +129,7 @@ public class MSPublishExchangeOfferTransactionType extends MSTransactionType {
 
     @Override
     public void applyAttachment(Transaction transaction, Account senderAccount, Account recipientAccount) {
-        MonetarySystemPublishExchangeOffer attachment = (MonetarySystemPublishExchangeOffer) transaction.getAttachment();
+        MSPublishExchangeOfferAttachment attachment = (MSPublishExchangeOfferAttachment) transaction.getAttachment();
         exchangeOfferFacade.publishOffer(transaction, attachment);
     }
 

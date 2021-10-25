@@ -24,7 +24,7 @@ import com.apollocurrency.aplwallet.apl.core.entity.state.account.Account;
 import com.apollocurrency.aplwallet.apl.core.http.APITag;
 import com.apollocurrency.aplwallet.apl.core.http.HttpParameterParserUtil;
 import com.apollocurrency.aplwallet.apl.core.transaction.messages.Attachment;
-import com.apollocurrency.aplwallet.apl.core.transaction.messages.DigitalGoodsListing;
+import com.apollocurrency.aplwallet.apl.core.transaction.messages.DGSListingAttachment;
 import com.apollocurrency.aplwallet.apl.core.transaction.messages.PrunablePlainMessageAppendix;
 import com.apollocurrency.aplwallet.apl.crypto.Convert;
 import com.apollocurrency.aplwallet.apl.util.Constants;
@@ -105,7 +105,7 @@ public final class DGSListing extends CreateTransactionHandler {
         }
 
         Account account = HttpParameterParserUtil.getSenderAccount(req);
-        Attachment attachment = new DigitalGoodsListing(name, description, tags, quantity, priceATM);
+        Attachment attachment = new DGSListingAttachment(name, description, tags, quantity, priceATM);
         return createTransaction(req, account, attachment);
 
     }

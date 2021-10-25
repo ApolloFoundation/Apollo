@@ -51,7 +51,7 @@ import com.apollocurrency.aplwallet.apl.core.service.state.asset.AssetService;
 import com.apollocurrency.aplwallet.apl.core.service.state.currency.CurrencyService;
 import com.apollocurrency.aplwallet.apl.core.service.state.order.OrderService;
 import com.apollocurrency.aplwallet.apl.core.service.state.qualifier.AskOrderService;
-import com.apollocurrency.aplwallet.apl.core.transaction.messages.ColoredCoinsAskOrderPlacement;
+import com.apollocurrency.aplwallet.apl.core.transaction.messages.CCAskOrderPlacementAttachment;
 import com.apollocurrency.aplwallet.apl.crypto.Convert;
 import com.apollocurrency.aplwallet.apl.util.Constants;
 import com.apollocurrency.aplwallet.apl.util.Convert2;
@@ -128,7 +128,7 @@ public class AccountController {
     private WalletKeysConverter walletKeysConverter;
     private Account2FADetailsConverter faDetailsConverter;
     private Account2FAConverter faConverter;
-    private OrderService<AskOrder, ColoredCoinsAskOrderPlacement> orderService;
+    private OrderService<AskOrder, CCAskOrderPlacementAttachment> orderService;
     private AccountStatisticsService accountStatisticsService;
     private AssetService assetService;
     private CurrencyService currencyService;
@@ -148,7 +148,7 @@ public class AccountController {
                              WalletKeysConverter walletKeysConverter,
                              Account2FADetailsConverter faDetailsConverter,
                              Account2FAConverter faConverter,
-                             @AskOrderService OrderService<AskOrder, ColoredCoinsAskOrderPlacement> orderService,
+                             @AskOrderService OrderService<AskOrder, CCAskOrderPlacementAttachment> orderService,
                              @Property(name = "apl.maxAPIRecords", defaultValue = "100") int maxAPIrecords,
                              AccountStatisticsService accountStatisticsService,
                              AssetService assetService,
