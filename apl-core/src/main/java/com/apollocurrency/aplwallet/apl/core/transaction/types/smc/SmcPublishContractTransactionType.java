@@ -12,7 +12,8 @@ import com.apollocurrency.aplwallet.apl.core.exception.AplAcceptableTransactionV
 import com.apollocurrency.aplwallet.apl.core.exception.AplUnacceptableTransactionValidationException;
 import com.apollocurrency.aplwallet.apl.core.model.Transaction;
 import com.apollocurrency.aplwallet.apl.core.service.state.account.AccountService;
-import com.apollocurrency.aplwallet.apl.core.service.state.smc.SmcContractService;
+import com.apollocurrency.aplwallet.apl.core.service.state.smc.ContractToolService;
+import com.apollocurrency.aplwallet.apl.core.service.state.smc.PostponedContractService;
 import com.apollocurrency.aplwallet.apl.core.service.state.smc.impl.SmcBlockchainIntegratorFactory;
 import com.apollocurrency.aplwallet.apl.core.transaction.TransactionTypes;
 import com.apollocurrency.aplwallet.apl.core.transaction.messages.AbstractAttachment;
@@ -48,11 +49,12 @@ public class SmcPublishContractTransactionType extends AbstractSmcTransactionTyp
 
     @Inject
     public SmcPublishContractTransactionType(BlockchainConfig blockchainConfig, AccountService accountService,
-                                             SmcContractService contractService,
+                                             PostponedContractService contractService,
+                                             ContractToolService contractToolService,
                                              FuelValidator fuelValidator,
                                              SmcBlockchainIntegratorFactory integratorFactory,
                                              SmcConfig smcConfig) {
-        super(blockchainConfig, accountService, contractService, fuelValidator, integratorFactory, smcConfig);
+        super(blockchainConfig, accountService, contractService, contractToolService, fuelValidator, integratorFactory, smcConfig);
     }
 
     @Override
@@ -110,8 +112,8 @@ public class SmcPublishContractTransactionType extends AbstractSmcTransactionTyp
         if (Strings.isNullOrEmpty(attachment.getLanguageName())) {
             throw new AplUnacceptableTransactionValidationException("Empty contract language name.", transaction);
         }
-        SmartContract smartContract = contractService.createNewContract(transaction);
-        if (!contractService.validateContractSource(smartContract.getCode())) {
+        SmartContract smartContract = contractToolService.createNewContract(transaction);
+        if (!contractToolService.validateContractSource(smartContract.getCode())) {
             throw new AplUnacceptableTransactionValidationException("The contract source code doesn't match the contract template code.", transaction);
         }
         BigInteger calculatedFuel = publishContractFee.calcFuel(smartContract);
@@ -134,7 +136,7 @@ public class SmcPublishContractTransactionType extends AbstractSmcTransactionTyp
     @Override
     public void applyAttachment(Transaction transaction, Account senderAccount, Account recipientAccount) {
         log.debug("SMC: applyAttachment: publish smart contract and call constructor.");
-        SmartContract smartContract = contractService.createNewContract(transaction);
+        SmartContract smartContract = contractToolService.createNewContract(transaction);
         SmcPublishContractAttachment attachment = (SmcPublishContractAttachment) transaction.getAttachment();
         var context = SmcConfig.asContext(integratorFactory.createProcessor(transaction, attachment,
             senderAccount, recipientAccount, getLedgerEvent()));

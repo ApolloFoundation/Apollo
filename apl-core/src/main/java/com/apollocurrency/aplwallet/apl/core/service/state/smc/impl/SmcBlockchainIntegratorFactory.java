@@ -12,9 +12,9 @@ import com.apollocurrency.aplwallet.apl.core.model.Transaction;
 import com.apollocurrency.aplwallet.apl.core.rest.service.ServerInfoService;
 import com.apollocurrency.aplwallet.apl.core.service.blockchain.Blockchain;
 import com.apollocurrency.aplwallet.apl.core.service.state.account.AccountService;
-import com.apollocurrency.aplwallet.apl.core.service.state.smc.CachedAccountService;
+import com.apollocurrency.aplwallet.apl.core.service.state.smc.InMemoryAccountService;
 import com.apollocurrency.aplwallet.apl.core.service.state.smc.event.SmcContractEventManagerClassFactory;
-import com.apollocurrency.aplwallet.apl.core.service.state.smc.txlog.TransferRecord;
+import com.apollocurrency.aplwallet.apl.core.service.state.smc.txlog.SendMoneyRecord;
 import com.apollocurrency.aplwallet.apl.core.transaction.messages.AbstractSmcAttachment;
 import com.apollocurrency.aplwallet.apl.smc.model.AplAddress;
 import com.apollocurrency.aplwallet.apl.smc.service.mapping.SmcMappingRepositoryClassFactory;
@@ -39,6 +39,7 @@ import com.apollocurrency.smc.contract.vm.operation.SMCOperationProcessor;
 import com.apollocurrency.smc.data.type.Address;
 import com.apollocurrency.smc.data.type.ContractBlock;
 import com.apollocurrency.smc.data.type.ContractBlockchainTransaction;
+import com.apollocurrency.smc.polyglot.language.SmartSource;
 import com.apollocurrency.smc.txlog.ArrayTxLog;
 import com.apollocurrency.smc.txlog.DevNullLog;
 import com.apollocurrency.smc.txlog.TxLog;
@@ -86,7 +87,7 @@ public class SmcBlockchainIntegratorFactory {
     }
 
     public BlockchainIntegrator createReadonlyProcessor() {
-        final var integrator = new ReadonlyIntegrator(new SmcCachedAccountService(accountService));
+        final var integrator = new ReadonlyIntegrator(new SmcInMemoryAccountService(accountService));
         return new SMCOperationProcessor(integrator, new ExecutionLog());
     }
 
@@ -101,15 +102,15 @@ public class SmcBlockchainIntegratorFactory {
             currentBlock,
             currentTransaction,
             txLogProcessor,
-            new SmcCachedAccountService(accountService));
+            new SmcInMemoryAccountService(accountService));
     }
 
     private class ReadonlyIntegrator implements BlockchainIntegrator {
 
-        final CachedAccountService cachedAccountService;
+        final InMemoryAccountService inMemoryAccountService;
 
-        public ReadonlyIntegrator(CachedAccountService cachedAccountService) {
-            this.cachedAccountService = cachedAccountService;
+        public ReadonlyIntegrator(InMemoryAccountService inMemoryAccountService) {
+            this.inMemoryAccountService = inMemoryAccountService;
         }
 
         private static final String READONLY_INTEGRATOR = "Readonly integrator.";
@@ -147,7 +148,7 @@ public class SmcBlockchainIntegratorFactory {
 
         @Override
         public BigInteger getBalance(Address address) {
-            Account account = cachedAccountService.getAccount(address);
+            Account account = inMemoryAccountService.getAccount(address);
             if (account == null) {
                 throw new AddressNotFoundException(address);
             }
@@ -183,6 +184,16 @@ public class SmcBlockchainIntegratorFactory {
         public ContractEventManager createEventManager(Address contract) {
             return smcContractEventManagerClassFactory.createMockEventManagerFactory().create(contract);
         }
+
+        @Override
+        public SmartSource getSmartSource(Address contract) {
+            return null;
+        }
+
+        @Override
+        public String getSerializedObject(Address contract) {
+            return null;
+        }
     }
 
     private class FullIntegrator extends ReadonlyIntegrator {
@@ -203,8 +214,8 @@ public class SmcBlockchainIntegratorFactory {
                               ContractBlock currentBlock,
                               ContractBlockchainTransaction currentTransaction,
                               TxLogProcessor txLogProcessor,
-                              CachedAccountService cachedAccountService) {
-            super(cachedAccountService);
+                              InMemoryAccountService inMemoryAccountService) {
+            super(inMemoryAccountService);
 
             this.originatorTransactionId = originatorTransactionId;
             this.txSenderAccount = txSenderAccount;
@@ -268,10 +279,10 @@ public class SmcBlockchainIntegratorFactory {
                     .recipientId(Long.toUnsignedString(to.getLongId()));
                 log.debug("--send money ---4: before blockchain tx, receipt={}", txReceiptBuilder.build());
 
-                cachedAccountService.addToBalanceAndUnconfirmedBalanceATM(from, value.negate());
-                cachedAccountService.addToBalanceAndUnconfirmedBalanceATM(to, value);
+                inMemoryAccountService.addToBalanceAndUnconfirmedBalanceATM(from, value.negate());
+                inMemoryAccountService.addToBalanceAndUnconfirmedBalanceATM(to, value);
 
-                var rec = TransferRecord.builder()
+                var rec = SendMoneyRecord.builder()
                     .contract(contract)
                     .sender(from.getLongId())
                     .recipient(to.getLongId())

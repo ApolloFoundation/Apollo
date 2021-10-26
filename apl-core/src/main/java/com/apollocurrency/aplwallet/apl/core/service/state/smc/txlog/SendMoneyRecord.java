@@ -19,16 +19,16 @@ import lombok.ToString;
 @Getter
 @ToString
 @EqualsAndHashCode
-public class TransferRecord implements Record {
+public class SendMoneyRecord implements Record {
     private final Address contract;
     private final long sender;
     private final long recipient;
-    private final long value;
+    private final long value;//amount
     private final LedgerEvent event;
     private final long transaction;
 
     @Override
     public SmcRecordType type() {
-        return SmcRecordType.TRANSFER;
+        return SmcRecordType.SEND_MONEY;
     }
 }

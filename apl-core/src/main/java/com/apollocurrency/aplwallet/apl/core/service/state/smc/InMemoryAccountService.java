@@ -12,7 +12,7 @@ import java.math.BigInteger;
 /**
  * @author andrew.zinchenko@gmail.com
  */
-public interface CachedAccountService {
+public interface InMemoryAccountService {
 
     Account getAccount(Address address);
 

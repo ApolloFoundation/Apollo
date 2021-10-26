@@ -6,7 +6,7 @@ package com.apollocurrency.aplwallet.apl.core.service.state.smc.impl;
 
 import com.apollocurrency.aplwallet.apl.core.entity.state.account.Account;
 import com.apollocurrency.aplwallet.apl.core.service.state.account.AccountService;
-import com.apollocurrency.aplwallet.apl.core.service.state.smc.CachedAccountService;
+import com.apollocurrency.aplwallet.apl.core.service.state.smc.InMemoryAccountService;
 import com.apollocurrency.aplwallet.apl.smc.model.AplAddress;
 import com.apollocurrency.smc.data.type.Address;
 import lombok.NonNull;
@@ -20,11 +20,11 @@ import java.util.Map;
  * @author andrew.zinchenko@gmail.com
  */
 @Slf4j
-public class SmcCachedAccountService implements CachedAccountService {
+public class SmcInMemoryAccountService implements InMemoryAccountService {
     private final AccountService accountService;
     private final Map<Long, Account> inMemoryAccounts;
 
-    public SmcCachedAccountService(@NonNull AccountService accountService) {
+    public SmcInMemoryAccountService(@NonNull AccountService accountService) {
         this.accountService = accountService;
         this.inMemoryAccounts = new HashMap<>();
     }

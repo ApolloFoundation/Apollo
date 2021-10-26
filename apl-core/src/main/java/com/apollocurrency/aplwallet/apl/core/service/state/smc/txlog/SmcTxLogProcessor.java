@@ -40,7 +40,7 @@ public class SmcTxLogProcessor implements TxLogProcessor {
 
     private void init() {
         processorMap = new HashMap<>();
-        processorMap.put(SmcRecordType.TRANSFER, createTransferRecordProcessor());
+        processorMap.put(SmcRecordType.SEND_MONEY, createTransferRecordProcessor());
         processorMap.put(SmcRecordType.FIRE_EVENT, createEventLogRecordProcessor());
     }
 
@@ -63,7 +63,7 @@ public class SmcTxLogProcessor implements TxLogProcessor {
         return proc;
     }
 
-    private RecordProcessor<TransferRecord> createTransferRecordProcessor() {
+    private RecordProcessor<SendMoneyRecord> createTransferRecordProcessor() {
         return (header, data) -> {
             var sender = accountService.getAccount(data.getSender());
             var recipient = accountService.getAccount(data.getRecipient());

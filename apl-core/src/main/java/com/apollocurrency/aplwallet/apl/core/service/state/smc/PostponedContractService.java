@@ -9,10 +9,12 @@ import com.apollocurrency.smc.contract.fuel.Fuel;
 import com.apollocurrency.smc.data.type.Address;
 
 /**
+ * The specified service to postpone the real modification of the data.
+ * All changes will be committed later.
+ *
  * @author andrew.zinchenko@gmail.com
  */
-public interface CachedContractService {
-
+public interface PostponedContractService {
     /**
      * Save the published contract
      *
