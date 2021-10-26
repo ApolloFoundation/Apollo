@@ -12,7 +12,7 @@ import com.apollocurrency.aplwallet.apl.core.exception.AplTransactionExecutionEx
 import com.apollocurrency.aplwallet.apl.core.exception.AplUnacceptableTransactionValidationException;
 import com.apollocurrency.aplwallet.apl.core.model.Transaction;
 import com.apollocurrency.aplwallet.apl.core.service.state.account.AccountService;
-import com.apollocurrency.aplwallet.apl.core.service.state.smc.SmcContractService;
+import com.apollocurrency.aplwallet.apl.core.service.state.smc.CachedContractService;
 import com.apollocurrency.aplwallet.apl.core.service.state.smc.impl.SmcBlockchainIntegratorFactory;
 import com.apollocurrency.aplwallet.apl.core.transaction.Fee;
 import com.apollocurrency.aplwallet.apl.core.transaction.TransactionType;
@@ -41,13 +41,13 @@ import java.math.BigInteger;
  */
 @Slf4j
 public abstract class AbstractSmcTransactionType extends TransactionType {
-    protected SmcContractService contractService;
+    protected CachedContractService contractService;
     protected final FuelValidator fuelMinMaxValidator;
     protected final SmcBlockchainIntegratorFactory integratorFactory;
     protected final SmcConfig smcConfig;
 
     AbstractSmcTransactionType(BlockchainConfig blockchainConfig, AccountService accountService,
-                               SmcContractService contractService,
+                               CachedContractService contractService,
                                FuelValidator fuelMinMaxValidator,
                                SmcBlockchainIntegratorFactory integratorFactory,
                                SmcConfig smcConfig) {
