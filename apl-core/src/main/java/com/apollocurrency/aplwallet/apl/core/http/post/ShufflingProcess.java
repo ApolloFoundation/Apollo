@@ -75,7 +75,7 @@ public final class ShufflingProcess extends CreateTransactionHandler {
 
         long accountId = HttpParameterParserUtil.getAccountId(req, this.vaultAccountName(), false);
         byte[] secretBytes = HttpParameterParserUtil.getSecretBytes(req, accountId, true);
-        byte[] recipientPublicKey = HttpParameterParserUtil.getPublicKey(req, "recipient");
+        byte[] recipientPublicKey = HttpParameterParserUtil.getPublicKey(req, "recipient", HttpParameterParserUtil.getAccountId(req, "recipientAccount", false));
         if (lookupAccountService().getAccount(recipientPublicKey) != null) {
             return INCORRECT_PUBLIC_KEY; // do not allow existing account to be used as recipient
         }
