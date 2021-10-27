@@ -13,7 +13,8 @@ import com.apollocurrency.aplwallet.apl.core.exception.AplAcceptableTransactionV
 import com.apollocurrency.aplwallet.apl.core.exception.AplUnacceptableTransactionValidationException;
 import com.apollocurrency.aplwallet.apl.core.model.Transaction;
 import com.apollocurrency.aplwallet.apl.core.service.state.account.AccountService;
-import com.apollocurrency.aplwallet.apl.core.service.state.smc.SmcContractService;
+import com.apollocurrency.aplwallet.apl.core.service.state.smc.ContractToolService;
+import com.apollocurrency.aplwallet.apl.core.service.state.smc.PostponedContractService;
 import com.apollocurrency.aplwallet.apl.core.service.state.smc.impl.SmcBlockchainIntegratorFactory;
 import com.apollocurrency.aplwallet.apl.core.transaction.Fee;
 import com.apollocurrency.aplwallet.apl.core.transaction.TransactionTypes;
@@ -53,11 +54,12 @@ import java.util.Map;
 public class SmcCallMethodTransactionType extends AbstractSmcTransactionType {
     @Inject
     public SmcCallMethodTransactionType(BlockchainConfig blockchainConfig, AccountService accountService,
-                                        SmcContractService contractService,
+                                        PostponedContractService contractService,
+                                        ContractToolService contractToolService,
                                         FuelValidator fuelValidator,
                                         SmcBlockchainIntegratorFactory integratorFactory,
                                         SmcConfig smcConfig) {
-        super(blockchainConfig, accountService, contractService, fuelValidator, integratorFactory, smcConfig);
+        super(blockchainConfig, accountService, contractService, contractToolService, fuelValidator, integratorFactory, smcConfig);
     }
 
     @Override
@@ -102,6 +104,7 @@ public class SmcCallMethodTransactionType extends AbstractSmcTransactionType {
         try {
             smartContract = contractService.loadContract(
                 address,
+                transactionSender,
                 transactionSender,
                 new ContractFuel(address, attachment.getFuelLimit(), attachment.getFuelPrice())
             );
@@ -169,6 +172,7 @@ public class SmcCallMethodTransactionType extends AbstractSmcTransactionType {
         final AplAddress transactionSender = new AplAddress(transaction.getSenderId());
         SmartContract smartContract = contractService.loadContract(
             address,
+            transactionSender,
             transactionSender,
             new ContractFuel(address, attachment.getFuelLimit(), attachment.getFuelPrice())
         );

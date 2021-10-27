@@ -16,6 +16,7 @@ import com.apollocurrency.aplwallet.apl.core.model.Transaction;
 import com.apollocurrency.aplwallet.apl.core.model.smc.SmcTxData;
 import com.apollocurrency.aplwallet.apl.core.service.blockchain.Blockchain;
 import com.apollocurrency.aplwallet.apl.core.service.state.smc.impl.SmcContractServiceImpl;
+import com.apollocurrency.aplwallet.apl.core.service.state.smc.impl.SmcContractToolServiceImpl;
 import com.apollocurrency.aplwallet.apl.core.signature.Signature;
 import com.apollocurrency.aplwallet.apl.core.transaction.messages.SmcPublishContractAttachment;
 import com.apollocurrency.aplwallet.apl.core.utils.CollectionUtil;
@@ -94,6 +95,7 @@ class SmcContractServiceTest {
     SmcContractStateEntity smcContractStateEntity;
 
     SmcContractService contractService;
+    ContractToolService contractToolService;
     SmartSource smartSource;
 
     @BeforeEach
@@ -107,6 +109,7 @@ class SmcContractServiceTest {
             contractModelToEntityConverter,
             contractModelToStateConverter,
             smcConfig);
+        contractToolService = new SmcContractToolServiceImpl(blockchain, smcConfig);
 
         smcTxData = SmcTxData.builder()
             .address("APL-632K-TWX3-2ALQ-973CU")
@@ -237,7 +240,7 @@ class SmcContractServiceTest {
         when(smcTransaction.getId()).thenReturn(TX_ID);
         when(preprocessor.process(any())).thenReturn(smartSource);
         //WHEN
-        SmartContract newContract = contractService.createNewContract(smcTransaction);
+        SmartContract newContract = contractToolService.createNewContract(smcTransaction);
 
         //THEN
         assertEquals(smartContract, newContract);

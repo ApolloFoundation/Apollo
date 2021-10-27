@@ -35,6 +35,7 @@ import com.apollocurrency.aplwallet.apl.core.rest.v2.converter.CallMethodResultM
 import com.apollocurrency.aplwallet.apl.core.rest.v2.converter.MethodSpecMapper;
 import com.apollocurrency.aplwallet.apl.core.rest.v2.converter.SmartMethodMapper;
 import com.apollocurrency.aplwallet.apl.core.service.state.account.AccountService;
+import com.apollocurrency.aplwallet.apl.core.service.state.smc.ContractToolService;
 import com.apollocurrency.aplwallet.apl.core.service.state.smc.SmcContractService;
 import com.apollocurrency.aplwallet.apl.core.service.state.smc.impl.SmcBlockchainIntegratorFactory;
 import com.apollocurrency.aplwallet.apl.core.signature.MultiSigCredential;
@@ -97,6 +98,7 @@ public class SmcApiServiceImpl implements SmcApiService {
 
     private final AccountService accountService;
     private final SmcContractService contractService;
+    private final ContractToolService contractToolService;
     private final SmcContractEventService eventService;
     private final TransactionCreator transactionCreator;
     private final TxBContext txBContext;
@@ -113,6 +115,7 @@ public class SmcApiServiceImpl implements SmcApiService {
     public SmcApiServiceImpl(BlockchainConfig blockchainConfig,
                              AccountService accountService,
                              SmcContractService contractService,
+                             ContractToolService contractToolService,
                              SmcContractEventService eventService,
                              TransactionCreator transactionCreator,
                              SmcBlockchainIntegratorFactory integratorFactory,
@@ -124,6 +127,7 @@ public class SmcApiServiceImpl implements SmcApiService {
                              ElGamalEncryptor elGamal) {
         this.accountService = accountService;
         this.contractService = contractService;
+        this.contractToolService = contractToolService;
         this.eventService = eventService;
         this.transactionCreator = transactionCreator;
         this.txBContext = TxBContext.newInstance(blockchainConfig.getChain());
@@ -243,7 +247,7 @@ public class SmcApiServiceImpl implements SmcApiService {
         if (transaction == null) {
             return builder.build();
         }
-        SmartContract smartContract = contractService.createNewContract(transaction);
+        SmartContract smartContract = contractToolService.createNewContract(transaction);
         var context = SmcConfig.asContext(integratorFactory.createMockProcessor(transaction.getId()));
         //syntactical and semantic validation
         SmcContractTxProcessor processor = new PublishContractTxValidator(smartContract, context);

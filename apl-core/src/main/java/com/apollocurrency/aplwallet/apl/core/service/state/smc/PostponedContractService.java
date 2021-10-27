@@ -16,7 +16,8 @@ import com.apollocurrency.smc.data.type.Address;
  */
 public interface PostponedContractService {
     /**
-     * Save the published contract
+     * Save the published contract,
+     * the changes will be committed later.
      *
      * @param contract the published contract
      */
@@ -27,10 +28,11 @@ public interface PostponedContractService {
      *
      * @param address      given contract address
      * @param originator   the origin transaction sender
+     * @param caller       the contract caller
      * @param contractFuel given fuel to execute method calling
      * @return loaded smart contract or null
      */
-    SmartContract loadContract(Address address, Address originator, Fuel contractFuel);
+    SmartContract loadContract(Address address, Address originator, Address caller, Fuel contractFuel);
 
     /**
      * Checks if contract already exists
@@ -40,6 +42,12 @@ public interface PostponedContractService {
      */
     boolean isContractExist(Address address);
 
+    /**
+     * Update the contract state,
+     * the changes will be committed later.
+     *
+     * @param contract the already published contract
+     */
     void updateContractState(SmartContract contract);
 
 }

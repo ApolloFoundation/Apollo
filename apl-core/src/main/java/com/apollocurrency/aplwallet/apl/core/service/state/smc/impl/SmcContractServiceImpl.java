@@ -28,6 +28,7 @@ import com.apollocurrency.smc.contract.AddressNotFoundException;
 import com.apollocurrency.smc.contract.ContractSource;
 import com.apollocurrency.smc.contract.ContractStatus;
 import com.apollocurrency.smc.contract.SmartContract;
+import com.apollocurrency.smc.contract.fuel.ContractFuel;
 import com.apollocurrency.smc.contract.fuel.Fuel;
 import com.apollocurrency.smc.data.type.Address;
 import com.apollocurrency.smc.polyglot.SimpleVersion;
@@ -92,20 +93,34 @@ public class SmcContractServiceImpl implements SmcContractService {
      * Load the saved contract by the given address or null if the given address doesn't correspond the smart contract
      * The loaded smart contract instance hase an undefined fuel value.
      *
-     * @param address    given contract address
-     * @param originator the origin transaction sender
+     * @param address      given contract address
+     * @param originator   the origin transaction sender
+     * @param caller       the contract caller
+     * @param contractFuel given fuel to execute method calling
      * @return loaded smart contract or throw {@link com.apollocurrency.smc.contract.AddressNotFoundException}
      */
     @Override
     @Transactional(readOnly = true)
-    public SmartContract loadContract(Address address, Address originator, Fuel contractFuel) {
+    public SmartContract loadContract(Address address, Address originator, Address caller, Fuel contractFuel) {
+
         SmcContractEntity smcEntity = loadContractEntity(address);
         SmcContractStateEntity smcStateEntity = loadContractStateEntity(address);
 
-        SmartContract contract = convert(smcEntity, smcStateEntity, originator, contractFuel);
+        SmartContract contract = convert(smcEntity, smcStateEntity, originator, caller, contractFuel);
         log.debug("Loaded contract={}", contract);
 
         return contract;
+    }
+
+    @Override
+    public SmartContract loadContract(Address address, Address originator, Fuel contractFuel) {
+        return loadContract(address, originator, originator, contractFuel);
+    }
+
+    @Override
+    public SmartContract loadContract(Address address) {
+        //originator and caller are ignored
+        return loadContract(address, null, null, new ContractFuel(address, 0, 0));
     }
 
     /**
@@ -255,12 +270,12 @@ public class SmcContractServiceImpl implements SmcContractService {
         }
     }
 
-    public static SmartContract convert(SmcContractEntity entity, SmcContractStateEntity stateEntity, Address originator, Fuel contractFuel) {
+    public static SmartContract convert(SmcContractEntity entity, SmcContractStateEntity stateEntity, Address originator, Address caller, Fuel contractFuel) {
         return SmartContract.builder()
             .address(new AplAddress(entity.getAddress()))
             .owner(new AplAddress(entity.getOwner()))
             .originator(originator)
-            .caller(originator)
+            .caller(caller)
             .txId(new AplAddress(entity.getTransactionId()))
             .args(entity.getArgs())
             .code(ContractSource.builder()

@@ -12,7 +12,9 @@ import com.apollocurrency.aplwallet.apl.core.model.Transaction;
 import com.apollocurrency.aplwallet.apl.core.rest.service.ServerInfoService;
 import com.apollocurrency.aplwallet.apl.core.service.blockchain.Blockchain;
 import com.apollocurrency.aplwallet.apl.core.service.state.account.AccountService;
+import com.apollocurrency.aplwallet.apl.core.service.state.smc.ContractToolService;
 import com.apollocurrency.aplwallet.apl.core.service.state.smc.InMemoryAccountService;
+import com.apollocurrency.aplwallet.apl.core.service.state.smc.SmcContractService;
 import com.apollocurrency.aplwallet.apl.core.service.state.smc.event.SmcContractEventManagerClassFactory;
 import com.apollocurrency.aplwallet.apl.core.service.state.smc.txlog.SendMoneyRecord;
 import com.apollocurrency.aplwallet.apl.core.transaction.messages.AbstractSmcAttachment;
@@ -28,7 +30,9 @@ import com.apollocurrency.smc.blockchain.event.ContractEventManagerFactory;
 import com.apollocurrency.smc.blockchain.storage.CachedMappingRepository;
 import com.apollocurrency.smc.blockchain.storage.ContractMappingRepositoryFactory;
 import com.apollocurrency.smc.contract.AddressNotFoundException;
+import com.apollocurrency.smc.contract.SmartContract;
 import com.apollocurrency.smc.contract.SmartMethod;
+import com.apollocurrency.smc.contract.fuel.Fuel;
 import com.apollocurrency.smc.contract.vm.ContractEventManager;
 import com.apollocurrency.smc.contract.vm.ExecutionLog;
 import com.apollocurrency.smc.contract.vm.SendMsgException;
@@ -39,7 +43,6 @@ import com.apollocurrency.smc.contract.vm.operation.SMCOperationProcessor;
 import com.apollocurrency.smc.data.type.Address;
 import com.apollocurrency.smc.data.type.ContractBlock;
 import com.apollocurrency.smc.data.type.ContractBlockchainTransaction;
-import com.apollocurrency.smc.polyglot.language.SmartSource;
 import com.apollocurrency.smc.txlog.ArrayTxLog;
 import com.apollocurrency.smc.txlog.DevNullLog;
 import com.apollocurrency.smc.txlog.TxLog;
@@ -61,16 +64,20 @@ public class SmcBlockchainIntegratorFactory {
     private final Blockchain blockchain;
     private final ServerInfoService serverInfoService;
     private final BlockConverter blockConverter;
+    private final SmcContractService contractService;
+    private final ContractToolService contractToolService;
     private final SmcMappingRepositoryClassFactory smcMappingRepositoryClassFactory;
     private final SmcContractEventManagerClassFactory smcContractEventManagerClassFactory;
     private final TxLogProcessor txLogProcessor;
 
     @Inject
-    public SmcBlockchainIntegratorFactory(AccountService accountService, Blockchain blockchain, ServerInfoService serverInfoService, SmcMappingRepositoryClassFactory smcMappingRepositoryClassFactory, SmcContractEventManagerClassFactory smcContractEventManagerClassFactory, TxLogProcessor txLogProcessor) {
+    public SmcBlockchainIntegratorFactory(AccountService accountService, Blockchain blockchain, ServerInfoService serverInfoService, SmcContractService contractService, ContractToolService contractToolService, SmcMappingRepositoryClassFactory smcMappingRepositoryClassFactory, SmcContractEventManagerClassFactory smcContractEventManagerClassFactory, TxLogProcessor txLogProcessor) {
         this.accountService = Objects.requireNonNull(accountService);
         this.blockchain = Objects.requireNonNull(blockchain);
         this.serverInfoService = Objects.requireNonNull(serverInfoService);
         this.blockConverter = new BlockConverter();
+        this.contractService = Objects.requireNonNull(contractService);
+        this.contractToolService = Objects.requireNonNull(contractToolService);
         this.smcMappingRepositoryClassFactory = Objects.requireNonNull(smcMappingRepositoryClassFactory);
         this.smcContractEventManagerClassFactory = Objects.requireNonNull(smcContractEventManagerClassFactory);
         this.txLogProcessor = txLogProcessor;
@@ -186,13 +193,14 @@ public class SmcBlockchainIntegratorFactory {
         }
 
         @Override
-        public SmartSource getSmartSource(Address contract) {
-            return null;
+        public SmartContract loadSmartContract(Address contractAddress, Address originator, Address caller, Fuel contractFuel) {
+            return contractService.loadContract(contractAddress, originator, caller, contractFuel);
         }
 
         @Override
-        public String getSerializedObject(Address contract) {
-            return null;
+        public String getSerializedObject(Address contractAddress) {
+            var contract = contractService.loadContract(contractAddress);
+            return contract.getSerializedObject();
         }
     }
 

@@ -31,10 +31,15 @@ public interface SmcContractService {
      *
      * @param address      given contract address
      * @param originator   the origin transaction sender
+     * @param caller       the contract caller
      * @param contractFuel given fuel to execute method calling
-     * @return loaded smart contract or null
+     * @return loaded smart contract or throw {@link com.apollocurrency.smc.contract.AddressNotFoundException}
      */
+    SmartContract loadContract(Address address, Address originator, Address caller, Fuel contractFuel);
+
     SmartContract loadContract(Address address, Address originator, Fuel contractFuel);
+
+    SmartContract loadContract(Address address);
 
     /**
      * Load the contract specification by given contract address
