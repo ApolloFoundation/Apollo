@@ -112,7 +112,8 @@ public class DexOrderTable extends EntityDbTable<DexOrder> {
         try (Connection con = databaseManager.getDataSource().getConnection();
              PreparedStatement pstm = con.prepareStatement(
                  "SELECT * FROM dex_offer LEFT JOIN dex_contract ON dex_offer.id = dex_contract.counter_offer_id " +
-                     "OR dex_offer.id = dex_contract.offer_id WHERE dex_contract.id IS NULL AND dex_offer.status=1 AND dex_offer.height < ? AND dex_offer.latest = true ORDER BY db_id ASC")) {
+                     "OR dex_offer.id = dex_contract.offer_id WHERE dex_contract.id IS NULL AND dex_offer.status=1 " +
+                     "AND dex_offer.height < ? AND dex_offer.latest = true ORDER BY dex_offer.db_id ASC")) {
             pstm.setInt(1, height);
             return CollectionUtil.toList(getManyBy(con, pstm, false));
         } catch (SQLException e) {
