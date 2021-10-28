@@ -94,7 +94,7 @@ public class DexContractTable extends EntityDbTable<ExchangeContract> {
     public List<ExchangeContract> getAllByCounterOrder(Long counterOrderId) {
         DbIterator<ExchangeContract> dbIterator = getManyBy(
             new DbClause.LongClause("counter_offer_id", counterOrderId)
-            .and(new DbClause.ByteClause("status", DbClause.Op.GTE, (byte) 0)), 0, -1);
+            .and(new DbClause.ByteClause("status", DbClause.Op.GTE, (byte) 0)), 0, -1, " ORDER BY db_id ASC ");
         return CollectionUtil.toList(dbIterator);
     }
 

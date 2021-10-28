@@ -57,10 +57,11 @@ public class DexContractTableTest extends DbContainerBaseTest {
     }
 
     @Test
-    void t() {
+    void testGetByCounterOrder() {
         List<ExchangeContract> allByCounterOrder = table.getAllByCounterOrder(-6968465014361285240L);
 
-        assertEquals(List.of(td.EXCHANGE_CONTRACT_11, td.EXCHANGE_CONTRACT_12, td.EXCHANGE_CONTRACT_13, td.EXCHANGE_CONTRACT_14, td.EXCHANGE_CONTRACT_15), allByCounterOrder);
+        assertEquals(List.of(td.EXCHANGE_CONTRACT_11, td.EXCHANGE_CONTRACT_12, td.EXCHANGE_CONTRACT_13,
+            td.EXCHANGE_CONTRACT_14, td.EXCHANGE_CONTRACT_15), allByCounterOrder);
     }
 
 }
