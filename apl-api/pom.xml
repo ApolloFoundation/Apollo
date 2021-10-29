@@ -114,6 +114,9 @@
     <plugins>
       <plugin>
         <artifactId>maven-surefire-plugin</artifactId>
+        <configuration>
+          <argLine>-Duser.language=en</argLine>
+        </configuration>
       </plugin>
     </plugins>
   </build>
