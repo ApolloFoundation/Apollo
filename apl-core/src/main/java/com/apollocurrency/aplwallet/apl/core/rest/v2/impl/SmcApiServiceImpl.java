@@ -51,11 +51,13 @@ import com.apollocurrency.aplwallet.apl.smc.service.tx.CallMethodTxValidator;
 import com.apollocurrency.aplwallet.apl.smc.service.tx.CallViewMethodTxProcessor;
 import com.apollocurrency.aplwallet.apl.smc.service.tx.PublishContractTxValidator;
 import com.apollocurrency.aplwallet.apl.util.Convert2;
+import com.apollocurrency.aplwallet.apl.util.StringUtils;
 import com.apollocurrency.aplwallet.apl.util.api.parameter.FirstLastIndexBeanParam;
 import com.apollocurrency.aplwallet.apl.util.cdi.config.Property;
 import com.apollocurrency.aplwallet.apl.util.exception.ApiErrors;
 import com.apollocurrency.aplwallet.apl.util.io.PayloadResult;
 import com.apollocurrency.aplwallet.apl.util.io.Result;
+import com.apollocurrency.aplwallet.apl.util.service.ElGamalEncryptor;
 import com.apollocurrency.smc.contract.AddressNotFoundException;
 import com.apollocurrency.smc.contract.ContractStatus;
 import com.apollocurrency.smc.contract.SmartContract;
@@ -104,6 +106,7 @@ public class SmcApiServiceImpl implements SmcApiService {
     private final SmartMethodMapper methodMapper;
     private final CallMethodResultMapper methodResultMapper;
     private final MethodSpecMapper methodSpecMapper;
+    private final ElGamalEncryptor elGamal;
 
 
     @Inject
@@ -117,7 +120,8 @@ public class SmcApiServiceImpl implements SmcApiService {
                              SmartMethodMapper methodMapper,
                              CallMethodResultMapper methodResultMapper,
                              MethodSpecMapper methodSpecMapper,
-                             @Property(name = "apl.maxAPIRecords", defaultValue = "100") int maxAPIRecords) {
+                             @Property(name = "apl.maxAPIRecords", defaultValue = "100") int maxAPIRecords,
+                             ElGamalEncryptor elGamal) {
         this.accountService = accountService;
         this.contractService = contractService;
         this.eventService = eventService;
@@ -129,6 +133,7 @@ public class SmcApiServiceImpl implements SmcApiService {
         this.methodResultMapper = methodResultMapper;
         this.methodSpecMapper = methodSpecMapper;
         this.maxAPIRecords = maxAPIRecords;
+        this.elGamal = elGamal;
     }
 
     @Override
@@ -282,6 +287,11 @@ public class SmcApiServiceImpl implements SmcApiService {
             response.error(ApiErrors.INCORRECT_VALUE, "fuel_limit", body.getFuelLimit());
             return null;
         }
+        if (StringUtils.isBlank(body.getSecretPhrase())) {
+            response.error(ApiErrors.MISSING_PARAM, "secretPhrase");
+            return null;
+        }
+        var secretPhrase = elGamal.elGamalDecrypt(body.getSecretPhrase());
 
         BigInteger fuelLimit = new BigInteger(body.getFuelLimit());
         BigInteger fuelPrice = new BigInteger(body.getFuelPrice());
@@ -305,10 +315,10 @@ public class SmcApiServiceImpl implements SmcApiService {
             .senderAccount(account)
             .recipientPublicKey(Convert.toHexString(publicKey))
             .recipientId(recipientId)
-            .secretPhrase(body.getSecret())
+            .secretPhrase(secretPhrase)
             .deadlineValue(String.valueOf(1440))
             .attachment(attachment)
-            .credential(new MultiSigCredential(1, Crypto.getKeySeed(body.getSecret())))
+            .credential(new MultiSigCredential(1, Crypto.getKeySeed(secretPhrase)))
             .broadcast(false)
             .validate(false)
             .build();
@@ -554,6 +564,11 @@ public class SmcApiServiceImpl implements SmcApiService {
             response.error(ApiErrors.INCORRECT_VALUE, "fuel_limit", body.getFuelLimit());
             return null;
         }
+        if (StringUtils.isBlank(body.getSecretPhrase())) {
+            response.error(ApiErrors.MISSING_PARAM, "secretPhrase");
+            return null;
+        }
+        var secretPhrase = elGamal.elGamalDecrypt(body.getSecretPhrase());
 
         BigInteger fuelLimit = new BigInteger(body.getFuelLimit());
         BigInteger fuelPrice = new BigInteger(body.getFuelPrice());
@@ -572,10 +587,10 @@ public class SmcApiServiceImpl implements SmcApiService {
             .senderAccount(senderAccount)
             .recipientPublicKey(Convert.toHexString(contractAccount.getPublicKey().getPublicKey()))
             .recipientId(contractAccount.getId())
-            .secretPhrase(body.getSecret())
+            .secretPhrase(secretPhrase)
             .deadlineValue(String.valueOf(1440))
             .attachment(attachment)
-            .credential(new MultiSigCredential(1, Crypto.getKeySeed(body.getSecret())))
+            .credential(new MultiSigCredential(1, Crypto.getKeySeed(secretPhrase)))
             .broadcast(false)
             .validate(false)
             .build();

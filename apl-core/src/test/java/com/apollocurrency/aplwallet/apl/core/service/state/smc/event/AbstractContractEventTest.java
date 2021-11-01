@@ -42,7 +42,7 @@ class AbstractContractEventTest {
         .indexedFieldsCount(2)
         .anonymous(false)
         .build();
-    final String signatureStr = "Transfer:from,to,amount:2:false";
+    final String signatureStr = "Transfer:from,to,amount";
     final byte[] signature = {1, 2, 3, 4, 5, 6, 7, 8};
 
     AplContractEventManager manager;
