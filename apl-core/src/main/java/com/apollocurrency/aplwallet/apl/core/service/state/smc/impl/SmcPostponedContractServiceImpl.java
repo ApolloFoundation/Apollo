@@ -15,6 +15,8 @@ import javax.inject.Inject;
 import javax.inject.Singleton;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.concurrent.locks.Lock;
+import java.util.concurrent.locks.ReentrantLock;
 
 /**
  * @author andrew.zinchenko@gmail.com
@@ -23,19 +25,25 @@ import java.util.Map;
 @Singleton
 public class SmcPostponedContractServiceImpl implements PostponedContractService {
     private final SmcContractService contractService;
-
     private final Map<Address, SmartContract> cachedContracts;
+    private final Lock lock;
 
     @Inject
     public SmcPostponedContractServiceImpl(SmcContractService contractService) {
         this.contractService = contractService;
         this.cachedContracts = new HashMap<>();
+        this.lock = new ReentrantLock();
     }
 
     @Override
     public void saveContract(SmartContract contract) {
         log.trace("Save in memory collection, contract={}", contract.getAddress().getHex());
-        cachedContracts.put(contract.getAddress(), contract);
+        lock.lock();
+        try {
+            cachedContracts.put(contract.getAddress(), contract);
+        } finally {
+            lock.unlock();
+        }
     }
 
     @Override
@@ -55,19 +63,30 @@ public class SmcPostponedContractServiceImpl implements PostponedContractService
     @Override
     public void updateContractState(SmartContract contract) {
         log.trace("Update in memory collection, contract={}", contract.getAddress().getHex());
-        cachedContracts.put(contract.getAddress(), contract);
+        lock.lock();
+        try {
+            cachedContracts.put(contract.getAddress(), contract);
+        } finally {
+            lock.unlock();
+        }
     }
 
     public void commit() {
         log.trace("For committing {}", cachedContracts.size());
-        cachedContracts.forEach((address, smartContract) -> {
-            if (contractService.isContractExist(address)) {
-                log.trace("Update sate on address={}, state={}", address.getHex(), smartContract.getSerializedObject());
-                contractService.updateContractState(smartContract);
-            } else {
-                log.trace("Save new contract={}", address.getHex());
-                contractService.saveContract(smartContract);
-            }
-        });
+        lock.lock();
+        try {
+            cachedContracts.forEach((address, smartContract) -> {
+                if (contractService.isContractExist(address)) {
+                    log.trace("Update sate on address={}, state={}", address.getHex(), smartContract.getSerializedObject());
+                    contractService.updateContractState(smartContract);
+                } else {
+                    log.trace("Save new contract={}", address.getHex());
+                    contractService.saveContract(smartContract);
+                }
+            });
+            cachedContracts.clear();
+        } finally {
+            lock.unlock();
+        }
     }
 }

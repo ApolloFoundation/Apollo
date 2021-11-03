@@ -194,6 +194,8 @@ public class SmcCallMethodTransactionType extends AbstractSmcTransactionType {
             smartMethod.getMethodWithParams(),
             smartContract.getAddress(), Long.toUnsignedString(transaction.getId()),
             smartContract.getFuel(), transaction.getAmountATM(), transactionSender);
+        contractService.commit();
+        log.trace("Changes were committed");
     }
 
     private Fee.FuelBasedFee getFuelBasedFee(Transaction transaction) {

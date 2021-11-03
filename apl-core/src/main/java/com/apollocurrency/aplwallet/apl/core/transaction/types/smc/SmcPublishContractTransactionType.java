@@ -149,6 +149,8 @@ public class SmcPublishContractTransactionType extends AbstractSmcTransactionTyp
         log.info("Contract {} published init=[{}], txId={}, fuel={}, amountATM={}, owner={}",
             smartContract.getAddress(), smartContract.getInitCode(), Long.toUnsignedString(transaction.getId()),
             smartContract.getFuel(), transaction.getAmountATM(), smartContract.getOwner());
+        contractService.commit();
+        log.trace("Changes were committed");
     }
 
     @Override

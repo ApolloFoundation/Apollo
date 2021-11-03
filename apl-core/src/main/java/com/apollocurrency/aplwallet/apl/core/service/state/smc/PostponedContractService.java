@@ -50,4 +50,9 @@ public interface PostponedContractService {
      */
     void updateContractState(SmartContract contract);
 
+    /**
+     * Fix all changes in the blockchain.
+     */
+    void commit();
+
 }
