@@ -26,6 +26,7 @@ import com.apollocurrency.aplwallet.apl.util.api.converter.Converter;
 import com.apollocurrency.smc.blockchain.BlockchainIntegrator;
 import com.apollocurrency.smc.blockchain.MockIntegrator;
 import com.apollocurrency.smc.blockchain.OperationReceipt;
+import com.apollocurrency.smc.blockchain.crypt.HashSumProvider;
 import com.apollocurrency.smc.blockchain.event.ContractEventManagerFactory;
 import com.apollocurrency.smc.blockchain.storage.CachedMappingRepository;
 import com.apollocurrency.smc.blockchain.storage.ContractMappingRepositoryFactory;
@@ -69,9 +70,10 @@ public class SmcBlockchainIntegratorFactory {
     private final SmcMappingRepositoryClassFactory smcMappingRepositoryClassFactory;
     private final SmcContractEventManagerClassFactory smcContractEventManagerClassFactory;
     private final TxLogProcessor txLogProcessor;
+    private final HashSumProvider hashSumProvider;
 
     @Inject
-    public SmcBlockchainIntegratorFactory(AccountService accountService, Blockchain blockchain, ServerInfoService serverInfoService, SmcContractService contractService, ContractToolService contractToolService, SmcMappingRepositoryClassFactory smcMappingRepositoryClassFactory, SmcContractEventManagerClassFactory smcContractEventManagerClassFactory, TxLogProcessor txLogProcessor) {
+    public SmcBlockchainIntegratorFactory(AccountService accountService, Blockchain blockchain, ServerInfoService serverInfoService, SmcContractService contractService, ContractToolService contractToolService, SmcMappingRepositoryClassFactory smcMappingRepositoryClassFactory, SmcContractEventManagerClassFactory smcContractEventManagerClassFactory, TxLogProcessor txLogProcessor, HashSumProvider hashSumProvider) {
         this.accountService = Objects.requireNonNull(accountService);
         this.blockchain = Objects.requireNonNull(blockchain);
         this.serverInfoService = Objects.requireNonNull(serverInfoService);
@@ -81,6 +83,7 @@ public class SmcBlockchainIntegratorFactory {
         this.smcMappingRepositoryClassFactory = Objects.requireNonNull(smcMappingRepositoryClassFactory);
         this.smcContractEventManagerClassFactory = Objects.requireNonNull(smcContractEventManagerClassFactory);
         this.txLogProcessor = txLogProcessor;
+        this.hashSumProvider = Objects.requireNonNull(hashSumProvider);
     }
 
     public BlockchainIntegrator createProcessor(final Transaction originator, AbstractSmcAttachment attachment, Account txSenderAccount, Account txRecipientAccount, final LedgerEvent ledgerEvent) {
@@ -90,7 +93,7 @@ public class SmcBlockchainIntegratorFactory {
 
     public BlockchainIntegrator createMockProcessor(final long originatorTransactionId) {
         final var transaction = new AplAddress(originatorTransactionId);
-        return new SMCOperationProcessor(new MockIntegrator(transaction), ExecutionLog.EMPTY_LOG);
+        return new SMCOperationProcessor(new MockIntegrator(transaction, null, hashSumProvider), ExecutionLog.EMPTY_LOG);
     }
 
     public BlockchainIntegrator createReadonlyProcessor() {
@@ -201,6 +204,11 @@ public class SmcBlockchainIntegratorFactory {
         public String getSerializedObject(Address contractAddress) {
             var contract = contractService.loadContract(contractAddress);
             return contract.getSerializedObject();
+        }
+
+        @Override
+        public HashSumProvider getHashSumProvider() {
+            return hashSumProvider;
         }
     }
 

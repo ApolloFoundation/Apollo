@@ -181,7 +181,7 @@ public class SmcCallMethodTransactionType extends AbstractSmcTransactionType {
             .args(attachment.getMethodParams())
             .value(BigInteger.valueOf(transaction.getAmountATM()))
             .build();
-        log.debug("Before processing Address={} Fuel={}", smartContract.getAddress(), smartContract.getFuel());
+        log.debug("Before processing: caller={} contract={} Fuel={}", smartContract.getCaller(), smartContract.getAddress(), smartContract.getFuel());
         var context = SmcConfig.asContext(integratorFactory.createProcessor(transaction, attachment,
             senderAccount, recipientAccount, getLedgerEvent())
         );
