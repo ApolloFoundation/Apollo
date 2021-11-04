@@ -52,14 +52,6 @@ public class DexContractTable extends EntityDbTable<ExchangeContract> {
             databaseManager, fullTextOperationDataEvent);
     }
 
-    private static ExchangeContract getFirstOrNull(List<ExchangeContract> contracts) {
-        if (contracts.size() > 0) {
-            return contracts.get(0);
-        } else {
-            return null;
-        }
-    }
-
     @Override
     protected ExchangeContract load(Connection con, ResultSet rs, DbKey dbKey) throws SQLException {
         return mapper.map(rs, null);
@@ -100,16 +92,9 @@ public class DexContractTable extends EntityDbTable<ExchangeContract> {
     }
 
     public List<ExchangeContract> getAllByCounterOrder(Long counterOrderId) {
-        return getAllByLongParameterFromStatus(counterOrderId, "counter_offer_id", 0);
-    }
-
-    private List<ExchangeContract> getAllByLongParameterFromStatusHeightSorted(Long parameterValue, String parameterName, int fromStatus) {
-        DbIterator<ExchangeContract> dbIterator = getManyBy(new DbClause.LongClause(parameterName, parameterValue).and(new DbClause.ByteClause("status", DbClause.Op.GTE, (byte) fromStatus)), 0, -1, " ORDER BY height DESC, db_id DESC");
-        return CollectionUtil.toList(dbIterator);
-    }
-
-    private List<ExchangeContract> getAllByLongParameterFromStatus(Long parameterValue, String parameterName, int fromStatus) {
-        DbIterator<ExchangeContract> dbIterator = getManyBy(new DbClause.LongClause(parameterName, parameterValue).and(new DbClause.ByteClause("status", DbClause.Op.GTE, (byte) fromStatus)), 0, -1);
+        DbIterator<ExchangeContract> dbIterator = getManyBy(
+            new DbClause.LongClause("counter_offer_id", counterOrderId)
+            .and(new DbClause.ByteClause("status", DbClause.Op.GTE, (byte) 0)), 0, -1, " ORDER BY db_id ASC ");
         return CollectionUtil.toList(dbIterator);
     }
 
@@ -117,7 +102,7 @@ public class DexContractTable extends EntityDbTable<ExchangeContract> {
         try (Connection con = getDatabaseManager().getDataSource().getConnection();
              PreparedStatement pstmt = con
                  .prepareStatement("SELECT * FROM dex_contract  where latest = true " +
-                     "AND height = ? AND (offer_id = ? OR counter_offer_id = ?)")
+                     "AND height = ? AND (offer_id = ? OR counter_offer_id = ?) ORDER BY db_id ASC")
         ) {
             int i = 0;
             pstmt.setInt(++i, height);
@@ -130,16 +115,6 @@ public class DexContractTable extends EntityDbTable<ExchangeContract> {
         }
     }
 
-    public ExchangeContract getLastByOrder(Long orderId) {
-        List<ExchangeContract> allByOrder = getAllByLongParameterFromStatusHeightSorted(orderId, "offer_id", 1);
-        return getFirstOrNull(allByOrder);
-    }
-
-    public ExchangeContract getLastByCounterOrder(Long orderId) {
-        List<ExchangeContract> allByOrder = getAllByLongParameterFromStatusHeightSorted(orderId, "counter_offer_id", 1);
-        return getFirstOrNull(allByOrder);
-    }
-
     public ExchangeContract getByOrderAndCounterOrder(Long orderId, Long counterOrderId) {
         // impossible to match to the same order multiple times,
         // so that contract for pair of counter order and order is always unique
@@ -148,14 +123,14 @@ public class DexContractTable extends EntityDbTable<ExchangeContract> {
 
     public List<ExchangeContract> getOverdueContractsStep1and2(int deadlineToReply) throws AplException.ExecutiveProcessException {
         String sql = "SELECT * FROM dex_contract  where latest = true " +
-            "AND status IN (0,1) AND deadline_to_reply < ?";
+            "AND status IN (0,1) AND deadline_to_reply < ? ORDER BY db_id ASC ";
 
         return getOverdueContracts(deadlineToReply, sql);
     }
 
     public List<ExchangeContract> getOverdueContractsStep1_2_3(int deadlineToReply) throws AplException.ExecutiveProcessException {
         String sql = "SELECT * FROM dex_contract  where latest = true " +
-            "AND status IN (0,1,2) AND deadline_to_reply < ?";
+            "AND status IN (0,1,2) AND deadline_to_reply < ? ORDER BY db_id ASC ";
 
         return getOverdueContracts(deadlineToReply, sql);
     }

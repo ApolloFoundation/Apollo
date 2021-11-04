@@ -37,13 +37,13 @@ import javax.servlet.http.HttpServletRequest;
 public final class GetAccountId extends AbstractAPIRequestHandler {
 
     public GetAccountId() {
-        super(new APITag[]{APITag.ACCOUNTS}, "secretPhrase", "publicKey");
+        super(new APITag[]{APITag.ACCOUNTS}, "secretPhrase", "publicKey", "passphrase", "account");
     }
 
     @Override
     public JSONStreamAware processRequest(HttpServletRequest req) throws ParameterException {
 
-        byte[] publicKey = HttpParameterParserUtil.getPublicKey(req);
+        byte[] publicKey = HttpParameterParserUtil.getPublicKey(req, HttpParameterParserUtil.getAccountId(req, false));
         long accountId = AccountService.getId(publicKey);
         JSONObject response = new JSONObject();
         JSONData.putAccount(response, "account", accountId);

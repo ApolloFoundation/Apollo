@@ -565,14 +565,6 @@ public final class HttpParameterParserUtil {
         return lookupElGamalEncryptor().elGamalDecrypt(secretPhrase);
     }
 
-    public static byte[] getPublicKey(HttpServletRequest req) throws ParameterException {
-        return getPublicKey(req, null);
-    }
-
-    public static byte[] getPublicKey(HttpServletRequest req, String prefix) throws ParameterException {
-        return getPublicKey(req, prefix, 0);
-    }
-
     public static byte[] getPublicKey(HttpServletRequest req, long accountId) throws ParameterException {
         return getPublicKey(req, null, accountId);
     }
@@ -585,15 +577,20 @@ public final class HttpParameterParserUtil {
         String secretPhraseParam = prefix == null ? "secretPhrase" : (prefix + "SecretPhrase");
         String publicKeyParam = prefix == null ? "publicKey" : (prefix + "PublicKey");
         String passphraseParam = prefix == null ? "passphrase" : (prefix + "Passphrase");
+        String accountIdParam = prefix == null ? "account" : (prefix + "Account");
         String secretPhrase = getSecretPhrase(req, secretPhraseParam, false);
         if (secretPhrase == null) {
             try {
                 byte[] publicKey = Convert.parseHexString(Convert.emptyToNull(req.getParameter(publicKeyParam)));
                 if (publicKey == null) {
                     String passphrase = Convert.emptyToNull(HttpParameterParserUtil.getPassphrase(req, passphraseParam, false));
-                    if (accountId == 0 || passphrase == null) {
+                    if (passphrase == null) {
                         if (isMandatory) {
                             throw new ParameterException(missing(secretPhraseParam, publicKeyParam, passphraseParam));
+                        }
+                    } else if (accountId == 0) {
+                        if (isMandatory) {
+                            throw new ParameterException(missing(accountIdParam));
                         }
                     } else {
                         byte[] secretBytes = lookupAccountKMSv1().getAplSecretBytes(accountId, passphrase);
@@ -603,7 +600,6 @@ public final class HttpParameterParserUtil {
                         return Crypto.getPublicKey(Crypto.getKeySeed(secretBytes));
                     }
                 } else {
-
                     if (!Crypto.isCanonicalPublicKey(publicKey)) {
                         if (isMandatory) {
                             throw new ParameterException(incorrect(publicKeyParam));
