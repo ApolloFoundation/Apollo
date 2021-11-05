@@ -105,9 +105,10 @@ public interface SmcContractService {
      *
      * @param language the language name
      * @param version  the language version
+     * @param type     the module type: token, escrow etc.
      * @return the list of ASR module names.
      */
-    List<String> getAsrModules(String language, Version version);
+    List<String> getAsrModules(String language, Version version, String type);
 
     /**
      * Returns the list of inherited ASR modules.

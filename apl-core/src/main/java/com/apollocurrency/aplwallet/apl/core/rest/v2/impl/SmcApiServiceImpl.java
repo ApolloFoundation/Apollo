@@ -215,15 +215,23 @@ public class SmcApiServiceImpl implements SmcApiService {
     }
 
     @Override
-    public Response getSmcAsrModules(String languageStr, String versionStr, SecurityContext securityContext) throws NotFoundException {
+    public Response getSmcAsrModules(String languageStr, String versionStr, String typeStr, SecurityContext securityContext) throws NotFoundException {
         ResponseBuilderV2 builder = ResponseBuilderV2.startTiming();
         String language = defaultLanguage(languageStr);
         Version version = defaultVersion(versionStr);
+        String type = defaultType(typeStr);
         var response = new ModuleListResponse();
-        response.setModules(contractService.getAsrModules(language, version));
+        response.setModules(contractService.getAsrModules(language, version, type));
         response.setLanguage(language);
         response.setVersion(version.toString());
         return builder.bind(response).build();
+    }
+
+    private String defaultType(String typeStr) {
+        if (typeStr == null || typeStr.isBlank()) {
+            typeStr = "token";
+        }
+        return typeStr;
     }
 
     private Version defaultVersion(String versionStr) {

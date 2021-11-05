@@ -262,9 +262,9 @@ public class SmcContractServiceImpl implements SmcContractService {
     }
 
     @Override
-    public List<String> getAsrModules(String language, Version version) {
+    public List<String> getAsrModules(String language, Version version, String type) {
         if (libraryProvider.isCompatible(language, version)) {
-            return libraryProvider.getAsrModules();
+            return libraryProvider.getAsrModules(type);
         } else {
             return List.of();
         }
