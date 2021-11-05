@@ -87,6 +87,7 @@ import java.util.Map;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 
+import static com.apollocurrency.smc.polyglot.language.lib.JSLibraryProvider.ASR_TYPE_TOKEN;
 import static com.apollocurrency.smc.util.HexUtils.toHex;
 
 /**
@@ -229,7 +230,7 @@ public class SmcApiServiceImpl implements SmcApiService {
 
     private String defaultType(String typeStr) {
         if (typeStr == null || typeStr.isBlank()) {
-            typeStr = "token";
+            typeStr = ASR_TYPE_TOKEN;
         }
         return typeStr;
     }
