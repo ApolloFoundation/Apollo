@@ -75,12 +75,4 @@ class GetTransactionsRequestTest {
         Validator validator = factory.getValidator();
         return validator.validate(request);
     }
-
-    @Test
-    void getStringTransactionIds() {
-    }
-
-    @Test
-    void getTransactionIds() {
-    }
 }
