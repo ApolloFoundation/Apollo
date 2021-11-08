@@ -1796,7 +1796,7 @@ components:
         filter:
           type: string
           description: the complex expression to filter events
-          example: "{ from : {$eq: '0x123123123123'} }"
+          example: "{ \"from\" : {\"$eq\": \"0x123123123123\"} }"
 
     ContractEventsResponse:
       allOf:
