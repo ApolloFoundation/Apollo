@@ -123,6 +123,11 @@ public class DGSFeedbackTableTest extends ValuesDbTableTest<DGSFeedback> {
     }
 
     @Override
+    public DatabaseManager getDatabaseManager() {
+        return null;
+    }
+
+    @Override
     protected List<DGSFeedback> getAll() {
         return List.of(dtd.FEEDBACK_0, dtd.FEEDBACK_1, dtd.FEEDBACK_2, dtd.FEEDBACK_3, dtd.FEEDBACK_4, dtd.FEEDBACK_5, dtd.FEEDBACK_6, dtd.FEEDBACK_7, dtd.FEEDBACK_8, dtd.FEEDBACK_9, dtd.FEEDBACK_10, dtd.FEEDBACK_11);
     }

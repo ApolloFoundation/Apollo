@@ -146,6 +146,11 @@ public class DGSTagTableTest extends EntityDbTableTest<DGSTag> {
     }
 
     @Override
+    public DatabaseManager getDatabaseManager() {
+        return null;
+    }
+
+    @Override
     protected List<DGSTag> getAll() {
         return new ArrayList<>(List.of(dtd.TAG_0, dtd.TAG_1, dtd.TAG_2, dtd.TAG_3, dtd.TAG_4, dtd.TAG_5, dtd.TAG_6, dtd.TAG_7, dtd.TAG_8, dtd.TAG_9, dtd.TAG_10, dtd.TAG_11, dtd.TAG_12));
     }

@@ -106,13 +106,16 @@ public class DbExtension implements BeforeEachCallback, /*AfterEachCallback,*/ A
     public void beforeEach(ExtensionContext context) {
         if (context != null && context.getTags().contains("skip-fts-init")) {
             // skip init for some tests
-            if (fullTextSearchService == null) {
+            if (fullTextSearchService != null) {
                 initFtl();
             }
         } else {
             if (fullTextSearchService != null) {
                 initFtl();
             }
+        }
+        if (!staticInit) {
+            cleanAndPopulateDb();
         }
     }
 
@@ -127,6 +130,7 @@ public class DbExtension implements BeforeEachCallback, /*AfterEachCallback,*/ A
         if (fullTextSearchService != null) {
             initFtl();
         }
+        staticInit = true;
     }
 
     public void cleanAndPopulateDb() {

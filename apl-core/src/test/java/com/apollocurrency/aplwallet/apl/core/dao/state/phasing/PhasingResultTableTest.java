@@ -146,6 +146,11 @@ public class PhasingResultTableTest extends EntityDbTableTest<PhasingPollResult>
     }
 
     @Override
+    public DatabaseManager getDatabaseManager() {
+        return null;
+    }
+
+    @Override
     protected List<PhasingPollResult> getAll() {
         return new ArrayList<>(List.of(ptd.SHARD_RESULT_0, ptd.RESULT_0, ptd.RESULT_1, ptd.RESULT_2, ptd.RESULT_3));
     }

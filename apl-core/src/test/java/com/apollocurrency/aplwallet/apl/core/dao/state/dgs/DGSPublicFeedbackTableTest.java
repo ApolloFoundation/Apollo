@@ -128,6 +128,11 @@ public class DGSPublicFeedbackTableTest extends ValuesDbTableTest<DGSPublicFeedb
     }
 
     @Override
+    public DatabaseManager getDatabaseManager() {
+        return null;
+    }
+
+    @Override
     protected List<DGSPublicFeedback> getAll() {
         return new ArrayList<>(List.of(dtd.PUBLIC_FEEDBACK_0, dtd.PUBLIC_FEEDBACK_1, dtd.PUBLIC_FEEDBACK_2, dtd.PUBLIC_FEEDBACK_3, dtd.PUBLIC_FEEDBACK_4, dtd.PUBLIC_FEEDBACK_5, dtd.PUBLIC_FEEDBACK_6, dtd.PUBLIC_FEEDBACK_7, dtd.PUBLIC_FEEDBACK_8, dtd.PUBLIC_FEEDBACK_9, dtd.PUBLIC_FEEDBACK_10, dtd.PUBLIC_FEEDBACK_11, dtd.PUBLIC_FEEDBACK_12, dtd.PUBLIC_FEEDBACK_13));
     }

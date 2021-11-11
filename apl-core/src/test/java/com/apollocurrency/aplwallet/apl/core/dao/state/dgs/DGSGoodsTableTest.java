@@ -7,6 +7,7 @@ package com.apollocurrency.aplwallet.apl.core.dao.state.dgs;
 import com.apollocurrency.aplwallet.apl.core.app.observer.events.TrimEvent;
 import com.apollocurrency.aplwallet.apl.core.dao.state.derived.DerivedDbTable;
 import com.apollocurrency.aplwallet.apl.core.dao.state.derived.EntityDbTableTest;
+import com.apollocurrency.aplwallet.apl.core.db.DatabaseManager;
 import com.apollocurrency.aplwallet.apl.core.entity.state.derived.VersionedDerivedEntity;
 import com.apollocurrency.aplwallet.apl.core.entity.state.dgs.DGSGoods;
 import com.apollocurrency.aplwallet.apl.core.service.fulltext.FullTextOperationData;
@@ -51,6 +52,11 @@ public class DGSGoodsTableTest extends EntityDbTableTest<DGSGoods> {
     @Override
     public DerivedDbTable<DGSGoods> getDerivedDbTable() {
         return table;
+    }
+
+    @Override
+    public DatabaseManager getDatabaseManager() {
+        return null;
     }
 
     @Override

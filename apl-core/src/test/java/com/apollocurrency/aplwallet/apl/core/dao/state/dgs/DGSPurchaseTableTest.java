@@ -139,6 +139,11 @@ public class DGSPurchaseTableTest extends EntityDbTableTest<DGSPurchase> {
     }
 
     @Override
+    public DatabaseManager getDatabaseManager() {
+        return null;
+    }
+
+    @Override
     protected List<DGSPurchase> getAll() {
         return new ArrayList<>(List.of(dtd.PURCHASE_0, dtd.PURCHASE_1, dtd.PURCHASE_2, dtd.PURCHASE_3, dtd.PURCHASE_4, dtd.PURCHASE_5, dtd.PURCHASE_6, dtd.PURCHASE_7, dtd.PURCHASE_8, dtd.PURCHASE_9, dtd.PURCHASE_10, dtd.PURCHASE_11, dtd.PURCHASE_12, dtd.PURCHASE_13, dtd.PURCHASE_14, dtd.PURCHASE_15, dtd.PURCHASE_16, dtd.PURCHASE_17, dtd.PURCHASE_18));
     }
