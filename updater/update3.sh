@@ -3,9 +3,9 @@
 
 echo Downloading shards...
 
-DOWNLOAD_PATH=https://s3.amazonaws.com/updates.apollowallet.org/database/
+DOWNLOAD_PATH=https://apl-db-upd.s3.fr-par.scw.cloud/
 
-DB_POSTFIX=-2020-q1
+DB_POSTFIX=-2021-q4
 if [ $4 == 'false' ]
 then
     DB_POSTFIX=${DB_POSTFIX}-noshards
@@ -15,7 +15,7 @@ cd $1
 mkdir tmpdir
 cd tmpdir
 rm -rfv "$5".tar.gz
-#echo https://s3.amazonaws.com/updates.apollowallet.org/database/$5.tar.gz
+
 wget -v ${DOWNLOAD_PATH}$5${DB_POSTFIX}.tar.gz -O $5.tar.gz || curl --retry 100 ${DOWNLOAD_PATH}$5${DB_POSTFIX}.tar.gz -o $5.tar.gz
 echo Unpacking...
 tar -zxvf $5.tar.gz
