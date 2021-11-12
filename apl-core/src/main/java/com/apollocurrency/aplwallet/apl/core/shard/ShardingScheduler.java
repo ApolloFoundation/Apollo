@@ -128,7 +128,6 @@ public class ShardingScheduler {
                 synchronized (this) {
                     if (scheduledShards.isEmpty()) {
                         updateTrimConfig(true, false);
-
                     } else {
                         for (ShardScheduledRecord record : scheduledShards) {
                             record.schedulingTime = timeService.systemTimeMillis();
@@ -136,8 +135,11 @@ public class ShardingScheduler {
                     }
                 }
             }
+        } catch (Exception e) {
+            logErrorAndDisableSharding("Unknown error during trying to shard, last sharding at height "
+                + lastShardScheduledHeight + "scheduled shards: " + scheduledShardings()  , e);
         } finally {
-           scheduleBackgroundShardingTask(nextShardDelay);
+            scheduleBackgroundShardingTask(nextShardDelay);
         }
     }
 
@@ -277,6 +279,14 @@ public class ShardingScheduler {
 
     private void logErrorAndDisableSharding(String error, Object... args) {
         log.error(error, args);
+        disableSharding();
+    }
+    private void logErrorAndDisableSharding(String error, Exception e) {
+        log.error(error, e);
+        disableSharding();
+    }
+
+    private void disableSharding() {
         shardingFailed = true;
         synchronized (this) {
             scheduledShards.clear();
