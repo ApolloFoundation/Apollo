@@ -17,7 +17,7 @@ import com.apollocurrency.aplwallet.api.v2.model.ContractListResponse;
 import com.apollocurrency.aplwallet.api.v2.model.ContractMethod;
 import com.apollocurrency.aplwallet.api.v2.model.ContractSpecResponse;
 import com.apollocurrency.aplwallet.api.v2.model.ContractStateResponse;
-import com.apollocurrency.aplwallet.api.v2.model.MethodSpec;
+import com.apollocurrency.aplwallet.api.v2.model.MemberSpec;
 import com.apollocurrency.aplwallet.api.v2.model.ModuleListResponse;
 import com.apollocurrency.aplwallet.api.v2.model.ModuleSourceResponse;
 import com.apollocurrency.aplwallet.api.v2.model.PropertySpec;
@@ -393,14 +393,18 @@ public class SmcApiServiceImpl implements SmcApiService {
         var aplContractSpec = contractService.loadAsrModuleSpec(address);
         var contractSpec = aplContractSpec.getContractSpec();
         var notViewMethods = contractSpec.getMembers().stream()
-            .filter(member -> member.getStateMutability() != ContractSpec.StateMutability.VIEW
+            .filter(member -> member.getType() == ContractSpec.MemberType.FUNCTION && member.getStateMutability() != ContractSpec.StateMutability.VIEW
                 && (member.getVisibility() == ContractSpec.Visibility.PUBLIC
                 || member.getVisibility() == ContractSpec.Visibility.EXTERNAL))
             .collect(Collectors.toList());
         var viewMethods = contractSpec.getMembers().stream()
-            .filter(member -> member.getStateMutability() == ContractSpec.StateMutability.VIEW
+            .filter(member -> member.getType() == ContractSpec.MemberType.FUNCTION && member.getStateMutability() == ContractSpec.StateMutability.VIEW
                 && (member.getVisibility() == ContractSpec.Visibility.PUBLIC
                 || member.getVisibility() == ContractSpec.Visibility.EXTERNAL))
+            .collect(Collectors.toList());
+
+        var events = contractSpec.getMembers().stream()
+            .filter(member -> member.getType() == ContractSpec.MemberType.EVENT)
             .collect(Collectors.toList());
 
         List<ContractMethod> methodsToCall = new ArrayList<>();
@@ -433,6 +437,7 @@ public class SmcApiServiceImpl implements SmcApiService {
         response.getMembers().addAll(methodSpecMapper.convert(viewMethods));
         matchResults(response.getMembers(), resultMap);
         response.getMembers().addAll(methodSpecMapper.convert(notViewMethods));
+        response.getMembers().addAll(methodSpecMapper.convert(events));
 
         response.setInheritedContracts(contractService.getInheritedAsrModules(contractSpec.getType()
             , aplContractSpec.getLanguage()
@@ -445,7 +450,7 @@ public class SmcApiServiceImpl implements SmcApiService {
         return result.stream().collect(Collectors.toMap(ResultValue::getMethod, Function.identity()));
     }
 
-    private void matchResults(List<MethodSpec> methods, Map<String, ResultValue> resultMap) {
+    private void matchResults(List<MemberSpec> methods, Map<String, ResultValue> resultMap) {
         methods.forEach(methodSpec -> {
             if (methodSpec.getInputs() == null || methodSpec.getInputs().isEmpty()) {
                 var res = resultMap.getOrDefault(methodSpec.getName(), ResultValue.UNDEFINED_RESULT);

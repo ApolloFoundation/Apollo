@@ -1343,7 +1343,7 @@ components:
           type: string
           example: uint
 
-    AsrMethodSpec:
+    AsrMemberSpec:
       type: object
       properties:
         type:
@@ -1396,7 +1396,7 @@ components:
           description: the list of members
           type: array
           items:
-            - $ref: '#/components/AsrMethodSpec'
+            - $ref: '#/components/schemas/AsrMemberSpec'
 
     AsrSpecResponse:
       allOf:
@@ -1894,7 +1894,7 @@ components:
               description: the contract public functions
               type: array
               items:
-                $ref: '#/components/schemas/MethodSpec'
+                $ref: '#/components/schemas/MemberSpec'
             inheritedContracts:
               type: array
               description: the list of inherited contracts
@@ -2069,11 +2069,15 @@ components:
                 $ref: '#/components/schemas/BaseResponse'
               nullable: true
 
-    MethodSpec:
+    MemberSpec:
       type: object
       properties:
+        type:
+          description: the object type- constructor, function, event etc
+          type: string
+          example: function
         name:
-          description: the method/function name
+          description: the event/method/function name
           type: string
           example: balanceOf
         inputs:
