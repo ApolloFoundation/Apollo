@@ -46,7 +46,9 @@ public abstract class DerivedDbTableTest<T extends DerivedEntity> extends DbCont
 
     public abstract DerivedDbTable<T> getDerivedDbTable();
 
-    public abstract DatabaseManager getDatabaseManager();
+    public DatabaseManager getDatabaseManager() {
+        return getDerivedDbTable().getDatabaseManager();
+    }
 
     @Test
     public void testGetAll() throws SQLException {

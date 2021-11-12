@@ -205,10 +205,13 @@ public class PhasingPollTable extends EntityDbTable<PhasingPoll> {
         }
     }
 
-    public List<TransactionDbInfo> getActivePhasedTransactionDbIds(int height) throws SQLException {
+    public List<TransactionDbInfo> getActivePhasedTransactionDbIdsAfterHeight(int height) throws SQLException {
         List<TransactionDbInfo> excludeInfos = new ArrayList<>();
         TransactionalDataSource dataSource = databaseManager.getDataSource();
         int blockTimestamp = blockTimestamp(height);
+        if (blockTimestamp == 0) {
+            throw new IllegalStateException("Block with height " + height + " was not found or has unacceptable timestamp");
+        }
         try (Connection conn = dataSource.getConnection();
              PreparedStatement pstmt = conn.prepareStatement(
                  "SELECT db_id, id FROM transaction WHERE id IN " +
@@ -264,6 +267,11 @@ public class PhasingPollTable extends EntityDbTable<PhasingPoll> {
         }
     }
 
+    /**
+     * Return all finished phasings before height (exclusive, because it's required trim behavior)
+     * @param height height of the blockchain before which finished polls should be searched
+     * @return lazy db iterator of the resulting finished polls
+     */
     private DbIterator<PhasingPoll> getAllFinishedPolls(int height) {
         Connection con = null;
         try {

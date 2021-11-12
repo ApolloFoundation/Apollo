@@ -7,8 +7,8 @@ package com.apollocurrency.aplwallet.apl.core.dao.state.phasing;
 import com.apollocurrency.aplwallet.apl.core.dao.state.derived.DerivedDbTable;
 import com.apollocurrency.aplwallet.apl.core.dao.state.derived.ValuesDbTableTest;
 import com.apollocurrency.aplwallet.apl.core.dao.state.keyfactory.LongKey;
-import com.apollocurrency.aplwallet.apl.core.db.DatabaseManager;
 import com.apollocurrency.aplwallet.apl.core.entity.state.phasing.PhasingPollLinkedTransaction;
+import com.apollocurrency.aplwallet.apl.data.DbTestData;
 import com.apollocurrency.aplwallet.apl.data.PhasingTestData;
 import com.apollocurrency.aplwallet.apl.data.TransactionTestData;
 import com.apollocurrency.aplwallet.apl.extension.DbExtension;
@@ -30,9 +30,8 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 @Tag("slow")
 public class PhasingPollLinkedTransactionTest extends ValuesDbTableTest<PhasingPollLinkedTransaction> {
 
-    TransactionTestData td = new TransactionTestData();
     @RegisterExtension
-    static DbExtension extension = new DbExtension(mariaDBContainer);
+    DbExtension extension = new DbExtension(mariaDBContainer, DbTestData.getDbUrlProps(), "db/phasing-poll-data.sql", "db/schema.sql");
 
 
     PhasingPollLinkedTransactionTable table;
@@ -55,11 +54,6 @@ public class PhasingPollLinkedTransactionTest extends ValuesDbTableTest<PhasingP
     @Override
     public DerivedDbTable<PhasingPollLinkedTransaction> getDerivedDbTable() {
         return table;
-    }
-
-    @Override
-    public DatabaseManager getDatabaseManager() {
-        return extension.getDatabaseManager();
     }
 
     @Test

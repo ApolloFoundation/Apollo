@@ -9,7 +9,6 @@ import com.apollocurrency.aplwallet.apl.core.converter.db.TransactionEntityRowMa
 import com.apollocurrency.aplwallet.apl.core.converter.db.TransactionModelToEntityConverter;
 import com.apollocurrency.aplwallet.apl.core.dao.state.derived.DerivedDbTable;
 import com.apollocurrency.aplwallet.apl.core.dao.state.derived.EntityDbTableTest;
-import com.apollocurrency.aplwallet.apl.core.db.DatabaseManager;
 import com.apollocurrency.aplwallet.apl.core.entity.blockchain.TransactionEntity;
 import com.apollocurrency.aplwallet.apl.core.entity.state.phasing.PhasingPoll;
 import com.apollocurrency.aplwallet.apl.core.model.TransactionDbInfo;
@@ -37,6 +36,7 @@ import java.util.stream.Collectors;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNull;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.Mockito.mock;
 
@@ -60,7 +60,7 @@ public class PhasingPollTableTest extends EntityDbTableTest<PhasingPoll> {
     @BeforeEach
     @Override
     public void setUp() {
-        table = new PhasingPollTable(getDatabaseManager(), new TransactionEntityRowMapper(), mock(Event.class));
+        table = new PhasingPollTable(extension.getDatabaseManager(), new TransactionEntityRowMapper(), mock(Event.class));
         ptd = new PhasingTestData();
         ttd = new TransactionTestData();
         super.setUp();
@@ -69,11 +69,6 @@ public class PhasingPollTableTest extends EntityDbTableTest<PhasingPoll> {
     @Override
     public DerivedDbTable<PhasingPoll> getDerivedDbTable() {
         return table;
-    }
-
-    @Override
-    public DatabaseManager getDatabaseManager() {
-        return extension.getDatabaseManager();
     }
 
     @Override
@@ -136,30 +131,43 @@ public class PhasingPollTableTest extends EntityDbTableTest<PhasingPoll> {
 
     @Test
     void testGetActivePhasingDbIds() throws SQLException {
-        List<TransactionDbInfo> transactionDbInfoList = table.getActivePhasedTransactionDbIds(ttd.TRANSACTION_8.getHeight() + 1);
+        List<TransactionDbInfo> transactionDbInfoList = table.getActivePhasedTransactionDbIdsAfterHeight(8000);
+        assertEquals(Arrays.asList(new TransactionDbInfo(ttd.DB_ID_8, ttd.TRANSACTION_8.getId()),
+            new TransactionDbInfo(ttd.DB_ID_7, ttd.TRANSACTION_7.getId())), transactionDbInfoList);
 
-        assertEquals(Arrays.asList(new TransactionDbInfo(ttd.DB_ID_8, ttd.TRANSACTION_8.getId()), new TransactionDbInfo(ttd.DB_ID_7, ttd.TRANSACTION_7.getId())), transactionDbInfoList);
-    }
+        transactionDbInfoList = table.getActivePhasedTransactionDbIdsAfterHeight(15000);
+        assertEquals(Arrays.asList(new TransactionDbInfo(ttd.DB_ID_8, ttd.TRANSACTION_8.getId()), new TransactionDbInfo(3100, 7)), transactionDbInfoList);
 
-    @Test
-    void testGetActivePhasingDbIdWhenHeightIsMax() throws SQLException {
-        List<TransactionDbInfo> transactionDbInfoList = table.getActivePhasedTransactionDbIds(553327);
+        transactionDbInfoList = table.getActivePhasedTransactionDbIdsAfterHeight(510001);
+        assertEquals(Collections.singletonList(new TransactionDbInfo(5500, 8)), transactionDbInfoList);
 
-        assertEquals(Collections.emptyList(), transactionDbInfoList);
+
+        transactionDbInfoList = table.getActivePhasedTransactionDbIdsAfterHeight(510000);
+        assertEquals(Collections.singletonList(new TransactionDbInfo(5500, 8)), transactionDbInfoList);
+
+        transactionDbInfoList = table.getActivePhasedTransactionDbIdsAfterHeight(509999);
+        assertEquals(Collections.emptyList(), transactionDbInfoList, "tx8 was not saved yet");
     }
 
     @Test
     void testGetActivePhasingDbIdAllPollsFinished() throws SQLException {
-        List<TransactionDbInfo> transactionDbInfoList = table.getActivePhasedTransactionDbIds(ptd.POLL_0.getHeight() - 1);
+        List<TransactionDbInfo> transactionDbInfoList = table.getActivePhasedTransactionDbIdsAfterHeight(553326);
 
         assertEquals(Collections.emptyList(), transactionDbInfoList);
     }
 
     @Test
-    void testGetActivePhasingDbIdsWhenNoPollsAtHeight() throws SQLException {
-        List<TransactionDbInfo> transactionDbInfoList = table.getActivePhasedTransactionDbIds(ttd.TRANSACTION_0.getHeight());
+    void testGetActivePhasingDbIdsWhenNoPollsAtLowHeight() throws SQLException {
+        List<TransactionDbInfo> transactionDbInfoList = table.getActivePhasedTransactionDbIdsAfterHeight(ttd.TRANSACTION_0.getHeight());
 
         assertEquals(Collections.emptyList(), transactionDbInfoList);
+    }
+
+    @Test
+    void testGetActivePhasingDbIds_blockNotFound() throws SQLException {
+        IllegalStateException ex = assertThrows(IllegalStateException.class, () -> table.getActivePhasedTransactionDbIdsAfterHeight(8001));
+
+        assertEquals("Block with height 8001 was not found or has unacceptable timestamp", ex.getMessage());
     }
 
     @Test

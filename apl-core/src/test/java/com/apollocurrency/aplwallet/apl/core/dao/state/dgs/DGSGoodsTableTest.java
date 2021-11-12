@@ -7,15 +7,17 @@ package com.apollocurrency.aplwallet.apl.core.dao.state.dgs;
 import com.apollocurrency.aplwallet.apl.core.app.observer.events.TrimEvent;
 import com.apollocurrency.aplwallet.apl.core.dao.state.derived.DerivedDbTable;
 import com.apollocurrency.aplwallet.apl.core.dao.state.derived.EntityDbTableTest;
-import com.apollocurrency.aplwallet.apl.core.db.DatabaseManager;
 import com.apollocurrency.aplwallet.apl.core.entity.state.derived.VersionedDerivedEntity;
 import com.apollocurrency.aplwallet.apl.core.entity.state.dgs.DGSGoods;
 import com.apollocurrency.aplwallet.apl.core.service.fulltext.FullTextOperationData;
 import com.apollocurrency.aplwallet.apl.data.DGSTestData;
+import com.apollocurrency.aplwallet.apl.data.DbTestData;
+import com.apollocurrency.aplwallet.apl.extension.DbExtension;
 import com.apollocurrency.aplwallet.apl.testutil.DbUtils;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.RegisterExtension;
 
 import javax.enterprise.event.Event;
 import javax.enterprise.util.AnnotationLiteral;
@@ -33,8 +35,11 @@ import static org.mockito.Mockito.when;
 @Tag("slow")
 public class DGSGoodsTableTest extends EntityDbTableTest<DGSGoods> {
 
+    @RegisterExtension
+    DbExtension extension = new DbExtension(mariaDBContainer, DbTestData.getDbUrlProps(), "db/dgs-data.sql", "db/schema.sql");
+
     Event<FullTextOperationData> fullTextOperationDataEvent = mock(Event.class);
-    DGSGoodsTable table = new DGSGoodsTable(getDatabaseManager(), fullTextOperationDataEvent);
+    DGSGoodsTable table;
 
     DGSTestData dtd = new DGSTestData();
 
@@ -45,6 +50,7 @@ public class DGSGoodsTableTest extends EntityDbTableTest<DGSGoods> {
     @Override
     @BeforeEach
     public void setUp() {
+        table = new DGSGoodsTable(extension.getDatabaseManager(), fullTextOperationDataEvent);
         super.setUp();
         when(fullTextOperationDataEvent.select(new AnnotationLiteral<TrimEvent>() {})).thenReturn(fullTextOperationDataEvent);
     }
@@ -52,11 +58,6 @@ public class DGSGoodsTableTest extends EntityDbTableTest<DGSGoods> {
     @Override
     public DerivedDbTable<DGSGoods> getDerivedDbTable() {
         return table;
-    }
-
-    @Override
-    public DatabaseManager getDatabaseManager() {
-        return null;
     }
 
     @Override

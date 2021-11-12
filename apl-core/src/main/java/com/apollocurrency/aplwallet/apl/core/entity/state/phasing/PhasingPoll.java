@@ -13,7 +13,7 @@ import java.util.Arrays;
 import java.util.List;
 import java.util.Objects;
 
-@ToString
+@ToString(callSuper = true)
 public class PhasingPoll extends AbstractPoll {
 
     private final long quorum;
