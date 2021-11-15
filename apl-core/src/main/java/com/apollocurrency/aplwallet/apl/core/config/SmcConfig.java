@@ -11,9 +11,11 @@ import com.apollocurrency.smc.blockchain.BlockchainIntegrator;
 import com.apollocurrency.smc.blockchain.crypt.Digest;
 import com.apollocurrency.smc.blockchain.crypt.DigestWrapper;
 import com.apollocurrency.smc.blockchain.crypt.HashSumProvider;
+import com.apollocurrency.smc.contract.vm.SMCPaidExecutionMode;
+import com.apollocurrency.smc.contract.vm.operation.OperationPrice;
+import com.apollocurrency.smc.contract.vm.operation.SMCOperationPrice;
 import com.apollocurrency.smc.polyglot.config.JsLimitsConfig;
 import com.apollocurrency.smc.polyglot.engine.ExecutionEnv;
-import com.apollocurrency.smc.polyglot.engine.ExecutionModeHelper;
 import com.apollocurrency.smc.polyglot.language.LanguageContext;
 import com.apollocurrency.smc.polyglot.language.LanguageContextFactory;
 import com.apollocurrency.smc.polyglot.security.AllowFullHostAccessPolicy;
@@ -101,11 +103,14 @@ public class SmcConfig {
             new AllowHostClassLoadingPolicy());
     }
 
+    private static OperationPrice getAplPrice() {
+        return SMCOperationPrice.getInstance();
+    }
+
     private static ExecutionEnv getExecutionEnv() {
         return ExecutionEnv.builder()
-            .mode(ExecutionModeHelper.createProdExecutionMode())
-            //TODO: set price
-            //.price( ... )
+            .mode(new SMCPaidExecutionMode(getAplPrice()))
+            .price(getAplPrice())
             .config(new JsLimitsConfig())
             .build();
     }
