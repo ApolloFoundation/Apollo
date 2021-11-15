@@ -253,22 +253,6 @@ then
 	bash ./update3.sh $1 $2 $3 $4 $5
     fi
 
-notify "Updating config files..."
-
-if [ $3 == true ]
-then
-    
-    mkdir -p ~/.apl-blockchain/conf
-    echo ""  >>~/.apl-blockchain/conf/apl-blockchain.properties
-    echo "# H2 db configuration" >>~/.apl-blockchain/conf/apl-blockchain.properties
-    echo "apl.dbType=h2"  >>~/.apl-blockchain/conf/apl-blockchain.properties
-    echo "apl.dbUsername=sa"  >>~/.apl-blockchain/conf/apl-blockchain.properties
-    echo "apl.dbPassword=sa"  >>~/.apl-blockchain/conf/apl-blockchain.properties
-    echo "apl.dbParams=DB_CLOSE_ON_EXIT=FALSE;AUTO_SERVER=TRUE;MODE=MySQL;DATABASE_TO_LOWER=TRUE" >>~/.apl-blockchain/conf/apl-blockchain.properties
-else
-
-
-
 
 #    if [[ -d conf ]]; then
 #	mv -fv conf apollo-blockchain
