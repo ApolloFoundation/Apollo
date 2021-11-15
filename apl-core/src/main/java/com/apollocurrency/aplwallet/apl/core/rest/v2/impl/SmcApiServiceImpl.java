@@ -73,6 +73,7 @@ import com.apollocurrency.smc.data.type.Address;
 import com.apollocurrency.smc.polyglot.SimpleVersion;
 import com.apollocurrency.smc.polyglot.Version;
 import com.apollocurrency.smc.polyglot.language.ContractSpec;
+import com.apollocurrency.smc.polyglot.language.lib.JSLibraryProvider;
 import com.google.common.base.Strings;
 import lombok.extern.slf4j.Slf4j;
 
@@ -87,7 +88,6 @@ import java.util.Map;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 
-import static com.apollocurrency.smc.polyglot.language.lib.JSLibraryProvider.ASR_TYPE_TOKEN;
 import static com.apollocurrency.smc.util.HexUtils.toHex;
 
 /**
@@ -230,7 +230,7 @@ public class SmcApiServiceImpl implements SmcApiService {
 
     private String defaultType(String typeStr) {
         if (typeStr == null || typeStr.isBlank()) {
-            typeStr = ASR_TYPE_TOKEN;
+            typeStr = JSLibraryProvider.ASR_TYPE_TOKEN;
         }
         return typeStr;
     }
@@ -419,19 +419,18 @@ public class SmcApiServiceImpl implements SmcApiService {
 
         var executionLog = new ExecutionLog();
         var result = processAllMethods(address, methodsToCall, executionLog);
-
         if (executionLog.hasError()) {
             return builder.detailedError(ApiErrors.CONTRACT_READ_METHOD_ERROR, executionLog.toJsonString(), executionLog.getLatestCause()).build();
         }
+        result.add(ResultValue.builder()
+            .method(JSLibraryProvider.CONTRACT_OVERVIEW_ITEM.getName())
+            .output(List.of(address.getHex()))
+            .build());
 
         var resultMap = toMap(result);
-        var property = new PropertySpec();
-        property.setName("Contract");
-        property.setType("address");
-        property.setValue(address.getHex());
-        var overviewProperties = new ArrayList<PropertySpec>();
-        overviewProperties.add(property);
-        overviewProperties.addAll(createOverview(resultMap));
+        var overviewProperties = new ArrayList<>(
+            createOverview(contractSpec, resultMap)
+        );
         response.setOverview(overviewProperties);
 
         response.getMembers().addAll(methodSpecMapper.convert(viewMethods));
@@ -460,21 +459,17 @@ public class SmcApiServiceImpl implements SmcApiService {
         });
     }
 
-    private List<PropertySpec> createOverview(Map<String, ResultValue> resultMap) {
+    private List<PropertySpec> createOverview(ContractSpec contractSpec, Map<String, ResultValue> resultMap) {
         //TODO: move Overview info to ContractSpec
-        var properties = List.of(
-            new String[]{"name", "string"},
-            new String[]{"symbol", "string"},
-            new String[]{"decimals", "uint"},
-            new String[]{"totalSupply", "uint"});
+        var properties = contractSpec.getOverview();
 
         var propertySpec = new ArrayList<PropertySpec>();
 
-        properties.forEach(s -> {
+        properties.forEach(item -> {
             var prop = new PropertySpec();
-            prop.setName(s[0]);
-            prop.setType(s[1]);
-            prop.setValue(resultMap.getOrDefault(s[0], ResultValue.UNDEFINED_RESULT).getStringResult());
+            prop.setName(item.getName());
+            prop.setType(item.getType());
+            prop.setValue(resultMap.getOrDefault(item.getName(), ResultValue.UNDEFINED_RESULT).getStringResult());
             propertySpec.add(prop);
         });
         return propertySpec;
