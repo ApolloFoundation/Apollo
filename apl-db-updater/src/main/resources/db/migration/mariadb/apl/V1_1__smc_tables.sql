@@ -44,7 +44,7 @@ CREATE TABLE IF NOT EXISTS `smc_mapping`
     `db_id`     bigint(20) unsigned                    NOT NULL AUTO_INCREMENT,
     `address`   bigint(20)                             NOT NULL, # contract address
     `entry_key` binary(32)                             NOT NULL, # key
-    `name`      varchar(36) COLLATE utf8mb4_unicode_ci NOT NULL, # mapping name
+    `name`      varchar(66) COLLATE utf8mb4_unicode_ci NOT NULL, # mapping name
     `object`    LONGTEXT COLLATE utf8mb4_unicode_ci    NOT NULL, # serialized object
     `height`    int(11)                                NOT NULL,
     `latest`    tinyint(1)                             NOT NULL DEFAULT 1,

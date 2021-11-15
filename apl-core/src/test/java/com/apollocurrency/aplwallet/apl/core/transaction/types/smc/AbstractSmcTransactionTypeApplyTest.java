@@ -61,13 +61,15 @@ import com.apollocurrency.aplwallet.apl.core.service.state.account.PublicKeyDao;
 import com.apollocurrency.aplwallet.apl.core.service.state.account.impl.AccountControlPhasingServiceImpl;
 import com.apollocurrency.aplwallet.apl.core.service.state.account.impl.AccountPublicKeyServiceImpl;
 import com.apollocurrency.aplwallet.apl.core.service.state.account.impl.AccountServiceImpl;
-import com.apollocurrency.aplwallet.apl.core.service.state.smc.SmcContractService;
+import com.apollocurrency.aplwallet.apl.core.service.state.smc.ContractToolService;
+import com.apollocurrency.aplwallet.apl.core.service.state.smc.PostponedContractService;
 import com.apollocurrency.aplwallet.apl.core.service.state.smc.SmcFuelValidator;
 import com.apollocurrency.aplwallet.apl.core.service.state.smc.event.SmcContractEventManagerClassFactory;
 import com.apollocurrency.aplwallet.apl.core.service.state.smc.impl.SmcBlockchainIntegratorFactory;
 import com.apollocurrency.aplwallet.apl.core.service.state.smc.impl.SmcContractEventServiceImpl;
 import com.apollocurrency.aplwallet.apl.core.service.state.smc.impl.SmcContractServiceImpl;
 import com.apollocurrency.aplwallet.apl.core.service.state.smc.impl.SmcContractStorageServiceImpl;
+import com.apollocurrency.aplwallet.apl.core.service.state.smc.impl.SmcContractToolServiceImpl;
 import com.apollocurrency.aplwallet.apl.core.service.state.smc.txlog.SmcTxLogProcessor;
 import com.apollocurrency.aplwallet.apl.core.signature.MultiSigCredential;
 import com.apollocurrency.aplwallet.apl.core.transaction.CachedTransactionTypeFactory;
@@ -97,6 +99,7 @@ import com.apollocurrency.aplwallet.apl.util.env.config.Chain;
 import com.apollocurrency.aplwallet.apl.util.injectable.PropertiesHolder;
 import com.apollocurrency.aplwallet.apl.util.service.TaskDispatchManager;
 import com.apollocurrency.smc.contract.fuel.FuelValidator;
+import com.apollocurrency.smc.txlog.TxLogProcessor;
 import org.jboss.weld.junit.MockBean;
 import org.jboss.weld.junit5.EnableWeld;
 import org.jboss.weld.junit5.WeldInitiator;
@@ -153,14 +156,13 @@ abstract class AbstractSmcTransactionTypeApplyTest extends DbContainerBaseTest {
             DefaultBlockValidator.class, ReferencedTransactionService.class,
             PublicKeyAnnouncementAppendixApplier.class, AppendixApplierRegistry.class,
             AppendixValidatorRegistry.class, NtpTime.class,
-            //TransactionRowMapper.class, TxReceiptRowMapper.class, PrunableTxRowMapper.class,
             ReferencedTransactionDaoImpl.class, TransactionSignerImpl.class,
             TransactionValidator.class, TransactionApplier.class,
             SmcConfig.class, SmcBlockchainIntegratorFactory.class,
             SmcContractTable.class, SmcContractStateTable.class, SmcContractMappingTable.class, SmcContractEventTable.class, SmcContractEventLogTable.class,
             ContractModelToEntityConverter.class, ContractModelToStateEntityConverter.class,
             ContractEventLogModelToLogEntryConverter.class, ContractEventModelToEntityConverter.class,
-            SmcContractServiceImpl.class, SmcContractStorageServiceImpl.class, SmcContractEventServiceImpl.class,
+            SmcContractServiceImpl.class, SmcContractToolServiceImpl.class, SmcContractStorageServiceImpl.class, SmcContractEventServiceImpl.class,
             SmcTxLogProcessor.class, SmcMappingRepositoryClassFactory.class, SmcContractEventManagerClassFactory.class
         )
         .addBeans(MockBean.of(extension.getDatabaseManager(), DatabaseManager.class))
@@ -184,6 +186,7 @@ abstract class AbstractSmcTransactionTypeApplyTest extends DbContainerBaseTest {
         .addBeans(MockBean.of(blockchain, Blockchain.class, BlockchainImpl.class))
         .addBeans(MockBean.of(mock(AccountControlPhasingService.class), AccountControlPhasingService.class, AccountControlPhasingServiceImpl.class))
         .addBeans(MockBean.of(calculator, FeeCalculator.class))
+        .addBeans(MockBean.of(mock(SmcTxLogProcessor.class), TxLogProcessor.class))
         .build();
 
     @Inject
@@ -191,7 +194,9 @@ abstract class AbstractSmcTransactionTypeApplyTest extends DbContainerBaseTest {
     @Inject
     AccountService accountService;
     @Inject
-    SmcContractService contractService;
+    PostponedContractService contractService;
+    @Inject
+    ContractToolService contractToolService;
     @Inject
     SmcBlockchainIntegratorFactory integratorFactory;
     @Inject
@@ -236,8 +241,8 @@ abstract class AbstractSmcTransactionTypeApplyTest extends DbContainerBaseTest {
         spyAccountService = spy(accountService);
         context = TxBContext.newInstance(chain);
         transactionTypeFactory = new CachedTransactionTypeFactory(List.of(
-            new SmcPublishContractTransactionType(blockchainConfig, spyAccountService, contractService, fuelValidator, integratorFactory, smcConfig),
-            new SmcCallMethodTransactionType(blockchainConfig, spyAccountService, contractService, fuelValidator, integratorFactory, smcConfig)
+            new SmcPublishContractTransactionType(blockchainConfig, spyAccountService, contractService, contractToolService, fuelValidator, integratorFactory, smcConfig),
+            new SmcCallMethodTransactionType(blockchainConfig, spyAccountService, contractService, contractToolService, fuelValidator, integratorFactory, smcConfig)
         ));
         transactionBuilderFactory = new TransactionBuilderFactory(transactionTypeFactory, blockchainConfig);
         transactionCreator = new TransactionCreator(validator, propertiesHolder, timeService, calculator, blockchain, processor, transactionTypeFactory, transactionBuilderFactory, signerService, blockchainConfig);

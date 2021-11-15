@@ -5,15 +5,12 @@
 package com.apollocurrency.aplwallet.apl.core.service.state.smc;
 
 import com.apollocurrency.aplwallet.api.v2.model.ContractDetails;
-import com.apollocurrency.aplwallet.apl.core.model.Transaction;
-import com.apollocurrency.aplwallet.apl.core.transaction.messages.SmcPublishContractAttachment;
 import com.apollocurrency.aplwallet.apl.smc.model.AplContractSpec;
 import com.apollocurrency.smc.contract.ContractStatus;
 import com.apollocurrency.smc.contract.SmartContract;
 import com.apollocurrency.smc.contract.fuel.Fuel;
 import com.apollocurrency.smc.data.type.Address;
 import com.apollocurrency.smc.polyglot.Version;
-import com.apollocurrency.smc.polyglot.language.SmartSource;
 
 import java.util.List;
 
@@ -21,8 +18,6 @@ import java.util.List;
  * @author andrew.zinchenko@gmail.com
  */
 public interface SmcContractService {
-
-    boolean validateContractSource(SmartSource source);
 
     /**
      * Save the published contract
@@ -35,10 +30,16 @@ public interface SmcContractService {
      * Load the saved contract by the given address or null if the given address doesn't correspond the smart contract
      *
      * @param address      given contract address
+     * @param originator   the origin transaction sender
+     * @param caller       the contract caller
      * @param contractFuel given fuel to execute method calling
-     * @return loaded smart contract or null
+     * @return loaded smart contract or throw {@link com.apollocurrency.smc.contract.AddressNotFoundException}
      */
-    SmartContract loadContract(Address address, Fuel contractFuel);
+    SmartContract loadContract(Address address, Address originator, Address caller, Fuel contractFuel);
+
+    SmartContract loadContract(Address address, Address originator, Fuel contractFuel);
+
+    SmartContract loadContract(Address address);
 
     /**
      * Load the contract specification by given contract address
@@ -61,16 +62,6 @@ public interface SmcContractService {
     String loadSerializedContract(Address address);
 
     void saveSerializedContract(SmartContract contract, String serializedObject);
-
-    SmartSource createSmartSource(SmcPublishContractAttachment attachment);
-
-    /**
-     * Creates a new smart contract instance. That one is not persisted in the blockchain.
-     *
-     * @param smcTransaction blockchain transaction instance
-     * @return smart contract instance
-     */
-    SmartContract createNewContract(Transaction smcTransaction);
 
     /**
      * Returns the list of contracts published by given owner
@@ -114,9 +105,10 @@ public interface SmcContractService {
      *
      * @param language the language name
      * @param version  the language version
+     * @param type     the module type: token, escrow etc.
      * @return the list of ASR module names.
      */
-    List<String> getAsrModules(String language, Version version);
+    List<String> getAsrModules(String language, Version version, String type);
 
     /**
      * Returns the list of inherited ASR modules.

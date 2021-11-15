@@ -9,11 +9,11 @@ import com.apollocurrency.aplwallet.apl.core.app.GenesisImporter;
 import com.apollocurrency.aplwallet.apl.core.chainid.BlockchainConfig;
 import com.apollocurrency.aplwallet.apl.core.config.SmcConfig;
 import com.apollocurrency.aplwallet.apl.core.service.state.account.AccountService;
-import com.apollocurrency.aplwallet.apl.core.service.state.smc.SmcContractService;
+import com.apollocurrency.aplwallet.apl.core.service.state.smc.ContractToolService;
+import com.apollocurrency.aplwallet.apl.core.service.state.smc.PostponedContractService;
 import com.apollocurrency.aplwallet.apl.core.service.state.smc.SmcFuelValidator;
 import com.apollocurrency.aplwallet.apl.core.service.state.smc.impl.SmcBlockchainIntegratorFactory;
 import com.apollocurrency.aplwallet.apl.core.transaction.messages.SmcCallMethodAttachment;
-import com.apollocurrency.aplwallet.apl.util.env.config.Chain;
 import com.apollocurrency.aplwallet.apl.util.rlp.RlpList;
 import com.apollocurrency.aplwallet.apl.util.rlp.RlpReader;
 import com.apollocurrency.aplwallet.apl.util.rlp.RlpWriteBuffer;
@@ -22,19 +22,19 @@ import org.json.simple.JSONObject;
 import org.json.simple.parser.JSONParser;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
+import org.mockito.junit.jupiter.MockitoExtension;
 
 import java.math.BigInteger;
-import java.util.UUID;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
-import static org.mockito.Mockito.doReturn;
-import static org.mockito.MockitoAnnotations.initMocks;
 
 /**
  * @author andrew.zinchenko@gmail.com
  */
+@ExtendWith(MockitoExtension.class)
 class SmcCallMethodTransactionTypeTest {
 
     private static final String CHAIN_ID_TN1 = "a2e9b946-290b-48b6-9985-dc2e5a5860a1";
@@ -47,13 +47,13 @@ class SmcCallMethodTransactionTypeTest {
         "}";
 
     @Mock
-    Chain chain;
-    @Mock
     private BlockchainConfig blockchainConfig;
     @Mock
     private AccountService accountService;
     @Mock
-    SmcContractService contractService;
+    PostponedContractService contractService;
+    @Mock
+    ContractToolService contractToolService;
     @Mock
     SmcBlockchainIntegratorFactory integratorFactory;
 
@@ -61,11 +61,13 @@ class SmcCallMethodTransactionTypeTest {
 
     @BeforeEach
     void setUp() {
-        initMocks(this);
         GenesisImporter.CREATOR_ID = 1739068987193023818L;//TN1
-        doReturn(UUID.fromString(CHAIN_ID_TN1)).when(chain).getChainId();
-        doReturn(chain).when(blockchainConfig).getChain();
-        smcCallMethodTransactionType = new SmcCallMethodTransactionType(blockchainConfig, accountService, contractService, new SmcFuelValidator(blockchainConfig), integratorFactory, new SmcConfig());
+        smcCallMethodTransactionType = new SmcCallMethodTransactionType(blockchainConfig,
+            accountService,
+            contractService, contractToolService,
+            new SmcFuelValidator(blockchainConfig),
+            integratorFactory,
+            new SmcConfig());
     }
 
     @SneakyThrows

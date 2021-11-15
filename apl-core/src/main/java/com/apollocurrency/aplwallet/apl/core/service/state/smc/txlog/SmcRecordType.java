@@ -10,7 +10,7 @@ import com.apollocurrency.smc.txlog.RecordType;
  * @author andrew.zinchenko@gmail.com
  */
 public enum SmcRecordType implements RecordType {
-    TRANSFER,
+    SEND_MONEY,
     CREATE_EVENT_TYPE,
     FIRE_EVENT;
 }

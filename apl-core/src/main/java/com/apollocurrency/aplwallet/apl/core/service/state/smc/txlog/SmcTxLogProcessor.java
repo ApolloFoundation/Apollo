@@ -40,7 +40,7 @@ public class SmcTxLogProcessor implements TxLogProcessor {
 
     private void init() {
         processorMap = new HashMap<>();
-        processorMap.put(SmcRecordType.TRANSFER, createTransferRecordProcessor());
+        processorMap.put(SmcRecordType.SEND_MONEY, createTransferRecordProcessor());
         processorMap.put(SmcRecordType.FIRE_EVENT, createEventLogRecordProcessor());
     }
 
@@ -63,13 +63,13 @@ public class SmcTxLogProcessor implements TxLogProcessor {
         return proc;
     }
 
-    private RecordProcessor<TransferRecord> createTransferRecordProcessor() {
+    private RecordProcessor<SendMoneyRecord> createTransferRecordProcessor() {
         return (header, data) -> {
             var sender = accountService.getAccount(data.getSender());
             var recipient = accountService.getAccount(data.getRecipient());
             accountService.addToBalanceAndUnconfirmedBalanceATM(sender, data.getEvent(), data.getTransaction(), -data.getValue());
             accountService.addToBalanceAndUnconfirmedBalanceATM(recipient, data.getEvent(), data.getTransaction(), data.getValue());
-            log.debug("Apply the transferring command, contract={} sender={} recipient={} amount={}", header.getContract(), data.getSender(), data.getRecipient(), data.getValue());
+            log.debug("Apply the transferring command, contract={} sender={} recipient={} amount={}", data.getContract(), data.getSender(), data.getRecipient(), data.getValue());
         };
     }
 
@@ -78,7 +78,7 @@ public class SmcTxLogProcessor implements TxLogProcessor {
             final AplContractEvent event = data.getEvent();
             contractEventService.saveEvent(event);
             contractEventService.fireCdiEvent(event);
-            log.debug("Apply the firing event command, contract={} event={}", header.getContract(), event);
+            log.debug("Apply the firing event command, contract={} event={}", event.getContract(), event);
         };
     }
 

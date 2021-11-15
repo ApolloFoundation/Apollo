@@ -17,7 +17,7 @@ import com.apollocurrency.aplwallet.api.v2.model.ContractListResponse;
 import com.apollocurrency.aplwallet.api.v2.model.ContractMethod;
 import com.apollocurrency.aplwallet.api.v2.model.ContractSpecResponse;
 import com.apollocurrency.aplwallet.api.v2.model.ContractStateResponse;
-import com.apollocurrency.aplwallet.api.v2.model.MethodSpec;
+import com.apollocurrency.aplwallet.api.v2.model.MemberSpec;
 import com.apollocurrency.aplwallet.api.v2.model.ModuleListResponse;
 import com.apollocurrency.aplwallet.api.v2.model.ModuleSourceResponse;
 import com.apollocurrency.aplwallet.api.v2.model.PropertySpec;
@@ -35,6 +35,7 @@ import com.apollocurrency.aplwallet.apl.core.rest.v2.converter.CallMethodResultM
 import com.apollocurrency.aplwallet.apl.core.rest.v2.converter.MethodSpecMapper;
 import com.apollocurrency.aplwallet.apl.core.rest.v2.converter.SmartMethodMapper;
 import com.apollocurrency.aplwallet.apl.core.service.state.account.AccountService;
+import com.apollocurrency.aplwallet.apl.core.service.state.smc.ContractToolService;
 import com.apollocurrency.aplwallet.apl.core.service.state.smc.SmcContractService;
 import com.apollocurrency.aplwallet.apl.core.service.state.smc.impl.SmcBlockchainIntegratorFactory;
 import com.apollocurrency.aplwallet.apl.core.signature.MultiSigCredential;
@@ -72,6 +73,7 @@ import com.apollocurrency.smc.data.type.Address;
 import com.apollocurrency.smc.polyglot.SimpleVersion;
 import com.apollocurrency.smc.polyglot.Version;
 import com.apollocurrency.smc.polyglot.language.ContractSpec;
+import com.apollocurrency.smc.polyglot.language.lib.JSLibraryProvider;
 import com.google.common.base.Strings;
 import lombok.extern.slf4j.Slf4j;
 
@@ -97,6 +99,7 @@ public class SmcApiServiceImpl implements SmcApiService {
 
     private final AccountService accountService;
     private final SmcContractService contractService;
+    private final ContractToolService contractToolService;
     private final SmcContractEventService eventService;
     private final TransactionCreator transactionCreator;
     private final TxBContext txBContext;
@@ -113,6 +116,7 @@ public class SmcApiServiceImpl implements SmcApiService {
     public SmcApiServiceImpl(BlockchainConfig blockchainConfig,
                              AccountService accountService,
                              SmcContractService contractService,
+                             ContractToolService contractToolService,
                              SmcContractEventService eventService,
                              TransactionCreator transactionCreator,
                              SmcBlockchainIntegratorFactory integratorFactory,
@@ -124,6 +128,7 @@ public class SmcApiServiceImpl implements SmcApiService {
                              ElGamalEncryptor elGamal) {
         this.accountService = accountService;
         this.contractService = contractService;
+        this.contractToolService = contractToolService;
         this.eventService = eventService;
         this.transactionCreator = transactionCreator;
         this.txBContext = TxBContext.newInstance(blockchainConfig.getChain());
@@ -211,15 +216,23 @@ public class SmcApiServiceImpl implements SmcApiService {
     }
 
     @Override
-    public Response getSmcAsrModules(String languageStr, String versionStr, SecurityContext securityContext) throws NotFoundException {
+    public Response getSmcAsrModules(String languageStr, String versionStr, String typeStr, SecurityContext securityContext) throws NotFoundException {
         ResponseBuilderV2 builder = ResponseBuilderV2.startTiming();
         String language = defaultLanguage(languageStr);
         Version version = defaultVersion(versionStr);
+        String type = defaultType(typeStr);
         var response = new ModuleListResponse();
-        response.setModules(contractService.getAsrModules(language, version));
+        response.setModules(contractService.getAsrModules(language, version, type));
         response.setLanguage(language);
         response.setVersion(version.toString());
         return builder.bind(response).build();
+    }
+
+    private String defaultType(String typeStr) {
+        if (typeStr == null || typeStr.isBlank()) {
+            typeStr = JSLibraryProvider.ASR_TYPE_TOKEN;
+        }
+        return typeStr;
     }
 
     private Version defaultVersion(String versionStr) {
@@ -243,7 +256,7 @@ public class SmcApiServiceImpl implements SmcApiService {
         if (transaction == null) {
             return builder.build();
         }
-        SmartContract smartContract = contractService.createNewContract(transaction);
+        SmartContract smartContract = contractToolService.createNewContract(transaction);
         var context = SmcConfig.asContext(integratorFactory.createMockProcessor(transaction.getId()));
         //syntactical and semantic validation
         SmcContractTxProcessor processor = new PublishContractTxValidator(smartContract, context);
@@ -380,14 +393,18 @@ public class SmcApiServiceImpl implements SmcApiService {
         var aplContractSpec = contractService.loadAsrModuleSpec(address);
         var contractSpec = aplContractSpec.getContractSpec();
         var notViewMethods = contractSpec.getMembers().stream()
-            .filter(member -> member.getStateMutability() != ContractSpec.StateMutability.VIEW
+            .filter(member -> member.getType() == ContractSpec.MemberType.FUNCTION && member.getStateMutability() != ContractSpec.StateMutability.VIEW
                 && (member.getVisibility() == ContractSpec.Visibility.PUBLIC
                 || member.getVisibility() == ContractSpec.Visibility.EXTERNAL))
             .collect(Collectors.toList());
         var viewMethods = contractSpec.getMembers().stream()
-            .filter(member -> member.getStateMutability() == ContractSpec.StateMutability.VIEW
+            .filter(member -> member.getType() == ContractSpec.MemberType.FUNCTION && member.getStateMutability() == ContractSpec.StateMutability.VIEW
                 && (member.getVisibility() == ContractSpec.Visibility.PUBLIC
                 || member.getVisibility() == ContractSpec.Visibility.EXTERNAL))
+            .collect(Collectors.toList());
+
+        var events = contractSpec.getMembers().stream()
+            .filter(member -> member.getType() == ContractSpec.MemberType.EVENT)
             .collect(Collectors.toList());
 
         List<ContractMethod> methodsToCall = new ArrayList<>();
@@ -402,24 +419,24 @@ public class SmcApiServiceImpl implements SmcApiService {
 
         var executionLog = new ExecutionLog();
         var result = processAllMethods(address, methodsToCall, executionLog);
-
         if (executionLog.hasError()) {
             return builder.detailedError(ApiErrors.CONTRACT_READ_METHOD_ERROR, executionLog.toJsonString(), executionLog.getLatestCause()).build();
         }
+        result.add(ResultValue.builder()
+            .method(JSLibraryProvider.CONTRACT_OVERVIEW_ITEM.getName())
+            .output(List.of(address.getHex()))
+            .build());
 
         var resultMap = toMap(result);
-        var property = new PropertySpec();
-        property.setName("Contract");
-        property.setType("address");
-        property.setValue(address.getHex());
-        var overviewProperties = new ArrayList<PropertySpec>();
-        overviewProperties.add(property);
-        overviewProperties.addAll(createOverview(resultMap));
+        var overviewProperties = new ArrayList<>(
+            createOverview(contractSpec, resultMap)
+        );
         response.setOverview(overviewProperties);
 
         response.getMembers().addAll(methodSpecMapper.convert(viewMethods));
         matchResults(response.getMembers(), resultMap);
         response.getMembers().addAll(methodSpecMapper.convert(notViewMethods));
+        response.getMembers().addAll(methodSpecMapper.convert(events));
 
         response.setInheritedContracts(contractService.getInheritedAsrModules(contractSpec.getType()
             , aplContractSpec.getLanguage()
@@ -432,7 +449,7 @@ public class SmcApiServiceImpl implements SmcApiService {
         return result.stream().collect(Collectors.toMap(ResultValue::getMethod, Function.identity()));
     }
 
-    private void matchResults(List<MethodSpec> methods, Map<String, ResultValue> resultMap) {
+    private void matchResults(List<MemberSpec> methods, Map<String, ResultValue> resultMap) {
         methods.forEach(methodSpec -> {
             if (methodSpec.getInputs() == null || methodSpec.getInputs().isEmpty()) {
                 var res = resultMap.getOrDefault(methodSpec.getName(), ResultValue.UNDEFINED_RESULT);
@@ -442,21 +459,17 @@ public class SmcApiServiceImpl implements SmcApiService {
         });
     }
 
-    private List<PropertySpec> createOverview(Map<String, ResultValue> resultMap) {
+    private List<PropertySpec> createOverview(ContractSpec contractSpec, Map<String, ResultValue> resultMap) {
         //TODO: move Overview info to ContractSpec
-        var properties = List.of(
-            new String[]{"name", "string"},
-            new String[]{"symbol", "string"},
-            new String[]{"decimals", "uint"},
-            new String[]{"totalSupply", "uint"});
+        var properties = contractSpec.getOverview();
 
         var propertySpec = new ArrayList<PropertySpec>();
 
-        properties.forEach(s -> {
+        properties.forEach(item -> {
             var prop = new PropertySpec();
-            prop.setName(s[0]);
-            prop.setType(s[1]);
-            prop.setValue(resultMap.getOrDefault(s[0], ResultValue.UNDEFINED_RESULT).getStringResult());
+            prop.setName(item.getName());
+            prop.setType(item.getType());
+            prop.setValue(resultMap.getOrDefault(item.getName(), ResultValue.UNDEFINED_RESULT).getStringResult());
             propertySpec.add(prop);
         });
         return propertySpec;
@@ -465,10 +478,11 @@ public class SmcApiServiceImpl implements SmcApiService {
     private List<ResultValue> processAllMethods(Address contractAddress, List<ContractMethod> members, ExecutionLog executionLog) {
         SmartContract smartContract = contractService.loadContract(
             contractAddress,
+            contractAddress,
             new ContractFuel(contractAddress, BigInteger.ZERO, BigInteger.ONE)
         );
         var methods = methodMapper.convert(members);
-        var context = SmcConfig.asContext(integratorFactory.createReadonlyProcessor(contractAddress));
+        var context = SmcConfig.asContext(integratorFactory.createReadonlyProcessor());
 
         SmcContractTxBatchProcessor processor = new CallViewMethodTxProcessor(smartContract, methods, context);
 
@@ -495,12 +509,13 @@ public class SmcApiServiceImpl implements SmcApiService {
         SmcCallMethodAttachment attachment = (SmcCallMethodAttachment) transaction.getAttachment();
         SmartContract smartContract;
         AplAddress contractAddress = new AplAddress(transaction.getRecipientId());
+        final AplAddress transactionSender = new AplAddress(transaction.getSenderId());
         try {
             smartContract = contractService.loadContract(
                 contractAddress,
+                transactionSender,
                 new ContractFuel(contractAddress, attachment.getFuelLimit(), attachment.getFuelPrice())
             );
-            smartContract.setSender(new AplAddress(transaction.getSenderId()));
         } catch (AddressNotFoundException e) {
             return ResponseBuilderV2.apiError(ApiErrors.CONTRACT_NOT_FOUND, contractAddress.getHex(), body.getSender()).build();
         }

@@ -1001,6 +1001,13 @@ paths:
           schema:
             type: string
             example: '0.1.1'
+        - name: type
+          in: query
+          description: The module type, allowed values - token, escrow; the default value is token.
+          required: false
+          schema:
+            type: string
+            example: 'token'
       responses:
         200:
           description: successful operation
@@ -1336,7 +1343,7 @@ components:
           type: string
           example: uint
 
-    AsrMethodSpec:
+    AsrMemberSpec:
       type: object
       properties:
         type:
@@ -1389,7 +1396,7 @@ components:
           description: the list of members
           type: array
           items:
-            - $ref: '#/components/AsrMethodSpec'
+            - $ref: '#/components/schemas/AsrMemberSpec'
 
     AsrSpecResponse:
       allOf:
@@ -1789,7 +1796,7 @@ components:
         filter:
           type: string
           description: the complex expression to filter events
-          example: "{ from : {$eq: '0x123123123123'} }"
+          example: "{ \"from\" : {\"$eq\": \"0x123123123123\"} }"
 
     ContractEventsResponse:
       allOf:
@@ -1887,7 +1894,7 @@ components:
               description: the contract public functions
               type: array
               items:
-                $ref: '#/components/schemas/MethodSpec'
+                $ref: '#/components/schemas/MemberSpec'
             inheritedContracts:
               type: array
               description: the list of inherited contracts
@@ -2062,11 +2069,15 @@ components:
                 $ref: '#/components/schemas/BaseResponse'
               nullable: true
 
-    MethodSpec:
+    MemberSpec:
       type: object
       properties:
+        type:
+          description: the object type- constructor, function, event etc
+          type: string
+          example: function
         name:
-          description: the method/function name
+          description: the event/method/function name
           type: string
           example: balanceOf
         inputs:

@@ -78,6 +78,7 @@ public class SmcContractDetailsRowMapper implements RowMapper<ContractDetails> {
         contract.setFuelLimit(attachment.getFuelLimit().toString());
         contract.setFuelPrice(attachment.getFuelPrice().toString());
         contract.setStatus(status);
+        contract.setSrc(data);
 
         log.trace("Contract details={}", contract);
 

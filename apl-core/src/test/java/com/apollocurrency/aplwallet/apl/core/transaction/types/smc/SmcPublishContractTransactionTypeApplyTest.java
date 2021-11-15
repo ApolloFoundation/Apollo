@@ -98,6 +98,8 @@ class SmcPublishContractTransactionTypeApplyTest extends AbstractSmcTransactionT
         AplAddress contractAddress = new AplAddress(newTx.getRecipientId());
         SmartContract smartContract = contractService.loadContract(
             contractAddress,
+            new AplAddress(newTx.getSenderId()),
+            new AplAddress(newTx.getSenderId()),
             new ContractFuel(contractAddress, attachment.getFuelLimit(), attachment.getFuelPrice())
         );
 
@@ -154,6 +156,8 @@ class SmcPublishContractTransactionTypeApplyTest extends AbstractSmcTransactionT
         AplAddress contractAddress = new AplAddress(newTx.getRecipientId());
         SmartContract smartContract = contractService.loadContract(
             contractAddress,
+            new AplAddress(newTx.getSenderId()),
+            new AplAddress(newTx.getSenderId()),
             new ContractFuel(contractAddress, attachment.getFuelLimit(), attachment.getFuelPrice())
         );
 
@@ -201,6 +205,8 @@ class SmcPublishContractTransactionTypeApplyTest extends AbstractSmcTransactionT
         AplAddress contractAddress2 = new AplAddress(newTx2.getRecipientId());
         SmartContract smartContract2 = contractService.loadContract(
             contractAddress,
+            new AplAddress(newTx2.getSenderId()),
+            new AplAddress(newTx2.getSenderId()),
             new ContractFuel(contractAddress2, attachment2.getFuelLimit(), attachment2.getFuelPrice())
         );
 
@@ -244,6 +250,8 @@ class SmcPublishContractTransactionTypeApplyTest extends AbstractSmcTransactionT
         AplAddress contractAddress3 = new AplAddress(newTx3.getRecipientId());
         SmartContract smartContract3 = contractService.loadContract(
             contractAddress3,
+            new AplAddress(newTx3.getSenderId()),
+            new AplAddress(newTx3.getSenderId()),
             new ContractFuel(contractAddress3, attachment3.getFuelLimit(), attachment3.getFuelPrice())
         );
 

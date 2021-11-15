@@ -88,6 +88,11 @@ public class SmcMappingRepositoryClassFactory {
         public ContractMappingRepository<String> stringRepository(String mappingName) {
             return new PersistentMappingRepository<>(smcContractStorageService, contract, mappingName, new StringJsonConverter());
         }
+
+        @Override
+        public void clear() {
+            //nothing to do
+        }
     }
 
     private static class ReadOnlyMappingRepositoryFactory implements ContractMappingRepositoryFactory {
@@ -125,6 +130,11 @@ public class SmcMappingRepositoryClassFactory {
         @Override
         public ContractMappingRepository<String> stringRepository(String mappingName) {
             return new ReadonlyMappingRepository<>(persistentRepositoryFactory.stringRepository(mappingName));
+        }
+
+        @Override
+        public void clear() {
+            //nothing to do
         }
     }
 
@@ -175,6 +185,11 @@ public class SmcMappingRepositoryClassFactory {
             var repo = new CachedMappingRepository<>(persistentRepositoryFactory.stringRepository(mappingName));
             mappingRepositories.add(repo);
             return repo;
+        }
+
+        @Override
+        public void clear() {
+            mappingRepositories.clear();
         }
     }
 }

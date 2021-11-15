@@ -4,6 +4,8 @@
 
 package com.apollocurrency.aplwallet.apl.core.model.smc;
 
+import com.apollocurrency.aplwallet.apl.crypto.Convert;
+import com.apollocurrency.aplwallet.apl.smc.model.AplAddress;
 import lombok.Builder;
 import lombok.Data;
 
@@ -27,4 +29,16 @@ public class SmcTxData {
     long fuelLimit;
     long fuelPrice;
     List<String> params;
+
+    public AplAddress getSenderAddress() {
+        return new AplAddress(Convert.parseAccountId(sender));
+    }
+
+    public AplAddress getRecipientAddress() {
+        return new AplAddress(Convert.parseAccountId(recipient));
+    }
+
+    public AplAddress getContractAddress() {
+        return new AplAddress(Convert.parseAccountId(address));
+    }
 }
