@@ -11,6 +11,7 @@ import com.apollocurrency.aplwallet.apl.core.entity.state.account.LedgerEvent;
 import com.apollocurrency.aplwallet.apl.core.exception.AplAcceptableTransactionValidationException;
 import com.apollocurrency.aplwallet.apl.core.exception.AplUnacceptableTransactionValidationException;
 import com.apollocurrency.aplwallet.apl.core.model.Transaction;
+import com.apollocurrency.aplwallet.apl.core.service.blockchain.Blockchain;
 import com.apollocurrency.aplwallet.apl.core.service.state.account.AccountService;
 import com.apollocurrency.aplwallet.apl.core.service.state.smc.ContractToolService;
 import com.apollocurrency.aplwallet.apl.core.service.state.smc.PostponedContractService;
@@ -45,16 +46,15 @@ import java.util.Map;
 @Slf4j
 @Singleton
 public class SmcPublishContractTransactionType extends AbstractSmcTransactionType {
-    protected final SmcFuelBasedFee publishContractFee = new SmcFuelBasedFee(getExecutionEnv().getPrice().forContractPublishing());
-
     @Inject
-    public SmcPublishContractTransactionType(BlockchainConfig blockchainConfig, AccountService accountService,
+    public SmcPublishContractTransactionType(BlockchainConfig blockchainConfig, Blockchain blockchain,
+                                             AccountService accountService,
                                              PostponedContractService contractService,
                                              ContractToolService contractToolService,
                                              FuelValidator fuelValidator,
                                              SmcBlockchainIntegratorFactory integratorFactory,
                                              SmcConfig smcConfig) {
-        super(blockchainConfig, accountService, contractService, contractToolService, fuelValidator, integratorFactory, smcConfig);
+        super(blockchainConfig, blockchain, accountService, contractService, contractToolService, fuelValidator, integratorFactory, smcConfig);
     }
 
     @Override
@@ -116,12 +116,19 @@ public class SmcPublishContractTransactionType extends AbstractSmcTransactionTyp
         if (!contractToolService.validateContractSource(smartContract.getCode())) {
             throw new AplUnacceptableTransactionValidationException("The contract source code doesn't match the contract template code.", transaction);
         }
-        BigInteger calculatedFuel = publishContractFee.calcFuel(smartContract);
+        var context = smcConfig.asContext(blockchain.getHeight(),
+            smartContract,
+            integratorFactory.createMockProcessor(transaction.getId())
+        );
+        var pcf = new SmcFuelBasedFee(
+            context.getPrice().contractPublishing()
+        );
+        BigInteger calculatedFuel = pcf.calcFuel(smartContract);
         if (!smartContract.getFuel().tryToCharge(calculatedFuel)) {
             log.error("Needed fuel={} but actual={}", calculatedFuel, smartContract.getFuel());
             throw new AplUnacceptableTransactionValidationException("Not enough fuel to execute this transaction, expected=" + calculatedFuel + " but actual=" + smartContract.getFuel(), transaction);
         }
-        var context = SmcConfig.asContext(integratorFactory.createMockProcessor(transaction.getId()));
+
         //syntactical and semantic validation
         SmcContractTxProcessor processor = new PublishContractTxValidator(smartContract, context);
         var executionLog = new ExecutionLog();
@@ -138,8 +145,10 @@ public class SmcPublishContractTransactionType extends AbstractSmcTransactionTyp
         log.debug("SMC: applyAttachment: publish smart contract and call constructor.");
         SmartContract smartContract = contractToolService.createNewContract(transaction);
         SmcPublishContractAttachment attachment = (SmcPublishContractAttachment) transaction.getAttachment();
-        var context = SmcConfig.asContext(integratorFactory.createProcessor(transaction, attachment,
-            senderAccount, recipientAccount, getLedgerEvent()));
+        var context = smcConfig.asContext(blockchain.getHeight(),
+            smartContract,
+            integratorFactory.createProcessor(transaction, attachment, senderAccount, recipientAccount, getLedgerEvent())
+        );
         log.debug("Before processing Address={} Fuel={}", smartContract.getAddress(), smartContract.getFuel());
 
         executeContract(transaction, senderAccount, smartContract, new PublishContractTxProcessor(smartContract, context));

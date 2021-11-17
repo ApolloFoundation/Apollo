@@ -257,11 +257,14 @@ public class SmcApiServiceImpl implements SmcApiService {
             return builder.build();
         }
         SmartContract smartContract = contractToolService.createNewContract(transaction);
-        var context = SmcConfig.asContext(integratorFactory.createMockProcessor(transaction.getId()));
+        var context = smcConfig.asContext(accountService.getBlockchainHeight(),
+            smartContract,
+            integratorFactory.createMockProcessor(transaction.getId())
+        );
         //syntactical and semantic validation
         SmcContractTxProcessor processor = new PublishContractTxValidator(smartContract, context);
 
-        BigInteger calculatedFuel = processor.getExecutionEnv().getPrice().forContractPublishing().calc(smartContract);
+        BigInteger calculatedFuel = context.getPrice().contractPublishing().calc(smartContract);
         if (!smartContract.getFuel().tryToCharge(calculatedFuel)) {
             log.error("Needed fuel={} but actual={}", calculatedFuel, smartContract.getFuel());
             return builder.error(ApiErrors.CONTRACT_VALIDATION_ERROR, "Not enough fuel to execute this transaction, expected=" + calculatedFuel + " but actual=" + smartContract.getFuel()).build();
@@ -482,7 +485,10 @@ public class SmcApiServiceImpl implements SmcApiService {
             new ContractFuel(contractAddress, BigInteger.ZERO, BigInteger.ONE)
         );
         var methods = methodMapper.convert(members);
-        var context = SmcConfig.asContext(integratorFactory.createReadonlyProcessor());
+        var context = smcConfig.asContext(accountService.getBlockchainHeight(),
+            smartContract,
+            integratorFactory.createReadonlyProcessor()
+        );
 
         SmcContractTxBatchProcessor processor = new CallViewMethodTxProcessor(smartContract, methods, context);
 
@@ -525,7 +531,11 @@ public class SmcApiServiceImpl implements SmcApiService {
             .args(attachment.getMethodParams())
             .value(BigInteger.valueOf(transaction.getAmountATM()))
             .build();
-        var context = SmcConfig.asContext(integratorFactory.createMockProcessor(transaction.getId()));
+
+        var context = smcConfig.asContext(accountService.getBlockchainHeight(),
+            smartContract,
+            integratorFactory.createMockProcessor(transaction.getId())
+        );
 
         //syntactical and semantic validation
         SmcContractTxProcessor processor = new CallMethodTxValidator(
@@ -534,7 +544,7 @@ public class SmcApiServiceImpl implements SmcApiService {
             context
         );
 
-        BigInteger calculatedFuel = processor.getExecutionEnv().getPrice().forMethodCalling(smartMethod.getValue()).calc(smartMethod);
+        BigInteger calculatedFuel = context.getPrice().methodCalling(smartMethod.getValue()).calc(smartMethod);
         if (!smartContract.getFuel().tryToCharge(calculatedFuel)) {
             log.error("Needed fuel={} but actual={}", calculatedFuel, smartContract.getFuel());
             return builder.error(ApiErrors.CONTRACT_VALIDATION_ERROR, "Not enough fuel to execute this transaction, expected=" + calculatedFuel + " but actual=" + smartContract.getFuel()).build();
