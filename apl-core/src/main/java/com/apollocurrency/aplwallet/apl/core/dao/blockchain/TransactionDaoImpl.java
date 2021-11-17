@@ -29,6 +29,7 @@ import com.apollocurrency.aplwallet.apl.core.dao.exception.AplCoreDaoException;
 import com.apollocurrency.aplwallet.apl.core.db.DatabaseManager;
 import com.apollocurrency.aplwallet.apl.core.entity.appdata.ChatInfo;
 import com.apollocurrency.aplwallet.apl.core.entity.blockchain.TransactionEntity;
+import com.apollocurrency.aplwallet.apl.core.model.Sort;
 import com.apollocurrency.aplwallet.apl.core.model.TransactionDbInfo;
 import com.apollocurrency.aplwallet.apl.core.transaction.PrunableTransaction;
 import com.apollocurrency.aplwallet.apl.crypto.Convert;
@@ -381,14 +382,14 @@ public class TransactionDaoImpl implements TransactionDao {
         long accountId, byte type, byte subtype,
         int blockTimestamp, boolean withMessage, boolean phasedOnly, boolean nonPhasedOnly,
         int from, int to, boolean executedOnly, boolean includePrivate,
-        int height, int prunableExpiration, boolean failedOnly, boolean nonFailedOnly) {
+        int height, int prunableExpiration, boolean failedOnly, boolean nonFailedOnly, Sort sort) {
         validatePhaseAndNonPhasedTransactions(phasedOnly, nonPhasedOnly);
         validateFailedAndNonFailedTransactions(failedOnly, nonFailedOnly);
 
         StringBuilder buf = new StringBuilder();
         buf.append("SELECT transaction.* FROM transaction ");
         createTransactionSelectSqlWithOrder(buf, "transaction.*", type, subtype,
-            blockTimestamp, withMessage, phasedOnly, nonPhasedOnly, executedOnly, includePrivate, height, failedOnly, nonFailedOnly);
+            blockTimestamp, withMessage, phasedOnly, nonPhasedOnly, executedOnly, includePrivate, height, failedOnly, nonFailedOnly, sort);
         buf.append(DbUtils.limitsClause(from, to)); // append 'limit offset' clause
         try (Connection con = dataSource.getConnection()) {
             String sql = buf.toString();
@@ -874,9 +875,12 @@ public class TransactionDaoImpl implements TransactionDao {
         }
     }
 
-    private StringBuilder createTransactionSelectSqlWithOrder(StringBuilder buf, String selectString, byte type, byte subtype, int blockTimestamp, boolean withMessage, boolean phasedOnly, boolean nonPhasedOnly, boolean executedOnly, boolean includePrivate, int height, boolean failedOnly, boolean nonFailedOnly) {
+    private StringBuilder createTransactionSelectSqlWithOrder(StringBuilder buf, String selectString, byte type, byte subtype,
+                                                              int blockTimestamp, boolean withMessage, boolean phasedOnly,
+                                                              boolean nonPhasedOnly, boolean executedOnly, boolean includePrivate,
+                                                              int height, boolean failedOnly, boolean nonFailedOnly, Sort sort) {
         createTransactionSelectSqlNoOrder(buf, selectString, type, subtype, blockTimestamp, withMessage, phasedOnly, nonPhasedOnly, executedOnly, includePrivate, height, failedOnly, nonFailedOnly);
-        buf.append("ORDER BY block_timestamp DESC, transaction_index DESC");
+        buf.append("ORDER BY block_timestamp " + sort + ", transaction_index " + sort);
         return buf;
     }
 
