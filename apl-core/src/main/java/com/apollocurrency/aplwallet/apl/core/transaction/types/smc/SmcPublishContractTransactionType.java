@@ -113,9 +113,6 @@ public class SmcPublishContractTransactionType extends AbstractSmcTransactionTyp
             throw new AplUnacceptableTransactionValidationException("Empty contract language name.", transaction);
         }
         SmartContract smartContract = contractToolService.createNewContract(transaction);
-        if (!contractToolService.validateContractSource(smartContract.getCode())) {
-            throw new AplUnacceptableTransactionValidationException("The contract source code doesn't match the contract template code.", transaction);
-        }
         var context = smcConfig.asContext(blockchain.getHeight(),
             smartContract,
             integratorFactory.createMockProcessor(transaction.getId())

@@ -73,6 +73,7 @@ import com.apollocurrency.smc.data.type.Address;
 import com.apollocurrency.smc.polyglot.SimpleVersion;
 import com.apollocurrency.smc.polyglot.Version;
 import com.apollocurrency.smc.polyglot.language.ContractSpec;
+import com.apollocurrency.smc.polyglot.language.SmartSource;
 import com.apollocurrency.smc.polyglot.language.lib.JSLibraryProvider;
 import com.google.common.base.Strings;
 import lombok.extern.slf4j.Slf4j;
@@ -97,6 +98,7 @@ import static com.apollocurrency.smc.util.HexUtils.toHex;
 @RequestScoped
 public class SmcApiServiceImpl implements SmcApiService {
 
+    public static final String DEFAULT_LANGUAGE_NAME = "js";
     private final AccountService accountService;
     private final SmcContractService contractService;
     private final ContractToolService contractToolService;
@@ -244,7 +246,7 @@ public class SmcApiServiceImpl implements SmcApiService {
 
     private String defaultLanguage(String languageStr) {
         if (languageStr == null || languageStr.isBlank()) {
-            languageStr = "js";
+            languageStr = DEFAULT_LANGUAGE_NAME;
         }
         return languageStr;
     }
@@ -307,6 +309,15 @@ public class SmcApiServiceImpl implements SmcApiService {
             response.error(ApiErrors.MISSING_PARAM, "secretPhrase");
             return null;
         }
+
+        if (!contractToolService.validateContractSource(body.getSource())) {
+            response.error(ApiErrors.CONSTRAINT_VIOLATION, "The contract source code doesn't match the contract template code.");
+        }
+
+        var contractSource = contractToolService.createSmartSource(body.getName(), body.getSource(), DEFAULT_LANGUAGE_NAME);
+
+        SmartSource smartSource = contractToolService.completeContractSource(contractSource);
+
         var secretPhrase = elGamal.elGamalDecrypt(body.getSecretPhrase());
 
         BigInteger fuelLimit = new BigInteger(body.getFuelLimit());
@@ -314,10 +325,10 @@ public class SmcApiServiceImpl implements SmcApiService {
         String valueStr = body.getValue() != null ? body.getValue() : "0";
 
         SmcPublishContractAttachment attachment = SmcPublishContractAttachment.builder()
-            .contractName(body.getName())
-            .contractSource(body.getSource())
+            .contractName(smartSource.getName())
+            .contractSource(smartSource.getSourceCode())
             .constructorParams(String.join(",", body.getParams()))
-            .languageName("js")
+            .languageName(smartSource.getLanguageName())
             .fuelLimit(fuelLimit)
             .fuelPrice(fuelPrice)
             .build();
@@ -343,7 +354,7 @@ public class SmcApiServiceImpl implements SmcApiService {
 
         log.debug("Transaction id={} sender={} fee={}"
             , Convert.toHexString(transaction.getId())
-            , Convert.toHexString(senderAccountId)
+            , Convert.toHexString(txRequest.getSenderAccount().getId())
             , transaction.getFeeATM());
 
         return transaction;

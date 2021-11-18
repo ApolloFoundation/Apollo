@@ -14,9 +14,13 @@ import com.apollocurrency.smc.polyglot.language.SmartSource;
  */
 public interface ContractToolService {
 
-    boolean validateContractSource(SmartSource source);
+    boolean validateContractSource(String source);
 
     SmartSource createSmartSource(SmcPublishContractAttachment attachment);
+
+    SmartSource createSmartSource(String name, String source, String languageName);
+
+    SmartSource completeContractSource(SmartSource smartSource);
 
     /**
      * Creates a new smart contract instance. That one is not persisted in the blockchain.

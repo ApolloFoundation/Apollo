@@ -48,27 +48,34 @@ public class SmcContractToolServiceImpl implements ContractToolService {
     }
 
     @Override
-    public boolean validateContractSource(SmartSource source) {
+    public boolean validateContractSource(String source) {
         //validate, match the source code with template by RegExp
-        var rc = codeMatcher.match(source.getSourceCode());
-        log.debug("Validate smart contract source at height {}, rc={}, smc={}", blockchain.getHeight(), rc, source.getSourceCode());
+        var rc = codeMatcher.match(source);
+        log.debug("Validate smart contract source at height {}, rc={}, smc={}", blockchain.getHeight(), rc, source);
         return rc;
     }
 
-
     @Override
     public SmartSource createSmartSource(SmcPublishContractAttachment attachment) {
+        return createSmartSource(attachment.getContractName(), attachment.getContractSource(), attachment.getLanguageName());
+    }
 
-        final SmartSource smartSource = ContractSource.builder()
-            .sourceCode(attachment.getContractSource())
-            .name(attachment.getContractName())
-            .languageName(attachment.getLanguageName())
-            .languageVersion(Languages.languageVersion(attachment.getContractSource()))
+    @Override
+    public SmartSource createSmartSource(String name, String source, String languageName) {
+        return ContractSource.builder()
+            .name(name)
+            .sourceCode(source)
+            .languageName(languageName)
+            .languageVersion(Languages.languageVersion(source))
+            .baseContract(preprocessor.parseContractType(source).getType())
             .build();
+    }
 
-        log.debug("smartSource={}", smartSource);
-
-        return smartSource;
+    @Override
+    public SmartSource completeContractSource(SmartSource smartSource) {
+        var processedSrc = preprocessor.process(smartSource);
+        log.trace("Completed smartSource={}", processedSrc);
+        return processedSrc;
     }
 
     @Override
@@ -85,8 +92,6 @@ public class SmcContractToolServiceImpl implements ContractToolService {
 
         final SmartSource smartSource = createSmartSource(attachment);
 
-        var processedSrc = preprocessor.process(smartSource);
-
         SmartContract contract = SmartContract.builder()
             .address(contractAddress)
             .owner(transactionSender)
@@ -94,7 +99,7 @@ public class SmcContractToolServiceImpl implements ContractToolService {
             .caller(transactionSender)
             .txId(txId)
             .args(attachment.getConstructorParams())
-            .code(processedSrc)
+            .code(smartSource)
             .status(ContractStatus.CREATED)
             .fuel(new ContractFuel(transactionSender, attachment.getFuelLimit(), attachment.getFuelPrice()))
             .build();

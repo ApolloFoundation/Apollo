@@ -141,9 +141,6 @@ class SmcContractServiceTest {
             .languageVersion(Languages.languageVersion(smcPublishContractAttachment.getContractSource()))
             .build();
 
-        var src = new ContractSource(smartSource);
-        src.setParsedSourceCode(smcPublishContractAttachment.getContractSource());
-
         smartContract = SmartContract.builder()
             .address(smcTxData.getContractAddress())
             .owner(smcTxData.getSenderAddress())
@@ -151,7 +148,7 @@ class SmcContractServiceTest {
             .caller(smcTxData.getSenderAddress())
             .txId(new AplAddress(TX_ID))
             .args(smcPublishContractAttachment.getConstructorParams())
-            .code(src)
+            .code(smartSource)
             .status(ContractStatus.CREATED)
             .fuel(new ContractFuel(smcTxData.getSenderAddress(), smcPublishContractAttachment.getFuelLimit(), smcPublishContractAttachment.getFuelPrice()))
             .build();
@@ -238,7 +235,7 @@ class SmcContractServiceTest {
         when(smcTransaction.getRecipientId()).thenReturn(smcTxData.getRecipientAddress().getLongId());
         when(smcTransaction.getSenderId()).thenReturn(smcTxData.getSenderAddress().getLongId());
         when(smcTransaction.getId()).thenReturn(TX_ID);
-        when(preprocessor.process(any())).thenReturn(smartSource);
+        when(preprocessor.parseContractType(smartSource.getSourceCode())).thenReturn(new ContractSpec.Item(smartSource.getName(), smartSource.getBaseContract()));
         //WHEN
         SmartContract newContract = contractToolService.createNewContract(smcTransaction);
 
