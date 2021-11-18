@@ -56,8 +56,7 @@
     "decimals": 8,
     "featuresHeightRequirement": {
       "dexReopenPendingOrdersHeight": 3500000,
-      "dexExpiredContractWithFinishedPhasingHeightAndStep3": 4000000,
-      "failedTransactionsAcceptanceHeight": 9600000
+      "dexExpiredContractWithFinishedPhasingHeightAndStep3": 4000000
     },
     "currencyIssuanceHeights": [7961831, 7961830, 7945553, 7945552, 7905883, 7905882,
       7882498, 7882497, 7882492, 7882491, 7882486, 7882485, 7882454, 7882453, 7882435, 7882434,
