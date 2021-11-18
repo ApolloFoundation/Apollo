@@ -20,10 +20,6 @@
 
 package com.apollocurrency.aplwallet.apl.core.service.blockchain;
 
-import com.apollocurrency.aplwallet.apl.core.entity.blockchain.TransactionEntity;
-import com.apollocurrency.aplwallet.apl.core.model.Block;
-import com.apollocurrency.aplwallet.apl.core.model.EcBlockData;
-import com.apollocurrency.aplwallet.apl.core.model.Transaction;
 import com.apollocurrency.aplwallet.apl.core.converter.db.BlockEntityToModelConverter;
 import com.apollocurrency.aplwallet.apl.core.converter.db.BlockModelToEntityConverter;
 import com.apollocurrency.aplwallet.apl.core.dao.appdata.ShardDao;
@@ -36,6 +32,10 @@ import com.apollocurrency.aplwallet.apl.core.entity.appdata.Shard;
 import com.apollocurrency.aplwallet.apl.core.entity.appdata.TransactionIndex;
 import com.apollocurrency.aplwallet.apl.core.entity.blockchain.BlockEntity;
 import com.apollocurrency.aplwallet.apl.core.entity.state.account.PublicKey;
+import com.apollocurrency.aplwallet.apl.core.model.Block;
+import com.apollocurrency.aplwallet.apl.core.model.EcBlockData;
+import com.apollocurrency.aplwallet.apl.core.model.Sort;
+import com.apollocurrency.aplwallet.apl.core.model.Transaction;
 import com.apollocurrency.aplwallet.apl.core.model.TransactionDbInfo;
 import com.apollocurrency.aplwallet.apl.core.service.appdata.TimeService;
 import com.apollocurrency.aplwallet.apl.core.service.state.account.PublicKeyDao;
@@ -698,11 +698,11 @@ public class BlockchainImpl implements Blockchain {
     public List<Transaction> getTransactions(long accountId, int numberOfConfirmations, byte type, byte subtype,
                                              int blockTimestamp, boolean withMessage, boolean phasedOnly, boolean nonPhasedOnly,
                                              int from, int to, boolean includeExpiredPrunable, boolean executedOnly,
-                                             boolean includePrivate,  boolean failedOnly, boolean nonFailedOnly) {
+                                             boolean includePrivate, boolean failedOnly, boolean nonFailedOnly, Sort sort) {
 
         return transactionService.getTransactionsCrossShardingByAccount(accountId, getHeight(), numberOfConfirmations, type, subtype,
             blockTimestamp, withMessage, phasedOnly, nonPhasedOnly,
-            from, to, includeExpiredPrunable, executedOnly, includePrivate, failedOnly, nonFailedOnly);
+            from, to, includeExpiredPrunable, executedOnly, includePrivate, failedOnly, nonFailedOnly, sort);
     }
 
     @Transactional(readOnly = true)

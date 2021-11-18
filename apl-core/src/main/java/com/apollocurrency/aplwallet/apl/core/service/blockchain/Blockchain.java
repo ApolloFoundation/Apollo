@@ -22,6 +22,7 @@ package com.apollocurrency.aplwallet.apl.core.service.blockchain;
 
 import com.apollocurrency.aplwallet.apl.core.model.Block;
 import com.apollocurrency.aplwallet.apl.core.model.EcBlockData;
+import com.apollocurrency.aplwallet.apl.core.model.Sort;
 import com.apollocurrency.aplwallet.apl.core.model.Transaction;
 import com.apollocurrency.aplwallet.apl.core.model.TransactionDbInfo;
 import com.apollocurrency.aplwallet.apl.core.transaction.PrunableTransaction;
@@ -160,7 +161,7 @@ public interface Blockchain {
     List<Transaction> getTransactions(long accountId, int numberOfConfirmations, byte type, byte subtype,
                                       int blockTimestamp, boolean withMessage, boolean phasedOnly, boolean nonPhasedOnly,
                                       int from, int to, boolean includeExpiredPrunable, boolean executedOnly,
-                                      boolean includePrivate,  boolean failedOnly, boolean nonFailedOnly);
+                                      boolean includePrivate, boolean failedOnly, boolean nonFailedOnly, Sort sort);
 
     List<Transaction> getBlockTransactions(long blockId);
 
