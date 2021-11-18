@@ -22,6 +22,7 @@ public class SmcTxData {
     String recipient;
     String recipientPublicKey;
     String name;
+    String baseContract;
     String method;
     String source;
     String secret;

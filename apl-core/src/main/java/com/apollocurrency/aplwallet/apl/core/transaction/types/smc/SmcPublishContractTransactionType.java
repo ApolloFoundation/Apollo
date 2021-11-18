@@ -106,11 +106,17 @@ public class SmcPublishContractTransactionType extends AbstractSmcTransactionTyp
         if (Strings.isNullOrEmpty(attachment.getContractName())) {
             throw new AplUnacceptableTransactionValidationException("Empty contract name.", transaction);
         }
+        if (Strings.isNullOrEmpty(attachment.getBaseContract())) {
+            throw new AplUnacceptableTransactionValidationException("Empty base contract.", transaction);
+        }
         if (Strings.isNullOrEmpty(attachment.getContractSource())) {
             throw new AplUnacceptableTransactionValidationException("Empty contract source.", transaction);
         }
         if (Strings.isNullOrEmpty(attachment.getLanguageName())) {
             throw new AplUnacceptableTransactionValidationException("Empty contract language name.", transaction);
+        }
+        if (Strings.isNullOrEmpty(attachment.getLanguageVersion())) {
+            throw new AplUnacceptableTransactionValidationException("Empty contract language version.", transaction);
         }
         SmartContract smartContract = contractToolService.createNewContract(transaction);
         var context = smcConfig.asContext(blockchain.getHeight(),

@@ -17,6 +17,7 @@ import com.apollocurrency.smc.contract.ContractStatus;
 import com.apollocurrency.smc.contract.SmartContract;
 import com.apollocurrency.smc.contract.fuel.ContractFuel;
 import com.apollocurrency.smc.data.type.Address;
+import com.apollocurrency.smc.polyglot.SimpleVersion;
 import com.apollocurrency.smc.polyglot.language.LanguageContext;
 import com.apollocurrency.smc.polyglot.language.Languages;
 import com.apollocurrency.smc.polyglot.language.SmartSource;
@@ -57,7 +58,13 @@ public class SmcContractToolServiceImpl implements ContractToolService {
 
     @Override
     public SmartSource createSmartSource(SmcPublishContractAttachment attachment) {
-        return createSmartSource(attachment.getContractName(), attachment.getContractSource(), attachment.getLanguageName());
+        return ContractSource.builder()
+            .name(attachment.getContractName())
+            .baseContract(attachment.getBaseContract())
+            .sourceCode(attachment.getContractSource())
+            .languageName(attachment.getLanguageName())
+            .languageVersion(SimpleVersion.fromString(attachment.getLanguageVersion()))
+            .build();
     }
 
     @Override

@@ -24,9 +24,11 @@ class SmcPublishContractAttachmentTest {
 
     final SmcPublishContractAttachment expected = SmcPublishContractAttachment.builder()
         .contractName("Deal")
+        .baseContract("Contract")
         .contractSource("class Deal {}")
         .constructorParams("\"123\", \"0x0A0B0C0D0E0F\"")
-        .languageName("javascript")
+        .languageName("js")
+        .languageVersion("0.0.1")
         .fuelLimit(BigInteger.valueOf(5000L))
         .fuelPrice(BigInteger.valueOf(100L))
         .build();

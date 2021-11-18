@@ -15,6 +15,7 @@ import com.apollocurrency.smc.blockchain.crypt.DigestWrapper;
 import com.apollocurrency.smc.blockchain.crypt.HashSumProvider;
 import com.apollocurrency.smc.contract.fuel.Chargeable;
 import com.apollocurrency.smc.contract.fuel.OperationPrice;
+import com.apollocurrency.smc.contract.vm.SMCFreeExecutionMode;
 import com.apollocurrency.smc.contract.vm.SMCPaidExecutionMode;
 import com.apollocurrency.smc.polyglot.config.JsLimitsConfig;
 import com.apollocurrency.smc.polyglot.engine.ExecutionEnv;
@@ -57,7 +58,10 @@ public class SmcConfig {
 
             @Override
             public ExecutionEnv getExecutionEnv() {
-                return createExecutionEnv(height, chargeable);
+                return ExecutionEnv.builder()
+                    .mode(new SMCPaidExecutionMode(loadPrice(height), chargeable, true, true, false))
+                    .config(new JsLimitsConfig())
+                    .build();
             }
 
             @Override
@@ -72,11 +76,31 @@ public class SmcConfig {
         };
     }
 
-    public ExecutionEnv createExecutionEnv(int height, Chargeable chargeable) {
-        return ExecutionEnv.builder()
-            .mode(new SMCPaidExecutionMode(loadPrice(height), chargeable, true, true, false))
-            .config(new JsLimitsConfig())
-            .build();
+    public SmcContext asViewContext(int height, Chargeable chargeable, final BlockchainIntegrator integrator) {
+        return new SmcContext() {
+            @Override
+            public BlockchainIntegrator getIntegrator() {
+                return integrator;
+            }
+
+            @Override
+            public ExecutionEnv getExecutionEnv() {
+                return ExecutionEnv.builder()
+                    .mode(new SMCFreeExecutionMode(loadPrice(height), chargeable, true, true, false))
+                    .config(new JsLimitsConfig())
+                    .build();
+            }
+
+            @Override
+            public LanguageContext getLanguageContext() {
+                return createLanguageContext();
+            }
+
+            @Override
+            public OperationPrice getPrice() {
+                return loadPrice(height);
+            }
+        };
     }
 
     public OperationPrice loadPrice(int height) {

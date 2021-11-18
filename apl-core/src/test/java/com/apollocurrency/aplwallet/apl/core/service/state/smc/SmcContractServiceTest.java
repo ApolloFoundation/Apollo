@@ -32,7 +32,7 @@ import com.apollocurrency.smc.data.type.Address;
 import com.apollocurrency.smc.polyglot.SimpleVersion;
 import com.apollocurrency.smc.polyglot.language.ContractSpec;
 import com.apollocurrency.smc.polyglot.language.LanguageContext;
-import com.apollocurrency.smc.polyglot.language.Languages;
+import com.apollocurrency.smc.polyglot.language.LanguageContextFactory;
 import com.apollocurrency.smc.polyglot.language.SmartSource;
 import com.apollocurrency.smc.polyglot.language.lib.LibraryProvider;
 import com.apollocurrency.smc.polyglot.language.lib.ModuleSource;
@@ -116,6 +116,7 @@ class SmcContractServiceTest {
             .recipient("APL-632K-TWX3-2ALQ-973CU")
             .sender("APL-X5JH-TJKJ-DVGC-5T2V8")
             .name("Deal")
+            .baseContract("Contract")
             .source("class Deal extends Contract {}")
             .params(List.of("123"))
             .amountATM(10_00000000L)
@@ -126,19 +127,21 @@ class SmcContractServiceTest {
 
         smcPublishContractAttachment = SmcPublishContractAttachment.builder()
             .contractName(smcTxData.getName())
+            .baseContract(smcTxData.getBaseContract())
             .contractSource(smcTxData.getSource())
             .constructorParams(String.join(",", smcTxData.getParams()))
             .languageName("js")
+            .languageVersion(LanguageContextFactory.LANGUAGE_VERSION.toString())
             .fuelLimit(BigInteger.valueOf(smcTxData.getFuelLimit()))
             .fuelPrice(BigInteger.valueOf(smcTxData.getFuelPrice()))
             .build();
 
         smartSource = ContractSource.builder()
-            .sourceCode(smcPublishContractAttachment.getContractSource())
             .name(smcPublishContractAttachment.getContractName())
-            .baseContract("Contract")
+            .baseContract(smcPublishContractAttachment.getBaseContract())
+            .sourceCode(smcPublishContractAttachment.getContractSource())
             .languageName(smcPublishContractAttachment.getLanguageName())
-            .languageVersion(Languages.languageVersion(smcPublishContractAttachment.getContractSource()))
+            .languageVersion(SimpleVersion.fromString(smcPublishContractAttachment.getLanguageVersion()))
             .build();
 
         smartContract = SmartContract.builder()
@@ -235,7 +238,6 @@ class SmcContractServiceTest {
         when(smcTransaction.getRecipientId()).thenReturn(smcTxData.getRecipientAddress().getLongId());
         when(smcTransaction.getSenderId()).thenReturn(smcTxData.getSenderAddress().getLongId());
         when(smcTransaction.getId()).thenReturn(TX_ID);
-        when(preprocessor.parseContractType(smartSource.getSourceCode())).thenReturn(new ContractSpec.Item(smartSource.getName(), smartSource.getBaseContract()));
         //WHEN
         SmartContract newContract = contractToolService.createNewContract(smcTransaction);
 

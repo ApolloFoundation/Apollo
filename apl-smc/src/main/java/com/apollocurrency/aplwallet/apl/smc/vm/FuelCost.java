@@ -44,6 +44,6 @@ class FuelCost {
     public static final VolumeBasedFuelCalculator F_EVENT_EMIT = new VolumeBasedFuelCalculator(10_000L, 1000L);
 
     //Contract execution, on all statements entering
-    public static final ConstantFuelCalculator F_STATEMENT_ENTER = new ConstantFuelCalculator(0L);
+    public static final ConstantFuelCalculator F_STATEMENT_ENTER = new ConstantFuelCalculator(1L);
 
 }

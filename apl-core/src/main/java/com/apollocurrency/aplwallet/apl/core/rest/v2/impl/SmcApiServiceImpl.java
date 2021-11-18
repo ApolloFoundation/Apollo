@@ -310,7 +310,7 @@ public class SmcApiServiceImpl implements SmcApiService {
             return null;
         }
 
-        if (!contractToolService.validateContractSource(body.getSource())) {
+        if (!contractToolService.validateContractSource(body.getSource())) {//validate with pattern
             response.error(ApiErrors.CONSTRAINT_VIOLATION, "The contract source code doesn't match the contract template code.");
         }
 
@@ -326,9 +326,11 @@ public class SmcApiServiceImpl implements SmcApiService {
 
         SmcPublishContractAttachment attachment = SmcPublishContractAttachment.builder()
             .contractName(smartSource.getName())
+            .baseContract(smartSource.getBaseContract())
             .contractSource(smartSource.getSourceCode())
             .constructorParams(String.join(",", body.getParams()))
             .languageName(smartSource.getLanguageName())
+            .languageVersion(smartSource.getLanguageVersion().toString())
             .fuelLimit(fuelLimit)
             .fuelPrice(fuelPrice)
             .build();
@@ -380,7 +382,7 @@ public class SmcApiServiceImpl implements SmcApiService {
 
         var executionLog = new ExecutionLog();
 
-        var result = processAllMethods(contractAddress, body.getMembers(), executionLog);
+        var result = processAllViewMethods(contractAddress, body.getMembers(), executionLog);
 
         if (executionLog.hasError()) {
             return builder.detailedError(ApiErrors.CONTRACT_READ_METHOD_ERROR, executionLog.toJsonString(), executionLog.getLatestCause()).build();
@@ -432,7 +434,7 @@ public class SmcApiServiceImpl implements SmcApiService {
         });
 
         var executionLog = new ExecutionLog();
-        var result = processAllMethods(address, methodsToCall, executionLog);
+        var result = processAllViewMethods(address, methodsToCall, executionLog);
         if (executionLog.hasError()) {
             return builder.detailedError(ApiErrors.CONTRACT_READ_METHOD_ERROR, executionLog.toJsonString(), executionLog.getLatestCause()).build();
         }
@@ -489,14 +491,14 @@ public class SmcApiServiceImpl implements SmcApiService {
         return propertySpec;
     }
 
-    private List<ResultValue> processAllMethods(Address contractAddress, List<ContractMethod> members, ExecutionLog executionLog) {
+    private List<ResultValue> processAllViewMethods(Address contractAddress, List<ContractMethod> members, ExecutionLog executionLog) {
         SmartContract smartContract = contractService.loadContract(
             contractAddress,
             contractAddress,
             new ContractFuel(contractAddress, BigInteger.ZERO, BigInteger.ONE)
         );
         var methods = methodMapper.convert(members);
-        var context = smcConfig.asContext(accountService.getBlockchainHeight(),
+        var context = smcConfig.asViewContext(accountService.getBlockchainHeight(),
             smartContract,
             integratorFactory.createReadonlyProcessor()
         );
