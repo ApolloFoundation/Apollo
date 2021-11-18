@@ -134,6 +134,8 @@ then
     cd $1/..
     rm -rfv apollo-web-ui
     rm -rfv apollo-tools
+    rm -rfv apollo-desktop
+
 
     chmod 755 $1/../apollo-blockchain/bin/*.sh
 
