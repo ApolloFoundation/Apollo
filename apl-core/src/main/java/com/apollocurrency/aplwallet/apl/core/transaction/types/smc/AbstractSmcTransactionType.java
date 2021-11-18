@@ -11,6 +11,7 @@ import com.apollocurrency.aplwallet.apl.core.entity.state.account.LedgerEvent;
 import com.apollocurrency.aplwallet.apl.core.exception.AplTransactionExecutionException;
 import com.apollocurrency.aplwallet.apl.core.exception.AplUnacceptableTransactionValidationException;
 import com.apollocurrency.aplwallet.apl.core.model.Transaction;
+import com.apollocurrency.aplwallet.apl.core.service.blockchain.Blockchain;
 import com.apollocurrency.aplwallet.apl.core.service.state.account.AccountService;
 import com.apollocurrency.aplwallet.apl.core.service.state.smc.ContractToolService;
 import com.apollocurrency.aplwallet.apl.core.service.state.smc.PostponedContractService;
@@ -31,7 +32,6 @@ import com.apollocurrency.smc.polyglot.JSAssertionException;
 import com.apollocurrency.smc.polyglot.JSRequirementException;
 import com.apollocurrency.smc.polyglot.JSRevertException;
 import com.apollocurrency.smc.polyglot.PolyglotException;
-import com.apollocurrency.smc.polyglot.engine.ExecutionEnv;
 import com.apollocurrency.smc.polyglot.engine.InternalNotRecoverableException;
 import lombok.extern.slf4j.Slf4j;
 
@@ -46,9 +46,11 @@ public abstract class AbstractSmcTransactionType extends TransactionType {
     protected ContractToolService contractToolService;
     protected final FuelValidator fuelMinMaxValidator;
     protected final SmcBlockchainIntegratorFactory integratorFactory;
+    protected final Blockchain blockchain;
     protected final SmcConfig smcConfig;
 
-    AbstractSmcTransactionType(BlockchainConfig blockchainConfig, AccountService accountService,
+    AbstractSmcTransactionType(BlockchainConfig blockchainConfig, Blockchain blockchain,
+                               AccountService accountService,
                                PostponedContractService contractService,
                                ContractToolService contractToolService,
                                FuelValidator fuelMinMaxValidator,
@@ -59,11 +61,8 @@ public abstract class AbstractSmcTransactionType extends TransactionType {
         this.contractToolService = contractToolService;
         this.fuelMinMaxValidator = fuelMinMaxValidator;
         this.integratorFactory = integratorFactory;
+        this.blockchain = blockchain;
         this.smcConfig = smcConfig;
-    }
-
-    protected ExecutionEnv getExecutionEnv() {
-        return smcConfig.createExecutionEnv();
     }
 
     @Override

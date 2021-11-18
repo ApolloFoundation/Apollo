@@ -8,6 +8,7 @@ package com.apollocurrency.aplwallet.apl.core.transaction.common;
 import com.apollocurrency.aplwallet.apl.core.chainid.BlockchainConfig;
 import com.apollocurrency.aplwallet.apl.core.config.SmcConfig;
 import com.apollocurrency.aplwallet.apl.core.model.Transaction;
+import com.apollocurrency.aplwallet.apl.core.service.blockchain.Blockchain;
 import com.apollocurrency.aplwallet.apl.core.service.blockchain.TransactionBuilderFactory;
 import com.apollocurrency.aplwallet.apl.core.service.state.account.AccountPublicKeyService;
 import com.apollocurrency.aplwallet.apl.core.service.state.account.AccountService;
@@ -55,6 +56,8 @@ class TxSerializerV3Test {
     @Mock
     BlockchainConfig blockchainConfig;
     @Mock
+    Blockchain blockchain;
+    @Mock
     Chain chain;
     @Mock
     PostponedContractService contractService;
@@ -79,7 +82,7 @@ class TxSerializerV3Test {
         fuelValidator = new SmcFuelValidator(blockchainConfig);
         context = TxBContext.newInstance(chain);
         transactionTypeFactory = new CachedTransactionTypeFactory(List.of(
-            new SmcPublishContractTransactionType(blockchainConfig, accountService, contractService, contractToolService, fuelValidator, integratorFactory, new SmcConfig())
+            new SmcPublishContractTransactionType(blockchainConfig, blockchain, accountService, contractService, contractToolService, fuelValidator, integratorFactory, new SmcConfig())
         ));
         transactionBuilderFactory = new TransactionBuilderFactory(transactionTypeFactory, blockchainConfig);
     }

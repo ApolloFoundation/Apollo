@@ -24,7 +24,7 @@ import static org.slf4j.LoggerFactory.getLogger;
  * Data source with Transaction support implemented by ThreadLocal connection management.
  * Should not be retrieved from CDI directly.
  */
-public class TransactionalDataSource extends DataSourceWrapper implements TransactionManagement {
+public class TransactionalDataSource extends DataSourceWrapper implements TransactionManagement, Comparable<TransactionalDataSource> {
     private static final Logger log = getLogger(TransactionalDataSource.class);
     private final ThreadLocal<DbConnectionWrapper> localConnection = new ThreadLocal<>();
     private final ThreadLocal<Set<TransactionCallback>> transactionCallback = new ThreadLocal<>();
@@ -275,6 +275,20 @@ public class TransactionalDataSource extends DataSourceWrapper implements Transa
             return new StartedConnection(begin(), false);
         }
     }
+
+    @Override
+    public int compareTo(TransactionalDataSource o) {
+        if (o.getDbIdentity().isEmpty()) {
+            return -1;
+        }
+        if (getDbIdentity().isEmpty()) {
+            return 1;
+        }
+        int ourId = Integer.parseInt(dbIdentity.substring(dbIdentity.lastIndexOf("_") + 1));
+        int theirId = Integer.parseInt(o.getDbIdentity().get().substring(o.getDbIdentity().get().lastIndexOf("_") + 1));
+        return Integer.compare(ourId, theirId);
+    }
+
     @Data
     public static class StartedConnection {
         @Getter

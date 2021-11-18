@@ -12,6 +12,7 @@ import com.apollocurrency.aplwallet.apl.core.entity.state.account.LedgerEvent;
 import com.apollocurrency.aplwallet.apl.core.exception.AplAcceptableTransactionValidationException;
 import com.apollocurrency.aplwallet.apl.core.exception.AplUnacceptableTransactionValidationException;
 import com.apollocurrency.aplwallet.apl.core.model.Transaction;
+import com.apollocurrency.aplwallet.apl.core.service.blockchain.Blockchain;
 import com.apollocurrency.aplwallet.apl.core.service.state.account.AccountService;
 import com.apollocurrency.aplwallet.apl.core.service.state.smc.ContractToolService;
 import com.apollocurrency.aplwallet.apl.core.service.state.smc.PostponedContractService;
@@ -33,6 +34,7 @@ import com.apollocurrency.smc.contract.SmartMethod;
 import com.apollocurrency.smc.contract.fuel.ContractFuel;
 import com.apollocurrency.smc.contract.fuel.Fuel;
 import com.apollocurrency.smc.contract.fuel.FuelValidator;
+import com.apollocurrency.smc.contract.fuel.OperationPrice;
 import com.apollocurrency.smc.contract.vm.ExecutionLog;
 import com.apollocurrency.smc.data.type.Address;
 import com.google.common.base.Strings;
@@ -53,13 +55,14 @@ import java.util.Map;
 @Singleton
 public class SmcCallMethodTransactionType extends AbstractSmcTransactionType {
     @Inject
-    public SmcCallMethodTransactionType(BlockchainConfig blockchainConfig, AccountService accountService,
+    public SmcCallMethodTransactionType(BlockchainConfig blockchainConfig, Blockchain blockchain,
+                                        AccountService accountService,
                                         PostponedContractService contractService,
                                         ContractToolService contractToolService,
                                         FuelValidator fuelValidator,
                                         SmcBlockchainIntegratorFactory integratorFactory,
                                         SmcConfig smcConfig) {
-        super(blockchainConfig, accountService, contractService, contractToolService, fuelValidator, integratorFactory, smcConfig);
+        super(blockchainConfig, blockchain, accountService, contractService, contractToolService, fuelValidator, integratorFactory, smcConfig);
     }
 
     @Override
@@ -116,7 +119,10 @@ public class SmcCallMethodTransactionType extends AbstractSmcTransactionType {
             .args(attachment.getMethodParams())
             .value(BigInteger.valueOf(transaction.getAmountATM()))
             .build();
-        var context = SmcConfig.asContext(integratorFactory.createMockProcessor(transaction.getId()));
+        var context = smcConfig.asContext(blockchain.getHeight(),
+            smartContract,
+            integratorFactory.createMockProcessor(transaction.getId())
+        );
         //syntactical and semantic validation
         SmcContractTxProcessor processor = new CallMethodTxValidator(
             smartContract,
@@ -144,15 +150,21 @@ public class SmcCallMethodTransactionType extends AbstractSmcTransactionType {
             .args(attachment.getMethodParams())
             .value(BigInteger.valueOf(transaction.getAmountATM()))
             .build();
-        BigInteger calculatedFuel = getFuelBasedFee(transaction).calcFuel(smartMethod);
+
         Fuel actualFuel = new ContractFuel(new AplAddress(transaction.getRecipientId()), attachment.getFuelLimit(), attachment.getFuelPrice());
+        var context = smcConfig.asContext(blockchain.getHeight(),
+            actualFuel,
+            integratorFactory.createMockProcessor(transaction.getId())
+        );
+
+        BigInteger calculatedFuel = getFuelBasedFee(context.getPrice(), transaction.getAmountATM()).calcFuel(smartMethod);
+
         if (!actualFuel.tryToCharge(calculatedFuel)) {
             log.error("Needed fuel={} but actual={}", calculatedFuel, actualFuel);
             throw new AplUnacceptableTransactionValidationException("Not enough fuel to execute this transaction, expected="
                 + calculatedFuel + " but actual=" + actualFuel, transaction);
         }
 
-        var context = SmcConfig.asContext(integratorFactory.createMockProcessor(transaction.getId()));
         //syntactical validation
         SmcContractTxProcessor processor = new SyntaxValidator(smartMethod.getMethodWithParams(), context);
         var executionLog = new ExecutionLog();
@@ -182,8 +194,9 @@ public class SmcCallMethodTransactionType extends AbstractSmcTransactionType {
             .value(BigInteger.valueOf(transaction.getAmountATM()))
             .build();
         log.debug("Before processing: caller={} contract={} Fuel={}", smartContract.getCaller(), smartContract.getAddress(), smartContract.getFuel());
-        var context = SmcConfig.asContext(integratorFactory.createProcessor(transaction, attachment,
-            senderAccount, recipientAccount, getLedgerEvent())
+        var context = smcConfig.asContext(blockchain.getHeight(),
+            smartContract,
+            integratorFactory.createProcessor(transaction, attachment, senderAccount, recipientAccount, getLedgerEvent())
         );
 
         executeContract(transaction, senderAccount, smartContract, new CallMethodTxProcessor(smartContract, smartMethod, context));
@@ -198,8 +211,8 @@ public class SmcCallMethodTransactionType extends AbstractSmcTransactionType {
         log.trace("Changes were committed");
     }
 
-    private Fee.FuelBasedFee getFuelBasedFee(Transaction transaction) {
-        var fuelCalculator = getExecutionEnv().getPrice().forMethodCalling(BigInteger.valueOf(transaction.getAmountATM()));
+    private Fee.FuelBasedFee getFuelBasedFee(OperationPrice price, long amount) {
+        var fuelCalculator = price.methodCalling(BigInteger.valueOf(amount));
         return new SmcFuelBasedFee(fuelCalculator);
     }
 }

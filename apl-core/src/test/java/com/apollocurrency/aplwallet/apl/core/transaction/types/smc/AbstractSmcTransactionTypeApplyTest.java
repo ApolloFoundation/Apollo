@@ -241,8 +241,8 @@ abstract class AbstractSmcTransactionTypeApplyTest extends DbContainerBaseTest {
         spyAccountService = spy(accountService);
         context = TxBContext.newInstance(chain);
         transactionTypeFactory = new CachedTransactionTypeFactory(List.of(
-            new SmcPublishContractTransactionType(blockchainConfig, spyAccountService, contractService, contractToolService, fuelValidator, integratorFactory, smcConfig),
-            new SmcCallMethodTransactionType(blockchainConfig, spyAccountService, contractService, contractToolService, fuelValidator, integratorFactory, smcConfig)
+            new SmcPublishContractTransactionType(blockchainConfig, blockchain, spyAccountService, contractService, contractToolService, fuelValidator, integratorFactory, smcConfig),
+            new SmcCallMethodTransactionType(blockchainConfig, blockchain, spyAccountService, contractService, contractToolService, fuelValidator, integratorFactory, smcConfig)
         ));
         transactionBuilderFactory = new TransactionBuilderFactory(transactionTypeFactory, blockchainConfig);
         transactionCreator = new TransactionCreator(validator, propertiesHolder, timeService, calculator, blockchain, processor, transactionTypeFactory, transactionBuilderFactory, signerService, blockchainConfig);

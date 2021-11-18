@@ -8,6 +8,7 @@ package com.apollocurrency.aplwallet.apl.core.transaction.types.smc;
 import com.apollocurrency.aplwallet.apl.core.app.GenesisImporter;
 import com.apollocurrency.aplwallet.apl.core.chainid.BlockchainConfig;
 import com.apollocurrency.aplwallet.apl.core.config.SmcConfig;
+import com.apollocurrency.aplwallet.apl.core.service.blockchain.Blockchain;
 import com.apollocurrency.aplwallet.apl.core.service.state.account.AccountService;
 import com.apollocurrency.aplwallet.apl.core.service.state.smc.ContractToolService;
 import com.apollocurrency.aplwallet.apl.core.service.state.smc.PostponedContractService;
@@ -49,6 +50,8 @@ class SmcCallMethodTransactionTypeTest {
     @Mock
     private BlockchainConfig blockchainConfig;
     @Mock
+    private Blockchain blockchain;
+    @Mock
     private AccountService accountService;
     @Mock
     PostponedContractService contractService;
@@ -63,6 +66,7 @@ class SmcCallMethodTransactionTypeTest {
     void setUp() {
         GenesisImporter.CREATOR_ID = 1739068987193023818L;//TN1
         smcCallMethodTransactionType = new SmcCallMethodTransactionType(blockchainConfig,
+            blockchain,
             accountService,
             contractService, contractToolService,
             new SmcFuelValidator(blockchainConfig),
