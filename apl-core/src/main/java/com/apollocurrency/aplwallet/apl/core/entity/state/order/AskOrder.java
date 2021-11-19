@@ -5,8 +5,8 @@
 package com.apollocurrency.aplwallet.apl.core.entity.state.order;
 
 import com.apollocurrency.aplwallet.apl.core.dao.state.keyfactory.DbKey;
-import com.apollocurrency.aplwallet.apl.core.entity.blockchain.Transaction;
-import com.apollocurrency.aplwallet.apl.core.transaction.messages.ColoredCoinsAskOrderPlacement;
+import com.apollocurrency.aplwallet.apl.core.model.Transaction;
+import com.apollocurrency.aplwallet.apl.core.transaction.messages.CCAskOrderPlacementAttachment;
 import lombok.ToString;
 
 import java.sql.ResultSet;
@@ -18,7 +18,7 @@ import java.sql.SQLException;
 @ToString(callSuper = true)
 public class AskOrder extends Order {
 
-    public AskOrder(Transaction transaction, ColoredCoinsAskOrderPlacement attachment, int height) {
+    public AskOrder(Transaction transaction, CCAskOrderPlacementAttachment attachment, int height) {
         super(transaction, attachment, height);
     }
 

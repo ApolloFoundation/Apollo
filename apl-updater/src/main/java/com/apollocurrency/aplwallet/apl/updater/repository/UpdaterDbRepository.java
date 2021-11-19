@@ -4,9 +4,8 @@
 
 package com.apollocurrency.aplwallet.apl.updater.repository;
 
-import com.apollocurrency.aplwallet.apl.core.app.AplException;
-import com.apollocurrency.aplwallet.apl.core.dao.TransactionalDataSource;
-import com.apollocurrency.aplwallet.apl.core.entity.blockchain.Transaction;
+import com.apollocurrency.aplwallet.apl.util.db.TransactionalDataSource;
+import com.apollocurrency.aplwallet.apl.core.model.Transaction;
 import com.apollocurrency.aplwallet.apl.udpater.intfce.UpdaterMediator;
 import com.apollocurrency.aplwallet.apl.updater.UpdateTransaction;
 import org.slf4j.Logger;
@@ -49,9 +48,8 @@ public class UpdaterDbRepository implements UpdaterRepository {
     @Override
     public UpdateTransaction getLast() {
         try (Connection connection = dataSource.getConnection();
-
-             PreparedStatement statement = connection.prepareStatement("SELECT * FROM update_status")) {
-            ResultSet rs = statement.executeQuery();
+             PreparedStatement statement = connection.prepareStatement("SELECT * FROM update_status");
+             ResultSet rs = statement.executeQuery()) {
             if (rs.next()) {
                 long txId = rs.getLong("transaction_id");
                 Transaction tr = updaterMediator.getTransaction(txId);

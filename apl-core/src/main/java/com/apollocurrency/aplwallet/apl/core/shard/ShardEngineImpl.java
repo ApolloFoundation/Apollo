@@ -6,22 +6,16 @@ package com.apollocurrency.aplwallet.apl.core.shard;
 
 import com.apollocurrency.aplwallet.api.dto.DurableTaskInfo;
 import com.apollocurrency.aplwallet.apl.core.app.AplAppStatus;
-import com.apollocurrency.aplwallet.apl.core.dao.TransactionalDataSource;
 import com.apollocurrency.aplwallet.apl.core.dao.appdata.ShardDao;
 import com.apollocurrency.aplwallet.apl.core.dao.appdata.ShardRecoveryDao;
 import com.apollocurrency.aplwallet.apl.core.dao.appdata.ShardRecoveryDaoJdbc;
-import com.apollocurrency.aplwallet.apl.core.dao.appdata.cdi.Transactional;
 import com.apollocurrency.aplwallet.apl.core.dao.state.derived.DerivedTableInterface;
 import com.apollocurrency.aplwallet.apl.core.dao.state.derived.PrunableDbTable;
-import com.apollocurrency.aplwallet.apl.core.db.AplDbVersion;
-import com.apollocurrency.aplwallet.apl.core.db.DbVersion;
-import com.apollocurrency.aplwallet.apl.core.db.ShardAddConstraintsSchemaVersion;
+import com.apollocurrency.aplwallet.apl.core.db.DatabaseManager;
 import com.apollocurrency.aplwallet.apl.core.entity.appdata.Shard;
 import com.apollocurrency.aplwallet.apl.core.entity.appdata.ShardRecovery;
 import com.apollocurrency.aplwallet.apl.core.entity.appdata.ShardState;
-import com.apollocurrency.aplwallet.apl.core.service.appdata.DatabaseManager;
 import com.apollocurrency.aplwallet.apl.core.service.appdata.TrimService;
-import com.apollocurrency.aplwallet.apl.core.service.blockchain.ShardDataSourceCreateHelper;
 import com.apollocurrency.aplwallet.apl.core.service.state.DerivedTablesRegistry;
 import com.apollocurrency.aplwallet.apl.core.shard.commands.CommandParamInfo;
 import com.apollocurrency.aplwallet.apl.core.shard.helper.AbstractHelper;
@@ -35,10 +29,15 @@ import com.apollocurrency.aplwallet.apl.core.shard.model.ExcludeInfo;
 import com.apollocurrency.aplwallet.apl.core.shard.model.PrevBlockData;
 import com.apollocurrency.aplwallet.apl.core.shard.model.TableInfo;
 import com.apollocurrency.aplwallet.apl.crypto.Convert;
+import com.apollocurrency.aplwallet.apl.db.updater.AplDBUpdater;
+import com.apollocurrency.aplwallet.apl.db.updater.DBUpdater;
+import com.apollocurrency.aplwallet.apl.db.updater.ShardAllScriptsDBUpdater;
 import com.apollocurrency.aplwallet.apl.util.ChunkedFileOps;
 import com.apollocurrency.aplwallet.apl.util.FileUtils;
 import com.apollocurrency.aplwallet.apl.util.StringUtils;
 import com.apollocurrency.aplwallet.apl.util.Zip;
+import com.apollocurrency.aplwallet.apl.util.cdi.Transactional;
+import com.apollocurrency.aplwallet.apl.util.db.TransactionalDataSource;
 import com.apollocurrency.aplwallet.apl.util.env.dirprovider.DirProvider;
 import org.slf4j.Logger;
 
@@ -48,7 +47,6 @@ import java.io.FilenameFilter;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.sql.Connection;
-import java.sql.PreparedStatement;
 import java.sql.SQLException;
 import java.util.List;
 import java.util.Objects;
@@ -74,7 +72,6 @@ import static com.apollocurrency.aplwallet.apl.core.shard.MigrateState.SHARD_SCH
 import static com.apollocurrency.aplwallet.apl.core.shard.MigrateState.SHARD_SCHEMA_FULL;
 import static com.apollocurrency.aplwallet.apl.core.shard.MigrateState.ZIP_ARCHIVE_FINISHED;
 import static com.apollocurrency.aplwallet.apl.core.shard.MigrateState.ZIP_ARCHIVE_STARTED;
-import static com.apollocurrency.aplwallet.apl.core.shard.ShardConstants.DB_BACKUP_FORMAT;
 import static org.slf4j.LoggerFactory.getLogger;
 
 /**
@@ -139,49 +136,19 @@ public class ShardEngineImpl implements ShardEngine {
      */
     @Override
     public MigrateState createBackup() {
-        long start = System.currentTimeMillis();
-        durableTaskUpdateByState(state, 0.0, "Backup main database...");
-        ShardDataSourceCreateHelper shardDataSourceCreateHelper =
-            new ShardDataSourceCreateHelper(databaseManager);
-        TransactionalDataSource sourceDataSource = databaseManager.getDataSource();
-        String nextShardName = shardDataSourceCreateHelper.createUninitializedDataSource().checkGenerateShardName();
-        Path dbDir = dirProvider.getDbDir();
-        String backupName = String.format(DB_BACKUP_FORMAT, nextShardName);
-        Path backupPath = dbDir.resolve(backupName);
-        String sql = String.format("BACKUP TO '%s'", backupPath.toAbsolutePath().toString());
-        try (Connection con = sourceDataSource.getConnection();
-             PreparedStatement ps = con.prepareStatement(sql)) {
-            ps.executeUpdate();
-            if (!Files.exists(backupPath)) {
-                state = FAILED;
-                log.error("BACKUP main db has FAILED, SQL={}, shard = {}, backup was not found in path = {}",
-                    sql, shardDataSourceCreateHelper.getShardId(), backupPath);
-                durableTaskUpdateByState(state, null, null);
-            }
-            log.debug("BACKUP by SQL={} was successful, shard = {}", sql, shardDataSourceCreateHelper.getShardId());
-            state = MigrateState.MAIN_DB_BACKUPED;
-            durableTaskUpdateByState(state, 3.0, "Backed up");
-            loadAndRefreshRecovery(sourceDataSource);
-        } catch (SQLException e) {
-            log.error("ERROR on backup db before sharding, sql = " + sql, e);
-            state = FAILED;
-            durableTaskUpdateByState(state, null, null);
-        }
-        log.debug("BACKUP db before shard ({}) in {} sec", state.name(),
-            (System.currentTimeMillis() - start) / 1000);
-        return state;
+        throw new UnsupportedOperationException("Backup shard operation is not supported");
     }
 
     /**
      * {@inheritDoc}
      */
     @Override
-    public MigrateState addOrCreateShard(DbVersion dbVersion, CommandParamInfo commandParamInfo) {
+    public MigrateState addOrCreateShard(DBUpdater dbUpdater, CommandParamInfo commandParamInfo) {
         long start = System.currentTimeMillis();
-        Objects.requireNonNull(dbVersion, "dbVersion is NULL");
-        log.debug("INIT shard db file by schema={}", dbVersion.getClass().getSimpleName());
+        Objects.requireNonNull(dbUpdater, "dbUpdater is NULL");
+        log.debug("INIT shard db file by schema={}", dbUpdater.getClass().getSimpleName());
         try {
-            boolean isConstraintSchema = dbVersion instanceof ShardAddConstraintsSchemaVersion || dbVersion instanceof AplDbVersion;
+            boolean isConstraintSchema = dbUpdater instanceof ShardAllScriptsDBUpdater || dbUpdater instanceof AplDBUpdater;
             ShardRecovery recovery = shardRecoveryDaoJdbc.getLatestShardRecovery(databaseManager.getDataSource());
             if (recovery != null) {
                 if (recovery.getState().getValue() >= SHARD_SCHEMA_FULL.getValue()) {
@@ -198,7 +165,7 @@ public class ShardEngineImpl implements ShardEngine {
             }
 
             // we ALWAYS need to do that STEP to attach to new/existing shard db !!
-            TransactionalDataSource createdShardSource = ((ShardManagement) databaseManager).createOrUpdateShard(commandParamInfo.getShardId(), dbVersion);
+            TransactionalDataSource createdShardSource = ((ShardManagement) databaseManager).createOrUpdateShard(commandParamInfo.getShardId(), dbUpdater);
 
 
             if (isConstraintSchema) {
@@ -226,10 +193,10 @@ public class ShardEngineImpl implements ShardEngine {
             TransactionalDataSource sourceDataSource = databaseManager.getDataSource();
             loadAndRefreshRecovery(sourceDataSource);
             log.debug("INIT shard db={} by schema={} ({}) in {} sec",
-                createdShardSource.getDbIdentity(), dbVersion.getClass().getSimpleName(), state.name(),
+                createdShardSource.getDbIdentity(), dbUpdater.getClass().getSimpleName(), state.name(),
                 (System.currentTimeMillis() - start) / 1000);
         } catch (Exception e) {
-            log.error("Error creation Shard Db with Schema script:" + dbVersion.getClass().getSimpleName(), e);
+            log.error("Error creation Shard Db with Schema script:" + dbUpdater.getClass().getSimpleName(), e);
             state = MigrateState.FAILED;
             durableTaskUpdateByState(state, null, null);
         }
@@ -288,7 +255,6 @@ public class ShardEngineImpl implements ShardEngine {
         checkRequiredParameters(paramInfo);
         log.debug("Starting shard data transfer from [{}] tables...", paramInfo.getTableInfoList().size());
         long startAllTables = System.currentTimeMillis();
-        String lastTableName = null;
 
         TransactionalDataSource targetDataSource = ((ShardManagement) databaseManager).getOrCreateShardDataSourceById(paramInfo.getShardId());
         TransactionalDataSource sourceDataSource = databaseManager.getDataSource();
@@ -439,7 +405,8 @@ public class ShardEngineImpl implements ShardEngine {
         checkRequiredParameters(paramInfo);
         long startTime = System.currentTimeMillis();
         List<TableInfo> allTables = paramInfo.getTableInfoList();
-        log.debug("Starting EXPORT data from 'derived tables' + [{}] tables...", allTables.size());
+        log.debug("Starting EXPORT data from 'derived tables' = [{}]", allTables.size());
+        log.trace("Starting EXPORT data from 'derived tables' = {}", allTables);
 
         ShardRecovery recovery = getOrCreateRecovery(CSV_EXPORT_STARTED);
         if (recovery.getState().getValue() >= CSV_EXPORT_FINISHED.getValue()) {
@@ -471,14 +438,14 @@ public class ShardEngineImpl implements ShardEngine {
                         case ShardConstants.TRANSACTION_TABLE_NAME:
                             return csvExporter.exportTransactions(paramInfo.getExcludeInfo().getExportDbIds(), paramInfo.getSnapshotBlockHeight());
                         case ShardConstants.ACCOUNT_TABLE_NAME:
-                            return exportDerivedTable(tableInfo, paramInfo, Set.of("DB_ID", "LATEST", "HEIGHT", "DELETED"), pruningTime, null);
+                            return exportDerivedTable(tableInfo, paramInfo, Set.of("db_id", "latest", "height", "deleted"), pruningTime, "id");
 //                        case ShardConstants.DEX_ORDER_TABLE_NAME: // now it's returned back to usual export for derived tables
                         // this is en example how to export using specified columns + index on it
-//                            return exportDerivedTable(tableInfo, paramInfo, Set.of("DB_ID", "LATEST"), -1, "HEIGHT");
+//                            return exportDerivedTable(tableInfo, paramInfo, Set.of("db_id", "latest"), -1, "height");
                         case ShardConstants.ACCOUNT_CURRENCY_TABLE_NAME:
-                            return exportDerivedTable(tableInfo, paramInfo, Set.of("DB_ID", "LATEST", "HEIGHT", "DELETED"), pruningTime, " account_id, currency_id");
+                            return exportDerivedTable(tableInfo, paramInfo, Set.of("db_id", "latest", "height", "deleted"), pruningTime, " account_id, currency_id");
                         case ShardConstants.ACCOUNT_ASSET_TABLE_NAME:
-                            return exportDerivedTable(tableInfo, paramInfo, Set.of("DB_ID", "LATEST", "HEIGHT", "DELETED"), pruningTime, " account_id, asset_id");
+                            return exportDerivedTable(tableInfo, paramInfo, Set.of("db_id", "latest", "height", "deleted"), pruningTime, " account_id, asset_id");
 
                         default:
                             return exportDerivedTable(tableInfo, paramInfo, pruningTime);
@@ -510,7 +477,7 @@ public class ShardEngineImpl implements ShardEngine {
             trimService.waitTrimming();
             // distinguish usual trim and trim within sharding process
 //            return trimService.doTrimDerivedTablesOnHeightLocked(height, true);
-            return trimService.doTrimDerivedTablesOnHeight(height, true);
+            return trimService.doAccountableTrimDerivedTables(height);
         } catch (Exception e) {
             databaseManager.getDataSource().rollback(false);
             throw new RuntimeException(e);
@@ -544,6 +511,7 @@ public class ShardEngineImpl implements ShardEngine {
                                     Set<String> excludedColumns, int pruningTime,
                                     String sortColumn) {
         DerivedTableInterface derivedTable = registry.getDerivedTable(info.getName());
+        log.trace("Export derived: {} (isPrunable = {}) = {}", info.getName(), info.isPrunable(), derivedTable != null ? derivedTable.getName() : "NULL");
         if (derivedTable != null) {
             if (!info.isPrunable()) {
                 // not prunable table
@@ -584,7 +552,7 @@ public class ShardEngineImpl implements ShardEngine {
             log.debug("Skip already exported table: {}", tableName);
         } else {
             Path tableCsvPath = csvExporter.getDataExportPath().resolve(tableName + CsvAbstractBase.CSV_FILE_EXTENSION);
-            log.trace("Exporting '{}' into file : '{}'...", tableName, tableCsvPath);
+            log.debug("Exporting '{}' into file : '{}'...", tableName, tableCsvPath);
             FileUtils.deleteFileIfExistsAndHandleException(tableCsvPath, (e) -> {
                 durableTaskUpdateByState(state, null, null);
                 throw new RuntimeException("Unable to remove not finished csv file: " + tableCsvPath.toAbsolutePath().toString());
@@ -746,7 +714,7 @@ public class ShardEngineImpl implements ShardEngine {
         shardDao.updateShard(shard);
         shardRecoveryDao.hardDeleteAllShardRecovery();
         // call ANALYZE to optimize main db performance after massive copy/delete/update actions in it
-        sourceDataSource.analyzeTables();
+//        sourceDataSource.analyzeTables();
         log.debug("Shard process finished successfully, shard id - {}", paramInfo.getShardId());
         durableTaskUpdateByState(state, null, null);
         return state;

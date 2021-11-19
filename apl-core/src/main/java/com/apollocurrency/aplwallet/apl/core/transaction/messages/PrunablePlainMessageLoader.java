@@ -4,7 +4,7 @@
 
 package com.apollocurrency.aplwallet.apl.core.transaction.messages;
 
-import com.apollocurrency.aplwallet.apl.core.entity.blockchain.Transaction;
+import com.apollocurrency.aplwallet.apl.core.model.Transaction;
 import com.apollocurrency.aplwallet.apl.core.entity.prunable.PrunableMessage;
 import com.apollocurrency.aplwallet.apl.core.service.prunable.PrunableMessageService;
 
@@ -35,5 +35,10 @@ public class PrunablePlainMessageLoader implements PrunableLoader<PrunablePlainM
     @Override
     public void restorePrunableData(Transaction transaction, PrunablePlainMessageAppendix appendix, int blockTimestamp, int height) {
         messageService.add(transaction, appendix, blockTimestamp, height);
+    }
+
+    @Override
+    public Class<PrunablePlainMessageAppendix> forClass() {
+        return PrunablePlainMessageAppendix.class;
     }
 }

@@ -1,12 +1,12 @@
 /*
- * Copyright © 2018-2019 Apollo Foundation
+ * Copyright © 2018-2021 Apollo Foundation
  */
 
 package com.apollocurrency.aplwallet.apl.core.transaction.messages;
 
-import com.apollocurrency.aplwallet.apl.core.app.AplException;
-import com.apollocurrency.aplwallet.apl.core.entity.blockchain.Transaction;
+import com.apollocurrency.aplwallet.apl.core.model.Transaction;
 import com.apollocurrency.aplwallet.apl.crypto.EncryptedData;
+import com.apollocurrency.aplwallet.apl.util.exception.AplException;
 import org.json.simple.JSONObject;
 
 import java.nio.ByteBuffer;
@@ -51,15 +51,15 @@ public class EncryptedMessageAppendix extends AbstractEncryptedMessageAppendix {
     }
 
     @Override
-    public void performFullValidation(Transaction transaction, int blockHeight) throws AplException.ValidationException {
-        super.performFullValidation(transaction, blockHeight);
+    public void performStateDependentValidation(Transaction transaction, int blockHeight) throws AplException.ValidationException {
+        super.performStateDependentValidation(transaction, blockHeight);
         if (transaction.getRecipientId() == 0) {
             throw new AplException.NotValidException("Encrypted messages cannot be attached to transactions with no recipient");
         }
     }
 
     @Override
-    public void performLightweightValidation(Transaction transaction, int blockcHeight) {
+    public void performStateIndependentValidation(Transaction transaction, int blockHeight) {
         throw new UnsupportedOperationException("Validation for message appendix is not supported, use separate class");
     }
 

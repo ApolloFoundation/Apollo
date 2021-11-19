@@ -9,7 +9,6 @@ import lombok.extern.slf4j.Slf4j;
 
 import java.nio.BufferUnderflowException;
 import java.nio.ByteBuffer;
-import java.nio.ByteOrder;
 import java.util.Objects;
 
 /**
@@ -18,7 +17,7 @@ import java.util.Objects;
 @Slf4j
 class SigData implements Signature {
     private final byte[] signature;
-    private boolean verified = false;
+    private volatile boolean verified = false;
 
     public SigData(byte[] signature) {
         this.signature = Objects.requireNonNull(signature);
@@ -70,7 +69,6 @@ class SigData implements Signature {
         public Signature parse(ByteBuffer buffer) {
             SigData sigData;
             try {
-                buffer.order(ByteOrder.LITTLE_ENDIAN);
                 byte[] signature = new byte[ECDSA_SIGNATURE_SIZE];
                 buffer.get(signature);
                 sigData = new SigData(signature);
@@ -89,10 +87,9 @@ class SigData implements Signature {
 
         @Override
         public byte[] bytes(Signature signature) {
-            ByteBuffer buffer = ByteBuffer.allocate(calcDataSize(1));
-            buffer.order(ByteOrder.LITTLE_ENDIAN);
-            buffer.put(signature.bytes());
-            return buffer.array();
+            byte[] buffer = new byte[ECDSA_SIGNATURE_SIZE];
+            System.arraycopy(signature.bytes(), 0, buffer, 0, ECDSA_SIGNATURE_SIZE);
+            return buffer;
         }
 
     }

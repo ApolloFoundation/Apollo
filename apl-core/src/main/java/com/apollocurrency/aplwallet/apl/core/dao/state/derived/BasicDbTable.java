@@ -1,34 +1,26 @@
 /*
- *  Copyright © 2018-2019 Apollo Foundation
+ *  Copyright © 2018-2021 Apollo Foundation
  */
 
 package com.apollocurrency.aplwallet.apl.core.dao.state.derived;
 
-import javax.annotation.PostConstruct;
-import javax.enterprise.event.Event;
-import javax.enterprise.util.AnnotationLiteral;
-
-import com.apollocurrency.aplwallet.apl.core.app.observer.events.TrimEvent;
-import com.apollocurrency.aplwallet.apl.core.dao.TransactionalDataSource;
 import com.apollocurrency.aplwallet.apl.core.dao.state.keyfactory.DbKey;
 import com.apollocurrency.aplwallet.apl.core.dao.state.keyfactory.KeyFactory;
+import com.apollocurrency.aplwallet.apl.core.db.DatabaseManager;
 import com.apollocurrency.aplwallet.apl.core.entity.state.derived.DerivedEntity;
-import com.apollocurrency.aplwallet.apl.core.service.appdata.DatabaseManager;
-import com.apollocurrency.aplwallet.apl.core.service.fulltext.FullTextConfig;
-import com.apollocurrency.aplwallet.apl.core.service.state.DerivedTablesRegistry;
+import com.apollocurrency.aplwallet.apl.core.service.fulltext.FullTextOperationData;
 import com.apollocurrency.aplwallet.apl.core.shard.ShardConstants;
-import com.apollocurrency.aplwallet.apl.core.shard.observer.DeleteOnTrimData;
+import com.apollocurrency.aplwallet.apl.util.db.TransactionalDataSource;
 import lombok.extern.slf4j.Slf4j;
 
+import javax.enterprise.event.Event;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
-import java.util.Objects;
 import java.util.Set;
 
 /**
@@ -39,17 +31,14 @@ public abstract class BasicDbTable<T extends DerivedEntity> extends DerivedDbTab
 
     protected KeyFactory<T> keyFactory;
     protected boolean multiversion;
-    private final Event<DeleteOnTrimData> deleteOnTrimDataEvent;
 
     protected BasicDbTable(String table, KeyFactory<T> keyFactory, boolean multiversion,
-                           DerivedTablesRegistry derivedDbTablesRegistry,
                            DatabaseManager databaseManager,
-                           FullTextConfig fullTextConfig,
-                           Event<DeleteOnTrimData> deleteOnTrimDataEvent) {
-        super(table, derivedDbTablesRegistry, databaseManager, fullTextConfig);
+                           Event<FullTextOperationData> fullTextOperationDataEvent,
+                           String fullTextSearchColumns) {
+        super(table, databaseManager, fullTextOperationDataEvent, fullTextSearchColumns);
         this.keyFactory = keyFactory;
         this.multiversion = multiversion;
-        this.deleteOnTrimDataEvent = deleteOnTrimDataEvent;
     }
 
     public KeyFactory<T> getDbKeyFactory() {
@@ -71,7 +60,9 @@ public abstract class BasicDbTable<T extends DerivedEntity> extends DerivedDbTab
 
     private int doMultiversionRollback(int height) {
         log.trace("doMultiversionRollback(), height={}", height);
-        int deletedRecordsCount;
+        int deletedRecordsCount = 0; // count for selected db_ids (only Searchable tables)
+        int deletedResult; // count for deleted db_ids (any table)
+
         TransactionalDataSource dataSource = databaseManager.getDataSource();
         if (!dataSource.isInTransaction()) {
             throw new IllegalStateException("Not in transaction");
@@ -86,6 +77,8 @@ public abstract class BasicDbTable<T extends DerivedEntity> extends DerivedDbTab
                  + " FROM " + table + " WHERE height > ?");
              PreparedStatement pstmtDelete = con.prepareStatement("DELETE FROM " + table
                  + " WHERE height > ?");
+             // select records to deleted in FTS by 'db_id' values
+             PreparedStatement pstmtSelectDeletedIds = con.prepareStatement("SELECT DB_ID FROM " + table + " WHERE height > ?");
              PreparedStatement pstmtSetLatest = con.prepareStatement(sql)) {
             pstmtSelectToDelete.setInt(1, height);
             List<DbKey> dbKeys = new ArrayList<>();
@@ -94,18 +87,29 @@ public abstract class BasicDbTable<T extends DerivedEntity> extends DerivedDbTab
                     dbKeys.add(keyFactory.newKey(rs));
                 }
             }
-
             if (dbKeys.size() > 0) {
                 log.trace("Rollback table {} found {} records to update to latest", table, dbKeys.size());
             }
 
-            pstmtDelete.setInt(1, height);
-            deletedRecordsCount = pstmtDelete.executeUpdate();
+            pstmtSelectDeletedIds.setInt(1, height); // set height to select DB_IDs to be deleted
+            pstmtDelete.setInt(1, height); // set height to delete records
 
-            if (deletedRecordsCount > 0) {
+            // select deleted DB_IDs and fire FTS events for searchable tables to remove data from FTS
+            deletedRecordsCount = super.selectSearchableRecordsSendFtsEvent(deletedRecordsCount, pstmtSelectDeletedIds);
+            // deleting actual records for entity
+            deletedResult = pstmtDelete.executeUpdate();
+            if (this.isSearchable()) {
+                assert deletedResult == deletedRecordsCount; // check in debug mode only
+            }
+            log.trace("Deleted '{}' at height = {}, deletedCount = {}, deletedResult = {}",
+                this.table, height, deletedRecordsCount, deletedResult);
+
+            if (deletedResult > 0) {
                 log.trace("Rollback table {} deleting {} records", table, deletedRecordsCount);
             }
-            if (supportDelete()) { // do not 'setLatest' for deleted entities ( if last entity below given height was deleted 'deleted=true')
+
+            boolean supportDelete = supportDelete();
+            if (supportDelete) { // do not 'setLatest' for deleted entities ( if last entity below given height was deleted 'deleted=true')
                 try (PreparedStatement pstmtSelectDeletedCount = con.prepareStatement("SELECT " + keyFactory.getPKColumns() + " FROM " + table + " WHERE height <= ? AND deleted = true GROUP BY " + keyFactory.getPKColumns() + " HAVING COUNT(DISTINCT HEIGHT) % 2 = 0");
                      PreparedStatement pstmtGetLatestDeleted = con.prepareStatement("SELECT deleted FROM " + table + keyFactory.getPKClause() + " AND height <=? ORDER BY db_id DESC LIMIT 1")) {
                     pstmtSelectDeletedCount.setInt(1, height);
@@ -136,16 +140,16 @@ public abstract class BasicDbTable<T extends DerivedEntity> extends DerivedDbTab
             throw new RuntimeException(e.toString(), e);
         }
         log.trace("Rollback for table {} took {} ms", table, System.currentTimeMillis() - startTime);
-        return deletedRecordsCount;
+        return deletedResult;
     }
 
 
     @Override
-    public void trim(int height, boolean isSharding) {
+    public void trim(int height) {
         if (multiversion) {
-            doMultiversionTrim(height, isSharding);
+            doMultiversionTrim(height);
         } else {
-            super.trim(height, isSharding);
+            super.trim(height);
         }
     }
 
@@ -190,11 +194,8 @@ public abstract class BasicDbTable<T extends DerivedEntity> extends DerivedDbTab
      *                                                               100        4          100        7       true   false
      *                                                               }</pre>
      *               </p>
-     *  After selecting DB_IDs to be deleted in case trim they are
-     *    - either 'sent to DeleteTrimObserver' for later deleting in case usual trim
-     *    - or used for 'sharding trim' to delete at once ('Reset' event is sent to DeleteTrimObserver)
      */
-    private void doMultiversionTrim(final int height, boolean isSharding) {
+    private void doMultiversionTrim(final int height) {
         log.trace("doMultiversionTrim(), height={}", height);
         TransactionalDataSource dataSource = databaseManager.getDataSource();
         if (!dataSource.isInTransaction()) {
@@ -221,32 +222,17 @@ public abstract class BasicDbTable<T extends DerivedEntity> extends DerivedDbTab
                 log.trace("Select 2. {} time: {} ms", table, System.currentTimeMillis() - startSelectTime);
 
                 startDeleteTime = System.currentTimeMillis();
-                if (isSharding) { // trim on sharding
-                    log.trace("Before delete, SEND reset. isSharding = {}, table: {}, size=[{}]", isSharding, table, keysToDelete.size());
-                    // sent 'Reset' event when trim for sharding
-                    deleteOnTrimDataEvent.select(new AnnotationLiteral<TrimEvent>() {
-                    }).fireAsync(new DeleteOnTrimData(true, Collections.emptySet(), table));
-                    if (keysToDelete.size() > 0) {
-                        for (Long id : keysToDelete) {
-                            deleted += deleteByDbId(pstmtDeleteById, id);
-                            if (deleted % ShardConstants.DEFAULT_COMMIT_BATCH_SIZE == 0) {
-                                dataSource.commit(false);
-                            }
+                if (keysToDelete.size() > 0) {
+                    for (Long id : keysToDelete) {
+                        deleted += deleteByDbId(pstmtDeleteById, id);
+                        if (deleted % ShardConstants.DEFAULT_COMMIT_BATCH_SIZE == 0) {
+                            dataSource.commit(false);
                         }
-                        log.debug("Delete for table {} took {} ms", table, System.currentTimeMillis() - startDeleteTime);
                     }
+                    log.debug("Delete for table {} took {} ms", table, System.currentTimeMillis() - startDeleteTime);
                     dataSource.commit(false);
                     log.trace("Delete table '{}' in {} ms: deleted=[{}]",
                         table, System.currentTimeMillis() - startDeleteTime, deleted);
-                } else {
-                    // simple trimming
-                    log.trace("Should SEND to delete? isSharding = {}, table: {} , size = [{}]", isSharding, table, keysToDelete.size());
-                    // send 'Delete DB_IDs' event only if we have bigger then 100 records for deleting
-                    if (keysToDelete.size() > ShardConstants.DEFAULT_COMMIT_BATCH_SIZE) { // low limit
-                        log.trace("Before SEND delete. isSharding = {}, table: {} , size = [{}]", isSharding, table, keysToDelete.size());
-                        deleteOnTrimDataEvent.select(new AnnotationLiteral<TrimEvent>() {
-                        }).fireAsync(new DeleteOnTrimData(false, keysToDelete, table));
-                    }
                 }
             }
             long trimTime = System.currentTimeMillis() - startTime;

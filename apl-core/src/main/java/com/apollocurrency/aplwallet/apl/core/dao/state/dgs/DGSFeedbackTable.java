@@ -10,9 +10,8 @@ import com.apollocurrency.aplwallet.apl.core.dao.state.keyfactory.DbKey;
 import com.apollocurrency.aplwallet.apl.core.dao.state.keyfactory.LongKey;
 import com.apollocurrency.aplwallet.apl.core.dao.state.keyfactory.LongKeyFactory;
 import com.apollocurrency.aplwallet.apl.core.entity.state.dgs.DGSFeedback;
-import com.apollocurrency.aplwallet.apl.core.service.appdata.DatabaseManager;
-import com.apollocurrency.aplwallet.apl.core.service.state.DerivedTablesRegistry;
-import com.apollocurrency.aplwallet.apl.core.shard.observer.DeleteOnTrimData;
+import com.apollocurrency.aplwallet.apl.core.db.DatabaseManager;
+import com.apollocurrency.aplwallet.apl.core.service.fulltext.FullTextOperationData;
 import com.apollocurrency.aplwallet.apl.core.utils.EncryptedDataUtil;
 
 import javax.enterprise.event.Event;
@@ -22,6 +21,7 @@ import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
+import java.sql.Statement;
 import java.util.List;
 
 @Singleton
@@ -39,10 +39,10 @@ public class DGSFeedbackTable extends ValuesDbTable<DGSFeedback> {
     private static final DGSFeedbackMapper MAPPER = new DGSFeedbackMapper(KEY_FACTORY);
 
     @Inject
-    public DGSFeedbackTable(DerivedTablesRegistry derivedDbTablesRegistry,
-                            DatabaseManager databaseManager,
-                            Event<DeleteOnTrimData> deleteOnTrimDataEvent) {
-        super(TABLE_NAME, KEY_FACTORY, true, derivedDbTablesRegistry, databaseManager, null, deleteOnTrimDataEvent);
+    public DGSFeedbackTable(DatabaseManager databaseManager,
+                            Event<FullTextOperationData> fullTextOperationDataEvent) {
+        super(TABLE_NAME, KEY_FACTORY, true,
+            databaseManager, fullTextOperationDataEvent);
     }
 
     @Override
@@ -55,12 +55,17 @@ public class DGSFeedbackTable extends ValuesDbTable<DGSFeedback> {
     @Override
     public void save(Connection con, DGSFeedback feedback) throws SQLException {
         try (PreparedStatement pstmt = con.prepareStatement("INSERT INTO purchase_feedback (id, feedback_data, feedback_nonce, "
-            + "height, latest) VALUES (?, ?, ?, ?, TRUE)")) {
+            + "height, latest) VALUES (?, ?, ?, ?, TRUE)", Statement.RETURN_GENERATED_KEYS)) {
             int i = 0;
             pstmt.setLong(++i, feedback.getPurchaseId());
             i = EncryptedDataUtil.setEncryptedData(pstmt, feedback.getFeedbackEncryptedData(), ++i);
             pstmt.setInt(i, feedback.getHeight());
             pstmt.executeUpdate();
+            try (final ResultSet rs = pstmt.getGeneratedKeys()) {
+                if (rs.next()) {
+                    feedback.setDbId(rs.getLong(1));
+                }
+            }
         }
     }
 

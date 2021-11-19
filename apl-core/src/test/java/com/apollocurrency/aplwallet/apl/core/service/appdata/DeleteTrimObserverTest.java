@@ -4,17 +4,20 @@
 package com.apollocurrency.aplwallet.apl.core.service.appdata;
 
 import com.apollocurrency.aplwallet.apl.core.app.observer.events.TrimEvent;
-import com.apollocurrency.aplwallet.apl.core.dao.TransactionalDataSource;
+import com.apollocurrency.aplwallet.apl.core.db.DatabaseManager;
+import com.apollocurrency.aplwallet.apl.core.service.fulltext.FullTextOperationData;
+import com.apollocurrency.aplwallet.apl.util.db.TransactionalDataSource;
 import com.apollocurrency.aplwallet.apl.core.shard.observer.DeleteOnTrimData;
+import com.apollocurrency.aplwallet.apl.util.ThreadUtils;
 import com.apollocurrency.aplwallet.apl.util.injectable.PropertiesHolder;
 import org.jboss.weld.junit.MockBean;
 import org.jboss.weld.junit5.EnableWeld;
 import org.jboss.weld.junit5.WeldInitiator;
 import org.jboss.weld.junit5.WeldSetup;
 import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
-import org.junit.jupiter.api.parallel.Execution;
-import org.junit.jupiter.api.parallel.ExecutionMode;
+import org.junit.jupiter.api.Timeout;
 
 import javax.enterprise.event.Event;
 import javax.enterprise.util.AnnotationLiteral;
@@ -35,10 +38,9 @@ import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 
-@EnableWeld
-@Execution(ExecutionMode.SAME_THREAD)
+@Disabled
+@Deprecated
 class DeleteTrimObserverTest {
-
     DatabaseManager databaseManager = mock(DatabaseManager.class);
     PropertiesHolder propertiesHolder = mock(PropertiesHolder.class);
 
@@ -52,6 +54,8 @@ class DeleteTrimObserverTest {
     Event<DeleteOnTrimData> trimEvent;
     @Inject
     DeleteTrimObserver observer;
+    @Inject
+    Event<FullTextOperationData> fullTextOperationDataEvent;
 
     @BeforeEach
     void setUp() {
@@ -66,18 +70,18 @@ class DeleteTrimObserverTest {
     }
 
     @Test
+    @Timeout(value = 20)
     void sendDeleteEvent() {
         assertNotNull(observer);
         trimEvent.select(new AnnotationLiteral<TrimEvent>() {})
             .fireAsync(new DeleteOnTrimData(false, Collections.emptySet(), "some_table"));
-        try {
-            Thread.sleep(200);
-        } catch (InterruptedException e) {
-            throw new RuntimeException(e);
+        while (true) {
+            int size = observer.getDeleteOnTrimDataQueueSize();
+            if (size == 1) {
+                break;
+            }
+            ThreadUtils.sleep(100);
         }
-        int size = observer.getDeleteOnTrimDataQueueSize();
-
-        assertEquals(1, size);
     }
 
     @Test
@@ -106,7 +110,7 @@ class DeleteTrimObserverTest {
         PreparedStatement preparedStatement = mock(PreparedStatement.class);
         doReturn(preparedStatement).when(con).prepareStatement(anyString());
         doNothing().doNothing().when(preparedStatement).setLong(anyInt(), anyLong());
-        observer = new DeleteTrimObserver(databaseManager, propertiesHolder);
+        observer = new DeleteTrimObserver(databaseManager, propertiesHolder, fullTextOperationDataEvent);
 
         DeleteOnTrimData delete = new DeleteOnTrimData(true, Set.of(1739068987193023818L, 9211698109297098287L), "account");
         observer.performOneTableDelete(delete);

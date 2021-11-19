@@ -6,14 +6,14 @@ package com.apollocurrency.aplwallet.apl.core.service.state.asset.impl;
 
 import com.apollocurrency.aplwallet.apl.core.converter.rest.IteratorToStreamConverter;
 import com.apollocurrency.aplwallet.apl.core.dao.state.asset.AssetTransferTable;
-import com.apollocurrency.aplwallet.apl.core.db.DbClause;
-import com.apollocurrency.aplwallet.apl.core.db.DbIterator;
-import com.apollocurrency.aplwallet.apl.core.entity.blockchain.Block;
-import com.apollocurrency.aplwallet.apl.core.entity.blockchain.Transaction;
+import com.apollocurrency.aplwallet.apl.util.db.DbClause;
+import com.apollocurrency.aplwallet.apl.util.db.DbIterator;
+import com.apollocurrency.aplwallet.apl.core.model.Block;
+import com.apollocurrency.aplwallet.apl.core.model.Transaction;
 import com.apollocurrency.aplwallet.apl.core.entity.state.asset.AssetTransfer;
 import com.apollocurrency.aplwallet.apl.core.service.state.BlockChainInfoService;
 import com.apollocurrency.aplwallet.apl.core.service.state.asset.AssetTransferService;
-import com.apollocurrency.aplwallet.apl.core.transaction.messages.ColoredCoinsAssetTransfer;
+import com.apollocurrency.aplwallet.apl.core.transaction.messages.CCAssetTransferAttachment;
 
 import javax.inject.Inject;
 import javax.inject.Singleton;
@@ -103,7 +103,7 @@ public class AssetTransferServiceImpl implements AssetTransferService {
     }
 
     @Override
-    public AssetTransfer addAssetTransfer(Transaction transaction, ColoredCoinsAssetTransfer attachment) {
+    public AssetTransfer addAssetTransfer(Transaction transaction, CCAssetTransferAttachment attachment) {
         Block lastBlock = blockChainInfoService.getLastBlock();
         AssetTransfer assetTransfer = new AssetTransfer(transaction, attachment,
             lastBlock.getTimestamp(), lastBlock.getHeight());

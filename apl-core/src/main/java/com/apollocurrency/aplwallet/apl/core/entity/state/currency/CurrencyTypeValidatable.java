@@ -4,8 +4,8 @@
 
 package com.apollocurrency.aplwallet.apl.core.entity.state.currency;
 
-import com.apollocurrency.aplwallet.apl.core.app.AplException;
-import com.apollocurrency.aplwallet.apl.core.entity.blockchain.Transaction;
+import com.apollocurrency.aplwallet.apl.core.model.Transaction;
+import com.apollocurrency.aplwallet.apl.util.exception.AplException;
 
 import java.util.Set;
 

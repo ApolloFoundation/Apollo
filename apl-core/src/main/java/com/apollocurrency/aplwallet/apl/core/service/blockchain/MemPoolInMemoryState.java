@@ -4,15 +4,15 @@
 
 package com.apollocurrency.aplwallet.apl.core.service.blockchain;
 
-import com.apollocurrency.aplwallet.apl.core.config.Property;
-import com.apollocurrency.aplwallet.apl.core.entity.blockchain.Transaction;
-import com.apollocurrency.aplwallet.apl.core.entity.blockchain.UnconfirmedTransaction;
+import com.apollocurrency.aplwallet.apl.core.model.Transaction;
+import com.apollocurrency.aplwallet.apl.core.model.UnconfirmedTransaction;
+import com.apollocurrency.aplwallet.apl.core.model.WrappedTransaction;
+import com.apollocurrency.aplwallet.apl.core.utils.CollectionUtil;
 import com.apollocurrency.aplwallet.apl.util.SizeBoundedPriorityQueue;
-import lombok.Data;
-import lombok.Getter;
 
 import javax.inject.Inject;
 import javax.inject.Singleton;
+import java.util.ArrayDeque;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
@@ -25,8 +25,8 @@ import java.util.Set;
 import java.util.TreeSet;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.PriorityBlockingQueue;
-import java.util.concurrent.TimeUnit;
-import java.util.stream.Collectors;
+import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.concurrent.atomic.AtomicInteger;
 import java.util.stream.Stream;
 
 import static java.util.Comparator.comparingInt;
@@ -43,51 +43,50 @@ public class MemPoolInMemoryState {
     private final Map<Long, UnconfirmedTransaction> transactionCache = new ConcurrentHashMap<>();
     private final Map<Transaction, Transaction> txToBroadcastWhenConfirmed = new ConcurrentHashMap<>();
     private final Set<Transaction> broadcastedTransactions = Collections.newSetFromMap(new ConcurrentHashMap<>());
-    private final PriorityBlockingQueue<TxWithArrivalTimestamp> broadcastPendingTransactions;
-    private final PriorityBlockingQueue<UnconfirmedTransaction> processLaterQueue;
+    private final AtomicInteger referencedCounter = new AtomicInteger(-1);
+    private final AtomicBoolean cacheInitialized = new AtomicBoolean(false);
 
-    @Getter
-    private volatile boolean cacheInitialized;
-    private final int maxPendingBroadcastQueueSize;
-    private final int maxCachedTransactions;
+    private final PriorityBlockingQueue<UnconfirmedTransaction> processLaterQueue;
+    private final IdQueue<UnconfirmedTransaction> pendingProcessingQueue;
+    private final MemPoolConfig memPoolConfig;
 
 
     @Inject
-    public MemPoolInMemoryState(@Property(name = "apl.mempool.maxPendingTransactions", defaultValue = "3000") int maxPendingTransactions,
-                                @Property(name = "apl.mempool.maxCachedTransactions", defaultValue = "2000") int maxCachedTransactions,
-                                @Property(name = "apl.mempool.processLaterQueueSize", defaultValue = "5000") int processLaterQueueSize
-    ) {
-        this.maxCachedTransactions = maxCachedTransactions;
-        this.maxPendingBroadcastQueueSize = maxPendingTransactions;
-        this.processLaterQueue = new SizeBoundedPriorityQueue<>(processLaterQueueSize, new UnconfirmedTransactionComparator());
-        this.broadcastPendingTransactions = new PriorityBlockingQueue<>(maxPendingBroadcastQueueSize, Comparator.comparing(TxWithArrivalTimestamp::getArrivalTime)) {
-            @Override
-            public boolean offer(TxWithArrivalTimestamp txWithArrivalTimestamp) {
-                if (size() == maxPendingBroadcastQueueSize) {
-                    return false;
-                }
-                return super.offer(txWithArrivalTimestamp);
-            }
-        };
+    public MemPoolInMemoryState(MemPoolConfig memPoolConfig) {
+        this.processLaterQueue = new SizeBoundedPriorityQueue<>(memPoolConfig.getProcessLaterQueueSize(), new UnconfirmedTransactionComparator());
+        this.pendingProcessingQueue = new IdQueue<>(new ArrayDeque<>(), WrappedTransaction::getId, memPoolConfig.getMaxPendingTransactions());
+        this.memPoolConfig = memPoolConfig;
     }
 
     public void processLater(UnconfirmedTransaction unconfirmedTransaction) {
         processLaterQueue.add(unconfirmedTransaction);
     }
 
-    public Iterator<UnconfirmedTransaction> processLaterQueueIterator() {
-        return processLaterQueue.iterator();
+    public int pendingProcessingSize() {
+        return pendingProcessingQueue.size();
     }
 
-    public boolean addToSoftBroadcastingQueue(Transaction transaction) {
-        return broadcastPendingTransactions.offer(new TxWithArrivalTimestamp(transaction), 10, TimeUnit.SECONDS);
+    public UnconfirmedTransaction nextPendingProcessing() {
+        return pendingProcessingQueue.remove();
+    }
+
+    public boolean pendingProcessingContains(long id) {
+        return pendingProcessingQueue.contains(id);
+    }
+
+    public int pendingProcessingReminingCapacity() {
+        return memPoolConfig.getMaxPendingTransactions() - pendingProcessingQueue.size();
+    }
+
+    public Iterator<UnconfirmedTransaction> processLaterIterator() {
+        return processLaterQueue.iterator();
     }
 
     public boolean addToBroadcasted(Transaction transaction) {
         return broadcastedTransactions.add(transaction);
     }
 
-    public Collection<Transaction> getAllBroadcastedTransactions() {
+    public Collection<Transaction> getAllBroadcasted() {
         return new ArrayList<>(broadcastedTransactions);
     }
 
@@ -96,25 +95,31 @@ public class MemPoolInMemoryState {
     }
 
     public void putInCache(UnconfirmedTransaction unconfirmedTransaction) {
-        if (transactionCache.size() < maxCachedTransactions) {
+        if (transactionCache.size() < memPoolConfig.getMaxCachedTransactions()) {
             transactionCache.put(unconfirmedTransaction.getId(), unconfirmedTransaction);
+        }
+        if (unconfirmedTransaction.getReferencedTransactionFullHash() != null) {
+            referencedCounter.incrementAndGet();
         }
     }
 
+    public IdQueue.ReturnCode addPendingProcessing(UnconfirmedTransaction unconfirmedTransaction) {
+        return pendingProcessingQueue.addWithStatus(unconfirmedTransaction);
+    }
+
     public void initializeCache(Stream<UnconfirmedTransaction> unconfirmedTransactionStream) {
-        if (cacheInitialized) {
-            unconfirmedTransactionStream.forEach(e -> {});
-            return;
+        if(cacheInitialized.compareAndSet(false, true)){
+            AtomicInteger referencedCount = new AtomicInteger(0);
+            CollectionUtil.forEach(unconfirmedTransactionStream, e -> {
+                transactionCache.put(e.getId(), e);
+                if (e.getReferencedTransactionFullHash() != null) {
+                    referencedCount.incrementAndGet();
+                }
+            });
+            referencedCounter.set(referencedCount.get());
+        } else {
+            unconfirmedTransactionStream.close();
         }
-        synchronized (this) {
-            if (cacheInitialized) {
-                unconfirmedTransactionStream.forEach(e -> {
-                });
-                return;
-            }
-            unconfirmedTransactionStream.forEach(e -> transactionCache.put(e.getId(), e));
-        }
-        cacheInitialized = true;
     }
 
     public Set<UnconfirmedTransaction> getFromCache(List<String> exclude) {
@@ -127,12 +132,21 @@ public class MemPoolInMemoryState {
         return sortedUnconfirmedTransactions;
     }
 
+    public List<Long> getAllCachedIds(){
+        return new ArrayList<>(transactionCache.keySet());
+    }
+
     public void clear() {
         transactionCache.clear();
         txToBroadcastWhenConfirmed.clear();
         broadcastedTransactions.clear();
-        broadcastPendingTransactions.clear();
         processLaterQueue.clear();
+        referencedCounter.set(0);
+        pendingProcessingQueue.clear();
+    }
+
+    public List<UnconfirmedTransaction> getAllPendingProcessing() {
+        return new ArrayList<>(pendingProcessingQueue);
     }
 
     public int txCacheSize() {
@@ -143,12 +157,19 @@ public class MemPoolInMemoryState {
         return transactionCache.get(id);
     }
 
-    public void broadcastLater(Transaction tx) {
-        broadcastedTransactions.add(tx);
+    public int referencedRemainingCapacity() {
+        return Math.max(0, memPoolConfig.getMaxReferencedTxs() - referencedCounter.get());
     }
 
-    public void removeFromCache(long id) {
-        transactionCache.remove(id);
+    public int getReferencedCount() {
+        return referencedCounter.get();
+    }
+
+    public void removeCached(Transaction transaction) {
+        transactionCache.remove(transaction.getId());
+        if (transaction.getReferencedTransactionFullHash() != null) {
+            referencedCounter.decrementAndGet();
+        }
     }
 
     public boolean isBroadcasted(Transaction transaction) {
@@ -159,38 +180,23 @@ public class MemPoolInMemoryState {
         broadcastedTransactions.removeAll(transactions);
     }
 
-    public Map<Transaction, Transaction> getAllBroadcastWhenConfirmedTransactions() {
+    public Map<Transaction, Transaction> getAllBroadcastWhenConfirmed() {
         return new HashMap<>(txToBroadcastWhenConfirmed);
     }
 
-    public void removeBroadcastedWhenConfirmedTransactions(Collection<Transaction> transactions) {
+    public void removeBroadcastedWhenConfirmed(Collection<Transaction> transactions) {
         transactions.forEach(txToBroadcastWhenConfirmed::remove);
     }
 
-    public Transaction nextBroadcastPendingTransaction() throws InterruptedException {
-        return broadcastPendingTransactions.take().getTx();
-    }
-
-    public List<Transaction> allPendingTransactions() {
-        return broadcastPendingTransactions.stream().map(TxWithArrivalTimestamp::getTx).collect(Collectors.toList());
-    }
-
-    public int pendingBroadcastQueueSize() {
-        return broadcastPendingTransactions.size();
-    }
-
-
-    public double pendingBroadcastQueueLoadFactor() {
-        return 1.0 * broadcastPendingTransactions.size() / maxPendingBroadcastQueueSize;
-    }
-
-    public int processLaterQueueSize() {
+    public int processLaterSize() {
         return processLaterQueue.size();
     }
 
-    @Data
-    private static class TxWithArrivalTimestamp {
-        private final long arrivalTime = System.currentTimeMillis();
-        private final Transaction tx;
+    public boolean isCacheInitialized(){
+        return cacheInitialized.get();
+    }
+
+    public void removePendingProcessing(long id) {
+        pendingProcessingQueue.remove(id);
     }
 }

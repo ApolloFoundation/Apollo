@@ -7,14 +7,13 @@ package com.apollocurrency.aplwallet.apl.core.dao.state.account;
 import com.apollocurrency.aplwallet.apl.core.dao.state.derived.VersionedDeletableEntityDbTable;
 import com.apollocurrency.aplwallet.apl.core.dao.state.keyfactory.DbKey;
 import com.apollocurrency.aplwallet.apl.core.dao.state.keyfactory.LongKeyFactory;
-import com.apollocurrency.aplwallet.apl.core.db.DbUtils;
+import com.apollocurrency.aplwallet.apl.core.db.DatabaseManager;
 import com.apollocurrency.aplwallet.apl.core.entity.state.account.AccountControlPhasing;
-import com.apollocurrency.aplwallet.apl.core.service.appdata.DatabaseManager;
-import com.apollocurrency.aplwallet.apl.core.service.state.DerivedTablesRegistry;
-import com.apollocurrency.aplwallet.apl.core.shard.observer.DeleteOnTrimData;
+import com.apollocurrency.aplwallet.apl.core.service.fulltext.FullTextOperationData;
 import com.apollocurrency.aplwallet.apl.crypto.Convert;
 import com.apollocurrency.aplwallet.apl.util.annotation.DatabaseSpecificDml;
 import com.apollocurrency.aplwallet.apl.util.annotation.DmlMarker;
+import com.apollocurrency.aplwallet.apl.util.db.DbUtils;
 
 import javax.enterprise.event.Event;
 import javax.inject.Inject;
@@ -39,11 +38,10 @@ public class AccountControlPhasingTable extends VersionedDeletableEntityDbTable<
         };
 
     @Inject
-    public AccountControlPhasingTable(DerivedTablesRegistry derivedDbTablesRegistry,
-                                      DatabaseManager databaseManager,
-                                      Event<DeleteOnTrimData> deleteOnTrimDataEvent) {
+    public AccountControlPhasingTable(DatabaseManager databaseManager,
+                                      Event<FullTextOperationData> fullTextOperationDataEvent) {
         super("account_control_phasing", accountControlPhasingDbKeyFactory, null,
-            derivedDbTablesRegistry, databaseManager, null, deleteOnTrimDataEvent);
+                databaseManager, fullTextOperationDataEvent);
     }
 
     @Override
@@ -55,10 +53,15 @@ public class AccountControlPhasingTable extends VersionedDeletableEntityDbTable<
     public void save(Connection con, AccountControlPhasing phasingOnly) throws SQLException {
         try (
             @DatabaseSpecificDml(DmlMarker.MERGE) final PreparedStatement pstmt = con.prepareStatement(
-                "MERGE INTO account_control_phasing " +
+                "INSERT INTO account_control_phasing " +
                     "(account_id, whitelist, voting_model, quorum, min_balance, holding_id, min_balance_model, "
-                    + "max_fees, min_duration, max_duration, height, latest, deleted) KEY (account_id, height) "
-                    + "VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, TRUE, FALSE)")
+                    + "max_fees, min_duration, max_duration, height, latest, deleted) "
+                    + "VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, TRUE, FALSE) "
+                    + "ON DUPLICATE KEY UPDATE account_id = VALUES(account_id), whitelist = VALUES(whitelist), "
+                    + "voting_model = VALUES(voting_model), quorum = VALUES(quorum), min_balance = VALUES(min_balance), "
+                    + "holding_id = VALUES(holding_id), min_balance_model = VALUES(min_balance_model), "
+                    + "max_fees = VALUES(max_fees), min_duration = VALUES(min_duration), max_duration = VALUES(max_duration), "
+                    + "height = VALUES(height), latest = TRUE, deleted = FALSE")
         ) {
             int i = 0;
             pstmt.setLong(++i, phasingOnly.getAccountId());

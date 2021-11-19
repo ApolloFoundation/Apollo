@@ -3,37 +3,35 @@
  */
 package com.apollocurrency.aplwallet.apl.core.dao.state.publickey;
 
-import javax.enterprise.event.Event;
-
 import com.apollocurrency.aplwallet.apl.core.dao.state.derived.EntityDbTable;
 import com.apollocurrency.aplwallet.apl.core.dao.state.keyfactory.DbKey;
 import com.apollocurrency.aplwallet.apl.core.dao.state.keyfactory.LongKey;
 import com.apollocurrency.aplwallet.apl.core.dao.state.keyfactory.LongKeyFactory;
-import com.apollocurrency.aplwallet.apl.core.db.DbUtils;
+import com.apollocurrency.aplwallet.apl.core.service.fulltext.FullTextOperationData;
+import com.apollocurrency.aplwallet.apl.core.service.fulltext.FullTextSearchUpdater;
+import com.apollocurrency.aplwallet.apl.util.db.DbUtils;
 import com.apollocurrency.aplwallet.apl.core.entity.state.account.PublicKey;
-import com.apollocurrency.aplwallet.apl.core.service.appdata.DatabaseManager;
-import com.apollocurrency.aplwallet.apl.core.service.state.DerivedTablesRegistry;
+import com.apollocurrency.aplwallet.apl.core.db.DatabaseManager;
 import com.apollocurrency.aplwallet.apl.core.shard.observer.DeleteOnTrimData;
 import com.apollocurrency.aplwallet.apl.util.annotation.DatabaseSpecificDml;
 import com.apollocurrency.aplwallet.apl.util.annotation.DmlMarker;
 
+import javax.enterprise.event.Event;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 
 /**
+ * Uses external weld initialization through {@link PublicKeyTableProducer}
  * @author al
  */
-//@Singleton
 public class GenesisPublicKeyTable extends EntityDbTable<PublicKey> {
 
-    //@Inject
-    public GenesisPublicKeyTable(DerivedTablesRegistry derivedDbTablesRegistry,
-                                 DatabaseManager databaseManager,
-                                 Event<DeleteOnTrimData> deleteOnTrimDataEvent) {
+    public GenesisPublicKeyTable(DatabaseManager databaseManager,
+                                 Event<FullTextOperationData> fullTextOperationDataEvent) {
         super("genesis_public_key", new PublicKeyDbFactory("account_id"), false, null,
-            derivedDbTablesRegistry, databaseManager, null, deleteOnTrimDataEvent);
+            databaseManager, fullTextOperationDataEvent);
     }
 
     @Override
@@ -44,9 +42,11 @@ public class GenesisPublicKeyTable extends EntityDbTable<PublicKey> {
     @Override
     public void save(Connection con, PublicKey publicKey) throws SQLException {
         try (
-            @DatabaseSpecificDml(DmlMarker.MERGE) final PreparedStatement pstmt = con.prepareStatement("MERGE INTO " + table
+            @DatabaseSpecificDml(DmlMarker.MERGE) final PreparedStatement pstmt = con.prepareStatement("INSERT INTO " + table
                 + " (account_id, public_key, height, latest) "
-                + "KEY (account_id, height) VALUES (?, ?, ?, TRUE)")
+                + "VALUES (?, ?, ?, TRUE) "
+                + "ON DUPLICATE KEY UPDATE account_id = VALUES(account_id), public_key = VALUES(public_key), "
+                + "height = VALUES(height), latest = TRUE")
         ) {
             int i = 0;
             pstmt.setLong(++i, publicKey.getAccountId());

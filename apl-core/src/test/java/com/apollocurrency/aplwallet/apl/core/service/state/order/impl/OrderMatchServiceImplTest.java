@@ -1,13 +1,13 @@
 package com.apollocurrency.aplwallet.apl.core.service.state.order.impl;
 
-import com.apollocurrency.aplwallet.apl.core.entity.blockchain.Transaction;
+import com.apollocurrency.aplwallet.apl.core.model.Transaction;
 import com.apollocurrency.aplwallet.apl.core.entity.state.order.AskOrder;
 import com.apollocurrency.aplwallet.apl.core.entity.state.order.BidOrder;
 import com.apollocurrency.aplwallet.apl.core.service.state.TradeService;
 import com.apollocurrency.aplwallet.apl.core.service.state.account.AccountAssetService;
 import com.apollocurrency.aplwallet.apl.core.service.state.account.AccountService;
 import com.apollocurrency.aplwallet.apl.core.service.state.order.OrderService;
-import com.apollocurrency.aplwallet.apl.core.transaction.messages.ColoredCoinsAskOrderPlacement;
+import com.apollocurrency.aplwallet.apl.core.transaction.messages.CCAskOrderPlacementAttachment;
 import com.apollocurrency.aplwallet.apl.core.transaction.messages.CCBidOrderPlacementAttachment;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -18,7 +18,7 @@ import org.mockito.junit.jupiter.MockitoExtension;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.spy;
 import static org.mockito.Mockito.verify;
-import static org.mockito.Mockito.verifyZeroInteractions;
+import static org.mockito.Mockito.verifyNoInteractions;
 import static org.mockito.Mockito.when;
 
 /**
@@ -33,7 +33,7 @@ class OrderMatchServiceImplTest {
     private AccountAssetService accountAssetService;
 
     @Mock
-    private OrderService<AskOrder, ColoredCoinsAskOrderPlacement> orderAskService;
+    private OrderService<AskOrder, CCAskOrderPlacementAttachment> orderAskService;
 
     @Mock
     private OrderService<BidOrder, CCBidOrderPlacementAttachment> orderBidService;
@@ -60,7 +60,7 @@ class OrderMatchServiceImplTest {
     void shouldAddAskOrder() {
         //GIVEN
         final Transaction transaction = mock(Transaction.class);
-        final ColoredCoinsAskOrderPlacement attachment = mock(ColoredCoinsAskOrderPlacement.class);
+        final CCAskOrderPlacementAttachment attachment = mock(CCAskOrderPlacementAttachment.class);
         final long assetId = 10L;
         when(attachment.getAssetId()).thenReturn(assetId);
 
@@ -106,8 +106,8 @@ class OrderMatchServiceImplTest {
         orderMatchService.matchOrders(assetId);
 
         //THEN
-        verifyZeroInteractions(tradeService);
-        verifyZeroInteractions(accountService);
-        verifyZeroInteractions(accountAssetService);
+        verifyNoInteractions(tradeService);
+        verifyNoInteractions(accountService);
+        verifyNoInteractions(accountAssetService);
     }
 }

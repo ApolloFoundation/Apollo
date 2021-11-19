@@ -4,12 +4,12 @@
 
 package com.apollocurrency.aplwallet.apl.core.entity.prunable;
 
+import com.apollocurrency.aplwallet.apl.core.model.Transaction;
 import com.apollocurrency.aplwallet.apl.core.dao.state.keyfactory.DbKey;
-import com.apollocurrency.aplwallet.apl.core.db.DbUtils;
-import com.apollocurrency.aplwallet.apl.core.entity.blockchain.Transaction;
 import com.apollocurrency.aplwallet.apl.core.entity.state.derived.VersionedDerivedEntity;
 import com.apollocurrency.aplwallet.apl.core.transaction.messages.TaggedDataAttachment;
 import com.apollocurrency.aplwallet.apl.util.Search;
+import com.apollocurrency.aplwallet.apl.util.db.DbUtils;
 
 import java.sql.ResultSet;
 import java.sql.SQLException;
@@ -196,4 +196,5 @@ public class TaggedData extends VersionedDerivedEntity {
         sb.append('}');
         return sb.toString();
     }
+
 }

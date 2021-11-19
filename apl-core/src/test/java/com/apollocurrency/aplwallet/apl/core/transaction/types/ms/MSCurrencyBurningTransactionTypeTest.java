@@ -4,17 +4,17 @@
 
 package com.apollocurrency.aplwallet.apl.core.transaction.types.ms;
 
-import com.apollocurrency.aplwallet.apl.core.app.AplException;
 import com.apollocurrency.aplwallet.apl.core.chainid.BlockchainConfig;
 import com.apollocurrency.aplwallet.apl.core.chainid.HeightConfig;
-import com.apollocurrency.aplwallet.apl.core.entity.blockchain.Transaction;
 import com.apollocurrency.aplwallet.apl.core.entity.state.account.Account;
 import com.apollocurrency.aplwallet.apl.core.entity.state.account.LedgerEvent;
+import com.apollocurrency.aplwallet.apl.core.model.Transaction;
 import com.apollocurrency.aplwallet.apl.core.service.state.account.AccountCurrencyService;
 import com.apollocurrency.aplwallet.apl.core.service.state.account.AccountService;
 import com.apollocurrency.aplwallet.apl.core.service.state.currency.CurrencyService;
 import com.apollocurrency.aplwallet.apl.core.transaction.TransactionTypes;
 import com.apollocurrency.aplwallet.apl.core.transaction.messages.MonetarySystemCurrencyBurningAttachment;
+import com.apollocurrency.aplwallet.apl.util.exception.AplException;
 import org.json.simple.JSONObject;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -36,9 +36,11 @@ import static org.mockito.Mockito.doReturn;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.verifyNoInteractions;
+import static org.mockito.Mockito.when;
 
 @ExtendWith(MockitoExtension.class)
 class MSCurrencyBurningTransactionTypeTest {
+    public static final long SENDER_ID = 1001L;
     @Mock
     BlockchainConfig blockchainConfig;
     @Mock
@@ -54,7 +56,7 @@ class MSCurrencyBurningTransactionTypeTest {
     @InjectMocks
     MSCurrencyBurningTransactionType type;
 
-    Account sender = new Account(1001, 9000, 9000, 0, 0, 200);
+    Account sender = new Account(SENDER_ID, 9000, 9000, 0, 0, 200);
 
 
     @Test
@@ -109,11 +111,26 @@ class MSCurrencyBurningTransactionTypeTest {
         assertEquals(expected.getFullSize(), parsed.getFullSize());
     }
 
+    @Test
+    void doStateDependentValidation_notEnoughFunds() throws AplException.ValidationException {
+        mockAttachment(987, 10);
+        doReturn(true).when(currencyService).isActive(null);
+        when(transaction.getSenderId()).thenReturn(SENDER_ID);
+        when(accountCurrencyService.getUnconfirmedCurrencyUnits(SENDER_ID, 987)).thenReturn(9L);
+
+        AplException.NotCurrentlyValidException ex = assertThrows(AplException.NotCurrentlyValidException.class, () -> type.doStateDependentValidation(transaction));
+
+        assertEquals("Sender 1001 has not enough  987 currency to burn: required 10, but has only 9", ex.getMessage());
+        verify(currencyService).validate(null, transaction);
+    }
+
 
     @Test
     void doStateDependentValidation_OK() throws AplException.ValidationException {
         mockAttachment(987, 10);
         doReturn(true).when(currencyService).isActive(null);
+        when(transaction.getSenderId()).thenReturn(SENDER_ID);
+        when(accountCurrencyService.getUnconfirmedCurrencyUnits(SENDER_ID, 987)).thenReturn(10L);
 
         type.doStateDependentValidation(transaction);
 

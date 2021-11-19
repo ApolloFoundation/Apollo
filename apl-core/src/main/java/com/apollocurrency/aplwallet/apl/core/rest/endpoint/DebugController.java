@@ -4,7 +4,7 @@
 package com.apollocurrency.aplwallet.apl.core.rest.endpoint;
 
 import com.apollocurrency.aplwallet.api.p2p.FileDownloadInfo;
-import com.apollocurrency.aplwallet.api.p2p.respons.FileDownloadInfoResponse;
+import com.apollocurrency.aplwallet.api.p2p.response.FileDownloadInfoResponse;
 import com.apollocurrency.aplwallet.apl.core.rest.service.DebugService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.media.Content;

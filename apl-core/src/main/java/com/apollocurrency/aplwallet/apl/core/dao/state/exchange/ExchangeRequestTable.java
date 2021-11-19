@@ -4,18 +4,16 @@
 
 package com.apollocurrency.aplwallet.apl.core.dao.state.exchange;
 
-import javax.enterprise.event.Event;
-import javax.inject.Inject;
-import javax.inject.Singleton;
-
 import com.apollocurrency.aplwallet.apl.core.dao.state.derived.EntityDbTable;
 import com.apollocurrency.aplwallet.apl.core.dao.state.keyfactory.DbKey;
 import com.apollocurrency.aplwallet.apl.core.dao.state.keyfactory.LongKeyFactory;
 import com.apollocurrency.aplwallet.apl.core.entity.state.exchange.ExchangeRequest;
-import com.apollocurrency.aplwallet.apl.core.service.appdata.DatabaseManager;
-import com.apollocurrency.aplwallet.apl.core.service.state.DerivedTablesRegistry;
-import com.apollocurrency.aplwallet.apl.core.shard.observer.DeleteOnTrimData;
+import com.apollocurrency.aplwallet.apl.core.db.DatabaseManager;
+import com.apollocurrency.aplwallet.apl.core.service.fulltext.FullTextOperationData;
 
+import javax.enterprise.event.Event;
+import javax.inject.Inject;
+import javax.inject.Singleton;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
@@ -35,11 +33,10 @@ public class ExchangeRequestTable extends EntityDbTable<ExchangeRequest> {
     };
 
     @Inject
-    public ExchangeRequestTable(DerivedTablesRegistry derivedDbTablesRegistry,
-                                DatabaseManager databaseManager,
-                                Event<DeleteOnTrimData> deleteOnTrimDataEvent) {
+    public ExchangeRequestTable(DatabaseManager databaseManager,
+                                Event<FullTextOperationData> fullTextOperationDataEvent) {
         super("exchange_request", exchangeRequestDbKeyFactory, false, null,
-            derivedDbTablesRegistry, databaseManager, null, deleteOnTrimDataEvent);
+                databaseManager, fullTextOperationDataEvent);
     }
 
     @Override
@@ -50,7 +47,7 @@ public class ExchangeRequestTable extends EntityDbTable<ExchangeRequest> {
     @Override
     public void save(Connection con, ExchangeRequest exchangeRequest) throws SQLException {
         try (PreparedStatement pstmt = con.prepareStatement("INSERT INTO exchange_request (id, account_id, currency_id, "
-            + "units, rate, is_buy, timestamp, height) VALUES (?, ?, ?, ?, ?, ?, ?, ?)")) {
+            + "units, rate, is_buy, `timestamp`, height) VALUES (?, ?, ?, ?, ?, ?, ?, ?)")) {
             int i = 0;
             pstmt.setLong(++i, exchangeRequest.getId());
             pstmt.setLong(++i, exchangeRequest.getAccountId());

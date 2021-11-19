@@ -20,7 +20,6 @@
 
 package com.apollocurrency.aplwallet.apl.core.http.post;
 
-import com.apollocurrency.aplwallet.apl.core.app.AplException;
 import com.apollocurrency.aplwallet.apl.core.entity.state.account.Account;
 import com.apollocurrency.aplwallet.apl.core.entity.state.shuffling.Shuffling;
 import com.apollocurrency.aplwallet.apl.core.entity.state.shuffling.ShufflingParticipant;
@@ -28,8 +27,9 @@ import com.apollocurrency.aplwallet.apl.core.entity.state.shuffling.ShufflingSta
 import com.apollocurrency.aplwallet.apl.core.http.APITag;
 import com.apollocurrency.aplwallet.apl.core.http.HttpParameterParserUtil;
 import com.apollocurrency.aplwallet.apl.core.transaction.messages.ShufflingAttachment;
-import com.apollocurrency.aplwallet.apl.core.utils.Convert2;
+import com.apollocurrency.aplwallet.apl.util.Convert2;
 import com.apollocurrency.aplwallet.apl.util.JSON;
+import com.apollocurrency.aplwallet.apl.util.exception.AplException;
 import org.json.simple.JSONObject;
 import org.json.simple.JSONStreamAware;
 
@@ -39,7 +39,7 @@ import javax.servlet.http.HttpServletRequest;
 import static com.apollocurrency.aplwallet.apl.core.http.JSONResponses.INCORRECT_PUBLIC_KEY;
 
 @Vetoed
-public final class ShufflingProcess extends CreateTransaction {
+public final class ShufflingProcess extends CreateTransactionHandler {
 
     public ShufflingProcess() {
         super(new APITag[]{APITag.SHUFFLING, APITag.CREATE_TRANSACTION},
@@ -75,7 +75,7 @@ public final class ShufflingProcess extends CreateTransaction {
 
         long accountId = HttpParameterParserUtil.getAccountId(req, this.vaultAccountName(), false);
         byte[] secretBytes = HttpParameterParserUtil.getSecretBytes(req, accountId, true);
-        byte[] recipientPublicKey = HttpParameterParserUtil.getPublicKey(req, "recipient");
+        byte[] recipientPublicKey = HttpParameterParserUtil.getPublicKey(req, "recipient", HttpParameterParserUtil.getAccountId(req, "recipientAccount", false));
         if (lookupAccountService().getAccount(recipientPublicKey) != null) {
             return INCORRECT_PUBLIC_KEY; // do not allow existing account to be used as recipient
         }

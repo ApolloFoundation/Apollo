@@ -1,25 +1,34 @@
 /*
- * Copyright © 2018-2019 Apollo Foundation
+ * Copyright © 2018-2021 Apollo Foundation
  */
+
 package com.apollocurrency.aplwallet.apl.core.transaction.messages;
 
+import com.apollocurrency.aplwallet.apl.core.model.dex.DexOrder;
 import com.apollocurrency.aplwallet.apl.core.transaction.TransactionTypes;
 import com.apollocurrency.aplwallet.apl.crypto.Convert;
-import com.apollocurrency.aplwallet.apl.eth.utils.EthUtil;
-import com.apollocurrency.aplwallet.apl.exchange.model.DexOrder;
+import com.apollocurrency.aplwallet.apl.dex.eth.utils.EthUtil;
+import lombok.AllArgsConstructor;
+import lombok.EqualsAndHashCode;
+import lombok.Getter;
+import lombok.ToString;
 import org.json.simple.JSONObject;
 
 import java.nio.ByteBuffer;
 
+@EqualsAndHashCode(callSuper = true)
+@Getter
+@ToString
+@AllArgsConstructor
 public class DexOrderAttachment extends AbstractAttachment {
-    private byte type;
-    private byte orderCurrency;
-    private long orderAmount;
-    private byte pairCurrency;
-    private byte status;
+    private final byte type;
+    private final byte orderCurrency;
+    private final long orderAmount;
+    private final byte pairCurrency;
     //TODO change it on double.
-    private long pairRate;
-    private int finishTime;
+    private final long pairRate;
+    private final byte status;
+    private final int finishTime;
 
     public DexOrderAttachment(DexOrder order) {
         this.type = Byte.parseByte(String.valueOf(order.getType().ordinal()));
@@ -28,8 +37,8 @@ public class DexOrderAttachment extends AbstractAttachment {
         this.pairCurrency = Byte.parseByte(String.valueOf(order.getPairCurrency().ordinal()));
         //TODO change on double.
         this.pairRate = EthUtil.ethToGwei(order.getPairRate());
-        this.finishTime = order.getFinishTime();
         this.status = Byte.parseByte(String.valueOf(order.getStatus().ordinal()));
+        this.finishTime = order.getFinishTime();
     }
 
     public DexOrderAttachment(ByteBuffer buffer) {
@@ -83,66 +92,5 @@ public class DexOrderAttachment extends AbstractAttachment {
         json.put("pairRate", this.pairRate);
         json.put("status", this.status);
         json.put("finishTime", this.finishTime);
-    }
-
-    @Override
-    public byte getVersion() {
-        return 1;
-    }
-
-    public byte getType() {
-        return type;
-    }
-
-    public void setType(byte type) {
-        this.type = type;
-    }
-
-    public byte getOrderCurrency() {
-        return orderCurrency;
-    }
-
-    public void setOrderCurrency(byte orderCurrency) {
-        this.orderCurrency = orderCurrency;
-    }
-
-    public long getOrderAmount() {
-        return orderAmount;
-    }
-
-    public void setOrderAmount(long orderAmount) {
-        this.orderAmount = orderAmount;
-    }
-
-    public byte getPairCurrency() {
-        return pairCurrency;
-    }
-
-    public void setPairCurrency(byte pairCurrency) {
-        this.pairCurrency = pairCurrency;
-    }
-
-    public long getPairRate() {
-        return pairRate;
-    }
-
-    public void setPairRate(long pairRate) {
-        this.pairRate = pairRate;
-    }
-
-    public int getFinishTime() {
-        return finishTime;
-    }
-
-    public void setFinishTime(int finishTime) {
-        this.finishTime = finishTime;
-    }
-
-    public byte getStatus() {
-        return status;
-    }
-
-    public void setStatus(byte status) {
-        this.status = status;
     }
 }

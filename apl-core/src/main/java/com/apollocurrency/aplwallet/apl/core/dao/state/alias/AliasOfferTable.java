@@ -23,13 +23,12 @@ package com.apollocurrency.aplwallet.apl.core.dao.state.alias;
 import com.apollocurrency.aplwallet.apl.core.dao.state.derived.VersionedDeletableEntityDbTable;
 import com.apollocurrency.aplwallet.apl.core.dao.state.keyfactory.DbKey;
 import com.apollocurrency.aplwallet.apl.core.dao.state.keyfactory.LongKeyFactory;
-import com.apollocurrency.aplwallet.apl.core.db.DbClause;
-import com.apollocurrency.aplwallet.apl.core.db.DbUtils;
+import com.apollocurrency.aplwallet.apl.core.service.fulltext.FullTextOperationData;
+import com.apollocurrency.aplwallet.apl.util.db.DbClause;
+import com.apollocurrency.aplwallet.apl.util.db.DbUtils;
 import com.apollocurrency.aplwallet.apl.core.entity.state.alias.Alias;
 import com.apollocurrency.aplwallet.apl.core.entity.state.alias.AliasOffer;
-import com.apollocurrency.aplwallet.apl.core.service.appdata.DatabaseManager;
-import com.apollocurrency.aplwallet.apl.core.service.state.DerivedTablesRegistry;
-import com.apollocurrency.aplwallet.apl.core.shard.observer.DeleteOnTrimData;
+import com.apollocurrency.aplwallet.apl.core.db.DatabaseManager;
 import com.apollocurrency.aplwallet.apl.util.annotation.DatabaseSpecificDml;
 import com.apollocurrency.aplwallet.apl.util.annotation.DmlMarker;
 
@@ -59,11 +58,10 @@ public class AliasOfferTable extends VersionedDeletableEntityDbTable<AliasOffer>
     };
 
     @Inject
-    public AliasOfferTable(DerivedTablesRegistry derivedDbTablesRegistry,
-                           DatabaseManager databaseManager,
-                           Event<DeleteOnTrimData> deleteOnTrimDataEvent) {
+    public AliasOfferTable(DatabaseManager databaseManager,
+                           Event<FullTextOperationData> fullTextOperationDataEvent) {
         super("alias_offer", offerDbKeyFactory, null,
-            derivedDbTablesRegistry, databaseManager, null, deleteOnTrimDataEvent);
+                databaseManager, fullTextOperationDataEvent);
     }
 
     @Override
@@ -75,9 +73,12 @@ public class AliasOfferTable extends VersionedDeletableEntityDbTable<AliasOffer>
     public void save(Connection con, AliasOffer offer) throws SQLException {
         try (
             @DatabaseSpecificDml(DmlMarker.MERGE)
-            PreparedStatement pstmt = con.prepareStatement("MERGE INTO alias_offer (id, price, buyer_id, "
-                + "height) KEY (id, height) VALUES (?, ?, ?, ?)")
+            PreparedStatement pstmt = con.prepareStatement("INSERT INTO alias_offer (id, price, buyer_id, height) "
+                + "VALUES (?, ?, ?, ?) "
+                + "ON DUPLICATE KEY UPDATE "
+                + "id = VALUES(id), price = VALUES(price), buyer_id = VALUES(buyer_id), height = VALUES(height)")
         ) {
+
             int i = 0;
             pstmt.setLong(++i, offer.getAliasId());
             pstmt.setLong(++i, offer.getPriceATM());

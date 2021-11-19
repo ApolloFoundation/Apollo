@@ -4,7 +4,7 @@
 
 package com.apollocurrency.aplwallet.apl.core.shard.helper.csv;
 
-import com.apollocurrency.aplwallet.apl.core.db.DbUtils;
+import com.apollocurrency.aplwallet.apl.util.db.DbUtils;
 import com.apollocurrency.aplwallet.apl.core.shard.helper.CsvExportData;
 import com.apollocurrency.aplwallet.apl.core.shard.helper.jdbc.ColumnMetaData;
 import com.apollocurrency.aplwallet.apl.core.shard.model.ArrayColumn;
@@ -72,27 +72,27 @@ public class CsvWriterImpl extends CsvAbstractBase implements CsvWriter {
 
     private static Map<ArrayColumn, ArrayColumn> getArrayColumnIndex() {
         ArrayColumn arrayColumn1 =
-            new ArrayColumn("ACCOUNT_CONTROL_PHASING", "WHITELIST", 19, 0);
+            new ArrayColumn("account_control_phasing", "whitelist", 19, 0);
         ArrayColumn arrayColumn2 =
-            new ArrayColumn("GOODS", "PARSED_TAGS", 2147483647, 0);
+            new ArrayColumn("goods", "parsed_tags", 2147483647, 0);
         ArrayColumn arrayColumn3 =
-            new ArrayColumn("POLL", "OPTIONS", 2147483647, 0);
+            new ArrayColumn("poll", "options", 2147483647, 0);
         ArrayColumn arrayColumn4 =
-            new ArrayColumn("SHARD", "BLOCK_TIMEOUTS", 10, 0);
+            new ArrayColumn("shard", "block_timeouts", 10, 0);
         ArrayColumn arrayColumn5 =
-            new ArrayColumn("SHARD", "GENERATOR_IDS", 19, 0);
+            new ArrayColumn("shard", "generator_ids", 19, 0);
         ArrayColumn arrayColumn6 =
-            new ArrayColumn("SHARD", "BLOCK_TIMESTAMPS", 10, 0);
+            new ArrayColumn("shard", "block_timestamps", 10, 0);
         ArrayColumn arrayColumn7 =
-            new ArrayColumn("SHUFFLING", "RECIPIENT_PUBLIC_KEYS", 2147483647, 0);
+            new ArrayColumn("shuffling", "recipient_public_keys", 2147483647, 0);
         ArrayColumn arrayColumn8 =
-            new ArrayColumn("SHUFFLING_DATA", "DATA", 2147483647, 0);
+            new ArrayColumn("shuffling_data", "data", 2147483647, 0);
         ArrayColumn arrayColumn9 =
-            new ArrayColumn("SHUFFLING_PARTICIPANT", "BLAME_DATA", 2147483647, 0);
+            new ArrayColumn("shuffling_participant", "blame_data", 2147483647, 0);
         ArrayColumn arrayColumn10 =
-            new ArrayColumn("SHUFFLING_PARTICIPANT", "KEY_SEEDS", 2147483647, 0);
+            new ArrayColumn("shuffling_participant", "key_seeds", 2147483647, 0);
         ArrayColumn arrayColumn11 =
-            new ArrayColumn("TAGGED_DATA", "PARSED_TAGS", 2147483647, 0);
+            new ArrayColumn("tagged_data", "parsed_tags", 2147483647, 0);
 
         return Map.ofEntries(
             Map.entry(arrayColumn1, arrayColumn1),
@@ -164,8 +164,8 @@ public class CsvWriterImpl extends CsvAbstractBase implements CsvWriter {
     @Override
     public CsvExportData write(Connection conn, String outputFileName, String sql, String charset) throws SQLException {
         CsvExportData exportData;
-        try (Statement stat = conn.createStatement()) {
-            ResultSet rs = stat.executeQuery(sql);
+        try (Statement stat = conn.createStatement();
+             ResultSet rs = stat.executeQuery(sql)) {
             exportData = write(outputFileName, rs);
         }
         return exportData;
@@ -241,12 +241,6 @@ public class CsvWriterImpl extends CsvAbstractBase implements CsvWriter {
                     } else {
                         lastRow.put(rs.getMetaData().getColumnName(i + 1), rs.getObject(i + 1));
                         switch (columnsMetaData[i].getSqlTypeInt()) {
-                            case Types.BLOB:
-                                o = rs.getBlob(i + 1);
-                                if (o == null) {
-                                    o = nullString;
-                                }
-                                break;
                             case Types.BIGINT:
                             case Types.BIT:
                             case Types.BOOLEAN:
@@ -305,6 +299,7 @@ public class CsvWriterImpl extends CsvAbstractBase implements CsvWriter {
                                 break;
                             case Types.VARBINARY:
                             case Types.BINARY:
+                            case Types.BLOB:
                                 o = rs.getBytes(i + 1);
                                 if (o != null) {
                                     o = translator.translate((byte[]) o);
@@ -426,15 +421,9 @@ public class CsvWriterImpl extends CsvAbstractBase implements CsvWriter {
                 if (fieldDelimiter != 0) {
                     outputBuffer.append(fieldDelimiter);
                 }
-                // writing 'header columns' row into output file
-                if ((!Character.isLetterOrDigit(fieldTypeSeparatorStart) && !Character.isSpaceChar(fieldTypeSeparatorStart))
-                    && (!Character.isLetterOrDigit(fieldTypeSeparatorEnd) && !Character.isSpaceChar(fieldTypeSeparatorEnd))) {
-                    // write 'complex' csv Header columns as COLUMN_NAME_1(TYPE_1|PRECISION_1|SCALE_1),COLUMN_NAME_2(TYPE_2|PRECISION_2|SCALE_2)
-                    outputBuffer.append(columnsMetaData[i].toString());
-                } else {
-                    // write simple header columns as : COLUMN_NAME_1,COLUMN_NAME_2
-                    outputBuffer.append(s);
-                }
+                // write simple header columns as : COLUMN_NAME_1,COLUMN_NAME_2
+                outputBuffer.append(s.toLowerCase());
+
                 if (fieldDelimiter != 0) {
                     outputBuffer.append(fieldDelimiter);
                 }

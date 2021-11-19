@@ -11,29 +11,34 @@ import com.apollocurrency.aplwallet.api.response.AccountControlPhasingResponse;
 import com.apollocurrency.aplwallet.api.response.LeaseBalanceResponse;
 import com.apollocurrency.aplwallet.apl.core.app.VoteWeighting;
 import com.apollocurrency.aplwallet.apl.core.chainid.BlockchainConfig;
-import com.apollocurrency.aplwallet.apl.core.config.Property;
-import com.apollocurrency.aplwallet.apl.core.entity.blockchain.Transaction;
+import com.apollocurrency.aplwallet.apl.core.model.Transaction;
 import com.apollocurrency.aplwallet.apl.core.entity.state.account.Account;
 import com.apollocurrency.aplwallet.apl.core.entity.state.account.AccountControlPhasing;
 import com.apollocurrency.aplwallet.apl.core.http.ParameterException;
+import com.apollocurrency.aplwallet.apl.core.rest.converter.UnconfirmedTransactionConverterCreator;
+import com.apollocurrency.aplwallet.apl.util.io.PayloadResult;
+import com.apollocurrency.aplwallet.apl.util.io.Result;
 import com.apollocurrency.aplwallet.apl.core.model.CreateTransactionRequest;
 import com.apollocurrency.aplwallet.apl.core.model.PhasingParams;
-import com.apollocurrency.aplwallet.apl.core.rest.ApiErrors;
 import com.apollocurrency.aplwallet.apl.core.rest.TransactionCreator;
 import com.apollocurrency.aplwallet.apl.core.rest.converter.AccountControlPhasingConverter;
 import com.apollocurrency.aplwallet.apl.core.rest.converter.HttpRequestToCreateTransactionRequestConverter;
 import com.apollocurrency.aplwallet.apl.core.rest.converter.UnconfirmedTransactionConverter;
 import com.apollocurrency.aplwallet.apl.core.rest.filters.Secured2FA;
 import com.apollocurrency.aplwallet.apl.core.rest.parameter.AccountIdParameter;
-import com.apollocurrency.aplwallet.apl.core.rest.parameter.FirstLastIndexBeanParam;
-import com.apollocurrency.aplwallet.apl.core.rest.utils.ResponseBuilder;
 import com.apollocurrency.aplwallet.apl.core.service.state.account.AccountControlPhasingService;
 import com.apollocurrency.aplwallet.apl.core.service.state.account.AccountService;
+import com.apollocurrency.aplwallet.apl.core.transaction.TransactionWrapperHelper;
+import com.apollocurrency.aplwallet.apl.core.transaction.common.TxBContext;
 import com.apollocurrency.aplwallet.apl.core.transaction.messages.AccountControlEffectiveBalanceLeasing;
 import com.apollocurrency.aplwallet.apl.core.transaction.messages.Attachment;
 import com.apollocurrency.aplwallet.apl.core.transaction.messages.SetPhasingOnly;
 import com.apollocurrency.aplwallet.apl.crypto.Convert;
 import com.apollocurrency.aplwallet.apl.util.Constants;
+import com.apollocurrency.aplwallet.apl.util.api.parameter.FirstLastIndexBeanParam;
+import com.apollocurrency.aplwallet.apl.util.builder.ResponseBuilder;
+import com.apollocurrency.aplwallet.apl.util.cdi.config.Property;
+import com.apollocurrency.aplwallet.apl.util.exception.ApiErrors;
 import io.swagger.v3.oas.annotations.OpenAPIDefinition;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
@@ -82,6 +87,7 @@ public class AccountControlController {
     private UnconfirmedTransactionConverter unconfirmedTransactionConverter;
     private TransactionCreator txCreator;
     private AccountService accountService;
+    private TxBContext txBContext;
 
     public static int maxAPIFetchRecords;
 
@@ -91,13 +97,14 @@ public class AccountControlController {
         BlockchainConfig blockchainConfig,
         TransactionCreator txCreator,
         AccountService accountService,
-        UnconfirmedTransactionConverter unconfirmedTransactionConverter,
+        UnconfirmedTransactionConverterCreator unconfirmedTransactionConverterCreator,
         @Property(name = "apl.maxAPIRecords", defaultValue = "100") int maxAPIrecords) {
         this.accountControlPhasingService = accountControlPhasingService;
         this.blockchainConfig = blockchainConfig;
         this.txCreator = txCreator;
-        this.unconfirmedTransactionConverter = unconfirmedTransactionConverter;
+        this.unconfirmedTransactionConverter = unconfirmedTransactionConverterCreator.create(true);
         this.accountService = accountService;
+        this.txBContext = TxBContext.newInstance(blockchainConfig.getChain());
         maxAPIFetchRecords = maxAPIrecords;
     }
 
@@ -429,14 +436,22 @@ public class AccountControlController {
 
         Transaction transaction = txCreator.createTransactionThrowingException(txRequest);
         log.trace("leaseBalance transaction = {}", transaction);
+
+        Result unsignedTxBytes = PayloadResult.createLittleEndianByteArrayResult();
+        txBContext.createSerializer(transaction.getVersion())
+            .serialize(TransactionWrapperHelper.createUnsignedTransaction(transaction), unsignedTxBytes);
+
+        Result signedTxBytes = PayloadResult.createLittleEndianByteArrayResult();
+        txBContext.createSerializer(transaction.getVersion()).serialize(transaction, signedTxBytes);
+
         UnconfirmedTransactionDTO txDto = unconfirmedTransactionConverter.convert(transaction);
         log.trace("leaseBalance txDto = {}", txDto);
         LeaseBalanceResponse leaseBalanceResponse = new LeaseBalanceResponse();
         leaseBalanceResponse.setTransactionJSON(txDto);
-        leaseBalanceResponse.setUnsignedTransactionBytes(Convert.toHexString(transaction.getUnsignedBytes()));
+        leaseBalanceResponse.setUnsignedTransactionBytes(Convert.toHexString(unsignedTxBytes.array()));
         leaseBalanceResponse.setTransaction(transaction.getStringId());
         leaseBalanceResponse.setFullHash(transaction.getFullHashString());
-        leaseBalanceResponse.setTransactionBytes(Convert.toHexString(transaction.getCopyTxBytes()));
+        leaseBalanceResponse.setTransactionBytes(Convert.toHexString(signedTxBytes.array()));
         leaseBalanceResponse.setBroadcasted(txRequest.isBroadcast());
 
         log.trace("DONE leaseBalance, response = {}", leaseBalanceResponse);

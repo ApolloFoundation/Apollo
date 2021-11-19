@@ -9,19 +9,20 @@ import com.apollocurrency.aplwallet.apl.core.app.GenesisImporter;
 import com.apollocurrency.aplwallet.apl.core.app.observer.events.ShardPresentEvent;
 import com.apollocurrency.aplwallet.apl.core.app.observer.events.ShardPresentEventType;
 import com.apollocurrency.aplwallet.apl.core.chainid.BlockchainConfigUpdater;
-import com.apollocurrency.aplwallet.apl.core.dao.TransactionalDataSource;
 import com.apollocurrency.aplwallet.apl.core.dao.state.derived.DerivedTableInterface;
-import com.apollocurrency.aplwallet.apl.core.db.TransactionHelper;
-import com.apollocurrency.aplwallet.apl.core.entity.blockchain.Block;
+import com.apollocurrency.aplwallet.apl.core.db.DatabaseManager;
 import com.apollocurrency.aplwallet.apl.core.files.shards.ShardPresentData;
-import com.apollocurrency.aplwallet.apl.core.service.appdata.DatabaseManager;
+import com.apollocurrency.aplwallet.apl.core.model.Block;
 import com.apollocurrency.aplwallet.apl.core.service.blockchain.Blockchain;
 import com.apollocurrency.aplwallet.apl.core.service.blockchain.BlockchainProcessor;
 import com.apollocurrency.aplwallet.apl.core.service.fulltext.FullTextSearchService;
 import com.apollocurrency.aplwallet.apl.core.service.state.DerivedTablesRegistry;
 import com.apollocurrency.aplwallet.apl.core.shard.ShardImporter;
+import com.apollocurrency.aplwallet.apl.util.db.DbTransactionHelper;
+import com.apollocurrency.aplwallet.apl.util.db.TransactionalDataSource;
 import lombok.extern.slf4j.Slf4j;
 
+import javax.enterprise.event.Event;
 import javax.enterprise.event.Observes;
 import javax.enterprise.event.ObservesAsync;
 import javax.inject.Inject;
@@ -50,12 +51,15 @@ public class ShardDownloadPresenceObserver {
     private final BlockchainConfigUpdater blockchainConfigUpdater;
     private final GenesisImporter genesisImporter;
     private final FullTextSearchService fullTextSearchService;
+    private final Event<ShardPresentData> shardImportEvent;
 
     @Inject
     public ShardDownloadPresenceObserver(DatabaseManager databaseManager, BlockchainProcessor blockchainProcessor,
                                          Blockchain blockchain, DerivedTablesRegistry derivedTablesRegistry,
                                          ShardImporter shardImporter, BlockchainConfigUpdater blockchainConfigUpdater,
-                                         GenesisImporter genesisImporter, FullTextSearchService fullTextSearchService) {
+                                         GenesisImporter genesisImporter,
+                                         FullTextSearchService fullTextSearchService,
+                                         Event<ShardPresentData> shardImportEvent) {
         this.databaseManager = Objects.requireNonNull(databaseManager, "databaseManager is NULL");
         this.blockchainProcessor = Objects.requireNonNull(blockchainProcessor, "blockchainProcessor is NULL");
         this.derivedTablesRegistry = Objects.requireNonNull(derivedTablesRegistry, "derivedTablesRegistry is NULL");
@@ -64,6 +68,7 @@ public class ShardDownloadPresenceObserver {
         this.blockchainConfigUpdater = Objects.requireNonNull(blockchainConfigUpdater, "blockchainConfigUpdater is NULL");
         this.genesisImporter = Objects.requireNonNull(genesisImporter, "genesisImporter is NULL");
         this.fullTextSearchService = Objects.requireNonNull(fullTextSearchService, "fullTextSearchService is NULL");
+        this.shardImportEvent = shardImportEvent;
     }
 
     /**
@@ -74,17 +79,18 @@ public class ShardDownloadPresenceObserver {
     public void onShardPresent(@ObservesAsync @ShardPresentEvent(ShardPresentEventType.SHARD_PRESENT) ShardPresentData shardPresentData) {
         log.debug("Catching fired 'SHARD_PRESENT' event for {}", shardPresentData);
         TransactionalDataSource dataSource = databaseManager.getDataSource();
-        TransactionHelper.executeInTransaction(dataSource, ()-> {
+        DbTransactionHelper.executeInTransaction(dataSource, () -> {
             try (Connection con = dataSource.getConnection()) {
                 // create Lucene search indexes first
                 createLuceneSearchIndexes(con);
                 // import data so it gets into search indexes as well
                 shardImporter.importShardByFileId(shardPresentData);
+                fullTextSearchService.reindexAll(con);
             } catch (Exception e) {
-                log.error("Error on Shard # {}. Zip/CSV importing...", shardPresentData);
+                log.error("Error on Shard IMPORTING # " + shardPresentData, e);
                 log.error("Node has encountered serious error and import CSV shard data. " +
                     "Somethings wrong with processing fileId =\n'{}'\n >>> FALL BACK to Genesis importing....", shardPresentData);
-                // truncate all partial data potentially imported into database
+            // truncate all partial data potentially imported into database
                 cleanUpPreviouslyImportedData();
                 // fall back to importing Genesis and starting from beginning
                 onNoShardPresent(shardPresentData);
@@ -96,6 +102,7 @@ public class ShardDownloadPresenceObserver {
             blockchainConfigUpdater.updateToLatestConfig();
             blockchainProcessor.resumeBlockchainDownloading(); // turn ON blockchain downloading
             log.info("onShardPresent() finished Last block height: " + lastBlock.getHeight());
+            shardImportEvent.fire(shardPresentData);
         });
     }
 
@@ -107,6 +114,7 @@ public class ShardDownloadPresenceObserver {
      */
     private void createLuceneSearchIndexes(Connection con) throws SQLException {
         for (DerivedTableInterface table : derivedTablesRegistry.getDerivedTables()) {
+            // only searchable table will be processed inside createSearchIndex(...)
             fullTextSearchService.createSearchIndex(con, table.getName(), table.getFullTextSearchColumns());
         }
     }
@@ -117,7 +125,7 @@ public class ShardDownloadPresenceObserver {
     private void cleanUpPreviouslyImportedData() {
         log.debug("start CleanUp after UNSUCCESSFUL zip import...");
         TransactionalDataSource dataSource = databaseManager.getDataSource();
-        TransactionHelper.executeInTransaction(dataSource, () -> {
+        DbTransactionHelper.executeInTransaction(dataSource, () -> {
             try {
                 blockchain.deleteAll();
                 derivedTablesRegistry.getDerivedTables().forEach(DerivedTableInterface::truncate);
@@ -140,7 +148,7 @@ public class ShardDownloadPresenceObserver {
         TransactionalDataSource dataSource = databaseManager.getDataSource();
         log.info("Genesis block not in database, starting from scratch");
         try {
-            TransactionHelper.executeInTransaction(databaseManager.getDataSource(), () -> {
+            DbTransactionHelper.executeInTransaction(databaseManager.getDataSource(), () -> {
                 try (Connection con = dataSource.getConnection()) {
                     // create first genesis block, but do not save it to db here
                     Block genesisBlock = genesisImporter.newGenesisBlock();
@@ -149,7 +157,7 @@ public class ShardDownloadPresenceObserver {
                     // import other genesis data
                     genesisImporter.importGenesisJson(false);
                     // first genesis block should be saved only after all genesis data has been imported before
-                    addBlock(dataSource, genesisBlock); // save first genesis block here
+                    blockchain.saveBlock(genesisBlock);// save first genesis block here
                     // create Lucene search indexes first
                     createLuceneSearchIndexes(con);
                     blockchain.commit(genesisBlock);
@@ -167,14 +175,4 @@ public class ShardDownloadPresenceObserver {
             log.error(e.toString(), e);
         }
     }
-
-    private void addBlock(TransactionalDataSource dataSource, Block block) {
-        try (Connection con = dataSource.getConnection()) {
-            blockchain.saveBlock(con, block);
-        } catch (SQLException e) {
-            throw new RuntimeException(e.toString(), e);
-        }
-    }
-
-
 }

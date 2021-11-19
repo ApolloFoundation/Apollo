@@ -4,7 +4,7 @@
 
 package com.apollocurrency.aplwallet.apl.core.cache;
 
-import com.apollocurrency.aplwallet.apl.exchange.model.OrderFreezing;
+import com.apollocurrency.aplwallet.apl.dex.core.model.OrderFreezing;
 import com.apollocurrency.aplwallet.apl.util.cache.CacheConfiguration;
 import com.apollocurrency.aplwallet.apl.util.cache.InMemoryCacheConfigurator;
 import com.google.common.cache.CacheLoader;
@@ -28,7 +28,9 @@ public class AplCacheConfig implements InMemoryCacheConfigurator {
         this.cacheConfigurations = new CacheConfiguration[]{
             new PublicKeyCacheConfig(60),
             new BlockIndexCacheConfig(60),
-            new DexOrderFreezingCacheConfig(15, orderFreezingCacheLoader)
+            new DexOrderFreezingCacheConfig(15, orderFreezingCacheLoader),
+            new RemovedTxsCacheConfig(5),
+            new AccountCacheConfig(30)
         };
     }
 

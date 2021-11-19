@@ -3,15 +3,14 @@
  */
 package com.apollocurrency.aplwallet.apl.core.dao.state.account;
 
-import com.apollocurrency.aplwallet.apl.core.dao.TransactionalDataSource;
+import com.apollocurrency.aplwallet.apl.core.service.fulltext.FullTextOperationData;
+import com.apollocurrency.aplwallet.apl.util.db.TransactionalDataSource;
 import com.apollocurrency.aplwallet.apl.core.dao.state.derived.VersionedDeletableEntityDbTable;
 import com.apollocurrency.aplwallet.apl.core.dao.state.keyfactory.DbKey;
 import com.apollocurrency.aplwallet.apl.core.dao.state.keyfactory.LongKeyFactory;
-import com.apollocurrency.aplwallet.apl.core.db.DbUtils;
+import com.apollocurrency.aplwallet.apl.util.db.DbUtils;
 import com.apollocurrency.aplwallet.apl.core.entity.state.account.AccountLease;
-import com.apollocurrency.aplwallet.apl.core.service.appdata.DatabaseManager;
-import com.apollocurrency.aplwallet.apl.core.service.state.DerivedTablesRegistry;
-import com.apollocurrency.aplwallet.apl.core.shard.observer.DeleteOnTrimData;
+import com.apollocurrency.aplwallet.apl.core.db.DatabaseManager;
 import com.apollocurrency.aplwallet.apl.util.annotation.DatabaseSpecificDml;
 import com.apollocurrency.aplwallet.apl.util.annotation.DmlMarker;
 import lombok.extern.slf4j.Slf4j;
@@ -44,11 +43,10 @@ public class AccountLeaseTable extends VersionedDeletableEntityDbTable<AccountLe
     };
 
     @Inject
-    public AccountLeaseTable(DerivedTablesRegistry derivedDbTablesRegistry,
-                             DatabaseManager databaseManager,
-                             Event<DeleteOnTrimData> deleteOnTrimDataEvent) {
+    public AccountLeaseTable(DatabaseManager databaseManager,
+                             Event<FullTextOperationData> fullTextOperationDataEvent) {
         super("account_lease", accountLeaseDbKeyFactory, null,
-            derivedDbTablesRegistry, databaseManager, null, deleteOnTrimDataEvent);
+                databaseManager, fullTextOperationDataEvent);
     }
 
     public static DbKey newKey(long id) {
@@ -66,10 +64,15 @@ public class AccountLeaseTable extends VersionedDeletableEntityDbTable<AccountLe
             log.trace("--lease-- Save accountLease={}", accountLease);
         }
         try (
-            @DatabaseSpecificDml(DmlMarker.MERGE) final PreparedStatement pstmt = con.prepareStatement("MERGE INTO account_lease " +
+            @DatabaseSpecificDml(DmlMarker.MERGE) final PreparedStatement pstmt = con.prepareStatement("INSERT INTO account_lease " +
                 "(lessor_id, current_leasing_height_from, current_leasing_height_to, current_lessee_id, " +
                 "next_leasing_height_from, next_leasing_height_to, next_lessee_id, height, latest, deleted) " +
-                "KEY (lessor_id, height) VALUES (?, ?, ?, ?, ?, ?, ?, ?, TRUE, FALSE)")
+                "VALUES (?, ?, ?, ?, ?, ?, ?, ?, TRUE, FALSE) " +
+                "ON DUPLICATE KEY UPDATE lessor_id = VALUES(lessor_id) , current_leasing_height_from = VALUES(current_leasing_height_from), " +
+                "current_leasing_height_to = VALUES(current_leasing_height_to), current_lessee_id = VALUES(current_lessee_id), " +
+                "next_leasing_height_from = VALUES(next_leasing_height_from), next_leasing_height_to = VALUES(next_leasing_height_to), " +
+                "next_lessee_id = VALUES(next_lessee_id), height = VALUES(height), latest = TRUE, deleted = FALSE "
+            )
         ) {
             int i = 0;
             pstmt.setLong(++i, accountLease.getLessorId());

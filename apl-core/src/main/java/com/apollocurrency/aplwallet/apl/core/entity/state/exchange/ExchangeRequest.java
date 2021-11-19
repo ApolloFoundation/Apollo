@@ -6,11 +6,11 @@ package com.apollocurrency.aplwallet.apl.core.entity.state.exchange;
 
 import com.apollocurrency.aplwallet.apl.core.dao.state.exchange.ExchangeRequestTable;
 import com.apollocurrency.aplwallet.apl.core.dao.state.keyfactory.DbKey;
-import com.apollocurrency.aplwallet.apl.core.entity.blockchain.Transaction;
+import com.apollocurrency.aplwallet.apl.core.model.Transaction;
 import com.apollocurrency.aplwallet.apl.core.entity.state.derived.DerivedEntity;
 import com.apollocurrency.aplwallet.apl.core.transaction.messages.MonetarySystemExchangeAttachment;
 import com.apollocurrency.aplwallet.apl.core.transaction.messages.MonetarySystemExchangeBuyAttachment;
-import com.apollocurrency.aplwallet.apl.core.transaction.messages.MonetarySystemExchangeSell;
+import com.apollocurrency.aplwallet.apl.core.transaction.messages.MSExchangeSellAttachment;
 import lombok.Getter;
 import lombok.Setter;
 import lombok.ToString;
@@ -35,7 +35,7 @@ public class ExchangeRequest extends DerivedEntity {
         this(transaction, attachment, true, timestamp, height);
     }
 
-    public ExchangeRequest(Transaction transaction, MonetarySystemExchangeSell attachment, int timestamp, int height) {
+    public ExchangeRequest(Transaction transaction, MSExchangeSellAttachment attachment, int timestamp, int height) {
         this(transaction, attachment, false, timestamp, height);
     }
 

@@ -1,14 +1,13 @@
-DELETE FROM PUBLIC.ACCOUNT;
-DELETE FROM PUBLIC.ACCOUNT_ASSET;
-DELETE FROM PUBLIC.ACCOUNT_CURRENCY;
-DELETE FROM PUBLIC.ACCOUNT_GUARANTEED_BALANCE;
-DELETE FROM FTL.INDEXES;
-DELETE FROM PUBLIC.ACCOUNT_LEDGER;
-DELETE FROM PUBLIC.ACCOUNT_PROPERTY;
-DELETE FROM PUBLIC.ACCOUNT_LEASE;
+DELETE FROM account;
+DELETE FROM account_asset;
+DELETE FROM account_currency;
+DELETE FROM account_guaranteed_balance;
+DELETE FROM account_ledger;
+DELETE FROM account_property;
+DELETE FROM account_lease;
 
 
-INSERT INTO PUBLIC.ACCOUNT
+INSERT INTO account
 (DB_ID  ,ID      ,BALANCE  	             ,UNCONFIRMED_BALANCE  	    ,HAS_CONTROL_PHASING  	,FORGED_BALANCE  	,ACTIVE_LESSEE_ID  	,HEIGHT  	 ,LATEST) values
 (1       ,10     ,999990000000000     ,999990000000000       ,false                  ,0                  ,null               ,0           ,true),
 (10      ,20     ,555500000000         ,105500000000           ,false                  ,0                  ,null               ,100000     ,true),
@@ -29,7 +28,7 @@ INSERT INTO PUBLIC.ACCOUNT
 ;
 
 
-INSERT INTO PUBLIC.ACCOUNT_LEASE
+INSERT INTO account_lease
 (DB_ID, ID,     LESSOR_ID,  CURRENT_LEASING_HEIGHT_FROM, CURRENT_LEASING_HEIGHT_TO, CURRENT_LESSEE_ID, NEXT_LEASING_HEIGHT_FROM, NEXT_LEASING_HEIGHT_TO, NEXT_LESSEE_ID, HEIGHT, LATEST) VALUES
 (1,     1000,         100,        7000,                        11000,                     10,                0,                       0,                      0,              5000,  true),
 (2,     1100,         110,        7000,                        11000,                     10,                0,                       0,                      0,              5000,  true),

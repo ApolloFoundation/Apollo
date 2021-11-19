@@ -1,13 +1,16 @@
 /*
- *  Copyright © 2018-2019 Apollo Foundation
+ *  Copyright © 2018-2020 Apollo Foundation
  */
 
 package com.apollocurrency.aplwallet.apl.core.service.fulltext;
 
+import com.apollocurrency.aplwallet.apl.core.service.blockchain.Blockchain;
+import com.apollocurrency.aplwallet.apl.core.shard.helper.jdbc.SimpleResultSet;
 import com.apollocurrency.aplwallet.apl.util.NtpTime;
 import com.apollocurrency.aplwallet.apl.util.ReadWriteUpdateLock;
 import com.apollocurrency.aplwallet.apl.util.annotation.DatabaseSpecificDml;
 import com.apollocurrency.aplwallet.apl.util.annotation.DmlMarker;
+import lombok.extern.slf4j.Slf4j;
 import org.apache.lucene.analysis.Analyzer;
 import org.apache.lucene.analysis.standard.StandardAnalyzer;
 import org.apache.lucene.document.DateTools;
@@ -27,27 +30,27 @@ import org.apache.lucene.search.ScoreDoc;
 import org.apache.lucene.search.TopDocs;
 import org.apache.lucene.store.Directory;
 import org.apache.lucene.store.FSDirectory;
-import org.h2.tools.SimpleResultSet;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
+import javax.annotation.PreDestroy;
 import javax.inject.Inject;
 import javax.inject.Named;
 import javax.inject.Singleton;
 import java.io.IOException;
+import java.nio.file.DirectoryStream;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Types;
 import java.util.List;
+import java.util.Objects;
 import java.util.StringJoiner;
 import java.util.stream.Stream;
 
+@Slf4j
 @Singleton
 @DatabaseSpecificDml(DmlMarker.FULL_TEXT_SEARCH)
 public class LuceneFullTextSearchEngine implements FullTextSearchEngine {
-    private static final Logger LOG = LoggerFactory.getLogger(LuceneFullTextSearchEngine.class);
     /**
      * Lucene index reader (thread-safe)
      */
@@ -70,12 +73,14 @@ public class LuceneFullTextSearchEngine implements FullTextSearchEngine {
     private final Analyzer analyzer = new StandardAnalyzer();
     private NtpTime ntpTime;
     private Path indexDirPath;
+    private final Blockchain blockchain;
 
 
     @Inject
-    public LuceneFullTextSearchEngine(NtpTime ntpTime, @Named("indexDirPath") Path indexPath) {
+    public LuceneFullTextSearchEngine(NtpTime ntpTime, @Named("indexDirPath") Path indexPath, final Blockchain blockchain) {
         this.ntpTime = ntpTime;
         this.indexDirPath = indexPath;
+        this.blockchain = blockchain;
         if (!Files.exists(indexPath)) {
             try {
                 Files.createDirectories(indexPath);
@@ -85,33 +90,55 @@ public class LuceneFullTextSearchEngine implements FullTextSearchEngine {
         }
     }
 
+    @Override
+    public boolean isIndexFolderEmpty() throws IOException {
+        log.debug("FullTextSearch index path/folder = '{}'", this.indexDirPath);
+        boolean indexFolderExists = Files.exists(this.indexDirPath);
+        if (indexFolderExists) {
+            try (DirectoryStream<Path> dirStream = Files.newDirectoryStream(this.indexDirPath)) {
+                return !dirStream.iterator().hasNext();
+            }
+        }
+        return false;
+    }
+
     /**
      * {@inheritDoc}
      */
     @Override
-    public void indexRow(Object[] row, TableData tableData) throws SQLException {
+    public void indexRow(FullTextOperationData row, TableData tableData) throws SQLException {
+        Objects.requireNonNull(row, "row is NULL");
+        Objects.requireNonNull(tableData, "tableData is NULL");
         indexLock.readLock().lock();
         try {
             List<String> columnNames = tableData.getColumnNames();
             List<Integer> indexColumns = tableData.getIndexColumns();
-            int dbColumn = tableData.getDbIdColumnPosition();
-            String tableName = tableData.getSchema().toUpperCase() + "." + tableData.getTable().toUpperCase();
-            String query = tableName + ";" + columnNames.get(dbColumn) + ";" + (long) row[dbColumn];
+            String schemaTableName = tableData.getSchema().toLowerCase() + "." + tableData.getTable().toLowerCase();
+            String query = row.getTableKey();
             Document document = new Document();
             document.add(new StringField("_QUERY", query, Field.Store.YES));
             long now = ntpTime.getTime();
             document.add(new TextField("_MODIFIED", DateTools.timeToString(now, DateTools.Resolution.SECOND), Field.Store.NO));
-            document.add(new TextField("_TABLE", tableName, Field.Store.NO));
+            document.add(new TextField("_TABLE", schemaTableName, Field.Store.NO));
             StringJoiner sj = new StringJoiner(" ");
-            for (int index : indexColumns) {
-                String data = (row[index] != null ? (String) row[index] : "NULL");
-                document.add(new TextField(columnNames.get(index), data, Field.Store.NO));
+            for (int i = 0; i < row.getColumnsWithData().size(); i++) {
+                String data = row.getColumnsWithData().get(i) != null ?
+                    (String) row.getColumnsWithData().get(i) : "NULL";
+                String columnName = columnNames.get(indexColumns.get(i)); // get indexed column name by i
+                document.add(new TextField(columnName, data, Field.Store.NO));
                 sj.add(data);
             }
             document.add(new TextField("_DATA", sj.toString(), Field.Store.NO));
-            indexWriter.updateDocument(new Term("_QUERY", query), document);
+            log.debug("INDEX query={}\n{}", query, document);
+            if (document.getFields().size() > 4) {
+                // put/update Index when there are real data
+                indexWriter.updateDocument(new Term("_QUERY", query), document);
+                log.debug("INSERT/UPDATE = {}\n{}", query, document);
+            } else {
+                log.warn("SKIPPED FTS indexing for incomplete data set = {}", row);
+            }
         } catch (IOException exc) {
-            LOG.error("Unable to index row", exc);
+            log.error("Unable to index row", exc);
             throw new SQLException("Unable to index row", exc);
         } finally {
             indexLock.readLock().unlock();
@@ -122,26 +149,27 @@ public class LuceneFullTextSearchEngine implements FullTextSearchEngine {
      * {@inheritDoc}
      */
     @Override
-    public void commitRow(Object[] oldRow, Object[] newRow, TableData tableData) throws SQLException {
-        if (oldRow != null) {
-            if (newRow != null) {
-                indexRow(newRow, tableData);
-            } else {
-                deleteRow(oldRow, tableData);
-            }
-        } else if (newRow != null) {
+    public void commitRow(FullTextOperationData newRow, TableData tableData) throws SQLException {
+        Objects.requireNonNull(newRow, "newRow data is NULL");
+        log.debug("COMMIT row at {}: \n{}\n{}", (this.blockchain != null ? this.blockchain.getHeight() : -1), newRow, tableData);
+        if (newRow.getOperationType() == FullTextOperationData.OperationType.INSERT_UPDATE) {
+//            log.debug("INSERT/UPDATE: tableData = {}, newRow={}", tableData, newRow);
             indexRow(newRow, tableData);
+        } else {
+//            log.debug("DELETE: tableData = {}, newRow={}", tableData, newRow);
+            deleteRow(newRow, tableData);
         }
     }
 
-    private void deleteRow(Object[] row, TableData tableData) throws SQLException {
-        String query =
-            tableData.getTable() + ";" + tableData.getColumnNames().get(tableData.getDbIdColumnPosition()) + ";" + (long) row[tableData.getDbIdColumnPosition()];
+    private void deleteRow(FullTextOperationData row, TableData tableData) throws SQLException {
+        String query = row.getTableKey();
         indexLock.readLock().lock();
         try {
+//            log.debug("DELETE QUERY: query={}\n{}, oldRow={}\n", query, tableData, row);
             indexWriter.deleteDocuments(new Term("_QUERY", query));
+            log.debug("DELETE: {}", query);
         } catch (IOException exc) {
-            LOG.error("Unable to delete indexed row", exc);
+            log.error("Unable to delete indexed row", exc);
             throw new SQLException("Unable to delete indexed row", exc);
         } finally {
             indexLock.readLock().unlock();
@@ -153,13 +181,13 @@ public class LuceneFullTextSearchEngine implements FullTextSearchEngine {
      */
     @Override
     public void init() throws IOException {
+        log.trace("LuceneFullTextSearchEngine init...");
         boolean obtainedUpdateLock = false;
         if (!indexLock.writeLock().hasLock()) {
             indexLock.updateLock().lock();
             obtainedUpdateLock = true;
         }
         try {
-
             indexLock.writeLock().lock();
             try {
                 IndexWriterConfig config = new IndexWriterConfig(analyzer);
@@ -175,9 +203,9 @@ public class LuceneFullTextSearchEngine implements FullTextSearchEngine {
             } finally {
                 indexLock.writeLock().unlock();
             }
-
+            log.debug("LuceneFullTextSearchEngine init DONE");
         } catch (IOException exc) {
-            LOG.error("Unable to access the Lucene index", exc);
+            log.error("Unable to access the Lucene index", exc);
             throw new IOException("Unable to access the Lucene index", exc);
         } finally {
             if (obtainedUpdateLock) {
@@ -193,7 +221,9 @@ public class LuceneFullTextSearchEngine implements FullTextSearchEngine {
     public void commitIndex() throws SQLException {
         indexLock.writeLock().lock();
         try {
-            indexWriter.commit();
+            if (indexWriter != null && indexWriter.isOpen()) {
+                indexWriter.commit();
+            }
             DirectoryReader newReader = DirectoryReader.openIfChanged(indexReader);
             if (newReader != null) {
                 indexReader.close();
@@ -201,7 +231,7 @@ public class LuceneFullTextSearchEngine implements FullTextSearchEngine {
                 indexSearcher = new IndexSearcher(indexReader);
             }
         } catch (IOException exc) {
-            LOG.error("Unable to commit Lucene index updates", exc);
+            log.error("Unable to commit Lucene index updates", exc);
             throw new SQLException("Unable to commit Lucene index updates", exc);
         } finally {
             indexLock.writeLock().unlock();
@@ -229,9 +259,9 @@ public class LuceneFullTextSearchEngine implements FullTextSearchEngine {
                     }
                 }
                 init();
-                LOG.info("Lucene search index deleted");
+                log.info("Lucene search index deleted");
             } catch (IOException exc) {
-                LOG.error("Unable to remove Lucene index files", exc);
+                log.error("Unable to remove Lucene index files", exc);
                 throw new SQLException("Unable to remove Lucene index files", exc);
             }
         } finally {
@@ -249,11 +279,11 @@ public class LuceneFullTextSearchEngine implements FullTextSearchEngine {
         // Create the result set columns
         //
         SimpleResultSet result = new SimpleResultSet();
-        result.addColumn("SCHEMA", Types.VARCHAR, 0, 0);
-        result.addColumn("TABLE", Types.VARCHAR, 0, 0);
-        result.addColumn("COLUMNS", Types.ARRAY, 0, 0);
-        result.addColumn("KEYS", Types.ARRAY, 0, 0);
-        result.addColumn("SCORE", Types.FLOAT, 0, 0);
+        result.addColumn("schema", Types.VARCHAR, 0, 0);
+        result.addColumn("table", Types.VARCHAR, 0, 0);
+        result.addColumn("columns", Types.VARCHAR, 0, 0);
+        result.addColumn("score", Types.FLOAT, 0, 0);
+        result.addColumn("keys", Types.BIGINT, 0, 0);
         //
         // Perform the search
         //
@@ -267,26 +297,31 @@ public class LuceneFullTextSearchEngine implements FullTextSearchEngine {
             QueryParser parser = new QueryParser("_DATA", analyzer);
             parser.setDateResolution("_MODIFIED", DateTools.Resolution.SECOND);
             parser.setDefaultOperator(QueryParser.Operator.AND);
-            Query query = parser.parse("_TABLE:" + schema.toUpperCase() + "." + table.toUpperCase() + " AND (" + queryText + ")");
+            String queryStr = "_TABLE:" + schema.toLowerCase() + "." + table.toLowerCase() + " AND (" + queryText + ")";
+            Query query = parser.parse(queryStr);
             TopDocs documents = indexSearcher.search(query, limit);
             ScoreDoc[] hits = documents.scoreDocs;
             int resultCount = Math.min(hits.length, (limit == 0 ? hits.length : limit));
             int resultOffset = Math.min(offset, resultCount);
             for (int i = resultOffset; i < resultCount; i++) {
-                Document document = indexSearcher.doc(hits[i].doc);
-                String[] indexParts = document.get("_QUERY").split(";");
-                String[] nameParts = indexParts[0].split("\\.");
-                result.addRow(nameParts[0],
-                    nameParts[1],
-                    new String[]{indexParts[1]},
-                    new Long[]{Long.parseLong(indexParts[2])},
-                    hits[i].score);
+                Document document = indexSearcher.doc(hits[i].doc); // _QUERY EXAMPLE = public.account_info;DB_ID;1
+                String[] indexParts = document.get("_QUERY").split(";"); // split to: public.account_info + DB_ID + 1
+                String[] nameParts = indexParts[0].split("\\.");// split to : public + account_info
+                log.debug("create ROW nameParts[{}]={}, indexParts[{}]={}", nameParts.length, nameParts, indexParts.length, indexParts);
+                result.addRow(nameParts[0], // schema name = public
+                    nameParts[1], // table name = account_info
+                    new String[]{indexParts[1]}, // columns ?
+                    hits[i].score, // score
+                    Long.parseLong(indexParts[2]) // DB_ID key value = 1
+                );
             }
+            log.debug("HITS length = [{}], resultCount={}, resultOffset={}, query={}", hits.length, resultCount, resultOffset, queryStr);
+            log.debug("RESULT = {}\n{}", hits, documents);
         } catch (ParseException exc) {
-            LOG.debug("Lucene parse exception for query: " + queryText + "\n" + exc.getMessage());
+            log.debug("Lucene parse exception for query: " + queryText + "\n" + exc.getMessage());
             throw new SQLException("Lucene parse exception for query: " + queryText + "\n" + exc.getMessage());
         } catch (IOException exc) {
-            LOG.error("Unable to search Lucene index", exc);
+            log.error("Unable to search Lucene index", exc);
             throw new SQLException("Unable to search Lucene index", exc);
         } finally {
             indexLock.readLock().unlock();
@@ -297,8 +332,10 @@ public class LuceneFullTextSearchEngine implements FullTextSearchEngine {
     /**
      * {@inheritDoc}
      */
+    @PreDestroy
     @Override
     public void shutdown() {
+        log.trace("LuceneFullTextSearchEngine shutdown start...");
         indexLock.writeLock().lock();
         try {
             commitIndex();
@@ -308,8 +345,9 @@ public class LuceneFullTextSearchEngine implements FullTextSearchEngine {
             if (indexWriter != null) {
                 indexWriter.close();
             }
+            log.debug("LuceneFullTextSearchEngine shutdown DONE...");
         } catch (IOException | SQLException exc) {
-            LOG.error("Unable to remove Lucene index access", exc);
+            log.error("Unable to remove Lucene index access", exc);
         } finally {
             indexLock.writeLock().unlock();
         }

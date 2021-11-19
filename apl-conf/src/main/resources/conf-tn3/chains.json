@@ -10,7 +10,7 @@
       "51.15.242.197",
       "51.15.218.241",
       "51.15.130.37",
-      "51.15.46.49"
+      "51.15.102.159"
     ],
     "name": "Apollo experimental testnet",
     "description": "NOT STABLE testnet for experiments. Don't use it if you don't know what is it",
@@ -22,7 +22,8 @@
     "featuresHeightRequirement": {
       "dexReopenPendingOrdersHeight": 3000,
       "dexExpiredContractWithFinishedPhasingHeightAndStep3": 5000,
-      "transactionV2Height": 1
+      "transactionV2Height": 1,
+      "failedTransactionsAcceptanceHeight": 0
     },
     "blockchainProperties": [
       {
@@ -51,7 +52,7 @@
         },
         "shardingSettings": {
           "enabled": true,
-          "frequency": 50000
+          "frequency": 10000
         },
         "transactionFeeSettings": {
           "feeRates": [
@@ -85,7 +86,7 @@
         },
         "shardingSettings": {
           "enabled": true,
-          "frequency": 1000
+          "frequency": 2000
         },
         "transactionFeeSettings": {
           "feeRates": [

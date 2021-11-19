@@ -4,18 +4,20 @@
 
 package com.apollocurrency.aplwallet.apl.exchange.dao;
 
-import com.apollocurrency.aplwallet.apl.core.dao.appdata.cdi.transaction.JdbiHandleFactory;
-import com.apollocurrency.aplwallet.apl.core.dao.appdata.cdi.transaction.JdbiTransactionalSqlObjectDaoProxyInvocationHandler;
+import com.apollocurrency.aplwallet.apl.core.dao.DbContainerBaseTest;
+import com.apollocurrency.aplwallet.apl.core.model.dex.DexOrder;
 import com.apollocurrency.aplwallet.apl.data.DexTestData;
-import com.apollocurrency.aplwallet.apl.exchange.model.DBSortOrder;
-import com.apollocurrency.aplwallet.apl.exchange.model.DexCurrency;
-import com.apollocurrency.aplwallet.apl.exchange.model.DexOrder;
-import com.apollocurrency.aplwallet.apl.exchange.model.DexOrderDBRequest;
-import com.apollocurrency.aplwallet.apl.exchange.model.DexOrderSortBy;
-import com.apollocurrency.aplwallet.apl.exchange.model.HeightDbIdRequest;
-import com.apollocurrency.aplwallet.apl.exchange.model.OrderDbIdPaginationDbRequest;
-import com.apollocurrency.aplwallet.apl.exchange.model.OrderType;
+import com.apollocurrency.aplwallet.apl.dex.core.model.DBSortOrder;
+import com.apollocurrency.aplwallet.apl.dex.core.model.DexCurrency;
+import com.apollocurrency.aplwallet.apl.dex.core.model.DexOrderDBRequest;
+import com.apollocurrency.aplwallet.apl.dex.core.model.DexOrderSortBy;
+import com.apollocurrency.aplwallet.apl.dex.core.model.HeightDbIdRequest;
+import com.apollocurrency.aplwallet.apl.dex.core.model.OrderDbIdPaginationDbRequest;
+import com.apollocurrency.aplwallet.apl.dex.core.model.OrderType;
 import com.apollocurrency.aplwallet.apl.extension.DbExtension;
+import com.apollocurrency.aplwallet.apl.testutil.DbUtils;
+import com.apollocurrency.aplwallet.apl.util.cdi.transaction.JdbiTransactionalSqlObjectDaoProxyInvocationHandler;
+import lombok.extern.slf4j.Slf4j;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
@@ -25,27 +27,58 @@ import java.util.List;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 
+@Slf4j
+
 @Tag("slow")
-class DexOrderDaoTest {
+class DexOrderDaoTest extends DbContainerBaseTest {
+
     @RegisterExtension
-    DbExtension extension = new DbExtension();
+    static DbExtension extension = new DbExtension(mariaDBContainer);
     DexOrderDao dexOrderDao;
     DexTestData td;
 
     @BeforeEach
     void setUp() {
-        JdbiHandleFactory jdbiHandleFactory = new JdbiHandleFactory();
-        jdbiHandleFactory.setJdbi(extension.getDatabaseManager().getJdbi());
-        dexOrderDao = JdbiTransactionalSqlObjectDaoProxyInvocationHandler.createProxy(jdbiHandleFactory, DexOrderDao.class);
+        dexOrderDao = JdbiTransactionalSqlObjectDaoProxyInvocationHandler.createProxy(DbUtils.createJdbiHandleFactory(extension.getDatabaseManager()), DexOrderDao.class);
         td = new DexTestData();
     }
 
     @Test
     void testGetOrdersByType() {
-        List<DexOrder> orders = dexOrderDao.getOrders(DexOrderDBRequest.builder().type(OrderType.SELL.ordinal()).build(),
+        List<DexOrder> orders = dexOrderDao.getOrders(
+            DexOrderDBRequest.builder().type(OrderType.SELL.ordinal()).limit(10).offset(0).build(),
             DexOrderSortBy.PAIR_RATE, DBSortOrder.DESC);
 
         assertEquals(List.of(td.ORDER_SPA_2, td.ORDER_SEA_7, td.ORDER_SEA_3), orders); // sorted by pair rate desc
+    }
+
+    @Test
+    void testGetOrdersWithoutOffset() {
+        List<DexOrder> orders = dexOrderDao.getOrders(
+            DexOrderDBRequest.builder().limit(2).build(),
+            DexOrderSortBy.DB_ID, DBSortOrder.ASC);
+
+        assertEquals(List.of(td.ORDER_BEA_1, td.ORDER_SPA_2), orders); // sorted by pair rate desc
+    }
+
+    @Test
+    void testGetOrdersWithoutLimitAndOffset() {
+        List<DexOrder> orders = dexOrderDao.getOrders(
+            DexOrderDBRequest.builder().build(),
+            DexOrderSortBy.DB_ID, DBSortOrder.ASC);
+
+        assertEquals(List.of(
+            td.ORDER_BEA_1,
+            td.ORDER_SPA_2,
+            td.ORDER_BPB_1,
+            td.ORDER_SEA_3,
+            td.ORDER_BEA_4,
+            td.ORDER_BPA_5,
+            td.ORDER_BEA_6,
+            td.ORDER_BPB_2,
+            td.ORDER_SEA_7,
+            td.ORDER_BEA_8
+        ), orders); // sorted by pair rate desc
     }
 
     @Test
@@ -54,6 +87,7 @@ class DexOrderDaoTest {
                 .dbId(td.ORDER_SPA_2.getDbId())
                 .accountId(td.BOB)
                 .pairCur(DexCurrency.PAX.ordinal())
+                .limit(10).offset(0)
                 .build(),
             DexOrderSortBy.PAIR_RATE, DBSortOrder.DESC);
 

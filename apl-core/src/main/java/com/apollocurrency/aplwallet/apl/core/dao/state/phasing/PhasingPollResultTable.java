@@ -9,9 +9,8 @@ import com.apollocurrency.aplwallet.apl.core.dao.state.derived.EntityDbTable;
 import com.apollocurrency.aplwallet.apl.core.dao.state.keyfactory.DbKey;
 import com.apollocurrency.aplwallet.apl.core.dao.state.keyfactory.LongKeyFactory;
 import com.apollocurrency.aplwallet.apl.core.entity.state.phasing.PhasingPollResult;
-import com.apollocurrency.aplwallet.apl.core.service.appdata.DatabaseManager;
-import com.apollocurrency.aplwallet.apl.core.service.state.DerivedTablesRegistry;
-import com.apollocurrency.aplwallet.apl.core.shard.observer.DeleteOnTrimData;
+import com.apollocurrency.aplwallet.apl.core.db.DatabaseManager;
+import com.apollocurrency.aplwallet.apl.core.service.fulltext.FullTextOperationData;
 
 import javax.enterprise.event.Event;
 import javax.inject.Inject;
@@ -38,11 +37,10 @@ public class PhasingPollResultTable extends EntityDbTable<PhasingPollResult> {
     private static final PhasingPollResultMapper MAPPER = new PhasingPollResultMapper(KEY_FACTORY);
 
     @Inject
-    public PhasingPollResultTable(DerivedTablesRegistry derivedDbTablesRegistry,
-                                  DatabaseManager databaseManager,
-                                  Event<DeleteOnTrimData> deleteOnTrimDataEvent) {
+    public PhasingPollResultTable(DatabaseManager databaseManager,
+                                  Event<FullTextOperationData> fullTextOperationDataEvent) {
         super(TABLE_NAME, KEY_FACTORY, false, null,
-            derivedDbTablesRegistry, databaseManager, null, deleteOnTrimDataEvent);
+                databaseManager, fullTextOperationDataEvent);
     }
 
 

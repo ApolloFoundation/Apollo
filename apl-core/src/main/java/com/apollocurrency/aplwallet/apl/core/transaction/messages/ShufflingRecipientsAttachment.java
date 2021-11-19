@@ -3,10 +3,11 @@
  */
 package com.apollocurrency.aplwallet.apl.core.transaction.messages;
 
-import com.apollocurrency.aplwallet.apl.core.app.AplException;
 import com.apollocurrency.aplwallet.apl.core.transaction.TransactionTypes;
 import com.apollocurrency.aplwallet.apl.crypto.Convert;
 import com.apollocurrency.aplwallet.apl.util.Constants;
+import com.apollocurrency.aplwallet.apl.util.exception.AplException;
+import lombok.ToString;
 import org.json.simple.JSONArray;
 import org.json.simple.JSONObject;
 
@@ -16,6 +17,7 @@ import java.util.List;
 /**
  * @author al
  */
+@ToString(callSuper = true)
 public final class ShufflingRecipientsAttachment extends AbstractShufflingAttachment {
 
     final byte[][] recipientPublicKeys;

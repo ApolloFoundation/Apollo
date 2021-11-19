@@ -20,7 +20,6 @@
 
 package com.apollocurrency.aplwallet.apl.core.http.post;
 
-import com.apollocurrency.aplwallet.apl.core.app.AplException;
 import com.apollocurrency.aplwallet.apl.core.chainid.BlockchainConfig;
 import com.apollocurrency.aplwallet.apl.core.entity.state.account.Account;
 import com.apollocurrency.aplwallet.apl.core.entity.state.currency.CurrencyType;
@@ -31,6 +30,7 @@ import com.apollocurrency.aplwallet.apl.core.transaction.messages.Attachment;
 import com.apollocurrency.aplwallet.apl.core.transaction.messages.MonetarySystemCurrencyIssuanceAttachment;
 import com.apollocurrency.aplwallet.apl.crypto.Convert;
 import com.apollocurrency.aplwallet.apl.util.Constants;
+import com.apollocurrency.aplwallet.apl.util.exception.AplException;
 import org.json.simple.JSONStreamAware;
 
 import javax.enterprise.inject.Vetoed;
@@ -92,12 +92,12 @@ import javax.servlet.http.HttpServletRequest;
  * @see com.apollocurrency.aplwallet.apl.crypto.HashFunction
  */
 @Vetoed
-public final class IssueCurrency extends CreateTransaction {
+public final class IssueCurrency extends CreateTransactionHandler {
 
     public IssueCurrency() {
         super(new APITag[]{APITag.MS, APITag.CREATE_TRANSACTION},
-            "name", "code", "description", "type", "initialSupply", "reserveSupply", "maxSupply", "issuanceHeight", "minReservePerUnitATM",
-            "minDifficulty", "maxDifficulty", "ruleset", "algorithm", "decimals");
+                "name", "code", "description", "type", "initialSupply", "reserveSupply", "maxSupply", "issuanceHeight", "minReservePerUnitATM",
+                "minDifficulty", "maxDifficulty", "ruleset", "algorithm", "decimals");
     }
 
     @Override

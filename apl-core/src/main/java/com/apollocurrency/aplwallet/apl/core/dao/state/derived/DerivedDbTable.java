@@ -15,23 +15,28 @@
  */
 
 /*
- * Copyright © 2018-2019 Apollo Foundation
+ * Copyright © 2018-2021 Apollo Foundation
  */
 
 package com.apollocurrency.aplwallet.apl.core.dao.state.derived;
 
-import com.apollocurrency.aplwallet.apl.core.dao.TransactionalDataSource;
+import static com.apollocurrency.aplwallet.apl.core.service.fulltext.FullTextConfig.DEFAULT_SCHEMA;
+
+import javax.enterprise.event.Event;
+
 import com.apollocurrency.aplwallet.apl.core.dao.state.keyfactory.DbKey;
+import com.apollocurrency.aplwallet.apl.core.db.DatabaseManager;
 import com.apollocurrency.aplwallet.apl.core.entity.state.derived.DerivedEntity;
-import com.apollocurrency.aplwallet.apl.core.service.appdata.DatabaseManager;
-import com.apollocurrency.aplwallet.apl.core.service.fulltext.FullTextConfig;
-import com.apollocurrency.aplwallet.apl.core.service.state.DerivedTablesRegistry;
+import com.apollocurrency.aplwallet.apl.core.service.fulltext.FullTextOperationData;
+import com.apollocurrency.aplwallet.apl.util.StringUtils;
 import com.apollocurrency.aplwallet.apl.util.StringValidator;
 import com.apollocurrency.aplwallet.apl.util.annotation.DatabaseSpecificDml;
 import com.apollocurrency.aplwallet.apl.util.annotation.DmlMarker;
+import com.apollocurrency.aplwallet.apl.util.db.TransactionalDataSource;
+import lombok.Getter;
 import lombok.extern.slf4j.Slf4j;
 
-import javax.annotation.PostConstruct;
+import java.math.BigDecimal;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
@@ -46,21 +51,19 @@ public abstract class DerivedDbTable<T extends DerivedEntity> implements Derived
 
     protected final String table;
     protected final DatabaseManager databaseManager;
-    private final DerivedTablesRegistry derivedDbTablesRegistry;
-    private FullTextConfig fullTextConfig;
+    @Getter
+    private final String fullTextSearchColumns;
+    private FtsEventSender ftsEventSender;
 
     protected DerivedDbTable(String table,
-                             DerivedTablesRegistry derivedDbTablesRegistry,
                              DatabaseManager databaseManager,
-                             FullTextConfig fullTextConfig) {
+                             Event<FullTextOperationData> fullTextOperationDataEvent,
+                             String fullTextSearchColumns) {
         StringValidator.requireNonBlank(table, "Table name");
         this.table = table;
-        this.derivedDbTablesRegistry = Objects.requireNonNull(derivedDbTablesRegistry, "derivedDbTablesRegistry is NULL");
         this.databaseManager = Objects.requireNonNull(databaseManager, "databaseManager is NULL");
-        if (fullTextConfig != null) { // CAN BE NULL for some tables
-            this.fullTextConfig = fullTextConfig;
-        }
-        init();
+        this.ftsEventSender = new FtsEventSender(fullTextOperationDataEvent);
+        this.fullTextSearchColumns = fullTextSearchColumns;
     }
 
     public String getTableName() {
@@ -69,34 +72,6 @@ public abstract class DerivedDbTable<T extends DerivedEntity> implements Derived
 
     @Override
     public void trim(int height) {
-        // default implementation for most of derived successor
-        // 'Vote' is only one exception in that case
-        this.trim(height, true);
-    }
-
-    @Override
-    public void trim(int height, boolean isSharding) {
-/*
-        // default implementation for most of derived successor
-        // 'Vote' is only one exception in that case
-        this.trim(height, isSharding);
-*/
-    }
-
-    @PostConstruct
-    public void init() {
-        derivedDbTablesRegistry.registerDerivedTable(this);
-        log.debug("Register derived class: {}", this.getClass().getName());
-        if (this instanceof SearchableTableInterface) {
-            log.debug("Register SearchableTable derived class: {}", this.getClass().getName());
-            if (fullTextConfig != null) {
-                fullTextConfig.registerTable(table);
-            } else {
-                String error = "ERROR registering 'SearchableTable' table without supplied 'fullTextConfig' instance !!!";
-                log.error(error);
-                throw new RuntimeException(error);
-            }
-        }
     }
 
     @Override
@@ -105,16 +80,60 @@ public abstract class DerivedDbTable<T extends DerivedEntity> implements Derived
         if (!dataSource.isInTransaction()) {
             throw new IllegalStateException("Not in transaction");
         }
-        int rc;
+        int deletedRecordsCount = 0; // count for selected db_ids (only Searchable tables)
+        int deletedResult = 0; // count for deleted db_ids (any table)
         try (Connection con = dataSource.getConnection();
-             PreparedStatement pstmtDelete = con.prepareStatement("DELETE FROM " + table + " WHERE height > ?")) {
-            pstmtDelete.setInt(1, height);
-            rc = pstmtDelete.executeUpdate();
+             // delete records and return their 'db_id' values
+             PreparedStatement pstmtDelete = con.prepareStatement("DELETE FROM " + table + " WHERE height > ?");
+             PreparedStatement pstmtSelectDeletedIds = con.prepareStatement("SELECT DB_ID FROM " + table + " WHERE height > ?")) {
+
+            pstmtSelectDeletedIds.setInt(1, height); // set height to select DB_IDs to be deleted
+            pstmtDelete.setInt(1, height); // set height to delete records
+
+            // select deleted DB_IDs and fire FTS events for searchable tables to remove data from FTS
+            deletedRecordsCount = selectSearchableRecordsSendFtsEvent(deletedRecordsCount, pstmtSelectDeletedIds);
+            // deleting actual records for entity
+            deletedResult = pstmtDelete.executeUpdate();
+            if (this.isSearchable()) {
+                assert deletedResult == deletedRecordsCount; // check in debug mode only
+            }
+            log.trace("Deleted '{}' at height = {}, deletedCount = {}, deletedResult = {}",
+                this.table, height, deletedRecordsCount, deletedResult);
+
         } catch (SQLException e) {
             throw new RuntimeException(e.toString(), e);
         }
-        return rc;
+        return deletedRecordsCount;
     }
+
+    /**
+     * Select DB_IDs, check if 'searchable' and fire data into FTS to delete
+     * @param deletedRecordsCount number of deleted records
+     * @param pstmtSelectDeletedIds sql for selecting DB_ID records to deleted by previous sql
+     * @return affected number
+     * @throws SQLException error
+     */
+    protected int selectSearchableRecordsSendFtsEvent(
+        Integer deletedRecordsCount,
+        PreparedStatement pstmtSelectDeletedIds) throws SQLException {
+        // process only 'searchable'
+        if (this.isSearchable()) {
+            // do select DB_IDs first and sent FTS events
+            try (ResultSet deletedIds = pstmtSelectDeletedIds.executeQuery())  {
+                // operation data for current table
+                FullTextOperationData operationData = new FullTextOperationData(
+                    DEFAULT_SCHEMA, this.table, Thread.currentThread().getName(),
+                    FullTextOperationData.OperationType.DELETE);
+                deletedRecordsCount = ftsEventSender.fireEventsForDeletedIds(
+                    operationData, deletedIds, deletedRecordsCount);
+            } catch (SQLException e) {
+                log.error("Error on selecting DB_ID to be deleted in FTS", e);
+                throw new RuntimeException(e.toString(), e);
+            }
+        }
+        return deletedRecordsCount;
+    }
+
 
     @Override
     public boolean deleteAtHeight(T t, int height) {
@@ -188,8 +207,8 @@ public abstract class DerivedDbTable<T extends DerivedEntity> implements Derived
         Objects.requireNonNull(pstmt, "prepared statement is NULL");
         Objects.requireNonNull(minMaxValue, "minMaxValue is NULL");
         try {
-            pstmt.setLong(1, minMaxValue.getMin());
-            pstmt.setLong(2, minMaxValue.getMax());
+            pstmt.setBigDecimal(1, minMaxValue.getMin());
+            pstmt.setBigDecimal(2, minMaxValue.getMax());
             pstmt.setLong(3, limit);
             return pstmt.executeQuery();
         } catch (SQLException e) {
@@ -233,8 +252,8 @@ public abstract class DerivedDbTable<T extends DerivedEntity> implements Derived
         MinMaxValue result = null;
         try (ResultSet rs = pstmt.executeQuery()) {
             if (rs.next()) {
-                long min = rs.getLong("min_id");
-                long max = rs.getLong("max_id");
+                BigDecimal min = rs.getBigDecimal("min_id");
+                BigDecimal max = rs.getBigDecimal("max_id");
                 long rowCount = rs.getLong("count");
                 int height = rs.getInt("max_height");
                 result = new MinMaxValue(
@@ -263,4 +282,9 @@ public abstract class DerivedDbTable<T extends DerivedEntity> implements Derived
     public String getName() {
         return table;
     }
+
+    public boolean isSearchable() {
+        return !StringUtils.isBlank(this.fullTextSearchColumns);
+    }
+
 }

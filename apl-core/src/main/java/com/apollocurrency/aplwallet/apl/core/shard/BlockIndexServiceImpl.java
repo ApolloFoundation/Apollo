@@ -92,5 +92,4 @@ public class BlockIndexServiceImpl implements BlockIndexService {
         }
         return blockIndexDao.hardDeleteAllBlockIndex();
     }
-
 }

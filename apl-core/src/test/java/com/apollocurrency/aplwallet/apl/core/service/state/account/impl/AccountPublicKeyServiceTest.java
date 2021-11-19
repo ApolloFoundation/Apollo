@@ -8,10 +8,11 @@ import com.apollocurrency.aplwallet.apl.core.entity.state.account.PublicKey;
 import com.apollocurrency.aplwallet.apl.core.service.state.BlockChainInfoService;
 import com.apollocurrency.aplwallet.apl.core.service.state.account.AccountPublicKeyService;
 import com.apollocurrency.aplwallet.apl.core.service.state.account.PublicKeyDao;
-import com.apollocurrency.aplwallet.apl.core.service.state.account.TwoTablesPublicKeyDao;
 import com.apollocurrency.aplwallet.apl.data.AccountTestData;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+
+import javax.enterprise.event.Event;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
@@ -25,10 +26,12 @@ import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.spy;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.verifyNoInteractions;
 
 class AccountPublicKeyServiceTest {
     private BlockChainInfoService blockChainInfoService = mock(BlockChainInfoService.class);
     private PublicKeyDao publicKeyDao = mock(TwoTablesPublicKeyDao.class);
+    private Event event = mock(Event.class);
 
     private AccountPublicKeyService accountPublicKeyService;
     private AccountTestData testData;
@@ -36,7 +39,7 @@ class AccountPublicKeyServiceTest {
     @BeforeEach
     void setUp() {
         testData = new AccountTestData();
-        accountPublicKeyService = spy(new AccountPublicKeyServiceImpl(blockChainInfoService, publicKeyDao));
+        accountPublicKeyService = spy(new AccountPublicKeyServiceImpl(blockChainInfoService, publicKeyDao, event));
     }
 
     @Test
@@ -87,6 +90,8 @@ class AccountPublicKeyServiceTest {
         doReturn(expectedPublicKey).when(publicKeyDao).searchAll(anyLong());
         //publickKey == null
         accountPublicKeyService.apply(testData.ACC_1, testData.PUBLIC_KEY_STR.getBytes(), false);
+
+        verify(event).fire(expectedPublicKey);
         verify(publicKeyDao, times(1)).insert(any(PublicKey.class));
         assertEquals(expectedPublicKey, testData.ACC_1.getPublicKey());
     }
@@ -101,10 +106,12 @@ class AccountPublicKeyServiceTest {
         doReturn(expectedPublicKey).when(publicKeyDao).searchAll(anyLong());
         //key mismatch
         assertThrows(IllegalStateException.class, () -> accountPublicKeyService.apply(testData.ACC_1, testData.PUBLIC_KEY_STR2.getBytes(), false));
+        verifyNoInteractions(event);
         //key match
         expectedPublicKey.setHeight(998);
         accountPublicKeyService.apply(testData.ACC_1, testData.PUBLIC_KEY_STR.getBytes(), false);
         verify(publicKeyDao, times(2)).searchAll(anyLong());
+        verify(event).fire(expectedPublicKey);
         assertEquals(expectedPublicKey, testData.ACC_1.getPublicKey());
     }
 

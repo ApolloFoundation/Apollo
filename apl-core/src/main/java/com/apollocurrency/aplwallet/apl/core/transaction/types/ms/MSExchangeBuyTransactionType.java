@@ -3,9 +3,8 @@
  */
 package com.apollocurrency.aplwallet.apl.core.transaction.types.ms;
 
-import com.apollocurrency.aplwallet.apl.core.app.AplException;
 import com.apollocurrency.aplwallet.apl.core.chainid.BlockchainConfig;
-import com.apollocurrency.aplwallet.apl.core.entity.blockchain.Transaction;
+import com.apollocurrency.aplwallet.apl.core.model.Transaction;
 import com.apollocurrency.aplwallet.apl.core.entity.state.account.Account;
 import com.apollocurrency.aplwallet.apl.core.entity.state.account.LedgerEvent;
 import com.apollocurrency.aplwallet.apl.core.service.state.account.AccountService;
@@ -14,6 +13,7 @@ import com.apollocurrency.aplwallet.apl.core.service.state.currency.CurrencyServ
 import com.apollocurrency.aplwallet.apl.core.service.state.exchange.ExchangeRequestService;
 import com.apollocurrency.aplwallet.apl.core.transaction.TransactionTypes;
 import com.apollocurrency.aplwallet.apl.core.transaction.messages.MonetarySystemExchangeBuyAttachment;
+import com.apollocurrency.aplwallet.apl.util.exception.AplException;
 import org.json.simple.JSONObject;
 
 import javax.inject.Inject;
@@ -55,6 +55,14 @@ public class MSExchangeBuyTransactionType extends MSExchangeTransactionType {
     @Override
     public MonetarySystemExchangeBuyAttachment parseAttachment(JSONObject attachmentData) throws AplException.NotValidException {
         return new MonetarySystemExchangeBuyAttachment(attachmentData);
+    }
+
+    @Override
+    public void doStateDependentValidation(Transaction transaction) throws AplException.ValidationException {
+        super.doStateDependentValidation(transaction);
+        MonetarySystemExchangeBuyAttachment attachment = (MonetarySystemExchangeBuyAttachment) transaction.getAttachment();
+        long orderTotalATM = Math.multiplyExact(attachment.getUnits(), attachment.getRateATM());
+        verifyAccountBalanceSufficiency(transaction, orderTotalATM);
     }
 
     @Override

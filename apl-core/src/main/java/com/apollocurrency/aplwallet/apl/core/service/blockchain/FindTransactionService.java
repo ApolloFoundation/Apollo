@@ -5,8 +5,8 @@
 package com.apollocurrency.aplwallet.apl.core.service.blockchain;
 
 import com.apollocurrency.aplwallet.api.v2.model.TxReceipt;
-import com.apollocurrency.aplwallet.apl.core.entity.blockchain.Transaction;
-import com.apollocurrency.aplwallet.apl.core.entity.blockchain.UnconfirmedTransaction;
+import com.apollocurrency.aplwallet.apl.core.model.Transaction;
+import com.apollocurrency.aplwallet.apl.core.model.UnconfirmedTransaction;
 import com.apollocurrency.aplwallet.apl.core.model.AplQueryObject;
 
 import java.util.List;
@@ -20,11 +20,9 @@ public interface FindTransactionService {
 
     Stream<UnconfirmedTransaction> getAllUnconfirmedTransactionsStream();
 
-    long getAllUnconfirmedTransactionsCount();
-
     /**
      * Returns transaction given the transaction id up to the specified height.
-     * Looks for transactions in both transaction table in the unconfirmed and confirmed.
+     * Looks for transaction in the transaction table.
      *
      * @param transactionId the transaction id
      * @param height        the blockchain height (optional)

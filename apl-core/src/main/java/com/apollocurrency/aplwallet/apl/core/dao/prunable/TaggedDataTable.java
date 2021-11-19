@@ -6,20 +6,16 @@ package com.apollocurrency.aplwallet.apl.core.dao.prunable;
 
 import com.apollocurrency.aplwallet.apl.core.chainid.BlockchainConfig;
 import com.apollocurrency.aplwallet.apl.core.converter.db.tagged.TaggedDataMapper;
-import com.apollocurrency.aplwallet.apl.core.dao.TransactionalDataSource;
 import com.apollocurrency.aplwallet.apl.core.dao.state.derived.PrunableDbTable;
-import com.apollocurrency.aplwallet.apl.core.dao.state.derived.SearchableTableInterface;
+import com.apollocurrency.aplwallet.apl.core.dao.state.derived.SearchableTableMarkerInterface;
 import com.apollocurrency.aplwallet.apl.core.dao.state.keyfactory.DbKey;
 import com.apollocurrency.aplwallet.apl.core.dao.state.keyfactory.LongKeyFactory;
-import com.apollocurrency.aplwallet.apl.core.db.DbClause;
-import com.apollocurrency.aplwallet.apl.core.db.DbIterator;
-import com.apollocurrency.aplwallet.apl.core.db.DbUtils;
+import com.apollocurrency.aplwallet.apl.core.service.fulltext.FullTextOperationData;
+import com.apollocurrency.aplwallet.apl.util.db.DbClause;
+import com.apollocurrency.aplwallet.apl.util.db.DbIterator;
+import com.apollocurrency.aplwallet.apl.util.db.DbUtils;
 import com.apollocurrency.aplwallet.apl.core.entity.prunable.TaggedData;
-import com.apollocurrency.aplwallet.apl.core.service.appdata.DatabaseManager;
-import com.apollocurrency.aplwallet.apl.core.service.appdata.TimeService;
-import com.apollocurrency.aplwallet.apl.core.service.fulltext.FullTextConfig;
-import com.apollocurrency.aplwallet.apl.core.service.state.DerivedTablesRegistry;
-import com.apollocurrency.aplwallet.apl.core.shard.observer.DeleteOnTrimData;
+import com.apollocurrency.aplwallet.apl.core.db.DatabaseManager;
 import com.apollocurrency.aplwallet.apl.util.annotation.DatabaseSpecificDml;
 import com.apollocurrency.aplwallet.apl.util.annotation.DmlMarker;
 import com.apollocurrency.aplwallet.apl.util.injectable.PropertiesHolder;
@@ -31,6 +27,7 @@ import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
+import java.sql.Statement;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -40,10 +37,11 @@ import java.util.Map;
  */
 @Singleton
 @DatabaseSpecificDml(DmlMarker.FULL_TEXT_SEARCH)
-public class TaggedDataTable extends PrunableDbTable<TaggedData> implements SearchableTableInterface<TaggedData> {
+public class TaggedDataTable extends PrunableDbTable<TaggedData> implements SearchableTableMarkerInterface<TaggedData> {
 
-    private static final String DB_TABLE = "tagged_data";
-    private static final String FULL_TEXT_SEARCH_COLUMNS = "name,description,tags";
+    public static final String TABLE_NAME = "tagged_data";
+    public static final String FULL_TEXT_SEARCH_COLUMNS = "name,description,tags";
+
     private static final LongKeyFactory<TaggedData> taggedDataKeyFactory = new LongKeyFactory<>("id") {
         @Override
         public DbKey newKey(TaggedData taggedData) {
@@ -52,26 +50,22 @@ public class TaggedDataTable extends PrunableDbTable<TaggedData> implements Sear
     };
     private DataTagDao dataTagDao;
     private BlockchainConfig blockchainConfig;
-    private TimeService timeService;
     private TaggedDataMapper MAPPER = new TaggedDataMapper();
 
     @Inject
     public TaggedDataTable(DataTagDao dataTagDao,
                            BlockchainConfig blockchainConfig,
-                           TimeService timeService,
-                           DerivedTablesRegistry derivedDbTablesRegistry,
                            DatabaseManager databaseManager,
-                           FullTextConfig fullTextConfig,
                            PropertiesHolder propertiesHolder,
-                           Event<DeleteOnTrimData> deleteOnTrimDataEvent) {
-        super(DB_TABLE, taggedDataKeyFactory, true, FULL_TEXT_SEARCH_COLUMNS,
-            derivedDbTablesRegistry, databaseManager, fullTextConfig, blockchainConfig, propertiesHolder, deleteOnTrimDataEvent);
+                           Event<FullTextOperationData> fullTextOperationDataEvent) {
+        super(TABLE_NAME, taggedDataKeyFactory, true,
+            FULL_TEXT_SEARCH_COLUMNS, databaseManager, blockchainConfig,
+            propertiesHolder, fullTextOperationDataEvent);
         this.dataTagDao = dataTagDao;
-        this.timeService = timeService;
         this.blockchainConfig = blockchainConfig;
     }
 
-    private static DbClause getDbClause(String channel, long accountId) {
+    public static DbClause getDbClause(String channel, long accountId) {
         DbClause dbClause = DbClause.EMPTY_CLAUSE;
         if (channel != null) {
             dbClause = new DbClause.StringClause("channel", channel);
@@ -105,15 +99,15 @@ public class TaggedDataTable extends PrunableDbTable<TaggedData> implements Sear
             try (Connection con = getDatabaseManager().getDataSource().getConnection();
                  PreparedStatement pstmtSelect = con.prepareStatement("SELECT parsed_tags "
                      + "FROM tagged_data WHERE transaction_timestamp < ? AND latest = TRUE ")) {
-                int expiration = timeService.getEpochTime() - blockchainConfig.getMaxPrunableLifetime();
+                int expiration = time - blockchainConfig.getMaxPrunableLifetime();
                 pstmtSelect.setInt(1, expiration);
                 Map<String, Integer> expiredTags = new HashMap<>();
                 try (ResultSet rs = pstmtSelect.executeQuery()) {
                     while (rs.next()) {
-                        Object[] array = (Object[]) rs.getArray("parsed_tags").getArray();
-                        for (Object tag : array) {
+                        String[] array = DbUtils.getArray(rs, "parsed_tags", String[].class);
+                        for (String tag : array) {
                             Integer count = expiredTags.get(tag);
-                            expiredTags.put((String) tag, count != null ? count + 1 : 1);
+                            expiredTags.put(tag, count != null ? count + 1 : 1);
                         }
                     }
                 }
@@ -146,19 +140,20 @@ public class TaggedDataTable extends PrunableDbTable<TaggedData> implements Sear
         return super.getManyBy(getDbClause(channel, accountId), from, to);
     }
 
-    public DbIterator<TaggedData> searchData(String query, String channel, long accountId, int from, int to) {
-        return search(query, getDbClause(channel, accountId), from, to,
-            " ORDER BY ft.score DESC, tagged_data.block_timestamp DESC, tagged_data.db_id DESC ");
-    }
-
     @Override
     public void save(Connection con, TaggedData taggedData) throws SQLException {
         try (
             @DatabaseSpecificDml(DmlMarker.MERGE)
             @DatabaseSpecificDml(DmlMarker.RESERVED_KEYWORD_USE)
-            PreparedStatement pstmt = con.prepareStatement("MERGE INTO tagged_data (id, account_id, name, description, tags, parsed_tags, "
-                + "type, channel, data, is_text, filename, block_timestamp, transaction_timestamp, height, latest) "
-                + "KEY (id, height) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, TRUE)")
+            PreparedStatement pstmt = con.prepareStatement("INSERT INTO tagged_data (id, account_id, `name`, description, tags, parsed_tags, "
+                    + "`type`, channel, `data`, is_text, filename, block_timestamp, transaction_timestamp, height, latest) "
+                    + "VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, TRUE) "
+                    + "ON DUPLICATE KEY UPDATE id = VALUES(id), account_id = VALUES(account_id), `name` = VALUES(`name`), "
+                    + "description = VALUES(description), tags = VALUES(tags), parsed_tags = VALUES(parsed_tags), "
+                    + "`type` = VALUES(`type`), channel = VALUES(channel), `data` = VALUES(`data`), is_text = VALUES(is_text), "
+                    + "filename = VALUES(filename), block_timestamp = VALUES(block_timestamp), "
+                    + "transaction_timestamp = VALUES(transaction_timestamp), height = VALUES(height), latest = TRUE",
+                Statement.RETURN_GENERATED_KEYS)
         ) {
             int i = 0;
             pstmt.setLong(++i, taggedData.getId());
@@ -176,6 +171,11 @@ public class TaggedDataTable extends PrunableDbTable<TaggedData> implements Sear
             pstmt.setInt(++i, taggedData.getTransactionTimestamp());
             pstmt.setInt(++i, taggedData.getHeight());
             pstmt.executeUpdate();
+            try (final ResultSet rs = pstmt.getGeneratedKeys()) {
+                if (rs.next()) {
+                    taggedData.setDbId(rs.getLong(1));
+                }
+            }
         }
     }
 
@@ -192,35 +192,6 @@ public class TaggedDataTable extends PrunableDbTable<TaggedData> implements Sear
                 return !rs.next();
             }
         } catch (SQLException e) {
-            throw new RuntimeException(e.toString(), e);
-        }
-    }
-
-    @Override
-    public final DbIterator<TaggedData> search(String query, DbClause dbClause, int from, int to) {
-        return search(query, dbClause, from, to, " ORDER BY ft.score DESC ");
-    }
-
-    @Override
-    public final DbIterator<TaggedData> search(String query, DbClause dbClause, int from, int to, String sort) {
-        Connection con = null;
-        TransactionalDataSource dataSource = databaseManager.getDataSource();
-        try {
-            con = dataSource.getConnection();
-            @DatabaseSpecificDml(DmlMarker.FULL_TEXT_SEARCH)
-            PreparedStatement pstmt = con.prepareStatement("SELECT " + table + ".*, ft.score FROM " + table +
-                ", ftl_search('PUBLIC', '" + table + "', ?, 2147483647, 0) ft "
-                + " WHERE " + table + ".db_id = ft.keys[1] "
-                + (multiversion ? " AND " + table + ".latest = TRUE " : " ")
-                + " AND " + dbClause.getClause() + sort
-                + DbUtils.limitsClause(from, to));
-            int i = 0;
-            pstmt.setString(++i, query);
-            i = dbClause.set(pstmt, ++i);
-            i = DbUtils.setLimits(i, pstmt, from, to);
-            return getManyBy(con, pstmt, true);
-        } catch (SQLException e) {
-            DbUtils.close(con);
             throw new RuntimeException(e.toString(), e);
         }
     }

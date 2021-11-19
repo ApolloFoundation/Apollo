@@ -20,10 +20,11 @@
 
 package com.apollocurrency.aplwallet.apl.core.service.appdata;
 
-import com.apollocurrency.aplwallet.apl.core.app.AplException;
 import com.apollocurrency.aplwallet.apl.core.app.observer.events.TxEvent;
 import com.apollocurrency.aplwallet.apl.core.app.observer.events.TxEventType;
-import com.apollocurrency.aplwallet.apl.core.entity.blockchain.Transaction;
+import com.apollocurrency.aplwallet.apl.core.exception.AplTransactionValidationException;
+import com.apollocurrency.aplwallet.apl.core.model.Transaction;
+import com.apollocurrency.aplwallet.apl.core.service.blockchain.AplMemPoolFullException;
 import com.apollocurrency.aplwallet.apl.core.service.blockchain.TransactionProcessor;
 import com.apollocurrency.aplwallet.apl.util.Filter;
 import org.slf4j.Logger;
@@ -45,8 +46,8 @@ public class TransactionSchedulerService {
 
     private final Map<Transaction, TransactionScheduler> transactionSchedulers = new ConcurrentHashMap<>();
 
-    private TransactionProcessor transactionProcessor;
-    private TimeService timeService;
+    private final TransactionProcessor transactionProcessor;
+    private final TimeService timeService;
 
     @Inject
     public TransactionSchedulerService(TransactionProcessor transactionProcessor, TimeService timeService) {
@@ -113,8 +114,8 @@ public class TransactionSchedulerService {
         try {
             transactionProcessor.broadcast(transaction);
             return true;
-        } catch (AplException.ValidationException e) {
-            LOG.info("Failed to broadcast: " + e.getMessage());
+        } catch (AplMemPoolFullException | AplTransactionValidationException e) {
+            LOG.info("Failed to broadcast tx: {}, reason: {}", transaction.getStringId(), e.getMessage());
             return true;
         }
     }

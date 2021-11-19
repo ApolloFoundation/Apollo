@@ -7,11 +7,12 @@ package com.apollocurrency.aplwallet.apl.core.dao.state.account;
 import com.apollocurrency.aplwallet.apl.core.dao.state.derived.VersionedDeletableEntityDbTable;
 import com.apollocurrency.aplwallet.apl.core.dao.state.keyfactory.DbKey;
 import com.apollocurrency.aplwallet.apl.core.dao.state.keyfactory.LinkKeyFactory;
-import com.apollocurrency.aplwallet.apl.core.db.DbClause;
-import com.apollocurrency.aplwallet.apl.core.db.DbIterator;
+import com.apollocurrency.aplwallet.apl.core.service.fulltext.FullTextOperationData;
+import com.apollocurrency.aplwallet.apl.core.service.fulltext.FullTextSearchUpdater;
+import com.apollocurrency.aplwallet.apl.util.db.DbClause;
+import com.apollocurrency.aplwallet.apl.util.db.DbIterator;
 import com.apollocurrency.aplwallet.apl.core.entity.state.account.AccountCurrency;
-import com.apollocurrency.aplwallet.apl.core.service.appdata.DatabaseManager;
-import com.apollocurrency.aplwallet.apl.core.service.state.DerivedTablesRegistry;
+import com.apollocurrency.aplwallet.apl.core.db.DatabaseManager;
 import com.apollocurrency.aplwallet.apl.core.shard.observer.DeleteOnTrimData;
 import com.apollocurrency.aplwallet.apl.util.annotation.DatabaseSpecificDml;
 import com.apollocurrency.aplwallet.apl.util.annotation.DmlMarker;
@@ -41,11 +42,10 @@ public class AccountCurrencyTable extends VersionedDeletableEntityDbTable<Accoun
     };
 
     @Inject
-    public AccountCurrencyTable(DerivedTablesRegistry derivedDbTablesRegistry,
-                                DatabaseManager databaseManager,
-                                Event<DeleteOnTrimData> deleteOnTrimDataEvent) {
+    public AccountCurrencyTable(DatabaseManager databaseManager,
+                                Event<FullTextOperationData> fullTextOperationDataEvent) {
         super("account_currency", accountCurrencyDbKeyFactory, null,
-            derivedDbTablesRegistry, databaseManager, null, deleteOnTrimDataEvent);
+                databaseManager, fullTextOperationDataEvent);
     }
 
     public static DbKey newKey(long idA, long idB) {
@@ -60,7 +60,12 @@ public class AccountCurrencyTable extends VersionedDeletableEntityDbTable<Accoun
     @Override
     public void save(Connection con, AccountCurrency accountCurrency) throws SQLException {
         try (
-            @DatabaseSpecificDml(DmlMarker.MERGE) final PreparedStatement pstmt = con.prepareStatement("MERGE INTO account_currency " + "(account_id, currency_id, units, unconfirmed_units, height, latest, deleted) " + "KEY (account_id, currency_id, height) VALUES (?, ?, ?, ?, ?, TRUE, FALSE)")
+            @DatabaseSpecificDml(DmlMarker.MERGE) final PreparedStatement pstmt = con.prepareStatement("INSERT INTO account_currency "
+                + "(account_id, currency_id, units, unconfirmed_units, height, latest, deleted) "
+                + "VALUES (?, ?, ?, ?, ?, TRUE, FALSE) "
+                + "ON DUPLICATE KEY UPDATE "
+                + "account_id = VALUES(account_id), currency_id = VALUES(currency_id), units = VALUES(units), "
+                + "unconfirmed_units = VALUES(unconfirmed_units), height = VALUES(height), latest = TRUE, deleted = FALSE")
         ) {
             int i = 0;
             pstmt.setLong(++i, accountCurrency.getAccountId());

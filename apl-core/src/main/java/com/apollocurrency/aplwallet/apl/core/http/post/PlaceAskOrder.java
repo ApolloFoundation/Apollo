@@ -21,21 +21,19 @@
 package com.apollocurrency.aplwallet.apl.core.http.post;
 
 import com.apollocurrency.aplwallet.apl.core.entity.state.account.Account;
+import com.apollocurrency.aplwallet.apl.core.entity.state.asset.Asset;
 import com.apollocurrency.aplwallet.apl.core.http.APITag;
 import com.apollocurrency.aplwallet.apl.core.http.HttpParameterParserUtil;
-import com.apollocurrency.aplwallet.apl.core.entity.state.asset.Asset;
 import com.apollocurrency.aplwallet.apl.core.transaction.messages.Attachment;
-import com.apollocurrency.aplwallet.apl.core.transaction.messages.ColoredCoinsAskOrderPlacement;
-import com.apollocurrency.aplwallet.apl.core.app.AplException;
+import com.apollocurrency.aplwallet.apl.core.transaction.messages.CCAskOrderPlacementAttachment;
+import com.apollocurrency.aplwallet.apl.util.exception.AplException;
 import org.json.simple.JSONStreamAware;
 
 import javax.enterprise.inject.Vetoed;
 import javax.servlet.http.HttpServletRequest;
 
-import static com.apollocurrency.aplwallet.apl.core.http.JSONResponses.NOT_ENOUGH_ASSETS;
-
 @Vetoed
-public final class PlaceAskOrder extends CreateTransaction {
+public final class PlaceAskOrder extends CreateTransactionHandler {
 
     public PlaceAskOrder() {
         super(new APITag[]{APITag.AE, APITag.CREATE_TRANSACTION}, "asset", "quantityATU", "priceATM");
@@ -49,12 +47,8 @@ public final class PlaceAskOrder extends CreateTransaction {
         long quantityATU = HttpParameterParserUtil.getQuantityATU(req);
         Account account = HttpParameterParserUtil.getSenderAccount(req);
 
-        Attachment attachment = new ColoredCoinsAskOrderPlacement(asset.getId(), quantityATU, priceATM);
-        try {
-            return createTransaction(req, account, attachment);
-        } catch (AplException.InsufficientBalanceException e) {
-            return NOT_ENOUGH_ASSETS;
-        }
+        Attachment attachment = new CCAskOrderPlacementAttachment(asset.getId(), quantityATU, priceATM);
+        return createTransaction(req, account, attachment);
     }
 
 }

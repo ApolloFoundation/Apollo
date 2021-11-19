@@ -21,8 +21,8 @@ public class TableData {
     public TableData(int dbIdColumnPosition, String table, String schema, List<String> columnNames, List<Integer> columnTypes,
                      List<Integer> indexColumns) {
         this.dbIdColumnPosition = dbIdColumnPosition;
-        this.table = table.toUpperCase();
-        this.schema = schema.toUpperCase();
+        this.table = table.toLowerCase();
+        this.schema = schema.toLowerCase();
         this.columnNames = columnNames;
         this.columnTypes = columnTypes;
         this.indexColumns = indexColumns;
@@ -76,9 +76,9 @@ public class TableData {
             "dbIdColumnPosition=" + dbIdColumnPosition +
             ", table='" + table + '\'' +
             ", schema='" + schema + '\'' +
-            ", columnNames=" + columnNames +
-            ", columnTypes=" + columnTypes +
-            ", indexColumns=" + indexColumns +
+            ", columnNames=[" + (columnNames != null ? columnNames.size() : -1) + "]" +
+            ", columnTypes=[" + (columnTypes != null ? columnTypes.size() : -1) + "]" +
+            ", indexColumns=" + (indexColumns != null ? indexColumns.size() : -1) + "]" +
             '}';
     }
 }

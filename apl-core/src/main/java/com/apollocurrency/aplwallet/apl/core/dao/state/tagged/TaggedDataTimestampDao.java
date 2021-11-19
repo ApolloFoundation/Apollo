@@ -10,9 +10,8 @@ import com.apollocurrency.aplwallet.apl.core.dao.state.keyfactory.DbKey;
 import com.apollocurrency.aplwallet.apl.core.dao.state.keyfactory.LongKey;
 import com.apollocurrency.aplwallet.apl.core.dao.state.keyfactory.LongKeyFactory;
 import com.apollocurrency.aplwallet.apl.core.entity.state.tagged.TaggedDataTimestamp;
-import com.apollocurrency.aplwallet.apl.core.service.appdata.DatabaseManager;
-import com.apollocurrency.aplwallet.apl.core.service.state.DerivedTablesRegistry;
-import com.apollocurrency.aplwallet.apl.core.shard.observer.DeleteOnTrimData;
+import com.apollocurrency.aplwallet.apl.core.db.DatabaseManager;
+import com.apollocurrency.aplwallet.apl.core.service.fulltext.FullTextOperationData;
 import com.apollocurrency.aplwallet.apl.util.annotation.DatabaseSpecificDml;
 import com.apollocurrency.aplwallet.apl.util.annotation.DmlMarker;
 
@@ -41,10 +40,10 @@ public class TaggedDataTimestampDao extends EntityDbTable<TaggedDataTimestamp> {
     private final TagDataTimestampMapper MAPPER = new TagDataTimestampMapper();
 
     @Inject
-    public TaggedDataTimestampDao(DerivedTablesRegistry derivedDbTablesRegistry,
-                                  DatabaseManager databaseManager,
-                                  Event<DeleteOnTrimData> deleteOnTrimDataEvent) {
-        super(TABLE_NAME, timestampKeyFactory, true, null, derivedDbTablesRegistry, databaseManager, null, deleteOnTrimDataEvent);
+    public TaggedDataTimestampDao(DatabaseManager databaseManager,
+                                  Event<FullTextOperationData> fullTextOperationDataEvent) {
+        super(TABLE_NAME, timestampKeyFactory, true, null,
+            databaseManager, fullTextOperationDataEvent);
     }
 
     public DbKey newDbKey(TaggedDataTimestamp dataTimestamp) {
@@ -63,8 +62,10 @@ public class TaggedDataTimestampDao extends EntityDbTable<TaggedDataTimestamp> {
             @DatabaseSpecificDml(DmlMarker.MERGE)
             @DatabaseSpecificDml(DmlMarker.RESERVED_KEYWORD_USE)
             PreparedStatement pstmt = con.prepareStatement(
-                "MERGE INTO tagged_data_timestamp (id, timestamp, height, latest) "
-                    + "KEY (id, height) VALUES (?, ?, ?, TRUE)")
+                "INSERT INTO tagged_data_timestamp (id, `timestamp`, height, latest) "
+                    + "VALUES (?, ?, ?, TRUE) "
+                    + "ON DUPLICATE KEY UPDATE "
+                    + "id = VALUES(id) , `timestamp` = VALUES(`timestamp`), height = VALUES(height), latest = TRUE")
         ) {
             int i = 0;
             pstmt.setLong(++i, dataTimestamp.getId());

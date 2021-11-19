@@ -3,13 +3,15 @@ package com.apollocurrency.aplwallet.apl.exchange.service.graph;
 import com.apollocurrency.aplwallet.api.trading.SimpleTradingEntry;
 import com.apollocurrency.aplwallet.api.trading.TradingDataOutput;
 import com.apollocurrency.aplwallet.apl.core.app.GenesisImporter;
+import com.apollocurrency.aplwallet.apl.core.model.dex.DexOrder;
 import com.apollocurrency.aplwallet.apl.data.DexTradingTestData;
+import com.apollocurrency.aplwallet.apl.dex.core.model.DexCandlestick;
+import com.apollocurrency.aplwallet.apl.dex.core.model.DexCurrency;
+import com.apollocurrency.aplwallet.apl.dex.core.model.OrderDbIdPaginationDbRequest;
 import com.apollocurrency.aplwallet.apl.exchange.dao.DexCandlestickDao;
 import com.apollocurrency.aplwallet.apl.exchange.dao.DexOrderDao;
-import com.apollocurrency.aplwallet.apl.exchange.model.DexCandlestick;
-import com.apollocurrency.aplwallet.apl.exchange.model.DexCurrency;
-import com.apollocurrency.aplwallet.apl.exchange.model.DexOrder;
-import com.apollocurrency.aplwallet.apl.exchange.model.OrderDbIdPaginationDbRequest;
+import com.apollocurrency.aplwallet.apl.util.Convert2;
+import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
@@ -36,6 +38,10 @@ class DexTradingDataServiceTest {
     DexTradingDataService service;
     DexTradingTestData td = new DexTradingTestData();
 
+    @BeforeAll
+    static void beforeAll() {
+        Convert2.init("APL", 0);
+    }
 
     @BeforeEach
     void setUp() {
@@ -66,10 +72,10 @@ class DexTradingDataServiceTest {
         List<SimpleTradingEntry> tradingEntries = service.getFromCandlesticks(fromTimestamp, toTimestamp, DexCurrency.ETH, TimeFrame.HOUR);
 
         List<SimpleTradingEntry> expected = List.of(
-            fromRawData("0.0000032", "0.0000041", "0.0000034", "0.0000039", "1559000", "1114.9034283", 1574848800),
-            fromRawData("0.0000031", "0.0000043", "0.0000039", "0.0000034", "2447800", "1579.469088", 1574852400),
-            fromRawData("0.0000031", "0.0000036", "0.0000035", "0.0000033", "945246", "636.790145", 1574856000),
-            fromRawData("0.0000025", "0.0000036", "0.0000033", "0.0000031", "3464000", "2254.168052", 1574859600)
+            fromRawData("0.0000032", "0.0000041", "0.0000034", "0.0000039", "1559000.00", "1114.9034283", 1574848800),
+            fromRawData("0.0000031", "0.0000043", "0.0000039", "0.0000034", "2447800.00", "1579.469088", 1574852400),
+            fromRawData("0.0000031", "0.0000036", "0.0000035", "0.0000033", "945246.00", "636.790145", 1574856000),
+            fromRawData("0.0000025", "0.0000036", "0.0000033", "0.0000031", "3464000.00", "2254.168052", 1574859600)
         );
 
         assertEquals(expected, tradingEntries);
@@ -203,9 +209,9 @@ class DexTradingDataServiceTest {
         TradingDataOutput dataOutput = service.getBars(fromTimestamp, toTimestamp, DexCurrency.ETH, TimeFrame.HOUR);
 
         List<SimpleTradingEntry> expected = List.of(
-            fromRawData("0.0000031", "0.0000043", "0.0000039", "0.0000034", "2447800", "1579.469088", 1574852400),
-            fromRawData("0.0000031", "0.0000036", "0.0000035", "0.0000033", "945246", "636.790145", 1574856000),
-            fromRawData("0.0000025", "0.0000036", "0.0000033", "0.0000031", "3464000", "2254.168052", 1574859600)
+            fromRawData("0.0000031", "0.0000043", "0.0000039", "0.0000034", "2447800.00", "1579.469088", 1574852400),
+            fromRawData("0.0000031", "0.0000036", "0.0000035", "0.0000033", "945246.00", "636.790145", 1574856000),
+            fromRawData("0.0000025", "0.0000036", "0.0000033", "0.0000031", "3464000.00", "2254.168052", 1574859600)
         );
 
         assertEquals(expected, fromTable(dataOutput));
@@ -229,9 +235,9 @@ class DexTradingDataServiceTest {
         TradingDataOutput dataOutput = service.getBars(fromTimestamp, toTimestamp, DexCurrency.ETH, TimeFrame.HOUR);
 
         List<SimpleTradingEntry> expected = List.of(
-            fromRawData("0.0000031", "0.0000043", "0.0000039", "0.0000034", "2447800", "1579.469088", 1574852400),
-            fromRawData("0.0000031", "0.0000036", "0.0000035", "0.0000033", "945246", "636.790145", 1574856000),
-            fromRawData("0.0000025", "0.0000036", "0.0000033", "0.0000031", "3464000", "2254.168052", 1574859600),
+            fromRawData("0.0000031", "0.0000043", "0.0000039", "0.0000034", "2447800.00", "1579.469088", 1574852400),
+            fromRawData("0.0000031", "0.0000036", "0.0000035", "0.0000033", "945246.00", "636.790145", 1574856000),
+            fromRawData("0.0000025", "0.0000036", "0.0000033", "0.0000031", "3464000.00", "2254.168052", 1574859600),
             fromRawData("2.15", "2.5", "2.5", "2.33333", "820000", "1893332.00000", 1_574_863_200),
             fromRawData("2.1", "2.2", "2.2", "2.1", "450000", "960000.0", 1_574_870_400)
         );

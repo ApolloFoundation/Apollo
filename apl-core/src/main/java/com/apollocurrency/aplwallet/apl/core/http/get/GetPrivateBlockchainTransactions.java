@@ -4,9 +4,8 @@
 
 package com.apollocurrency.aplwallet.apl.core.http.get;
 
-import com.apollocurrency.aplwallet.apl.core.app.AplException;
-import com.apollocurrency.aplwallet.apl.core.entity.blockchain.Block;
-import com.apollocurrency.aplwallet.apl.core.entity.blockchain.Transaction;
+import com.apollocurrency.aplwallet.apl.core.model.Block;
+import com.apollocurrency.aplwallet.apl.core.model.Transaction;
 import com.apollocurrency.aplwallet.apl.core.http.APITag;
 import com.apollocurrency.aplwallet.apl.core.http.AbstractAPIRequestHandler;
 import com.apollocurrency.aplwallet.apl.core.http.HttpParameterParserUtil;
@@ -14,6 +13,7 @@ import com.apollocurrency.aplwallet.apl.core.http.JSONData;
 import com.apollocurrency.aplwallet.apl.core.service.blockchain.Blockchain;
 import com.apollocurrency.aplwallet.apl.core.transaction.TransactionTypes;
 import com.apollocurrency.aplwallet.apl.crypto.Convert;
+import com.apollocurrency.aplwallet.apl.util.exception.AplException;
 import org.json.simple.JSONArray;
 import org.json.simple.JSONObject;
 import org.json.simple.JSONStreamAware;
@@ -59,7 +59,7 @@ public final class GetPrivateBlockchainTransactions extends AbstractAPIRequestHa
         Blockchain blockchain = lookupBlockchain();
         if (height != -1) {
             Block block = blockchain.getBlockAtHeight(height);
-            blockchain.getOrLoadTransactions(block).forEach(transaction -> {
+            blockchain.loadBlockData(block).getTransactions().forEach(transaction -> {
                 if (transaction.getType().getSpec() == TransactionTypes.TransactionTypeSpec.PRIVATE_PAYMENT) {
 
                     if (transaction.getSenderId() != data.getAccountId() && transaction.getRecipientId() != data.getAccountId()) {
@@ -77,7 +77,7 @@ public final class GetPrivateBlockchainTransactions extends AbstractAPIRequestHa
         } else {
             List<Transaction> transactionList = blockchain.getTransactions(
                 data.getAccountId(), 0, type, subtype, 0, false, false,
-                false, firstIndex, lastIndex, false, false, true);
+                false, firstIndex, lastIndex, false, false, true, false, false);
             transactionList.forEach(tx -> {
 
                 if (TransactionTypes.TransactionTypeSpec.PRIVATE_PAYMENT == tx.getType().getSpec() && data.isEncrypt()) {

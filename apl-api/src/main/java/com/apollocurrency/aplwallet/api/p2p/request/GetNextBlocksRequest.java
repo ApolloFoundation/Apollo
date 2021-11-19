@@ -4,22 +4,33 @@
 
 package com.apollocurrency.aplwallet.api.p2p.request;
 
+import lombok.EqualsAndHashCode;
 import lombok.Getter;
 
 import java.util.List;
+import java.util.StringJoiner;
 import java.util.UUID;
 
 @Getter
+@EqualsAndHashCode(callSuper = true)
 public class GetNextBlocksRequest extends BaseP2PRequest {
-    private static final String requestType = "getNextBlocks";
+    private static final String REQUEST_TYPE = "getNextBlocks";
 
     private final List<String> blockIds;
     private final String blockId;
 
     public GetNextBlocksRequest(List<String> blockIds, String blockId, UUID chainId) {
-        super(requestType, chainId);
+        super(REQUEST_TYPE, chainId);
         this.blockIds = blockIds;
         this.blockId = blockId;
     }
 
+    @Override
+    public String toString() {
+        return new StringJoiner(", ", GetNextBlocksRequest.class.getSimpleName() + "[", "]")
+            .add("blockIds=[" + String.join(",", blockIds) + "]")
+            .add("blockId='" + blockId + "'")
+            .add("super=" + super.toString())
+            .toString();
+    }
 }

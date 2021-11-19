@@ -6,15 +6,15 @@ package com.apollocurrency.aplwallet.apl.core.service.state.exchange.impl;
 
 import com.apollocurrency.aplwallet.apl.core.converter.rest.IteratorToStreamConverter;
 import com.apollocurrency.aplwallet.apl.core.dao.state.exchange.ExchangeRequestTable;
-import com.apollocurrency.aplwallet.apl.core.db.DbClause;
-import com.apollocurrency.aplwallet.apl.core.db.DbIterator;
-import com.apollocurrency.aplwallet.apl.core.entity.blockchain.Block;
-import com.apollocurrency.aplwallet.apl.core.entity.blockchain.Transaction;
+import com.apollocurrency.aplwallet.apl.util.db.DbClause;
+import com.apollocurrency.aplwallet.apl.util.db.DbIterator;
+import com.apollocurrency.aplwallet.apl.core.model.Block;
+import com.apollocurrency.aplwallet.apl.core.model.Transaction;
 import com.apollocurrency.aplwallet.apl.core.entity.state.exchange.ExchangeRequest;
 import com.apollocurrency.aplwallet.apl.core.service.state.BlockChainInfoService;
 import com.apollocurrency.aplwallet.apl.core.service.state.exchange.ExchangeRequestService;
 import com.apollocurrency.aplwallet.apl.core.transaction.messages.MonetarySystemExchangeBuyAttachment;
-import com.apollocurrency.aplwallet.apl.core.transaction.messages.MonetarySystemExchangeSell;
+import com.apollocurrency.aplwallet.apl.core.transaction.messages.MSExchangeSellAttachment;
 import lombok.extern.slf4j.Slf4j;
 
 import javax.inject.Inject;
@@ -117,7 +117,7 @@ public class ExchangeRequestServiceImpl implements ExchangeRequestService {
     }
 
     @Override
-    public void addExchangeRequest(Transaction transaction, MonetarySystemExchangeSell attachment) {
+    public void addExchangeRequest(Transaction transaction, MSExchangeSellAttachment attachment) {
         Block lastBlock = blockChainInfoService.getLastBlock();
         ExchangeRequest exchangeRequest = new ExchangeRequest(
             transaction, attachment, lastBlock.getTimestamp(), lastBlock.getHeight());

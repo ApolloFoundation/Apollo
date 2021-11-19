@@ -15,8 +15,10 @@ import org.junit.jupiter.api.Test;
 import java.io.IOException;
 import java.nio.ByteBuffer;
 import java.security.MessageDigest;
+
 import static org.junit.jupiter.api.Assertions.assertArrayEquals;
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
 
 
 /**
@@ -276,6 +278,15 @@ public class CryptoTest extends TestsCommons {
         boolean expResult = true;
         boolean result = Crypto.isCanonicalPublicKey(publicKey);
         assertEquals(expResult, result);
+    }
+
+    @Test
+    void testNotCanonicalKey() {
+
+        String stringKey = "2b6b769ac39c788e846599323d6bfcd50eaa9024233355b3552bb007eed40299";
+        byte[] publicKey = Convert.parseHexString(stringKey);
+        boolean result = Crypto.isCanonicalPublicKey(publicKey);
+        assertFalse(result, "Key " + stringKey + " should not be canonical");
     }
 
     /**

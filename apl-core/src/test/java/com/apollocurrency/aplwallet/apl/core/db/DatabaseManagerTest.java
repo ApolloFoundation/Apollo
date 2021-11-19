@@ -4,25 +4,31 @@
 
 package com.apollocurrency.aplwallet.apl.core.db;
 
-import com.apollocurrency.aplwallet.apl.core.dao.TransactionalDataSource;
-import com.apollocurrency.aplwallet.apl.core.dao.appdata.cdi.transaction.JdbiHandleFactory;
-import com.apollocurrency.aplwallet.apl.core.service.appdata.impl.DatabaseManagerImpl;
+import com.apollocurrency.aplwallet.apl.core.dao.DBContainerRootTest;
 import com.apollocurrency.aplwallet.apl.core.shard.ShardManagement;
 import com.apollocurrency.aplwallet.apl.data.DbTestData;
+import com.apollocurrency.aplwallet.apl.db.updater.ShardAllScriptsDBUpdater;
+import com.apollocurrency.aplwallet.apl.db.updater.ShardInitDBUpdater;
 import com.apollocurrency.aplwallet.apl.extension.TemporaryFolderExtension;
 import com.apollocurrency.aplwallet.apl.testutil.DbPopulator;
-import com.apollocurrency.aplwallet.apl.util.Constants;
 import com.apollocurrency.aplwallet.apl.util.ThreadUtils;
+import com.apollocurrency.aplwallet.apl.util.db.DatabaseAdministratorFactoryImpl;
+import com.apollocurrency.aplwallet.apl.util.db.SelfInitializableDataSourceCreator;
+import com.apollocurrency.aplwallet.apl.util.db.TransactionalDataSource;
+import com.apollocurrency.aplwallet.apl.util.env.dirprovider.DirProvider;
 import com.apollocurrency.aplwallet.apl.util.injectable.DbProperties;
 import com.apollocurrency.aplwallet.apl.util.injectable.PropertiesHolder;
+import lombok.extern.slf4j.Slf4j;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
 import org.junit.jupiter.api.extension.RegisterExtension;
+import org.mockito.Mock;
+import org.mockito.junit.jupiter.MockitoExtension;
 
 import java.io.IOException;
-import java.nio.file.Path;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
@@ -42,39 +48,43 @@ import static org.junit.jupiter.api.Assertions.assertNotSame;
 import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertSame;
 import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyLong;
 import static org.mockito.Mockito.spy;
 import static org.mockito.Mockito.verify;
 
+@Slf4j
 @Tag("slow")
-class DatabaseManagerTest {
-
-    @RegisterExtension
-    static TemporaryFolderExtension temporaryFolderExtension = new TemporaryFolderExtension();
+@ExtendWith(MockitoExtension.class)
+class DatabaseManagerTest extends DBContainerRootTest {
     private static PropertiesHolder propertiesHolder = new PropertiesHolder();
-    private String TEMP_FILE_NAME = "apl-temp-utest-db-name";
     private DbProperties baseDbProperties;
     private DatabaseManagerImpl databaseManager;
+    @RegisterExtension
+    TemporaryFolderExtension tempFolder = new TemporaryFolderExtension();
+    @Mock
+    DirProvider dirProvider;
 
     @BeforeEach
     public void setUp() throws IOException {
-        Path dbFilePath = temporaryFolderExtension.newFolder().toPath().resolve(Constants.APPLICATION_DIR_NAME);
-        baseDbProperties = DbTestData.getDbFileProperties(dbFilePath.toAbsolutePath().toString());
-        databaseManager = new DatabaseManagerImpl(baseDbProperties, propertiesHolder, new JdbiHandleFactory());
-        DbPopulator dbPopulator = new DbPopulator(databaseManager.getDataSource(), "db/schema.sql", "db/db-manager-data.sql");
-        dbPopulator.initDb();
-        dbPopulator.populateDb();
+        baseDbProperties = DbTestData.getDbFileProperties(mariaDBContainer);
+        baseDbProperties.setDbParams("&TC_DAEMON=true&TC_REUSABLE=true");
+        databaseManager = new DatabaseManagerImpl(baseDbProperties, new SelfInitializableDataSourceCreator(new DatabaseAdministratorFactoryImpl(dirProvider), propertiesHolder));
+        DbPopulator dbPopulator = new DbPopulator(null, "db/db-manager-data.sql");
+        dbPopulator.initDb(databaseManager.getDataSource());
+        dbPopulator.populateDb(databaseManager.getDataSource());
         databaseManager.initFullShards(Set.of(2L, 3L));
     }
 
     @AfterEach
     public void tearDown() {
-        databaseManager.shutdown();
+        if (databaseManager != null) {
+            databaseManager.shutdown();
+        }
     }
 
     @Test
     void init() {
-
-        assertNotNull(databaseManager.getJdbi());
         TransactionalDataSource dataSource = databaseManager.getDataSource();
         assertNotNull(dataSource);
     }
@@ -82,10 +92,9 @@ class DatabaseManagerTest {
 
     @Test
     void createShardInitTableSchemaVersion() throws Exception {
-        assertNotNull(databaseManager.getJdbi());
         TransactionalDataSource dataSource = databaseManager.getDataSource();
         assertNotNull(dataSource);
-        TransactionalDataSource newShardDb = ((ShardManagement) databaseManager).createOrUpdateShard(1L, new ShardInitTableSchemaVersion());
+        TransactionalDataSource newShardDb = ((ShardManagement) databaseManager).createOrUpdateShard(1L, new ShardInitDBUpdater());
         assertNotNull(newShardDb);
         Connection newShardDbConnection = newShardDb.getConnection();
         assertNotNull(newShardDbConnection);
@@ -93,19 +102,18 @@ class DatabaseManagerTest {
     }
 
     private void checkTablesCreated(Connection newShardDbConnection) throws SQLException {
-        PreparedStatement sqlStatement = newShardDbConnection.prepareStatement("select * from BLOCK");
+        PreparedStatement sqlStatement = newShardDbConnection.prepareStatement("select * from block");
         sqlStatement.execute();
-        sqlStatement = newShardDbConnection.prepareStatement("select * from TRANSACTION");
+        sqlStatement = newShardDbConnection.prepareStatement("select * from transaction");
         sqlStatement.execute();
     }
-
 
     @Test
     void createShardAddConstraintsSchemaVersion() throws Exception {
         assertNotNull(databaseManager);
         TransactionalDataSource dataSource = databaseManager.getDataSource();
         assertNotNull(dataSource);
-        TransactionalDataSource newShardDb = ((ShardManagement) databaseManager).createOrUpdateShard(1L, new ShardAddConstraintsSchemaVersion());
+        TransactionalDataSource newShardDb = ((ShardManagement) databaseManager).createOrUpdateShard(1L, new ShardAllScriptsDBUpdater());
         assertNotNull(newShardDb);
         Connection newShardDbConnection = newShardDb.getConnection();
         assertNotNull(newShardDbConnection);
@@ -117,10 +125,10 @@ class DatabaseManagerTest {
         assertNotNull(databaseManager);
         TransactionalDataSource dataSource = databaseManager.getDataSource();
         assertNotNull(dataSource);
-        TransactionalDataSource newShardDb = ((ShardManagement) databaseManager).createOrUpdateShard(1L, new ShardInitTableSchemaVersion());
+        TransactionalDataSource newShardDb = ((ShardManagement) databaseManager).createOrUpdateShard(1L, new ShardInitDBUpdater());
         assertNotNull(newShardDb);
         assertNotNull(newShardDb.getConnection());
-        newShardDb = ((ShardManagement) databaseManager).createOrUpdateShard(1L, new ShardAddConstraintsSchemaVersion());
+        newShardDb = ((ShardManagement) databaseManager).createOrUpdateShard(1L, new ShardAllScriptsDBUpdater());
         assertNotNull(newShardDb);
         Connection newShardDbConnection = newShardDb.getConnection();
         assertNotNull(newShardDbConnection);
@@ -128,22 +136,12 @@ class DatabaseManagerTest {
     }
 
     @Test
-    void createTemporaryDb() throws Exception {
-        assertNotNull(databaseManager);
-        TransactionalDataSource dataSource = databaseManager.getDataSource();
-        assertNotNull(dataSource);
-        TransactionalDataSource temporaryDb = ((ShardManagement) databaseManager).createAndAddTemporaryDb(TEMP_FILE_NAME);
-        assertNotNull(temporaryDb);
-        assertNotNull(temporaryDb.getConnection());
-    }
-
-    @Test
     void testFindFullDatasources() {
         Collection<TransactionalDataSource> fullDatasources = ((ShardManagement) databaseManager).getAllFullDataSources(2L);
         assertEquals(2, fullDatasources.size());
         Iterator<TransactionalDataSource> iterator = fullDatasources.iterator();
-        assertTrue(iterator.next().getUrl().contains("shard-3"), "First datasource should represent full shard with id 3 (sorted by shard id desc)");
-        assertTrue(iterator.next().getUrl().contains("shard-2"), "Second datasource should represent full shard with id 2 (sorted by shard id desc)");
+        assertTrue(iterator.next().getUrl().contains("shard_3"), "First datasource should represent full shard with id 3 (sorted by shard id desc)");
+        assertTrue(iterator.next().getUrl().contains("shard_2"), "Second datasource should represent full shard with id 2 (sorted by shard id desc)");
     }
 
     @Test
@@ -165,7 +163,7 @@ class DatabaseManagerTest {
         TransactionalDataSource dataSource = ((ShardManagement) databaseManager).getOrInitFullShardDataSourceById(2L);
 
         assertNotNull(dataSource, "Shard datasource with shardId=2 should be full, (shard state = 100)");
-        assertTrue(dataSource.getUrl().contains("shard-2"), "Datasource should represent full shard with id 2");
+        assertTrue(dataSource.getUrl().contains("shard_2"), "Datasource should represent full shard with id 2");
     }
 
     @Test
@@ -217,7 +215,7 @@ class DatabaseManagerTest {
         List<TransactionalDataSource> fullDatasources = databaseManager.getAllFullDataSources(3L);
         assertEquals(3, fullDatasources.size());
         for (int i = 0; i < 3; i++) {
-            assertTrue(fullDatasources.get(i).getUrl().contains("shard-" + (3 - i)));
+            assertTrue(fullDatasources.get(i).getUrl().contains("shard_" + (3 - i)));
             checkDatasource(fullDatasources.get(i));
         }
         assertSame(fullDatasources.get(2), databaseManager.getShardDataSourceById(1L));
@@ -227,7 +225,7 @@ class DatabaseManagerTest {
     void testCreateShardDataSourceById() {
         TransactionalDataSource datasource = databaseManager.getOrCreateShardDataSourceById(2L);
         checkDatasource(datasource);
-        assertTrue(datasource.getUrl().contains("shard-2"));
+        assertTrue(datasource.getUrl().contains("shard_2"));
     }
 
     @Test
@@ -235,16 +233,16 @@ class DatabaseManagerTest {
         List<TransactionalDataSource> fullDatasources = databaseManager.getAllFullDataSources(null);
         TransactionalDataSource datasource = databaseManager.getOrCreateShardDataSourceById(2L);
         checkDatasource(datasource);
-        assertTrue(datasource.getUrl().contains("shard-2"));
+        assertTrue(datasource.getUrl().contains("shard_2"));
         assertSame(fullDatasources.get(1), datasource);
     }
 
     @Test
     void testGetExistingShardDataSourceByIdWithVersion() {
         List<TransactionalDataSource> fullDatasources = databaseManager.getAllFullDataSources(null);
-        TransactionalDataSource datasource = databaseManager.getOrCreateShardDataSourceById(3L, new ShardInitTableSchemaVersion());
+        TransactionalDataSource datasource = databaseManager.getOrCreateShardDataSourceById(3L, new ShardInitDBUpdater());
         checkDatasource(datasource);
-        assertTrue(datasource.getUrl().contains("shard-3"));
+        assertTrue(datasource.getUrl().contains("shard_3"));
         assertSame(fullDatasources.get(0), datasource);
     }
 
@@ -256,7 +254,7 @@ class DatabaseManagerTest {
         assertEquals(1, datasources.size());
         TransactionalDataSource dataSource = datasources.get(0);
         checkDatasource(dataSource);
-        assertTrue(dataSource.getUrl().contains("shard-1"));
+        assertTrue(dataSource.getUrl().contains("shard_1"));
     }
 
     private void checkDatasource(TransactionalDataSource dataSource) {
@@ -283,7 +281,7 @@ class DatabaseManagerTest {
         for (int i = 0; i < 20; i++) {
             futures.get(i).get();
         }
-        verify(spyDbManager).createOrUpdateShard(1L, new ShardInitTableSchemaVersion());
+        verify(spyDbManager).createOrUpdateShard(anyLong(), any(ShardInitDBUpdater.class));
 
     }
 

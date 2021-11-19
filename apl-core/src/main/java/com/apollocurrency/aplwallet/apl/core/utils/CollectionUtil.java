@@ -4,7 +4,8 @@
 
 package com.apollocurrency.aplwallet.apl.core.utils;
 
-import com.apollocurrency.aplwallet.apl.core.db.DbIterator;
+
+import com.apollocurrency.aplwallet.apl.util.db.DbIterator;
 
 import java.util.ArrayList;
 import java.util.Collection;
@@ -40,6 +41,17 @@ public class CollectionUtil {
         try (stream) {
             return stream.count();
         }
+    }
+
+    public static <T> Stream<T> limitStream(Stream<T> stream, int from, int to) {
+        int limit = to >=0 && to >= from && to < Integer.MAX_VALUE ? to - from + 1 : 0;
+        if (from > 0) {
+            stream = stream.skip(from);
+        }
+        if (limit > 0) {
+            stream = stream.limit(limit);
+        }
+        return stream;
     }
 
     public static boolean isEmpty(Collection collection) {

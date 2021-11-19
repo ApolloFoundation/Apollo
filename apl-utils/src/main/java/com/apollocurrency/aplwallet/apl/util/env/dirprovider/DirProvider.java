@@ -22,7 +22,7 @@ public interface DirProvider {
      *
      * @return File path denoting path to directory with main executable jar
      */
-    public static Path getBinDir() {
+    static Path getBinDir() {
         URI res = Paths.get("").toUri();
         if (RuntimeEnvironment.getInstance().getMain() == null) {
             RuntimeEnvironment.getInstance().setMain(DirProvider.class);

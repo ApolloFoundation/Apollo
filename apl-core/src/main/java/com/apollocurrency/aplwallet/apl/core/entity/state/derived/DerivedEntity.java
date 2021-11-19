@@ -13,12 +13,12 @@ import java.sql.SQLException;
 import java.util.Objects;
 
 @ToString
-public abstract class DerivedEntity implements Comparable {
+public abstract class DerivedEntity implements Comparable<DerivedEntity>, Cloneable {
     protected static final int DEFAULT_HEIGHT = -1;
     private static final long DEFAULT_DB_ID = 0L;
-    private DbKey dbKey;
-    private long dbId;
-    private int height;
+    private volatile DbKey dbKey;
+    private volatile long dbId;
+    private volatile int height;
 
     public DerivedEntity(Long dbId, Integer height) {
         this.dbId = dbId == null ? DEFAULT_DB_ID : dbId;
@@ -33,10 +33,9 @@ public abstract class DerivedEntity implements Comparable {
     @Override
     public boolean equals(Object o) {
         if (this == o) return true;
-        if (!(o instanceof DerivedEntity)) return false;
+        if (o == null || getClass() != o.getClass()) return false;
         DerivedEntity that = (DerivedEntity) o;
-        return dbId == that.dbId &&
-            height == that.height;
+        return dbId == that.dbId && height == that.height;
     }
 
     @Override
@@ -56,6 +55,10 @@ public abstract class DerivedEntity implements Comparable {
         return dbId;
     }
 
+    public boolean isNew() {
+        return dbId == DEFAULT_DB_ID;
+    }
+
     public void setDbId(long dbId) {
         this.dbId = dbId;
     }
@@ -69,12 +72,23 @@ public abstract class DerivedEntity implements Comparable {
     }
 
     @Override
-    public int compareTo(Object o) {
-        DerivedEntity entity = (DerivedEntity) o;
-        int res = Integer.compare(entity.getHeight(), height);
+    public int compareTo(DerivedEntity o) {
+        int res = Integer.compare(o.getHeight(), height);
         if (res == 0) {
-            res = Long.compare(entity.getDbId(), dbId);
+            res = Long.compare(o.getDbId(), dbId);
         }
         return res;
     }
+    public DerivedEntity clone() throws CloneNotSupportedException {
+        return (DerivedEntity) super.clone();
+    }
+
+    public DerivedEntity deepCopy() {
+        try {
+            return clone();
+        } catch (CloneNotSupportedException e) {
+            throw new RuntimeException(getClass().getSimpleName() + " does not support Object.clone() operation");
+        }
+    }
+
 }

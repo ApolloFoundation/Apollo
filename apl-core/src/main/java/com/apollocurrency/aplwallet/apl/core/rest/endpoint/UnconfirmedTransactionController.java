@@ -28,6 +28,10 @@ public class UnconfirmedTransactionController {
     public UnconfirmedTransactionController() {
     }
 
+    /**
+     *  Use  com.apollocurrency.aplwallet.apl.core.rest.v2.impl.InfoApiServiceImpl#getHealthInfo(javax.ws.rs.core.SecurityContext)
+     */
+    @Deprecated
     @GET
     @Path("/unconfirmed-count")
     @Produces(MediaType.APPLICATION_JSON)
@@ -35,6 +39,6 @@ public class UnconfirmedTransactionController {
         description = "Return current number of unconfirmed transsactions  ")
     @PermitAll
     public Response getUnconfirmedTransactionCount() {
-        return Response.ok(new UnconfirmedTransactionCountResponse(memPool.allProcessedCount(), memPool.pendingBroadcastQueueSize())).build();
+        return Response.ok(new UnconfirmedTransactionCountResponse(memPool.getCount(), memPool.processingQueueSize())).build();
     }
 }

@@ -1,7 +1,7 @@
 #!/bin/sh
 # Define versions
 if [ -z "${1}" ] ; then
-    NEW_VERSION=1.47.4
+    NEW_VERSION=1.48.0
 else
     NEW_VERSION=$1
 fi
@@ -21,7 +21,6 @@ CONST_PATH=apl-utils/src/main/java/com/apollocurrency/aplwallet/apl/util/Constan
 echo "Changing Constants in $CONST_PATH"
 VER_STR="VERSION"
 sed -i -e "s/\ VERSION.*/ VERSION = new Version\(\"$NEW_VERSION\"\);/g" ${CONST_PATH}
-
 PKG_PATH=apl-exec/packaging/pkg-apollo-blockchain.json
 echo "Changing pkg-apollo-blockchain.json"
 sed -i -e "s/\ \"version\".*/ \"version\": \"$NEW_VERSION\",/g" ${PKG_PATH}

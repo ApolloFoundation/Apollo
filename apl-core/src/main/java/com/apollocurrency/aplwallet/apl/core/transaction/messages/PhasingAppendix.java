@@ -1,13 +1,12 @@
 /*
- * Copyright © 2018-2020 Apollo Foundation
+ * Copyright © 2018-2021 Apollo Foundation
  */
 package com.apollocurrency.aplwallet.apl.core.transaction.messages;
 
-import com.apollocurrency.aplwallet.apl.core.app.AplException;
 import com.apollocurrency.aplwallet.apl.core.app.VoteWeighting;
-import com.apollocurrency.aplwallet.apl.core.entity.blockchain.Transaction;
 import com.apollocurrency.aplwallet.apl.core.entity.state.account.Account;
 import com.apollocurrency.aplwallet.apl.core.model.PhasingParams;
+import com.apollocurrency.aplwallet.apl.core.model.Transaction;
 import com.apollocurrency.aplwallet.apl.core.transaction.Fee;
 import com.apollocurrency.aplwallet.apl.crypto.Convert;
 import org.json.simple.JSONArray;
@@ -67,7 +66,7 @@ public class PhasingAppendix extends AbstractAppendix {
         String hashedSecret = Convert.emptyToNull((String) attachmentData.get("phasingHashedSecret"));
         if (hashedSecret != null) {
             this.hashedSecret = Convert.parseHexString(hashedSecret);
-            this.algorithm = ((Long) attachmentData.get("phasingHashedSecretAlgorithm")).byteValue();
+            this.algorithm = ((Number) attachmentData.get("phasingHashedSecretAlgorithm")).byteValue();
         } else {
             this.hashedSecret = Convert.EMPTY_BYTE;
             this.algorithm = 0;
@@ -158,12 +157,12 @@ public class PhasingAppendix extends AbstractAppendix {
     }
 
     @Override
-    public void performFullValidation(Transaction transaction, int blockHeight) throws AplException.ValidationException {
+    public void performStateDependentValidation(Transaction transaction, int blockHeight) {
         throw new UnsupportedOperationException("Validation for phasing appendix is not supported, use separate class");
     }
 
     @Override
-    public void performLightweightValidation(Transaction transaction, int blockcHeight) throws AplException.ValidationException {
+    public void performStateIndependentValidation(Transaction transaction, int blockHeight) {
         throw new UnsupportedOperationException("Validation for phasing appendix is not supported, use separate validator");
     }
 

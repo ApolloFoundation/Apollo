@@ -5,7 +5,7 @@
 package com.apollocurrency.aplwallet.apl.core.dao.appdata;
 
 import com.apollocurrency.aplwallet.apl.core.entity.appdata.TrimEntry;
-import com.apollocurrency.aplwallet.apl.core.service.appdata.DatabaseManager;
+import com.apollocurrency.aplwallet.apl.core.db.DatabaseManager;
 
 import javax.inject.Inject;
 import javax.inject.Singleton;
@@ -36,7 +36,7 @@ public class TrimDao {
                 }
             } else {
                 try (PreparedStatement pstm = con.prepareStatement(
-                    "INSERT INTO trim (height, done) VALUES (?, ?) ",
+                    "INSERT INTO `trim` (height, done) VALUES (?, ?) ",
                     Statement.RETURN_GENERATED_KEYS
                 )) {
                     pstm.setInt(1, trimEntry.getHeight());
@@ -59,7 +59,7 @@ public class TrimDao {
 
     public TrimEntry get() {
         try (Connection con = databaseManager.getDataSource().getConnection();
-             PreparedStatement pstmt = con.prepareStatement("SELECT * FROM trim");
+             PreparedStatement pstmt = con.prepareStatement("SELECT * FROM `trim`");
              ResultSet rs = pstmt.executeQuery()) {
             if (rs.next()) {
                 return new TrimEntry(rs.getLong("db_id"), rs.getInt("height"), rs.getBoolean("done"));
@@ -73,7 +73,7 @@ public class TrimDao {
 
     public void clear() {
         try (Connection con = databaseManager.getDataSource().getConnection();
-             PreparedStatement pstmt = con.prepareStatement("DELETE FROM trim");
+             PreparedStatement pstmt = con.prepareStatement("DELETE FROM `trim`");
         ) {
             pstmt.executeUpdate();
         } catch (SQLException e) {
@@ -83,7 +83,7 @@ public class TrimDao {
 
     public int count() {
         try (Connection con = databaseManager.getDataSource().getConnection();
-             PreparedStatement pstmt = con.prepareStatement("SELECT count(*) FROM trim");
+             PreparedStatement pstmt = con.prepareStatement("SELECT count(*) FROM `trim`");
              ResultSet rs = pstmt.executeQuery()
         ) {
             rs.next();

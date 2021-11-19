@@ -21,8 +21,8 @@
 package com.apollocurrency.aplwallet.apl.core.peer.endpoint;
 
 import com.apollocurrency.aplwallet.api.p2p.request.ProcessTransactionsRequest;
-import com.apollocurrency.aplwallet.apl.core.app.AplException;
-import com.apollocurrency.aplwallet.apl.core.entity.blockchain.Transaction;
+import com.apollocurrency.aplwallet.apl.core.model.Transaction;
+import com.apollocurrency.aplwallet.apl.core.exception.AplCoreLogicException;
 import com.apollocurrency.aplwallet.apl.core.peer.Peer;
 import com.apollocurrency.aplwallet.apl.core.peer.parser.ProcessTransactionsRequestParser;
 import com.apollocurrency.aplwallet.apl.core.rest.converter.TransactionDTOConverter;
@@ -63,7 +63,7 @@ public final class ProcessTransactions extends PeerRequestHandler {
             log.trace("Will process {} peer transactions from {}", transactions.size(), peer.getAnnouncedAddress());
             lookupTransactionProcessor().processPeerTransactions(transactions);
             return JSON.emptyJSON;
-        } catch (AplException.ValidationException | RuntimeException e) {
+        } catch (AplCoreLogicException e) {
             //LOG.debug("Failed to parse peer transactions: " + request.toJSONString());
             peer.blacklist(e);
             return PeerResponses.error(e);

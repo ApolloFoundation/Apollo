@@ -12,6 +12,7 @@ import lombok.NoArgsConstructor;
 import lombok.Setter;
 import lombok.ToString;
 
+import java.util.ArrayList;
 import java.util.List;
 
 @AllArgsConstructor
@@ -42,6 +43,8 @@ public class BlockDTO extends BaseDTO {
     private String previousBlockHash;
     private String blockSignature;
     private String totalAmountATM;
+    private Integer numberOfFailedTxs;
+    private List<TxErrorHashDTO> txErrorHashes = new ArrayList<>();
 
     private List<TransactionDTO> transactions;
     private List executedPhasedTransactions;

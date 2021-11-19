@@ -4,17 +4,18 @@
 
 package com.apollocurrency.aplwallet.apl.core.transaction.types.data;
 
-import com.apollocurrency.aplwallet.apl.core.app.AplException;
 import com.apollocurrency.aplwallet.apl.core.chainid.BlockchainConfig;
-import com.apollocurrency.aplwallet.apl.core.entity.blockchain.Transaction;
 import com.apollocurrency.aplwallet.apl.core.entity.state.account.Account;
 import com.apollocurrency.aplwallet.apl.core.entity.state.account.LedgerEvent;
+import com.apollocurrency.aplwallet.apl.core.exception.AplUnacceptableTransactionValidationException;
+import com.apollocurrency.aplwallet.apl.core.model.Transaction;
 import com.apollocurrency.aplwallet.apl.core.service.appdata.TimeService;
 import com.apollocurrency.aplwallet.apl.core.service.state.TaggedDataService;
 import com.apollocurrency.aplwallet.apl.core.service.state.account.AccountService;
 import com.apollocurrency.aplwallet.apl.core.transaction.TransactionTypes;
 import com.apollocurrency.aplwallet.apl.core.transaction.messages.TaggedDataUploadAttachment;
 import com.apollocurrency.aplwallet.apl.util.Constants;
+import com.apollocurrency.aplwallet.apl.util.exception.AplException;
 import lombok.extern.slf4j.Slf4j;
 import org.json.simple.JSONObject;
 
@@ -58,15 +59,17 @@ public class TaggedDataUploadTransactionType extends DataTransactionType {
 
     @Override
     public void doStateDependentValidation(Transaction transaction) throws AplException.ValidationException {
-
+        TaggedDataUploadAttachment attachment = (TaggedDataUploadAttachment) transaction.getAttachment();
+        // validate at the end of validation cycle to ensure, that transaction is not failed and data should be present for minPrunableLifetime
+        // transaction can not be failed by 'no data' reason
+        if (attachment.getData() == null && timeService.getEpochTime() - transaction.getTimestamp() < getBlockchainConfig().getMinPrunableLifetime()) {
+            throw new AplUnacceptableTransactionValidationException("Data has been pruned prematurely", transaction);
+        }
     }
 
     @Override
     public void doStateIndependentValidation(Transaction transaction) throws AplException.ValidationException {
         TaggedDataUploadAttachment attachment = (TaggedDataUploadAttachment) transaction.getAttachment();
-        if (attachment.getData() == null && timeService.getEpochTime() - transaction.getTimestamp() < getBlockchainConfig().getMinPrunableLifetime()) {
-            throw new AplException.NotCurrentlyValidException("Data has been pruned prematurely");
-        }
         if (attachment.getData() != null) {
             if (attachment.getName().length() == 0 || attachment.getName().length() > Constants.MAX_TAGGED_DATA_NAME_LENGTH) {
                 throw new AplException.NotValidException("Invalid name length: " + attachment.getName().length());

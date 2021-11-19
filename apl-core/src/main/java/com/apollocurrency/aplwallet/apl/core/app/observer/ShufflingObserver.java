@@ -8,7 +8,7 @@ package com.apollocurrency.aplwallet.apl.core.app.observer;
 import com.apollocurrency.aplwallet.apl.core.app.observer.events.BlockEvent;
 import com.apollocurrency.aplwallet.apl.core.app.observer.events.BlockEventType;
 import com.apollocurrency.aplwallet.apl.core.chainid.BlockchainConfig;
-import com.apollocurrency.aplwallet.apl.core.entity.blockchain.Block;
+import com.apollocurrency.aplwallet.apl.core.model.Block;
 import com.apollocurrency.aplwallet.apl.core.entity.state.shuffling.Shuffling;
 import com.apollocurrency.aplwallet.apl.core.service.blockchain.Blockchain;
 import com.apollocurrency.aplwallet.apl.core.service.state.ShufflingService;
@@ -42,8 +42,7 @@ public class ShufflingObserver {
         log.trace(":accept:ShufflingObserver: START onBlockApplaid AFTER_BLOCK_APPLY, block={}", block.getHeight());
         long startTime = System.currentTimeMillis();
         log.trace("Shuffling observer call at {}", block.getHeight());
-//        if (blockchain.getOrLoadTransactions(block).size() == blockchainConfig.getCurrentConfig().getMaxNumberOfTransactions()
-        if (blockchain.getBlockTransactionCount(block.getId()) == blockchainConfig.getCurrentConfig().getMaxNumberOfTransactions()
+        if (block.getTransactions().size() == blockchainConfig.getCurrentConfig().getMaxNumberOfTransactions()
             || block.getPayloadLength() > blockchainConfig.getCurrentConfig().getMaxPayloadLength() - Constants.MIN_TRANSACTION_SIZE) {
             log.trace("Will not process shufflings at {}", block.getHeight());
             return;

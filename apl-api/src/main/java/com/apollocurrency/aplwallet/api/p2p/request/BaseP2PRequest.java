@@ -10,6 +10,9 @@ import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
 
+import javax.validation.constraints.NotBlank;
+import javax.validation.constraints.NotNull;
+import java.util.StringJoiner;
 import java.util.UUID;
 
 /**
@@ -21,14 +24,30 @@ import java.util.UUID;
 @JsonInclude(JsonInclude.Include.NON_NULL)
 @JsonIgnoreProperties(ignoreUnknown = true)
 @EqualsAndHashCode
-public class BaseP2PRequest {
+public class BaseP2PRequest implements Cloneable {
 
     public final Integer protocol = 1;
+    @NotBlank
     public String requestType;
+    @NotNull
     private UUID chainId;
 
     public BaseP2PRequest(String requestType, UUID chainId) {
         this.requestType = requestType;
         this.chainId = chainId;
+    }
+
+    @Override
+    public String toString() {
+        return new StringJoiner(", ", BaseP2PRequest.class.getSimpleName() + "[", "]")
+            .add("protocol=" + protocol)
+            .add("requestType='" + requestType + "'")
+            .add("chainId=" + chainId)
+            .toString();
+    }
+
+    @Override
+    protected Object clone() throws CloneNotSupportedException {
+        return super.clone();
     }
 }

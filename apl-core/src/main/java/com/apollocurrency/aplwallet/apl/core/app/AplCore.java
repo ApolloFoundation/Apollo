@@ -15,22 +15,20 @@
  */
 
 /*
- * Copyright © 2018-2019 Apollo Foundation
+ * Copyright © 2018-2021 Apollo Foundation
  */
 
 package com.apollocurrency.aplwallet.apl.core.app;
 
 
 import com.apollocurrency.aplwallet.apl.core.addons.AddOns;
-import com.apollocurrency.aplwallet.apl.core.app.runnable.TaskDispatchManager;
 import com.apollocurrency.aplwallet.apl.core.chainid.BlockchainConfigUpdater;
+import com.apollocurrency.aplwallet.apl.core.db.DatabaseManager;
 import com.apollocurrency.aplwallet.apl.core.http.API;
 import com.apollocurrency.aplwallet.apl.core.http.APIProxy;
-import com.apollocurrency.aplwallet.apl.core.migrator.ApplicationDataMigrationManager;
 import com.apollocurrency.aplwallet.apl.core.peer.PeersService;
 import com.apollocurrency.aplwallet.apl.core.rest.filters.ApiSplitFilter;
 import com.apollocurrency.aplwallet.apl.core.rest.service.TransportInteractionService;
-import com.apollocurrency.aplwallet.apl.core.service.appdata.DatabaseManager;
 import com.apollocurrency.aplwallet.apl.core.service.appdata.TimeService;
 import com.apollocurrency.aplwallet.apl.core.service.blockchain.AbstractBlockValidator;
 import com.apollocurrency.aplwallet.apl.core.service.blockchain.Blockchain;
@@ -38,11 +36,12 @@ import com.apollocurrency.aplwallet.apl.core.service.blockchain.BlockchainImpl;
 import com.apollocurrency.aplwallet.apl.core.service.blockchain.BlockchainProcessor;
 import com.apollocurrency.aplwallet.apl.core.service.blockchain.BlockchainProcessorImpl;
 import com.apollocurrency.aplwallet.apl.core.service.blockchain.DefaultBlockValidator;
+import com.apollocurrency.aplwallet.apl.core.service.blockchain.FailedTransactionVerificationService;
+import com.apollocurrency.aplwallet.apl.core.service.blockchain.MemPool;
+import com.apollocurrency.aplwallet.apl.core.service.blockchain.ShardingInitTaskBackgroundScheduler;
 import com.apollocurrency.aplwallet.apl.core.service.blockchain.TransactionProcessingTaskScheduler;
-import com.apollocurrency.aplwallet.apl.core.service.fulltext.FullTextSearchService;
 import com.apollocurrency.aplwallet.apl.core.service.state.DerivedTablesRegistry;
 import com.apollocurrency.aplwallet.apl.core.service.state.TableRegistryInitializer;
-import com.apollocurrency.aplwallet.apl.core.shard.PrunableArchiveMigrator;
 import com.apollocurrency.aplwallet.apl.core.shard.PrunableArchiveMonitor;
 import com.apollocurrency.aplwallet.apl.core.shard.ShardService;
 import com.apollocurrency.aplwallet.apl.core.transaction.TxInitializer;
@@ -56,6 +55,7 @@ import com.apollocurrency.aplwallet.apl.util.UPnP;
 import com.apollocurrency.aplwallet.apl.util.env.RuntimeParams;
 import com.apollocurrency.aplwallet.apl.util.env.dirprovider.DirProvider;
 import com.apollocurrency.aplwallet.apl.util.injectable.PropertiesHolder;
+import com.apollocurrency.aplwallet.apl.util.service.TaskDispatchManager;
 import lombok.Setter;
 import lombok.extern.slf4j.Slf4j;
 
@@ -85,25 +85,24 @@ public final class AplCore {
     DerivedTablesRegistry dbRegistry;
     //those vars needed to just pull CDI to crerate it befor we gonna use it in threads
     private AbstractBlockValidator bcValidator;
-    private TimeService time;
+    private final TimeService time;
     private Blockchain blockchain;
     private BlockchainProcessor blockchainProcessor;
     private DatabaseManager databaseManager;
-    private FullTextSearchService fullTextSearchService;
+    //private FullTextSearchService fullTextSearchService;
     private API apiServer;
     private IDexMatcherInterface tcs;
     @Inject
-    @Setter
     private PropertiesHolder propertiesHolder;
     @Inject
-    @Setter
     private DirProvider dirProvider;
     @Inject
-    @Setter
     private AplAppStatus aplAppStatus;
     @Inject
-    @Setter
     private TaskDispatchManager taskDispatchManager;
+
+    @Inject
+    private MemPool memPool;
 
     private String initCoreTaskID;
 
@@ -155,8 +154,8 @@ public final class AplCore {
             blockchainProcessor.shutdown();
             log.info("blockchainProcessor Shutdown...");
         }
-        if (fullTextSearchService != null) fullTextSearchService.shutdown();
-        log.info("full text service shutdown...");
+//        if (fullTextSearchService != null) fullTextSearchService.shutdown();
+//        log.info("full text service shutdown...");
 
         if (databaseManager != null) {
             databaseManager.shutdown();
@@ -208,21 +207,20 @@ public final class AplCore {
             transportInteractionService = CDI.current().select(TransportInteractionService.class).get();
             transportInteractionService.start();
             aplAppStatus.durableTaskUpdate(initCoreTaskID, 5.5, "Transport control service initialization done");
+            AplHealthLogger healthLogger = CDI.current().select(AplHealthLogger.class).get();
+            healthLogger.logSystemProperties();
 
-            AplCoreRuntime.logSystemProperties();
             Thread secureRandomInitThread = initSecureRandom();
             aplAppStatus.durableTaskUpdate(initCoreTaskID, 6.0, "Database initialization");
 
             databaseManager = CDI.current().select(DatabaseManager.class).get();
             databaseManager.getDataSource();
             CDI.current().select(BlockchainConfigUpdater.class).get().updateToLatestConfig();
-            fullTextSearchService = CDI.current().select(FullTextSearchService.class).get();
-            fullTextSearchService.init(); // first time BEFORE migration
+//            fullTextSearchService = CDI.current().select(FullTextSearchService.class).get();
+//            fullTextSearchService.init(); // first time BEFORE migration
             aplAppStatus.durableTaskUpdate(initCoreTaskID, 30.0, "Database initialization done");
             aplAppStatus.durableTaskUpdate(initCoreTaskID, 30.1, "Apollo Data migration started");
 
-            ApplicationDataMigrationManager migrationManager = CDI.current().select(ApplicationDataMigrationManager.class).get();
-            migrationManager.executeDataMigration();
             BlockchainConfigUpdater blockchainConfigUpdater = CDI.current().select(BlockchainConfigUpdater.class).get();
             blockchainConfigUpdater.updateToLatestConfig(); // update config for migrated db
 
@@ -235,6 +233,8 @@ public final class AplCore {
 
             aplAppStatus.durableTaskUpdate(initCoreTaskID, 52.5, "Exchange matcher initialization");
 
+            GenesisAccounts genesisAccounts = CDI.current().select(GenesisAccounts.class).get();
+            genesisAccounts.init();
             tcs = CDI.current().select(IDexMatcherInterface.class).get();
             tcs.initialize();
 
@@ -242,8 +242,9 @@ public final class AplCore {
             bcValidator = CDI.current().select(DefaultBlockValidator.class).get();
             blockchainProcessor = CDI.current().select(BlockchainProcessorImpl.class).get();
             blockchain = CDI.current().select(BlockchainImpl.class).get();
+            blockchain.update();
             peers.init();
-            GenesisAccounts.init();
+
 
             aplAppStatus.durableTaskUpdate(initCoreTaskID, 55.0, "Apollo Account ledger initialization");
 
@@ -252,23 +253,22 @@ public final class AplCore {
             APIProxy.init();
 //            Generator.init();
             AddOns.init();
-            Helper2FA.init(databaseManager);
-            // do one time '2fa data' migration from db into files. That method is safe for multiple repeatable calls
-            Helper2FA.attemptMoveDataFromDatabase();
             aplAppStatus.durableTaskUpdate(initCoreTaskID, 70.1, "Apollo core classes initialization done");
             //signal to API that core is ready to serve requests. Should be removed as soon as all API will be on RestEasy
             ApiSplitFilter.isCoreReady = true;
 
-            PrunableArchiveMigrator migrator = CDI.current().select(PrunableArchiveMigrator.class).get();
-            migrator.migrate();
             // start shard process recovery after initialization of all derived tables but before launching threads (blockchain downloading, transaction processing)
             recoverSharding();
+
+            memPool.initCache();
 
             //Init classes to add tasks to the TaskDispatchManager
             CDI.current().select(DexOrderProcessor.class).get();
             CDI.current().select(PrunableArchiveMonitor.class).get();
             CDI.current().select(DexOperationService.class).get();
             CDI.current().select(TransactionProcessingTaskScheduler.class).get();
+            CDI.current().select(ShardingInitTaskBackgroundScheduler.class).get();
+            CDI.current().select(FailedTransactionVerificationService.class).get();
 
             //start all background tasks
             taskDispatchManager.dispatch();
@@ -289,7 +289,7 @@ public final class AplCore {
             aplAppStatus.durableTaskUpdate(initCoreTaskID, 100.0, message);
             log.info("Copyright © 2013-2016 The NXT Core Developers.");
             log.info("Copyright © 2016-2017 Jelurida IP B.V..");
-            log.info("Copyright © 2017-2020 Apollo Foundation.");
+            log.info("Copyright © 2017-2021 Apollo Foundation.");
             log.info("See LICENSE.txt for more information");
             if (API.getWelcomePageUri() != null) {
                 log.info("Client UI is at " + API.getWelcomePageUri());

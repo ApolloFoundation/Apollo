@@ -5,15 +5,13 @@
 package com.apollocurrency.aplwallet.apl.core.service.prunable.impl;
 
 import com.apollocurrency.aplwallet.api.p2p.request.GetTransactionsRequest;
-import com.apollocurrency.aplwallet.apl.core.app.AplException;
 import com.apollocurrency.aplwallet.apl.core.chainid.BlockchainConfig;
-import com.apollocurrency.aplwallet.apl.core.dao.TransactionalDataSource;
-import com.apollocurrency.aplwallet.apl.core.entity.blockchain.Transaction;
+import com.apollocurrency.aplwallet.apl.core.db.DatabaseManager;
+import com.apollocurrency.aplwallet.apl.core.model.Transaction;
 import com.apollocurrency.aplwallet.apl.core.peer.Peer;
 import com.apollocurrency.aplwallet.apl.core.peer.PeerNotConnectedException;
 import com.apollocurrency.aplwallet.apl.core.peer.PeerState;
 import com.apollocurrency.aplwallet.apl.core.peer.PeersService;
-import com.apollocurrency.aplwallet.apl.core.service.appdata.DatabaseManager;
 import com.apollocurrency.aplwallet.apl.core.service.appdata.TimeService;
 import com.apollocurrency.aplwallet.apl.core.service.blockchain.Blockchain;
 import com.apollocurrency.aplwallet.apl.core.service.blockchain.TransactionProcessor;
@@ -23,15 +21,13 @@ import com.apollocurrency.aplwallet.apl.core.transaction.PrunableTransaction;
 import com.apollocurrency.aplwallet.apl.core.transaction.messages.AbstractAppendix;
 import com.apollocurrency.aplwallet.apl.core.transaction.messages.Prunable;
 import com.apollocurrency.aplwallet.apl.core.transaction.messages.PrunableLoadingService;
+import com.apollocurrency.aplwallet.apl.util.exception.AplException;
 import lombok.extern.slf4j.Slf4j;
 import org.json.simple.JSONArray;
 import org.json.simple.JSONObject;
 
 import javax.inject.Inject;
 import javax.inject.Singleton;
-import java.sql.Connection;
-import java.sql.SQLException;
-import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
@@ -72,30 +68,23 @@ public class PrunableRestorationServiceImpl implements PrunableRestorationServic
 
     @Override
     public int restorePrunedData() {
-        TransactionalDataSource dataSource = databaseManager.getDataSource();
-        try (Connection con = dataSource.begin()) {
-            int now = timeService.getEpochTime();
-            int minTimestamp = Math.max(1, now - blockchainConfig.getMaxPrunableLifetime());
-            int maxTimestamp = Math.max(minTimestamp, now - blockchainConfig.getMinPrunableLifetime()) - 1;
-            List<PrunableTransaction> transactionList =
-                blockchain.findPrunableTransactions(con, minTimestamp, maxTimestamp);
-            transactionList.forEach(prunableTransaction -> {
-                long id = prunableTransaction.getId();
-                if ((prunableTransaction.hasPrunableAttachment() && prunableTransaction.getTransactionType().isPruned(id)) ||
-                    prunableMessageService.isPruned(id, prunableTransaction.hasPrunablePlainMessage(), prunableTransaction.hasPrunableEncryptedMessage())) {
-                    synchronized (prunableTransactions) {
-                        prunableTransactions.add(id);
-                    }
+        int now = timeService.getEpochTime();
+        int minTimestamp = Math.max(1, now - blockchainConfig.getMaxPrunableLifetime());
+        int maxTimestamp = Math.max(minTimestamp, now - blockchainConfig.getMinPrunableLifetime()) - 1;
+        List<PrunableTransaction> transactionList = blockchain.findPrunableTransactions(minTimestamp, maxTimestamp);
+        transactionList.forEach(prunableTransaction -> {
+            long id = prunableTransaction.getId();
+            if ((prunableTransaction.hasPrunableAttachment() && prunableTransaction.getTransactionType().isPruned(id)) ||
+                prunableMessageService.isPruned(id, prunableTransaction.hasPrunablePlainMessage(), prunableTransaction.hasPrunableEncryptedMessage())) {
+                synchronized (prunableTransactions) {
+                    prunableTransactions.add(id);
                 }
-            });
-            if (!prunableTransactions.isEmpty()) {
-                lastRestoreTime = 0;
             }
-            dataSource.commit();
-        } catch (SQLException e) {
-            dataSource.rollback();
-            throw new RuntimeException(e.toString(), e);
+        });
+        if (!prunableTransactions.isEmpty()) {
+            lastRestoreTime = 0;
         }
+
         synchronized (prunableTransactions) {
             return prunableTransactions.size();
         }
@@ -126,10 +115,7 @@ public class PrunableRestorationServiceImpl implements PrunableRestorationServic
             return null;
         }
 
-        List<String> transactionIds = new ArrayList<>();
-        transactionIds.add(Long.toUnsignedString(transactionId));
-
-        GetTransactionsRequest req = new GetTransactionsRequest(transactionIds, blockchainConfig.getChain().getChainId());
+        GetTransactionsRequest req = new GetTransactionsRequest(Set.of(transactionId), blockchainConfig.getChain().getChainId());
         for (Peer peer : peersList) {
             if (peer.getState() != PeerState.CONNECTED) {
                 peersService.connectPeer(peer);

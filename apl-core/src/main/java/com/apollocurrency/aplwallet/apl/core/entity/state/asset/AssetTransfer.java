@@ -6,9 +6,9 @@ package com.apollocurrency.aplwallet.apl.core.entity.state.asset;
 
 import com.apollocurrency.aplwallet.apl.core.dao.state.asset.AssetTransferTable;
 import com.apollocurrency.aplwallet.apl.core.dao.state.keyfactory.DbKey;
-import com.apollocurrency.aplwallet.apl.core.entity.blockchain.Transaction;
+import com.apollocurrency.aplwallet.apl.core.model.Transaction;
 import com.apollocurrency.aplwallet.apl.core.entity.state.derived.DerivedEntity;
-import com.apollocurrency.aplwallet.apl.core.transaction.messages.ColoredCoinsAssetTransfer;
+import com.apollocurrency.aplwallet.apl.core.transaction.messages.CCAssetTransferAttachment;
 import lombok.Getter;
 import lombok.Setter;
 import lombok.ToString;
@@ -31,7 +31,7 @@ public class AssetTransfer extends DerivedEntity {
     private long quantityATM;
     private int timestamp;
 
-    public AssetTransfer(Transaction transaction, ColoredCoinsAssetTransfer attachment, int timestamp, int height) {
+    public AssetTransfer(Transaction transaction, CCAssetTransferAttachment attachment, int timestamp, int height) {
         super(null, height);
         this.id = transaction.getId();
         this.setDbKey(AssetTransferTable.assetTransferDbKeyFactory.newKey(this.id));

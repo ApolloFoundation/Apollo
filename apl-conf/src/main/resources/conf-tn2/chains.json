@@ -19,8 +19,9 @@
     "initialSupply": 30000000000,
     "decimals": 8,
     "featuresHeightRequirement": {
-      "dexReopenPendingOrdersHeight": 300000,
-      "dexExpiredContractWithFinishedPhasingHeightAndStep3": 750000
+      "dexReopenPendingOrdersHeight": 0,
+      "dexExpiredContractWithFinishedPhasingHeightAndStep3": 0,
+      "failedTransactionsAcceptanceHeight": 0
     },
     "blockchainProperties": [
       {
@@ -34,21 +35,6 @@
       },
       {
         "height": 1,
-        "maxNumberOfTransactions": 255,
-        "maxArbitraryMessageLength": 160,
-        "blockTime": 2,
-        "maxBlockTimeLimit": 3,
-        "minBlockTimeLimit": 1,
-        "maxBalance": 30000000000,
-        "consensusSettings": {
-          "adaptiveForgingSettings": {
-            "enabled": "true",
-            "adaptiveBlockTime": 10
-          }
-        }
-      },
-      {
-        "height": 30000,
         "maxNumberOfTransactions": 255,
         "maxArbitraryMessageLength": 160,
         "maxNumberOfChildAccounts": 10,
@@ -65,26 +51,6 @@
         "shardingSettings": {
           "enabled": true,
           "frequency": 2000
-        }
-      },
-      {
-        "height": 135000,
-        "maxNumberOfTransactions": 255,
-        "maxArbitraryMessageLength": 160,
-        "maxNumberOfChildAccounts": 10,
-        "blockTime": 2,
-        "maxBlockTimeLimit": 3,
-        "minBlockTimeLimit": 1,
-        "maxBalance": 30000000000,
-        "consensusSettings": {
-          "adaptiveForgingSettings": {
-            "enabled": "true",
-            "adaptiveBlockTime": 10
-          }
-        },
-        "shardingSettings": {
-          "enabled": true,
-          "frequency": 800
         },
         "transactionFeeSettings": {
           "feeRates": [

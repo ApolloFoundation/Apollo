@@ -4,11 +4,12 @@
 
 package com.apollocurrency.aplwallet.apl.core.app.runnable;
 
-import com.apollocurrency.aplwallet.apl.core.app.AplException;
-import com.apollocurrency.aplwallet.apl.core.entity.blockchain.Transaction;
+import com.apollocurrency.aplwallet.apl.core.exception.AplTransactionValidationException;
+import com.apollocurrency.aplwallet.apl.core.model.Transaction;
 import com.apollocurrency.aplwallet.apl.core.service.appdata.TimeService;
 import com.apollocurrency.aplwallet.apl.core.service.blockchain.Blockchain;
 import com.apollocurrency.aplwallet.apl.core.service.blockchain.MemPool;
+import com.apollocurrency.aplwallet.apl.core.service.blockchain.TransactionProcessor;
 import lombok.extern.slf4j.Slf4j;
 
 import java.util.ArrayList;
@@ -16,26 +17,28 @@ import java.util.List;
 import java.util.Objects;
 
 @Slf4j
-//TODO make soft broadcast
 public class ProcessTxsToBroadcastWhenConfirmed implements Runnable {
 
-    private final MemPool memPool;
     private final TimeService timeService;
+    private final TransactionProcessor processor;
     private final Blockchain blockchain;
+    private final MemPool memPool;
 
-    public ProcessTxsToBroadcastWhenConfirmed(MemPool memPool,
+    public ProcessTxsToBroadcastWhenConfirmed(TransactionProcessor processor,
+                                              MemPool memPool,
                                               TimeService timeService,
                                               Blockchain blockchain) {
-        this.memPool = Objects.requireNonNull(memPool);
+        this.processor = Objects.requireNonNull(processor);
         this.timeService = Objects.requireNonNull(timeService);
         this.blockchain = Objects.requireNonNull(blockchain);
+        this.memPool = memPool;
         log.info("Created 'ProcessTxsToBroadcastWhenConfirmed' instance");
     }
 
     @Override
     public void run() {
         List<Transaction> txsToDelete = new ArrayList<>();
-        memPool.getAllBroadcastWhenConfirmedTransactions().forEach((tx, uncTx) -> {
+        memPool.getAllBroadcastWhenConfirmed().forEach((tx, uncTx) -> {
             try {
                 int epochTime = timeService.getEpochTime();
                 if (uncTx.getExpiration() < epochTime || tx.getExpiration() < epochTime) {
@@ -43,19 +46,16 @@ public class ProcessTxsToBroadcastWhenConfirmed implements Runnable {
                     txsToDelete.add(tx);
                 } else if (!hasTransaction(uncTx)) {
                     try {
-                        memPool.softBroadcast(uncTx);
-                    } catch (AplException.ValidationException e) {
+                        processor.broadcast(uncTx);
+                    } catch (AplTransactionValidationException e) {
                         log.debug("Unable to broadcast invalid unctx {}, reason {}", tx.getId(), e.getMessage());
                         txsToDelete.add(tx);
                     }
                 } else if (blockchain.hasTransaction(uncTx.getId())) {
                     if (!hasTransaction(tx)) {
                         try {
-                            boolean broadcasted = memPool.softBroadcast(tx);
-                            if (!broadcasted) {
-                                return;
-                            }
-                        } catch (AplException.ValidationException e) {
+                            processor.broadcast(tx);
+                        } catch (AplTransactionValidationException e) {
                             log.debug("Unable to broadcast invalid tx {}, reason {}", tx.getId(), e.getMessage());
                         }
                     }
@@ -65,10 +65,10 @@ public class ProcessTxsToBroadcastWhenConfirmed implements Runnable {
                 log.error("Unknown error during broadcasting {}", tx.getId());
             }
         });
-        memPool.removeBroadcastedWhenConfirmedTransaction(txsToDelete);
+        memPool.removeBroadcastedWhenConfirmed(txsToDelete);
     }
 
     private boolean hasTransaction(Transaction tx) {
-        return memPool.getUnconfirmedTransaction(tx.getId()) != null || blockchain.hasTransaction(tx.getId());
+        return memPool.contains(tx.getId()) || blockchain.hasTransaction(tx.getId());
     }
 }

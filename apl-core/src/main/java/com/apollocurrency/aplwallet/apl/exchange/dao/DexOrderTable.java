@@ -7,15 +7,12 @@ package com.apollocurrency.aplwallet.apl.exchange.dao;
 import com.apollocurrency.aplwallet.apl.core.converter.db.DexOrderMapper;
 import com.apollocurrency.aplwallet.apl.core.dao.state.derived.EntityDbTable;
 import com.apollocurrency.aplwallet.apl.core.dao.state.keyfactory.DbKey;
-import com.apollocurrency.aplwallet.apl.core.db.DbClause;
-import com.apollocurrency.aplwallet.apl.core.db.DbIterator;
-import com.apollocurrency.aplwallet.apl.core.service.appdata.DatabaseManager;
-import com.apollocurrency.aplwallet.apl.core.service.state.DerivedTablesRegistry;
-import com.apollocurrency.aplwallet.apl.core.shard.observer.DeleteOnTrimData;
+import com.apollocurrency.aplwallet.apl.core.db.DatabaseManager;
+import com.apollocurrency.aplwallet.apl.core.model.dex.DexOrder;
+import com.apollocurrency.aplwallet.apl.core.service.fulltext.FullTextOperationData;
 import com.apollocurrency.aplwallet.apl.core.utils.CollectionUtil;
-import com.apollocurrency.aplwallet.apl.eth.utils.EthUtil;
-import com.apollocurrency.aplwallet.apl.exchange.model.DexOrder;
-import com.apollocurrency.aplwallet.apl.exchange.model.OrderStatus;
+import com.apollocurrency.aplwallet.apl.dex.eth.utils.EthUtil;
+import com.apollocurrency.aplwallet.apl.util.db.DbIterator;
 import lombok.extern.slf4j.Slf4j;
 
 import javax.enterprise.event.Event;
@@ -42,10 +39,10 @@ public class DexOrderTable extends EntityDbTable<DexOrder> {
     private DexOrderMapper dexOrderMapper = new DexOrderMapper();
 
     @Inject
-    public DexOrderTable(DerivedTablesRegistry derivedDbTablesRegistry,
-                         DatabaseManager databaseManager,
-                         Event<DeleteOnTrimData> deleteOnTrimDataEvent) {
-        super(TABLE_NAME, keyFactory, true, null, derivedDbTablesRegistry, databaseManager, null, deleteOnTrimDataEvent);
+    public DexOrderTable(DatabaseManager databaseManager,
+                         Event<FullTextOperationData> fullTextOperationDataEvent) {
+        super(TABLE_NAME, keyFactory, true, null,
+            databaseManager, fullTextOperationDataEvent);
     }
 
     @Override
@@ -62,7 +59,7 @@ public class DexOrderTable extends EntityDbTable<DexOrder> {
         try (Connection con = getDatabaseManager().getDataSource().getConnection();
              PreparedStatement pstmt = con
                  .prepareStatement("SELECT * FROM dex_offer AS offer where latest = true " +
-                     "AND offer.status = 0 AND offer.finish_time < ?")
+                     "AND offer.status = 0 AND offer.finish_time < ? ORDER BY db_id ASC")
         ) {
             int i = 0;
             pstmt.setLong(++i, currentTime);
@@ -77,10 +74,6 @@ public class DexOrderTable extends EntityDbTable<DexOrder> {
         return dexOrders;
     }
 
-    public List<DexOrder> getWaitingPhasingResultOrders() {
-        return CollectionUtil.toList(getManyBy(new DbClause.ByteClause("status", (byte) OrderStatus.PHASING_RESULT_PENDING.ordinal()), 0, -1));
-    }
-
     @Override
     public void save(Connection con, DexOrder order) throws SQLException {
         log.debug("Save new order: id:{}, accountId:{}, type:{}, order_currency:{}, :{}, pair_currency:{}, " +
@@ -88,9 +81,14 @@ public class DexOrderTable extends EntityDbTable<DexOrder> {
             order.getId(), order.getAccountId(), order.getType(), order.getOrderCurrency(), order.getOrderAmount(), order.getPairCurrency(),
             order.getFinishTime(), order.getStatus(), order.getHeight(), order.getFromAddress(), order.getToAddress());
 
-        try (PreparedStatement pstmt = con.prepareStatement("MERGE INTO dex_offer (id, account_id, type, " +
-            "offer_currency, offer_amount, pair_currency, pair_rate, finish_time, status, height, latest, from_address, to_address) " +
-            "KEY (id, height) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, TRUE, ?, ?)")) {
+        try (PreparedStatement pstmt = con.prepareStatement("INSERT INTO dex_offer (id, account_id, `type`, " +
+            "offer_currency, offer_amount, pair_currency, pair_rate, finish_time, status, height, latest, from_address, to_address) "
+            + "VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, TRUE, ?, ?) "
+            + "ON DUPLICATE KEY UPDATE id = VALUES(id), account_id = VALUES(account_id), `type` = VALUES(`type`), "
+            + "offer_currency = VALUES(offer_currency), offer_amount = VALUES(offer_amount), pair_currency = VALUES(pair_currency), "
+            + "pair_rate = VALUES(pair_rate), finish_time = VALUES(finish_time), status = VALUES(status), "
+            + "height = VALUES(height), latest = TRUE , from_address = VALUES(from_address), to_address = VALUES(to_address)")
+        ) {
 
             int i = 0;
             pstmt.setLong(++i, order.getId());
@@ -114,7 +112,8 @@ public class DexOrderTable extends EntityDbTable<DexOrder> {
         try (Connection con = databaseManager.getDataSource().getConnection();
              PreparedStatement pstm = con.prepareStatement(
                  "SELECT * FROM dex_offer LEFT JOIN dex_contract ON dex_offer.id = dex_contract.counter_offer_id " +
-                     "OR dex_offer.id = dex_contract.offer_id WHERE dex_contract.id IS NULL AND dex_offer.status=1 AND dex_offer.height < ? AND dex_offer.latest = true")) {
+                     "OR dex_offer.id = dex_contract.offer_id WHERE dex_contract.id IS NULL AND dex_offer.status=1 " +
+                     "AND dex_offer.height < ? AND dex_offer.latest = true ORDER BY dex_offer.db_id ASC")) {
             pstm.setInt(1, height);
             return CollectionUtil.toList(getManyBy(con, pstm, false));
         } catch (SQLException e) {

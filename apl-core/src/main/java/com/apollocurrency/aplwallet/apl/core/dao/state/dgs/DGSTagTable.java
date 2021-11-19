@@ -9,9 +9,8 @@ import com.apollocurrency.aplwallet.apl.core.dao.state.derived.EntityDbTable;
 import com.apollocurrency.aplwallet.apl.core.dao.state.keyfactory.DbKey;
 import com.apollocurrency.aplwallet.apl.core.dao.state.keyfactory.StringKeyFactory;
 import com.apollocurrency.aplwallet.apl.core.entity.state.dgs.DGSTag;
-import com.apollocurrency.aplwallet.apl.core.service.appdata.DatabaseManager;
-import com.apollocurrency.aplwallet.apl.core.service.state.DerivedTablesRegistry;
-import com.apollocurrency.aplwallet.apl.core.shard.observer.DeleteOnTrimData;
+import com.apollocurrency.aplwallet.apl.core.db.DatabaseManager;
+import com.apollocurrency.aplwallet.apl.core.service.fulltext.FullTextOperationData;
 import com.apollocurrency.aplwallet.apl.util.annotation.DatabaseSpecificDml;
 import com.apollocurrency.aplwallet.apl.util.annotation.DmlMarker;
 
@@ -22,6 +21,7 @@ import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
+import java.sql.Statement;
 
 @Singleton
 public class DGSTagTable extends EntityDbTable<DGSTag> {
@@ -38,11 +38,10 @@ public class DGSTagTable extends EntityDbTable<DGSTag> {
     private static final DGSTagMapper MAPPER = new DGSTagMapper(KEY_FACTORY);
 
     @Inject
-    public DGSTagTable(DerivedTablesRegistry derivedDbTablesRegistry,
-                       DatabaseManager databaseManager,
-                       Event<DeleteOnTrimData> deleteOnTrimDataEvent) {
+    public DGSTagTable(DatabaseManager databaseManager,
+                       Event<FullTextOperationData> fullTextOperationDataEvent) {
         super(TABLE_NAME, KEY_FACTORY, true, null,
-            derivedDbTablesRegistry, databaseManager, null, deleteOnTrimDataEvent);
+                databaseManager, fullTextOperationDataEvent);
     }
 
     @Override
@@ -56,8 +55,11 @@ public class DGSTagTable extends EntityDbTable<DGSTag> {
     public void save(Connection con, DGSTag tag) throws SQLException {
         try (
             @DatabaseSpecificDml(DmlMarker.MERGE)
-            PreparedStatement pstmt = con.prepareStatement("MERGE INTO tag (tag, in_stock_count, total_count, height, latest) "
-                + "KEY (tag, height) VALUES (?, ?, ?, ?, TRUE)")
+            PreparedStatement pstmt = con.prepareStatement("INSERT INTO tag (tag, in_stock_count, total_count, height, latest) "
+                + "VALUES (?, ?, ?, ?, TRUE) "
+                + "ON DUPLICATE KEY UPDATE "
+                + "tag = VALUES(tag), in_stock_count = VALUES(in_stock_count), total_count = VALUES(total_count), "
+                + "height = VALUES(height), latest = TRUE", Statement.RETURN_GENERATED_KEYS)
         ) {
             int i = 0;
             pstmt.setString(++i, tag.getTag());
@@ -65,6 +67,11 @@ public class DGSTagTable extends EntityDbTable<DGSTag> {
             pstmt.setInt(++i, tag.getTotalCount());
             pstmt.setInt(++i, tag.getHeight());
             pstmt.executeUpdate();
+            try (final ResultSet rs = pstmt.getGeneratedKeys()) {
+                if (rs.next()) {
+                    tag.setDbId(rs.getLong(1));
+                }
+            }
         }
     }
 

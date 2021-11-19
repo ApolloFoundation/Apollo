@@ -3,9 +3,8 @@
  */
 package com.apollocurrency.aplwallet.apl.core.transaction.types.cc;
 
-import com.apollocurrency.aplwallet.apl.core.app.AplException;
 import com.apollocurrency.aplwallet.apl.core.chainid.BlockchainConfig;
-import com.apollocurrency.aplwallet.apl.core.entity.blockchain.Transaction;
+import com.apollocurrency.aplwallet.apl.core.model.Transaction;
 import com.apollocurrency.aplwallet.apl.core.entity.state.account.Account;
 import com.apollocurrency.aplwallet.apl.core.entity.state.account.LedgerEvent;
 import com.apollocurrency.aplwallet.apl.core.entity.state.order.AskOrder;
@@ -15,7 +14,8 @@ import com.apollocurrency.aplwallet.apl.core.service.state.order.OrderService;
 import com.apollocurrency.aplwallet.apl.core.service.state.qualifier.AskOrderService;
 import com.apollocurrency.aplwallet.apl.core.transaction.TransactionTypes;
 import com.apollocurrency.aplwallet.apl.core.transaction.messages.ColoredCoinsAskOrderCancellation;
-import com.apollocurrency.aplwallet.apl.core.transaction.messages.ColoredCoinsAskOrderPlacement;
+import com.apollocurrency.aplwallet.apl.core.transaction.messages.CCAskOrderPlacementAttachment;
+import com.apollocurrency.aplwallet.apl.util.exception.AplException;
 import org.json.simple.JSONObject;
 
 import javax.inject.Inject;
@@ -24,11 +24,11 @@ import java.nio.ByteBuffer;
 
 @Singleton
 class CCAskOrderCancellationTransactionType extends CCOrderCancellationTransactionType {
-    private final OrderService<AskOrder, ColoredCoinsAskOrderPlacement> askOrderService;
+    private final OrderService<AskOrder, CCAskOrderPlacementAttachment> askOrderService;
     private final AccountAssetService accountAssetService;
 
     @Inject
-    public CCAskOrderCancellationTransactionType(BlockchainConfig blockchainConfig, AccountService accountService, @AskOrderService OrderService<AskOrder, ColoredCoinsAskOrderPlacement> askOrderService, AccountAssetService accountAssetService) {
+    public CCAskOrderCancellationTransactionType(BlockchainConfig blockchainConfig, AccountService accountService, @AskOrderService OrderService<AskOrder, CCAskOrderPlacementAttachment> askOrderService, AccountAssetService accountAssetService) {
         super(blockchainConfig, accountService);
         this.askOrderService = askOrderService;
         this.accountAssetService = accountAssetService;

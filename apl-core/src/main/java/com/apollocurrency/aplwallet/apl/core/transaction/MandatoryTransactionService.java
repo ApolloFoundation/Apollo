@@ -1,7 +1,7 @@
 package com.apollocurrency.aplwallet.apl.core.transaction;
 
-import com.apollocurrency.aplwallet.apl.core.entity.blockchain.MandatoryTransaction;
-import com.apollocurrency.aplwallet.apl.core.entity.blockchain.Transaction;
+import com.apollocurrency.aplwallet.apl.core.model.MandatoryTransaction;
+import com.apollocurrency.aplwallet.apl.core.model.Transaction;
 
 import java.util.List;
 
@@ -9,7 +9,7 @@ public interface MandatoryTransactionService {
 
     List<MandatoryTransaction> getAll(long from, int limit);
 
-    void add(Transaction tx, byte[] requiredTxHash);
+    void saveMandatoryTransaction(Transaction tx, byte[] requiredTxHash);
 
     int clearAll();
 

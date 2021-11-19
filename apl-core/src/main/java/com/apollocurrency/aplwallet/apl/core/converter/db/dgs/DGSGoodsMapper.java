@@ -6,8 +6,8 @@ package com.apollocurrency.aplwallet.apl.core.converter.db.dgs;
 
 import com.apollocurrency.aplwallet.apl.core.dao.state.keyfactory.KeyFactory;
 import com.apollocurrency.aplwallet.apl.core.dao.state.mapper.VersionedDerivedEntityMapper;
-import com.apollocurrency.aplwallet.apl.core.db.DbUtils;
 import com.apollocurrency.aplwallet.apl.core.entity.state.dgs.DGSGoods;
+import com.apollocurrency.aplwallet.apl.util.db.DbUtils;
 import org.jdbi.v3.core.statement.StatementContext;
 
 import java.sql.ResultSet;
@@ -26,7 +26,7 @@ public class DGSGoodsMapper extends VersionedDerivedEntityMapper<DGSGoods> {
         String name = rs.getString("name");
         String description = rs.getString("description");
         String tags = rs.getString("tags");
-        String[] parsedTags = DbUtils.getArray(rs, "parsed_tags", String[].class);
+        String[] parsedTags = DbUtils.getArray(rs, "parsed_tags", String[].class, new String[]{});
         int quantity = rs.getInt("quantity");
         long priceATM = rs.getLong("price");
         boolean delisted = rs.getBoolean("delisted");

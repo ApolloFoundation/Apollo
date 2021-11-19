@@ -6,7 +6,7 @@ package com.apollocurrency.aplwallet.apl.core.app.runnable;
 
 import com.apollocurrency.aplwallet.apl.core.chainid.BlockchainConfig;
 import com.apollocurrency.aplwallet.apl.core.entity.appdata.GeneratorMemoryEntity;
-import com.apollocurrency.aplwallet.apl.core.entity.blockchain.Block;
+import com.apollocurrency.aplwallet.apl.core.model.Block;
 import com.apollocurrency.aplwallet.apl.core.service.appdata.TimeService;
 import com.apollocurrency.aplwallet.apl.core.service.appdata.impl.GeneratorServiceImpl;
 import com.apollocurrency.aplwallet.apl.core.service.blockchain.Blockchain;
@@ -75,6 +75,7 @@ public class GenerateBlocksTask implements Runnable {
         try {
             try {
                 globalSync.updateLock();
+                long forgingIterationStart = System.currentTimeMillis();
                 log.trace("Acquire generation lock");
                 try {
                     Block lastBlock = blockchain.getLastBlock();
@@ -98,7 +99,7 @@ public class GenerateBlocksTask implements Runnable {
                                     log.debug("Pop off: {} will pop off last block {}", generator.toString(), lastBlock.getStringId());
                                     List<Block> poppedOffBlock = lookupBlockchainProcessor().popOffToCommonBlock(previousBlock);
                                     for (Block block : poppedOffBlock) {
-                                        transactionProcessor.processLater(blockchain.getOrLoadTransactions(block));
+                                        transactionProcessor.processLater(block.getTransactions());
                                     }
                                     lastBlock = previousBlock;
                                     lastBlockId = previousBlock.getId();
@@ -134,15 +135,21 @@ public class GenerateBlocksTask implements Runnable {
                         if (suspendForging) {
                             break;
                         }
-                        if (generator.getHitTime() > generationLimit
-                            || generatorService.forge(lastBlock, generationLimit, generator)) {
-                            log.trace("run - generator.forge() = {}", generator);
-                            return;
+                        boolean fastEnough = generator.getHitTime() <= generationLimit;
+                        if (!fastEnough) {
+                            log.trace("Skip {}, Reason: Too slow. Generation limit {} ", generator, generationLimit);
+                            continue;
+                        }
+                        boolean forged = generatorService.forge(lastBlock, generationLimit, generator);
+                        if (!forged) {
+                            log.trace("{} hasn't generated a block. Go to next", generator);
+                        } else {
+                            break;
                         }
                     }
                 } finally {
                     globalSync.updateUnlock();
-                    log.trace("Release generation lock  ({} ms)", (System.currentTimeMillis() - start));
+                    log.trace("Forging job is done in ({} ms), forging time ({} ms)", (System.currentTimeMillis() - start), (System.currentTimeMillis() - forgingIterationStart));
                 }
             } catch (Exception e) {
                 log.error("Error in block generation thread ({} ms)", (System.currentTimeMillis() - start), e);

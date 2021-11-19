@@ -1,36 +1,33 @@
 /*
- * Copyright © 2018-2020 Apollo Foundation
+ * Copyright © 2018-2021 Apollo Foundation
  */
 
 package com.apollocurrency.aplwallet.apl.core.rest.endpoint;
 
-import com.apollocurrency.aplwallet.api.dto.Status2FA;
 import com.apollocurrency.aplwallet.api.dto.account.AccountDTO;
 import com.apollocurrency.aplwallet.api.dto.account.AccountEffectiveBalanceDto;
 import com.apollocurrency.aplwallet.api.dto.account.AccountsCountDto;
-import com.apollocurrency.aplwallet.apl.core.entity.blockchain.Block;
+import com.apollocurrency.aplwallet.api.dto.account.CurrenciesWalletsDTO;
+import com.apollocurrency.aplwallet.api.dto.account.CurrencyWalletsDTO;
+import com.apollocurrency.aplwallet.api.dto.auth.Status2FA;
+import com.apollocurrency.aplwallet.api.dto.auth.TwoFactorAuthParameters;
+import com.apollocurrency.aplwallet.apl.core.model.Block;
 import com.apollocurrency.aplwallet.apl.core.entity.state.account.Account;
 import com.apollocurrency.aplwallet.apl.core.entity.state.account.AccountAsset;
 import com.apollocurrency.aplwallet.apl.core.entity.state.account.AccountCurrency;
 import com.apollocurrency.aplwallet.apl.core.entity.state.account.PublicKey;
 import com.apollocurrency.aplwallet.apl.core.entity.state.order.AskOrder;
-import com.apollocurrency.aplwallet.apl.core.model.ApolloFbWallet;
-import com.apollocurrency.aplwallet.apl.core.model.TwoFactorAuthDetails;
-import com.apollocurrency.aplwallet.apl.core.model.TwoFactorAuthParameters;
-import com.apollocurrency.aplwallet.apl.core.model.WalletKeysInfo;
 import com.apollocurrency.aplwallet.apl.core.rest.converter.Account2FAConverter;
 import com.apollocurrency.aplwallet.apl.core.rest.converter.Account2FADetailsConverter;
 import com.apollocurrency.aplwallet.apl.core.rest.converter.AccountAssetConverter;
 import com.apollocurrency.aplwallet.apl.core.rest.converter.AccountConverter;
 import com.apollocurrency.aplwallet.apl.core.rest.converter.AccountCurrencyConverter;
 import com.apollocurrency.aplwallet.apl.core.rest.converter.BlockConverter;
+import com.apollocurrency.aplwallet.apl.core.rest.converter.BlockConverterCreator;
 import com.apollocurrency.aplwallet.apl.core.rest.converter.TransactionConverter;
 import com.apollocurrency.aplwallet.apl.core.rest.converter.UnconfirmedTransactionConverter;
-import com.apollocurrency.aplwallet.apl.core.rest.converter.WalletKeysConverter;
 import com.apollocurrency.aplwallet.apl.core.rest.service.AccountStatisticsService;
-import com.apollocurrency.aplwallet.apl.core.rest.utils.Account2FAHelper;
-import com.apollocurrency.aplwallet.apl.core.rest.utils.FirstLastIndexParser;
-import com.apollocurrency.aplwallet.apl.core.service.appdata.KeyStoreService;
+import com.apollocurrency.aplwallet.apl.core.rest.utils.AccountParametersParser;
 import com.apollocurrency.aplwallet.apl.core.service.state.PhasingPollService;
 import com.apollocurrency.aplwallet.apl.core.service.state.account.AccountAssetService;
 import com.apollocurrency.aplwallet.apl.core.service.state.account.AccountCurrencyService;
@@ -39,11 +36,19 @@ import com.apollocurrency.aplwallet.apl.core.service.state.account.AccountServic
 import com.apollocurrency.aplwallet.apl.core.service.state.asset.AssetService;
 import com.apollocurrency.aplwallet.apl.core.service.state.currency.CurrencyService;
 import com.apollocurrency.aplwallet.apl.core.service.state.order.OrderService;
-import com.apollocurrency.aplwallet.apl.core.transaction.messages.ColoredCoinsAskOrderPlacement;
+import com.apollocurrency.aplwallet.apl.core.transaction.messages.CCAskOrderPlacementAttachment;
 import com.apollocurrency.aplwallet.apl.core.transaction.messages.PrunableLoadingService;
-import com.apollocurrency.aplwallet.apl.core.utils.AccountGeneratorUtil;
 import com.apollocurrency.aplwallet.apl.crypto.Convert;
 import com.apollocurrency.aplwallet.apl.util.Constants;
+import com.apollocurrency.aplwallet.vault.model.ApolloFbWallet;
+import com.apollocurrency.aplwallet.vault.model.KMSResponseStatus;
+import com.apollocurrency.aplwallet.vault.model.TwoFactorAuthDetails;
+import com.apollocurrency.aplwallet.vault.model.WalletKeysInfo;
+import com.apollocurrency.aplwallet.vault.rest.converter.WalletKeysConverter;
+import com.apollocurrency.aplwallet.vault.service.KMSService;
+import com.apollocurrency.aplwallet.vault.service.auth.Account2FAService;
+import com.apollocurrency.aplwallet.vault.util.AccountGeneratorUtil;
+import com.apollocurrency.aplwallet.vault.util.AccountHelper;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.JsonNode;
 import org.jboss.resteasy.mock.MockHttpRequest;
@@ -71,7 +76,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.UUID;
 
-import static com.apollocurrency.aplwallet.apl.core.rest.utils.Account2FAHelper.TWO_FACTOR_AUTH_PARAMETERS_ATTRIBUTE_NAME;
 import static com.apollocurrency.aplwallet.apl.data.BlockTestData.BLOCK_0_GENERATOR;
 import static com.apollocurrency.aplwallet.apl.data.BlockTestData.BLOCK_0_HEIGHT;
 import static com.apollocurrency.aplwallet.apl.data.BlockTestData.BLOCK_0_ID;
@@ -93,11 +97,14 @@ import static com.apollocurrency.aplwallet.apl.data.BlockTestData.GENESIS_BLOCK_
 import static com.apollocurrency.aplwallet.apl.data.BlockTestData.GENESIS_BLOCK_ID;
 import static com.apollocurrency.aplwallet.apl.data.BlockTestData.GENESIS_BLOCK_TIMESTAMP;
 import static com.apollocurrency.aplwallet.apl.data.BlockTestData.buildBlock;
+import static com.apollocurrency.aplwallet.vault.service.auth.Account2FAService.TWO_FACTOR_AUTH_PARAMETERS_ATTRIBUTE_NAME;
 import static org.jboss.resteasy.mock.MockHttpRequest.post;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.junit.jupiter.api.Assertions.fail;
 import static org.mockito.Mockito.doReturn;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.times;
@@ -106,7 +113,6 @@ import static org.mockito.Mockito.when;
 
 @ExtendWith(MockitoExtension.class)
 class AccountControllerTest extends AbstractEndpointTest {
-
     public static final String PUBLIC_KEY_HEX = "e03f00485cabc82491d05297acd9d140f62d61d86f16ba4bcf2a922482a4617d";
     public static final String ACCOUNT_RS = "APL-5MRD-NBKX-X5EJ-3UP2M";
     public static final long ACCOUNT_ID = 1838236804542746347L;
@@ -119,7 +125,6 @@ class AccountControllerTest extends AbstractEndpointTest {
     public AccountDTO accountDTO;
     public AccountAsset accountAsset;
     public AccountCurrency accountCurrency;
-
     private AccountController endpoint;
 
     @Mock
@@ -137,25 +142,28 @@ class AccountControllerTest extends AbstractEndpointTest {
     @Mock
     private AccountAssetConverter accountAssetConverter;
     @Mock
-    private OrderService<AskOrder, ColoredCoinsAskOrderPlacement> orderService;
+    private OrderService<AskOrder, CCAskOrderPlacementAttachment> orderService;
     @Mock
     private CurrencyService currencyService;
     @Mock
-    PrunableLoadingService prunableLoadingService;
-
-    private TransactionConverter transactionConverter = new TransactionConverter(blockchain, new UnconfirmedTransactionConverter(prunableLoadingService));
-    private BlockConverter blockConverter = new BlockConverter(
-        blockchain, transactionConverter,
-        mock(PhasingPollService.class), mock(AccountService.class));
-
+    private PrunableLoadingService prunableLoadingService;
     @Mock
-    private Account2FAHelper account2FAHelper;
-
-    private FirstLastIndexParser indexParser = new FirstLastIndexParser(100);
+    private KMSService KMSService;
+    @Mock
+    private Account2FAService account2FAService;
     @Mock
     private AccountStatisticsService accountStatisticsService = Mockito.mock(AccountStatisticsService.class);
     @Mock
     private AssetService assetService = Mockito.mock(AssetService.class);
+    @Mock
+    private AccountParametersParser accountParametersParser = Mockito.mock(AccountParametersParser.class);
+    @Mock
+    private BlockConverterCreator blockConverterCreator;
+
+    private TransactionConverter transactionConverter = new TransactionConverter(blockchain, new UnconfirmedTransactionConverter(prunableLoadingService));
+    private BlockConverter blockConverter = new BlockConverter(
+        blockchain, transactionConverter,
+        mock(PhasingPollService.class));
 
     private Block GENESIS_BLOCK, LAST_BLOCK, NEW_BLOCK;
     private Block BLOCK_0, BLOCK_1, BLOCK_2, BLOCK_3;
@@ -167,7 +175,7 @@ class AccountControllerTest extends AbstractEndpointTest {
 
         endpoint = new AccountController(
             blockchain,
-            account2FAHelper,
+            account2FAService,
             accountService,
             accountPublicKeyService,
             accountAssetService,
@@ -175,7 +183,7 @@ class AccountControllerTest extends AbstractEndpointTest {
             accountAssetConverter,
             accountCurrencyConverter,
             accountConverter,
-            blockConverter,
+            blockConverterCreator,
             new WalletKeysConverter(),
             new Account2FADetailsConverter(),
             new Account2FAConverter(),
@@ -183,7 +191,9 @@ class AccountControllerTest extends AbstractEndpointTest {
             100,
             accountStatisticsService,
             assetService,
-            currencyService
+            currencyService,
+            accountParametersParser,
+            KMSService
         );
 
         dispatcher.getRegistry().addSingletonResource(endpoint);
@@ -249,47 +259,63 @@ class AccountControllerTest extends AbstractEndpointTest {
     @ValueSource(strings = {"BlaBlaBla"})
     void createAccount(String pass) throws URISyntaxException, IOException {
         WalletKeysInfo info = createWalletKeysInfo(pass);
-        doReturn(info).when(account2FAHelper).generateUserWallet(pass);
+        doReturn(info).when(account2FAService).generateUserWallet(pass);
 
         MockHttpResponse response = sendPostRequest("/accounts/account", pass == null ? "wrong=value" : "passphrase=" + pass);
 
         assertEquals(Response.Status.OK.getStatusCode(), response.getStatus());
         String content = response.getContentAsString();
         print(content);
-        Map result = mapper.readValue(content, Map.class);
-        assertFalse(result.containsKey("newErrorCode"), "Unexpected error code:" + result.get("newErrorCode"));
-        assertNotNull(result.get("account"));
-        assertNotNull(result.get("accountRS"));
-        assertNotNull(result.get("publicKey"));
+        CurrenciesWalletsDTO dto = mapper.readValue(content, CurrenciesWalletsDTO.class);
+//        assertFalse(result.containsKey("newErrorCode"), "Unexpected error code:" + result.get("newErrorCode"));
+        assertEquals(2, dto.getCurrencies().size(), "After  successful vault wallet creation, two " +
+            "currency wallets should be created: apl and eth");
+        CurrencyWalletsDTO aplWallet = dto.getCurrencies().get(0);
+        assertEquals("apl", aplWallet.getCurrency(), "First currency in the wallet should be apl");
+        CurrencyWalletsDTO ethWallet = dto.getCurrencies().get(1);
+        assertEquals("eth", ethWallet.getCurrency(), "Second currency in the wallet should be eth");
+        assertEquals(1, aplWallet.getWallets().size(), "There should be one generated apl wallet");
+        assertEquals(1, ethWallet.getWallets().size(), "There should be one generated eth wallet");
+        Object receivedPass = dto.getPassphrase();
+        if (pass != null) {
+            assertNull(receivedPass, "Passphrase should not be present in the response, when specified by the " +
+                "sender, but got ''" + receivedPass + "'");
+        } else {
+            try {
+                UUID.fromString((String) receivedPass);
+            } catch (RuntimeException e) {
+                fail("Expected UUID passphrase in the response, but got " + receivedPass, e);
+            }
+        }
         //verify
-        verify(account2FAHelper, times(1)).generateUserWallet(pass);
+        verify(account2FAService, times(1)).generateUserWallet(pass);
     }
 
     @Test
     void enable2FA_withoutMandatoryParameters_thenGetError_2002() throws URISyntaxException, IOException {
-        when(account2FAHelper.create2FAParameters(null, null, null, null)).thenCallRealMethod();
+        when(account2FAService.create2FAParameters(null, null, null, null)).thenCallRealMethod();
         MockHttpResponse response = sendPostRequest("/accounts/enable2fa", "wrong=value");
 
         checkMandatoryParameterMissingErrorCode(response, 2002);
-        verify(account2FAHelper, times(1)).create2FAParameters(null, null, null, null);
+        verify(account2FAService, times(1)).create2FAParameters(null, null, null, null);
     }
 
     @Test
     void enable2FA_withBothSecretPhraseAndPassPhrase_thenGetError_2011() throws URISyntaxException, IOException {
-        when(account2FAHelper.create2FAParameters(null, PASSPHRASE, SECRET, null)).thenCallRealMethod();
+        when(account2FAService.create2FAParameters(null, PASSPHRASE, SECRET, null)).thenCallRealMethod();
         MockHttpResponse response = sendPostRequest("/accounts/enable2fa", "passphrase=" + PASSPHRASE + "&secretPhrase=" + SECRET);
 
         checkMandatoryParameterMissingErrorCode(response, 2011);
-        verify(account2FAHelper, times(1)).create2FAParameters(null, PASSPHRASE, SECRET, null);
+        verify(account2FAService, times(1)).create2FAParameters(null, PASSPHRASE, SECRET, null);
     }
 
     @Test
     void enable2FA_withoutMandatoryParameter_Account_thenGetError_2003() throws URISyntaxException, IOException {
-        when(account2FAHelper.create2FAParameters(null, PASSPHRASE, null, null)).thenCallRealMethod();
+        when(account2FAService.create2FAParameters(null, PASSPHRASE, null, null)).thenCallRealMethod();
         MockHttpResponse response = sendPostRequest("/accounts/enable2fa", "passphrase=" + PASSPHRASE);
 
         checkMandatoryParameterMissingErrorCode(response, 2003);
-        verify(account2FAHelper, times(1)).create2FAParameters(null, PASSPHRASE, null, null);
+        verify(account2FAService, times(1)).create2FAParameters(null, PASSPHRASE, null, null);
     }
 
     @Test
@@ -297,8 +323,8 @@ class AccountControllerTest extends AbstractEndpointTest {
         TwoFactorAuthParameters params2FA = new TwoFactorAuthParameters(ACCOUNT_ID, PASSPHRASE, null);
         TwoFactorAuthDetails authDetails = new TwoFactorAuthDetails(QR_CODE_URL, SECRET, Status2FA.OK);
 
-        doReturn(params2FA).when(account2FAHelper).create2FAParameters(ACCOUNT_RS, PASSPHRASE, null, null);
-        doReturn(authDetails).when(account2FAHelper).enable2FA(params2FA);
+        doReturn(params2FA).when(account2FAService).create2FAParameters(ACCOUNT_RS, PASSPHRASE, null, null);
+        doReturn(authDetails).when(account2FAService).enable2FA(params2FA);
         MockHttpResponse response = sendPostRequest("/accounts/enable2fa", "passphrase=" + PASSPHRASE + "&account=" + ACCOUNT_RS);
 
         assertEquals(Response.Status.OK.getStatusCode(), response.getStatus());
@@ -312,8 +338,8 @@ class AccountControllerTest extends AbstractEndpointTest {
         assertEquals(ACCOUNT_RS, result.get("accountRS"));
         assertEquals(QR_CODE_URL, result.get("qrCodeUrl"));
         assertEquals(SECRET, result.get("secret"));
-        verify(account2FAHelper, times(1)).create2FAParameters(ACCOUNT_RS, PASSPHRASE, null, null);
-        verify(account2FAHelper, times(1)).enable2FA(params2FA);
+        verify(account2FAService, times(1)).create2FAParameters(ACCOUNT_RS, PASSPHRASE, null, null);
+        verify(account2FAService, times(1)).enable2FA(params2FA);
     }
 
     @Test
@@ -321,8 +347,8 @@ class AccountControllerTest extends AbstractEndpointTest {
         TwoFactorAuthParameters params2FA = new TwoFactorAuthParameters(ACCOUNT_ID, null, SECRET);
         TwoFactorAuthDetails authDetails = new TwoFactorAuthDetails(QR_CODE_URL, SECRET, Status2FA.OK);
 
-        doReturn(params2FA).when(account2FAHelper).create2FAParameters(null, null, SECRET, null);
-        doReturn(authDetails).when(account2FAHelper).enable2FA(params2FA);
+        doReturn(params2FA).when(account2FAService).create2FAParameters(null, null, SECRET, null);
+        doReturn(authDetails).when(account2FAService).enable2FA(params2FA);
         MockHttpResponse response = sendPostRequest("/accounts/enable2fa", "secretPhrase=" + SECRET);
 
         assertEquals(Response.Status.OK.getStatusCode(), response.getStatus());
@@ -336,8 +362,8 @@ class AccountControllerTest extends AbstractEndpointTest {
         assertEquals(ACCOUNT_RS, result.get("accountRS"));
         assertEquals(QR_CODE_URL, result.get("qrCodeUrl"));
         assertEquals(SECRET, result.get("secret"));
-        verify(account2FAHelper, times(1)).create2FAParameters(null, null, SECRET, null);
-        verify(account2FAHelper, times(1)).enable2FA(params2FA);
+        verify(account2FAService, times(1)).create2FAParameters(null, null, SECRET, null);
+        verify(account2FAService, times(1)).enable2FA(params2FA);
     }
 
     @Test
@@ -346,9 +372,9 @@ class AccountControllerTest extends AbstractEndpointTest {
         TwoFactorAuthParameters twoFactorAuthParameters = new TwoFactorAuthParameters(ACCOUNT_ID, PASSPHRASE, null);
         twoFactorAuthParameters.setCode2FA(CODE_2FA);
 
-        doReturn(Status2FA.OK).when(account2FAHelper).disable2FA(twoFactorAuthParameters);
+        doReturn(Status2FA.OK).when(account2FAService).disable2FA(twoFactorAuthParameters);
         check2FA_withPassPhraseAndAccountAndCode2FA(uri, twoFactorAuthParameters);
-        verify(account2FAHelper, times(1)).disable2FA(twoFactorAuthParameters);
+        verify(account2FAService, times(1)).disable2FA(twoFactorAuthParameters);
     }
 
     @Test
@@ -357,9 +383,9 @@ class AccountControllerTest extends AbstractEndpointTest {
         TwoFactorAuthParameters twoFactorAuthParameters = new TwoFactorAuthParameters(ACCOUNT_ID, null, SECRET);
         twoFactorAuthParameters.setCode2FA(CODE_2FA);
 
-        doReturn(Status2FA.OK).when(account2FAHelper).disable2FA(twoFactorAuthParameters);
+        doReturn(Status2FA.OK).when(account2FAService).disable2FA(twoFactorAuthParameters);
         check2FA_withSecretPhraseAndCode2FA(uri, twoFactorAuthParameters);
-        verify(account2FAHelper, times(1)).disable2FA(twoFactorAuthParameters);
+        verify(account2FAService, times(1)).disable2FA(twoFactorAuthParameters);
     }
 
     @Test
@@ -368,9 +394,9 @@ class AccountControllerTest extends AbstractEndpointTest {
         TwoFactorAuthParameters twoFactorAuthParameters = new TwoFactorAuthParameters(ACCOUNT_ID, PASSPHRASE, null);
         twoFactorAuthParameters.setCode2FA(CODE_2FA);
 
-        doReturn(Status2FA.OK).when(account2FAHelper).confirm2FA(twoFactorAuthParameters);
+        doReturn(Status2FA.OK).when(account2FAService).confirm2FA(twoFactorAuthParameters);
         check2FA_withPassPhraseAndAccountAndCode2FA(uri, twoFactorAuthParameters);
-        verify(account2FAHelper, times(1)).confirm2FA(twoFactorAuthParameters);
+        verify(account2FAService, times(1)).confirm2FA(twoFactorAuthParameters);
     }
 
     @Test
@@ -379,9 +405,9 @@ class AccountControllerTest extends AbstractEndpointTest {
         TwoFactorAuthParameters twoFactorAuthParameters = new TwoFactorAuthParameters(ACCOUNT_ID, null, SECRET);
         twoFactorAuthParameters.setCode2FA(CODE_2FA);
 
-        doReturn(Status2FA.OK).when(account2FAHelper).confirm2FA(twoFactorAuthParameters);
+        doReturn(Status2FA.OK).when(account2FAService).confirm2FA(twoFactorAuthParameters);
         check2FA_withSecretPhraseAndCode2FA(uri, twoFactorAuthParameters);
-        verify(account2FAHelper, times(1)).confirm2FA(twoFactorAuthParameters);
+        verify(account2FAService, times(1)).confirm2FA(twoFactorAuthParameters);
     }
 
     @Test
@@ -390,9 +416,9 @@ class AccountControllerTest extends AbstractEndpointTest {
         TwoFactorAuthParameters twoFactorAuthParameters = new TwoFactorAuthParameters(ACCOUNT_ID, PASSPHRASE, null);
         twoFactorAuthParameters.setCode2FA(CODE_2FA);
 
-        doReturn(KeyStoreService.Status.OK).when(account2FAHelper).deleteAccount(twoFactorAuthParameters);
+        doReturn(KMSResponseStatus.OK).when(account2FAService).deleteAccount(twoFactorAuthParameters);
         check2FA_withPassPhraseAndAccountAndCode2FA(uri, twoFactorAuthParameters);
-        verify(account2FAHelper, times(1)).deleteAccount(twoFactorAuthParameters);
+        verify(account2FAService, times(1)).deleteAccount(twoFactorAuthParameters);
     }
 
     @ParameterizedTest
@@ -414,15 +440,14 @@ class AccountControllerTest extends AbstractEndpointTest {
     @Test
     void exportKey_withPassPhraseAndAccountAndCode2FA() throws URISyntaxException, IOException {
         String uri = "/accounts/export-key";
-        byte[] secretBytes = SECRET.getBytes();
         TwoFactorAuthParameters twoFactorAuthParameters = new TwoFactorAuthParameters(ACCOUNT_ID, PASSPHRASE, null);
         twoFactorAuthParameters.setCode2FA(CODE_2FA);
-        doReturn(twoFactorAuthParameters).when(account2FAHelper).create2FAParameters(ACCOUNT_RS, PASSPHRASE, null, null);
 
-        doReturn(secretBytes).when(account2FAHelper).findAplSecretBytes(twoFactorAuthParameters);
+        doReturn(SECRET.getBytes()).when(KMSService).getAplSecretBytes(ACCOUNT_ID, null);
+
         check2FA_withPassPhraseAndAccountAndCode2FA(uri, twoFactorAuthParameters);
-        verify(account2FAHelper, times(1)).create2FAParameters(ACCOUNT_RS, PASSPHRASE, null, null);
-        verify(account2FAHelper, times(1)).findAplSecretBytes(twoFactorAuthParameters);
+
+        verify(KMSService, times(1)).getAplSecretBytes(ACCOUNT_ID, null);
     }
 
     @Test
@@ -722,6 +747,7 @@ class AccountControllerTest extends AbstractEndpointTest {
         int to = 200;
 
         doReturn(BLOCKS).when(accountService).getAccountBlocks(ACCOUNT_ID, from, 99, timestamp);
+        doReturn(blockConverter).when(blockConverterCreator).create(false, false);
 
         MockHttpResponse response = sendGetRequest("/accounts/blocks?account=" + ACCOUNT_ID
             + "&timestamp=" + timestamp
@@ -835,7 +861,7 @@ class AccountControllerTest extends AbstractEndpointTest {
     private WalletKeysInfo createWalletKeysInfo(String passPhrase) {
         ApolloFbWallet apolloWallet = new ApolloFbWallet();
         apolloWallet.addAplKey(AccountGeneratorUtil.generateApl());
-        apolloWallet.addEthKey(AccountGeneratorUtil.generateEth());
+        apolloWallet.addEthKey(AccountHelper.generateNewEthAccount());
 
         WalletKeysInfo walletKeyInfo = new WalletKeysInfo(apolloWallet, null == passPhrase ? UUID.randomUUID().toString() : passPhrase);
         return walletKeyInfo;

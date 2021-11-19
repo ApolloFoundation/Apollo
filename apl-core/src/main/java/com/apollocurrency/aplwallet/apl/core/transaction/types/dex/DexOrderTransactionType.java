@@ -1,33 +1,31 @@
 /*
- * Copyright © 2018-2020 Apollo Foundation
+ * Copyright © 2018-2021 Apollo Foundation
  */
 package com.apollocurrency.aplwallet.apl.core.transaction.types.dex;
 
-import com.apollocurrency.aplwallet.apl.core.app.AplException;
 import com.apollocurrency.aplwallet.apl.core.chainid.BlockchainConfig;
-import com.apollocurrency.aplwallet.apl.core.entity.blockchain.Transaction;
 import com.apollocurrency.aplwallet.apl.core.entity.state.account.Account;
 import com.apollocurrency.aplwallet.apl.core.entity.state.account.LedgerEvent;
+import com.apollocurrency.aplwallet.apl.core.model.Transaction;
+import com.apollocurrency.aplwallet.apl.core.model.dex.DexOrder;
 import com.apollocurrency.aplwallet.apl.core.rest.service.DexOrderAttachmentFactory;
 import com.apollocurrency.aplwallet.apl.core.service.appdata.TimeService;
 import com.apollocurrency.aplwallet.apl.core.service.state.account.AccountService;
 import com.apollocurrency.aplwallet.apl.core.transaction.TransactionTypes;
-import com.apollocurrency.aplwallet.apl.core.transaction.messages.AbstractAttachment;
 import com.apollocurrency.aplwallet.apl.core.transaction.messages.DexOrderAttachment;
 import com.apollocurrency.aplwallet.apl.core.transaction.messages.DexOrderAttachmentV2;
-import com.apollocurrency.aplwallet.apl.exchange.model.DexCurrency;
-import com.apollocurrency.aplwallet.apl.exchange.model.DexOrder;
-import com.apollocurrency.aplwallet.apl.exchange.model.OrderStatus;
-import com.apollocurrency.aplwallet.apl.exchange.model.OrderType;
+import com.apollocurrency.aplwallet.apl.dex.core.model.DexCurrency;
+import com.apollocurrency.aplwallet.apl.dex.core.model.OrderStatus;
+import com.apollocurrency.aplwallet.apl.dex.core.model.OrderType;
 import com.apollocurrency.aplwallet.apl.exchange.service.DexService;
 import com.apollocurrency.aplwallet.apl.util.Constants;
 import com.apollocurrency.aplwallet.apl.util.StringUtils;
+import com.apollocurrency.aplwallet.apl.util.exception.AplException;
 import org.json.simple.JSONObject;
 
 import javax.inject.Inject;
 import javax.inject.Singleton;
 import java.nio.ByteBuffer;
-import java.util.Map;
 
 import static com.apollocurrency.aplwallet.apl.util.Constants.MAX_ORDER_DURATION_SEC;
 
@@ -53,17 +51,21 @@ public class DexOrderTransactionType extends DexTransactionType {
     }
 
     @Override
-    public AbstractAttachment parseAttachment(ByteBuffer buffer) throws AplException.NotValidException {
+    public DexOrderAttachment parseAttachment(ByteBuffer buffer) throws AplException.NotValidException {
         return DexOrderAttachmentFactory.build(buffer);
     }
 
     @Override
-    public AbstractAttachment parseAttachment(JSONObject attachmentData) throws AplException.NotValidException {
+    public DexOrderAttachment parseAttachment(JSONObject attachmentData) throws AplException.NotValidException {
         return DexOrderAttachmentFactory.parse(attachmentData);
     }
 
     @Override
     public void doStateDependentValidation(Transaction transaction) throws AplException.ValidationException {
+        DexOrderAttachment attachment = (DexOrderAttachment) transaction.getAttachment();
+        if (attachment.getType() == OrderType.SELL.ordinal()) {
+            verifyAccountBalanceSufficiency(transaction, attachment.getOrderAmount());
+        }
     }
 
     @Override
@@ -78,8 +80,8 @@ public class DexOrderTransactionType extends DexTransactionType {
         }
 
         try {
-            DexCurrency.getType(attachment.getOrderCurrency());
-            DexCurrency.getType(attachment.getPairCurrency());
+            DexCurrency.getTypeThrowing(attachment.getOrderCurrency());
+            DexCurrency.getTypeThrowing(attachment.getPairCurrency());
             OrderType.getType(attachment.getType());
         } catch (Exception ex) {
             throw new AplException.NotValidException("Invalid dex codes: " + attachment.getOrderCurrency() + " / " + attachment.getPairCurrency() + " / " + attachment.getType());
@@ -95,19 +97,18 @@ public class DexOrderTransactionType extends DexTransactionType {
         if (attachment instanceof DexOrderAttachmentV2) {
             String address = ((DexOrderAttachmentV2) attachment).getFromAddress();
             if (StringUtils.isBlank(address) || address.length() > Constants.MAX_ADDRESS_LENGTH) {
-                throw new AplException.NotValidException("FromAddress should be not null and address length less then " + Constants.MAX_ADDRESS_LENGTH);
+                throw new AplException.NotValidException("fromAddress should be not null and address length less then " + Constants.MAX_ADDRESS_LENGTH);
             }
         }
 
         int currentTime = timeService.getEpochTime();
-        if (attachment.getFinishTime() <= 0 || attachment.getFinishTime() - currentTime > MAX_ORDER_DURATION_SEC) {
-            throw new AplException.NotCurrentlyValidException(String.format("amountOfTime %d not in range [%d-%d]", attachment.getFinishTime(), 0, MAX_ORDER_DURATION_SEC));
+        if (attachment.getFinishTime() <= 0) {
+            throw new AplException.NotValidException("finishTime must be a positive value, but got " + attachment.getFinishTime());
         }
-    }
-
-    @Override
-    public boolean isDuplicate(Transaction transaction, Map<TransactionTypes.TransactionTypeSpec, Map<String, Integer>> duplicates) {
-        return isDuplicate(TransactionTypes.TransactionTypeSpec.DEX_ORDER, Long.toUnsignedString(transaction.getId()), duplicates, true);
+        int orderDuration = attachment.getFinishTime() - currentTime;
+        if (orderDuration > MAX_ORDER_DURATION_SEC) {
+            throw new AplException.NotCurrentlyValidException(String.format("orderDuration %d is not in range [%d-%d]", orderDuration, 1, MAX_ORDER_DURATION_SEC));
+        }
     }
 
     @Override

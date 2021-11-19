@@ -38,7 +38,7 @@ public class TimeTraceDecoratedThreadPoolExecutor extends DecoratedThreadPoolExe
 
 
     @Slf4j
-    private static class TimeThreadJob implements Event {
+    static class TimeThreadJob implements Event {
         private static final AtomicInteger taskIdCounter = new AtomicInteger(0);
         private volatile long startTime;
         private volatile long scheduleTime;

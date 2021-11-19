@@ -4,13 +4,11 @@
 
 package com.apollocurrency.aplwallet.apl.core.http;
 
-import com.apollocurrency.aplwallet.apl.core.app.AplException;
 import com.apollocurrency.aplwallet.apl.core.chainid.BlockchainConfig;
-import com.apollocurrency.aplwallet.apl.core.dao.TransactionalDataSource;
+import com.apollocurrency.aplwallet.apl.core.db.DatabaseManager;
 import com.apollocurrency.aplwallet.apl.core.entity.state.order.AskOrder;
 import com.apollocurrency.aplwallet.apl.core.entity.state.order.BidOrder;
 import com.apollocurrency.aplwallet.apl.core.peer.PeersService;
-import com.apollocurrency.aplwallet.apl.core.service.appdata.DatabaseManager;
 import com.apollocurrency.aplwallet.apl.core.service.appdata.GeneratorService;
 import com.apollocurrency.aplwallet.apl.core.service.appdata.TimeService;
 import com.apollocurrency.aplwallet.apl.core.service.appdata.TrimService;
@@ -62,10 +60,14 @@ import com.apollocurrency.aplwallet.apl.core.service.state.order.impl.AskOrderSe
 import com.apollocurrency.aplwallet.apl.core.service.state.order.impl.BidOrderServiceImpl;
 import com.apollocurrency.aplwallet.apl.core.service.state.qualifier.AskOrderService;
 import com.apollocurrency.aplwallet.apl.core.service.state.qualifier.BidOrderService;
-import com.apollocurrency.aplwallet.apl.core.transaction.messages.ColoredCoinsAskOrderPlacement;
+import com.apollocurrency.aplwallet.apl.core.transaction.common.TxBContext;
+import com.apollocurrency.aplwallet.apl.core.transaction.messages.CCAskOrderPlacementAttachment;
 import com.apollocurrency.aplwallet.apl.core.transaction.messages.CCBidOrderPlacementAttachment;
 import com.apollocurrency.aplwallet.apl.util.UPnP;
+import com.apollocurrency.aplwallet.apl.util.db.TransactionalDataSource;
+import com.apollocurrency.aplwallet.apl.util.exception.AplException;
 import com.apollocurrency.aplwallet.apl.util.injectable.PropertiesHolder;
+import com.apollocurrency.aplwallet.apl.util.service.ElGamalEncryptor;
 import org.json.simple.JSONStreamAware;
 
 import javax.enterprise.inject.spi.CDI;
@@ -81,7 +83,7 @@ import java.util.Set;
 public abstract class AbstractAPIRequestHandler {
 
     protected final AliasService aliasService = CDI.current().select(AliasService.class).get();
-    protected final OrderService<AskOrder, ColoredCoinsAskOrderPlacement> askOrderService =
+    protected final OrderService<AskOrder, CCAskOrderPlacementAttachment> askOrderService =
         CDI.current().select(AskOrderServiceImpl.class, AskOrderService.Literal.INSTANCE).get();
     protected final OrderService<BidOrder, CCBidOrderPlacementAttachment> bidOrderService =
         CDI.current().select(BidOrderServiceImpl.class, BidOrderService.Literal.INSTANCE).get();
@@ -101,6 +103,8 @@ public abstract class AbstractAPIRequestHandler {
     protected final PollOptionResultService pollOptionResultService = CDI.current().select(PollOptionResultService.class).get();
     protected ExchangeService exchangeService = CDI.current().select(ExchangeService.class).get();
     protected ShufflingService shufflingService = CDI.current().select(ShufflingService.class).get();
+
+    protected TxBContext txBContext;
 
     protected TrimService trimService;
     private List<String> parameters;
@@ -158,6 +162,8 @@ public abstract class AbstractAPIRequestHandler {
         this.parameters = Collections.unmodifiableList(parameters);
         this.apiTags = Collections.unmodifiableSet(new HashSet<>(Arrays.asList(apiTags)));
         this.fileParameter = fileParameter;
+
+        this.txBContext = TxBContext.newInstance(lookupBlockchainConfig().getChain());
     }
 
     protected PeersService lookupPeersService() {

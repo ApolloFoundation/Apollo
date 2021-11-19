@@ -17,15 +17,13 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
-import javax.inject.Inject;
 
 @Slf4j
 public class UserResourceLocator implements ResourceLocator {
 
     private final ConfigDirProvider dirProvider;
     private final String configDir;
-    
-    @Inject
+
     public UserResourceLocator(ConfigDirProvider dirProvider) {
         this.dirProvider = dirProvider;
         this.configDir = dirProvider.getConfigName();
@@ -45,8 +43,8 @@ public class UserResourceLocator implements ResourceLocator {
         InputStream is = classloader.getResourceAsStream(path);
         if (is != null) {
             log.info("Located in resources, resource={}", path);
-        }else{
-            log.warn("Can not find resource at: {}",path);
+        } else {
+            log.warn("Can not find resource at: {}", path);
         }
 
         return Optional.ofNullable(is);
@@ -56,11 +54,11 @@ public class UserResourceLocator implements ResourceLocator {
         List<String> searchDirs = new ArrayList<>();
         if (!StringUtils.isBlank(configDir)) { //load just from confDir
             searchDirs.add(configDir);
-        } else { //go trough standard search order and load all
+        }// else { //go trough standard search order and load all
             searchDirs.add(dirProvider.getInstallationConfigLocation() + File.separator + dirProvider.getConfigName());
             searchDirs.add(dirProvider.getSysConfigLocation() + File.separator + dirProvider.getConfigName());
             searchDirs.add(dirProvider.getUserConfigLocation() + File.separator + dirProvider.getConfigName());
-        }
+        //}
         if (log.isTraceEnabled()) {
             log.trace("The directory list:");
             searchDirs.forEach(s -> log.trace("  {}", s));

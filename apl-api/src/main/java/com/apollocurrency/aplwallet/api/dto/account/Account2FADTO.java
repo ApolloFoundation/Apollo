@@ -5,7 +5,7 @@
 package com.apollocurrency.aplwallet.api.dto.account;
 
 import com.apollocurrency.aplwallet.api.dto.BaseDTO;
-import com.apollocurrency.aplwallet.api.dto.Status2FA;
+import com.apollocurrency.aplwallet.api.dto.auth.Status2FA;
 import com.fasterxml.jackson.annotation.JsonAlias;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonInclude;

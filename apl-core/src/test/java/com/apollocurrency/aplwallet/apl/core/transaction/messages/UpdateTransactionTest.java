@@ -1,8 +1,7 @@
 package com.apollocurrency.aplwallet.apl.core.transaction.messages;
 
-import com.apollocurrency.aplwallet.apl.core.app.AplException;
 import com.apollocurrency.aplwallet.apl.core.chainid.BlockchainConfig;
-import com.apollocurrency.aplwallet.apl.core.entity.blockchain.Transaction;
+import com.apollocurrency.aplwallet.apl.core.model.Transaction;
 import com.apollocurrency.aplwallet.apl.core.service.state.account.AccountService;
 import com.apollocurrency.aplwallet.apl.core.transaction.TransactionType;
 import com.apollocurrency.aplwallet.apl.core.transaction.messages.update.UpdateV2Attachment;
@@ -13,10 +12,14 @@ import com.apollocurrency.aplwallet.apl.util.Version;
 import com.apollocurrency.aplwallet.apl.util.env.Arch;
 import com.apollocurrency.aplwallet.apl.util.env.OS;
 import com.apollocurrency.aplwallet.apl.util.env.PlatformSpec;
+import com.apollocurrency.aplwallet.apl.util.exception.AplException;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.ValueSource;
+import org.mockito.Mock;
+import org.mockito.junit.jupiter.MockitoExtension;
 
 import java.math.BigInteger;
 import java.util.Set;
@@ -26,12 +29,18 @@ import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
+@ExtendWith(MockitoExtension.class)
 public class UpdateTransactionTest {
+    @Mock
+    AccountService accountService;
+    @Mock
+    BlockchainConfig blockchainConfig;
+
     TransactionType type;
 
     @BeforeEach
     void setUp() {
-        type = new UpdateV2TransactionType(mock(BlockchainConfig.class), mock(AccountService.class));
+        type = new UpdateV2TransactionType(blockchainConfig, accountService);
     }
 
     @ParameterizedTest
@@ -39,15 +48,15 @@ public class UpdateTransactionTest {
     void testValidateAttachment_successfully(String v) throws AplException.ValidationException {
         Transaction tx = createUpdateTx(v);
 
-        type.doStateIndependentValidation(tx);
+        type.validateStateIndependent(tx);
     }
 
     @ParameterizedTest
     @ValueSource(strings = {"32768.1.1", "120.32768.32767", "120.0.33000"})
-    void testValidateAttachment_incorrectVersion(String incorrectVersionString) throws AplException.ValidationException {
+    void testValidateAttachment_incorrectVersion(String incorrectVersionString) {
         Transaction tx = createUpdateTx(incorrectVersionString);
 
-        assertThrows(AplException.NotValidException.class, () -> type.doStateIndependentValidation(tx));
+        assertThrows(AplException.NotValidException.class, () -> type.validateStateIndependent(tx));
     }
 
     @Test

@@ -20,8 +20,7 @@
 
 package com.apollocurrency.aplwallet.apl.core.entity.state.shuffling;
 
-import com.apollocurrency.aplwallet.apl.core.app.AplException;
-import com.apollocurrency.aplwallet.apl.core.entity.blockchain.Transaction;
+import com.apollocurrency.aplwallet.apl.core.model.Transaction;
 import com.apollocurrency.aplwallet.apl.core.service.state.account.AccountService;
 import com.apollocurrency.aplwallet.apl.crypto.Crypto;
 
@@ -31,7 +30,7 @@ public final class Shuffler {
     private final byte[] recipientPublicKey;
     private final byte[] shufflingFullHash;
     private volatile Transaction failedTransaction;
-    private volatile AplException.NotCurrentlyValidException failureCause;
+    private volatile Exception failureCause;
 
     public Shuffler(byte[] secretBytes, byte[] recipientPublicKey, byte[] shufflingFullHash) {
         this.secretBytes = secretBytes;
@@ -57,7 +56,7 @@ public final class Shuffler {
         return failedTransaction;
     }
 
-    public AplException.NotCurrentlyValidException getFailureCause() {
+    public Exception getFailureCause() {
         return failureCause;
     }
 
@@ -69,7 +68,7 @@ public final class Shuffler {
         this.failedTransaction = failedTransaction;
     }
 
-    public void setFailureCause(AplException.NotCurrentlyValidException failureCause) {
+    public void setFailureCause(Exception failureCause) {
         this.failureCause = failureCause;
     }
 

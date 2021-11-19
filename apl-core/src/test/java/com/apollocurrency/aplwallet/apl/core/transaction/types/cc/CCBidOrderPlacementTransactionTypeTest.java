@@ -4,16 +4,17 @@
 
 package com.apollocurrency.aplwallet.apl.core.transaction.types.cc;
 
-import com.apollocurrency.aplwallet.apl.core.app.AplException;
 import com.apollocurrency.aplwallet.apl.core.chainid.BlockchainConfig;
-import com.apollocurrency.aplwallet.apl.core.entity.blockchain.Transaction;
 import com.apollocurrency.aplwallet.apl.core.entity.state.account.Account;
 import com.apollocurrency.aplwallet.apl.core.entity.state.account.LedgerEvent;
+import com.apollocurrency.aplwallet.apl.core.entity.state.asset.Asset;
+import com.apollocurrency.aplwallet.apl.core.model.Transaction;
 import com.apollocurrency.aplwallet.apl.core.service.state.account.AccountService;
 import com.apollocurrency.aplwallet.apl.core.service.state.asset.AssetService;
 import com.apollocurrency.aplwallet.apl.core.service.state.order.OrderMatchService;
 import com.apollocurrency.aplwallet.apl.core.transaction.TransactionTypes;
 import com.apollocurrency.aplwallet.apl.core.transaction.messages.CCBidOrderPlacementAttachment;
+import com.apollocurrency.aplwallet.apl.util.exception.AplException;
 import org.json.simple.JSONObject;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -25,14 +26,17 @@ import java.nio.ByteBuffer;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.Mockito.doReturn;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.verifyNoInteractions;
+import static org.mockito.Mockito.when;
 
 @ExtendWith(MockitoExtension.class)
 class CCBidOrderPlacementTransactionTypeTest {
     public static final long ASSET_ID = 1L;
+    public static final long SENDER_ID = -10L;
     @Mock
     BlockchainConfig config;
     @Mock
@@ -50,6 +54,8 @@ class CCBidOrderPlacementTransactionTypeTest {
     Transaction tx;
     @Mock
     Account sender;
+    @Mock
+    Asset asset;
 
 
     @Test
@@ -135,6 +141,34 @@ class CCBidOrderPlacementTransactionTypeTest {
         type.undoAttachmentUnconfirmed(tx, sender);
 
         verify(accountService).addToUnconfirmedBalanceATM(sender, LedgerEvent.ASSET_BID_ORDER_PLACEMENT, 0, 200);
+    }
+
+    @Test
+    void doStateDependentValidation_notEnoughAplForOrder() {
+        mockAttachment(100, 4);
+        when(assetService.getAsset(ASSET_ID)).thenReturn(asset);
+        when(asset.getInitialQuantityATU()).thenReturn(2000L);
+        when(tx.getSenderId()).thenReturn(SENDER_ID);
+        when(accountService.getAccount(SENDER_ID)).thenReturn(sender);
+        when(sender.getUnconfirmedBalanceATM()).thenReturn(399L);
+
+        AplException.NotCurrentlyValidException ex = assertThrows(AplException.NotCurrentlyValidException.class,
+            () -> type.doStateDependentValidation(tx));
+
+        assertEquals("Sender 18446744073709551606 has not enough funds: required 400, but only has 399",
+            ex.getMessage());
+    }
+
+    @Test
+    void doStateDependentValidation_OK() throws AplException.ValidationException {
+        mockAttachment(100, 4);
+        when(assetService.getAsset(ASSET_ID)).thenReturn(asset);
+        when(asset.getInitialQuantityATU()).thenReturn(2000L);
+        when(tx.getSenderId()).thenReturn(SENDER_ID);
+        when(accountService.getAccount(SENDER_ID)).thenReturn(sender);
+        when(sender.getUnconfirmedBalanceATM()).thenReturn(400L);
+
+        type.doStateDependentValidation(tx);
     }
 
     private CCBidOrderPlacementAttachment mockAttachment(long quantity, long price) {

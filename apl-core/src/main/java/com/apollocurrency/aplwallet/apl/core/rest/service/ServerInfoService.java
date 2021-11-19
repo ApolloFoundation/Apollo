@@ -17,7 +17,7 @@ import com.apollocurrency.aplwallet.apl.core.app.GenesisImporter;
 import com.apollocurrency.aplwallet.apl.core.app.VoteWeighting;
 import com.apollocurrency.aplwallet.apl.core.chainid.BlockchainConfig;
 import com.apollocurrency.aplwallet.apl.core.entity.appdata.GeneratorMemoryEntity;
-import com.apollocurrency.aplwallet.apl.core.entity.blockchain.Block;
+import com.apollocurrency.aplwallet.apl.core.model.Block;
 import com.apollocurrency.aplwallet.apl.core.entity.state.currency.CurrencyType;
 import com.apollocurrency.aplwallet.apl.core.entity.state.order.AskOrder;
 import com.apollocurrency.aplwallet.apl.core.entity.state.order.BidOrder;
@@ -27,7 +27,7 @@ import com.apollocurrency.aplwallet.apl.core.http.API;
 import com.apollocurrency.aplwallet.apl.core.http.APIProxy;
 import com.apollocurrency.aplwallet.apl.core.http.APITag;
 import com.apollocurrency.aplwallet.apl.core.http.AdminPasswordVerifier;
-import com.apollocurrency.aplwallet.apl.core.monetary.HoldingType;
+import com.apollocurrency.aplwallet.apl.core.model.HoldingType;
 import com.apollocurrency.aplwallet.apl.core.peer.Peer;
 import com.apollocurrency.aplwallet.apl.core.peer.PeerState;
 import com.apollocurrency.aplwallet.apl.core.peer.PeersService;
@@ -61,7 +61,7 @@ import com.apollocurrency.aplwallet.apl.core.service.state.qualifier.AskOrderSer
 import com.apollocurrency.aplwallet.apl.core.service.state.qualifier.BidOrderService;
 import com.apollocurrency.aplwallet.apl.core.transaction.TransactionType;
 import com.apollocurrency.aplwallet.apl.core.transaction.TransactionTypeFactory;
-import com.apollocurrency.aplwallet.apl.core.transaction.messages.ColoredCoinsAskOrderPlacement;
+import com.apollocurrency.aplwallet.apl.core.transaction.messages.CCAskOrderPlacementAttachment;
 import com.apollocurrency.aplwallet.apl.core.transaction.messages.CCBidOrderPlacementAttachment;
 import com.apollocurrency.aplwallet.apl.crypto.HashFunction;
 import com.apollocurrency.aplwallet.apl.util.Constants;
@@ -101,7 +101,7 @@ public class ServerInfoService {
     private final AdminPasswordVerifier apw;
     private final UPnP upnp;
     private final AliasService aliasService;
-    private final OrderService<AskOrder, ColoredCoinsAskOrderPlacement> askOrderService;
+    private final OrderService<AskOrder, CCAskOrderPlacementAttachment> askOrderService;
     private final OrderService<BidOrder, CCBidOrderPlacementAttachment> bidOrderService;
     private final TradeService tradeService;
     private final AccountControlPhasingService accountControlPhasingService;
@@ -131,7 +131,7 @@ public class ServerInfoService {
                              AdminPasswordVerifier apw,
                              UPnP upnp,
                              AliasService aliasService,
-                             @AskOrderService OrderService<AskOrder, ColoredCoinsAskOrderPlacement> askOrderService,
+                             @AskOrderService OrderService<AskOrder, CCAskOrderPlacementAttachment> askOrderService,
                              @BidOrderService OrderService<BidOrder, CCBidOrderPlacementAttachment> bidOrderService,
                              TradeService tradeService,
                              AccountControlPhasingService accountControlPhasingService,

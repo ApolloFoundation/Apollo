@@ -3,17 +3,16 @@
  */
 package com.apollocurrency.aplwallet.apl.core.shard.helper;
 
-import com.apollocurrency.aplwallet.apl.core.db.DbUtils;
 import com.apollocurrency.aplwallet.apl.core.shard.MigrateState;
 import com.apollocurrency.aplwallet.apl.core.shard.ShardConstants;
 import com.apollocurrency.aplwallet.apl.crypto.Convert;
+import com.apollocurrency.aplwallet.apl.util.db.DbUtils;
 import org.slf4j.Logger;
 
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
-import java.sql.Types;
 import java.util.Objects;
 import java.util.Set;
 
@@ -126,7 +125,7 @@ public class SecondaryIndexInsertHelper extends AbstractHelper {
                         // we don't need it for INSERT, only for next SELECT
                         if (i + 1 != numColumns) {
                             Object object = rs.getObject(i + 1);
-                            if (isTransactionTable && columnTypes[i] == Types.VARBINARY) { // extract and shorten hash (id + shortened hash = full_hash)
+                            if (isTransactionTable && rs.getMetaData().getColumnName(i + 1).equalsIgnoreCase("full_hash")) { // extract and shorten hash (id + shortened hash = full_hash)
                                 byte[] fullHash = (byte[]) object;
                                 object = Convert.toPartialHash(fullHash);
                             }
@@ -165,20 +164,20 @@ public class SecondaryIndexInsertHelper extends AbstractHelper {
     private void assignMainBottomTopSelectSql(TableOperationParams operationParams) throws IllegalAccessException {
         if (ShardConstants.BLOCK_INDEX_TABLE_NAME.equalsIgnoreCase(currentTableName)) {
             sqlToExecuteWithPaging =
-                "select ID, HEIGHT, DB_ID from BLOCK where DB_ID > ? AND DB_ID < ? limit ?";
+                "SELECT id, height, db_id FROM block WHERE db_id > ? AND db_id < ? LIMIT ?";
             log.trace(sqlToExecuteWithPaging);
-            sqlSelectUpperBound = "SELECT IFNULL(max(DB_ID), 0) as DB_ID from BLOCK where HEIGHT = ?";
+            sqlSelectUpperBound = "SELECT IFNULL(MAX(db_id), 0) AS db_id FROM block WHERE height = ?";
             log.trace(sqlSelectUpperBound);
-            sqlSelectBottomBound = "SELECT IFNULL(min(DB_ID)-1, 0) as DB_ID from BLOCK";
+            sqlSelectBottomBound = "SELECT IFNULL(MIN(db_id)-1, 0) AS db_id FROM block";
             log.trace(sqlSelectBottomBound);
         } else if (ShardConstants.TRANSACTION_INDEX_TABLE_NAME.equalsIgnoreCase(operationParams.tableName)) {
             sqlToExecuteWithPaging =
-                "select ID, FULL_HASH, HEIGHT, TRANSACTION_INDEX, DB_ID from transaction where DB_ID > ? AND DB_ID < ? limit ?";
+                "SELECT id, full_hash, height, transaction_index, db_id FROM transaction WHERE db_id > ? AND db_id < ? LIMIT ?";
             log.trace(sqlToExecuteWithPaging);
             sqlSelectUpperBound =
-                "select DB_ID + 1 as DB_ID from transaction where block_timestamp < (SELECT \"TIMESTAMP\" from BLOCK where HEIGHT = ?) order by block_timestamp desc, transaction_index desc limit 1";
+                "SELECT db_id + 1 AS db_id FROM transaction WHERE block_timestamp < (SELECT `TIMESTAMP` FROM block WHERE height = ?) ORDER BY block_timestamp DESC, transaction_index DESC LIMIT 1";
             log.trace(sqlSelectUpperBound);
-            sqlSelectBottomBound = "SELECT IFNULL(min(DB_ID)-1, 0) as DB_ID from TRANSACTION";
+            sqlSelectBottomBound = "SELECT IFNULL(MIN(db_id)-1, 0) AS db_id FROM transaction";
             log.trace(sqlSelectBottomBound);
         } else {
             throw new IllegalAccessException("Unsupported table. 'BLOCK_INDEX' OR 'TRANSACTION_SHARD_INDEX' is expected. Pls use another Helper class");
@@ -196,11 +195,11 @@ public class SecondaryIndexInsertHelper extends AbstractHelper {
                 columnTypes[i] = rsmd.getColumnType(i + 1);
             }
             if (ShardConstants.BLOCK_INDEX_TABLE_NAME.equalsIgnoreCase(currentTableName)) {
-                sqlInsertString.append("insert into BLOCK_INDEX (block_id, block_height)")
-                    .append(" values (").append("?, ?").append(")");
+                sqlInsertString.append("INSERT INTO block_index (block_id, block_height)")
+                    .append(" VALUES (").append("?, ?").append(")");
             } else if (ShardConstants.TRANSACTION_INDEX_TABLE_NAME.equalsIgnoreCase(currentTableName)) {
-                sqlInsertString.append("insert into TRANSACTION_SHARD_INDEX (transaction_id, partial_transaction_hash, height, transaction_index)")
-                    .append(" values (").append("?, ?, ?, ?").append(")");
+                sqlInsertString.append("INSERT INTO transaction_shard_index (transaction_id, partial_transaction_hash, height, transaction_index)")
+                    .append(" VALUES (").append("?, ?, ?, ?").append(")");
             }
             // precompile sql
             if (preparedInsertStatement == null) {

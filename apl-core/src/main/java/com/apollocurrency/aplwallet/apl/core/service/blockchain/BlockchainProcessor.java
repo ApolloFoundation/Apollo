@@ -20,13 +20,14 @@
 
 package com.apollocurrency.aplwallet.apl.core.service.blockchain;
 
-import com.apollocurrency.aplwallet.apl.core.app.AplException;
-import com.apollocurrency.aplwallet.apl.core.entity.blockchain.Block;
-import com.apollocurrency.aplwallet.apl.core.entity.blockchain.Transaction;
-import com.apollocurrency.aplwallet.apl.core.entity.blockchain.UnconfirmedTransaction;
+import com.apollocurrency.aplwallet.apl.core.model.Block;
+import com.apollocurrency.aplwallet.apl.core.model.Transaction;
+import com.apollocurrency.aplwallet.apl.core.model.UnconfirmedTransaction;
+import com.apollocurrency.aplwallet.apl.core.entity.appdata.ScanEntity;
 import com.apollocurrency.aplwallet.apl.core.peer.Peer;
 import com.apollocurrency.aplwallet.apl.core.transaction.TransactionTypes;
 import com.apollocurrency.aplwallet.apl.util.Filter;
+import com.apollocurrency.aplwallet.apl.util.exception.AplException;
 import org.json.simple.JSONObject;
 
 import java.util.List;
@@ -59,14 +60,14 @@ public interface BlockchainProcessor {
 
     SortedSet<UnconfirmedTransaction> getUnconfirmedTransactions(Block previousBlock, int blockTimestamp, int limit);
 
-    void generateBlock(byte[] keySeed, int blockTimestamp, int timeout, int blockVersion) throws BlockNotAcceptedException;
+    void generateBlock(byte[] keySeed, int blockTimestamp, int timeout, int blockVersion) throws BlockNotAcceptedException, MempoolStateDesyncException;
 
     SortedSet<UnconfirmedTransaction> selectUnconfirmedTransactions(
         Map<TransactionTypes.TransactionTypeSpec, Map<String, Integer>> duplicates, Block previousBlock, int blockTimestamp, int limit);
 
-    void scan(int height, boolean validate);
-
     void fullScanWithShutdown();
+
+    void scan(ScanEntity scanEntity);
 
     void setGetMoreBlocks(boolean getMoreBlocks);
 
@@ -87,8 +88,6 @@ public interface BlockchainProcessor {
     void resumeBlockchainDownloading();
 
     void shutdown();
-
-    void scheduleOneScan();
 
     class BlockNotAcceptedException extends AplException {
 
@@ -112,6 +111,19 @@ public interface BlockchainProcessor {
 
     }
 
+    class MempoolStateDesyncException extends AplException {
+
+
+        public MempoolStateDesyncException(String message) {
+            super(message);
+        }
+
+        public MempoolStateDesyncException(String message, Throwable cause) {
+            super(message, cause);
+        }
+
+    }
+
     class TransactionNotAcceptedException extends BlockNotAcceptedException {
 
         private final Transaction transaction;
@@ -120,6 +132,7 @@ public interface BlockchainProcessor {
             super(message, jsonBlock);
             this.transaction = transaction;
         }
+
 
         public TransactionNotAcceptedException(Throwable cause, Transaction transaction, JSONObject jsonBlock) {
             super(cause, jsonBlock);

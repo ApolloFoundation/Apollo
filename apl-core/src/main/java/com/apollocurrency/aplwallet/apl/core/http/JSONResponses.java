@@ -20,21 +20,21 @@
 
 package com.apollocurrency.aplwallet.apl.core.http;
 
-import com.apollocurrency.aplwallet.api.dto.Status2FA;
-import com.apollocurrency.aplwallet.apl.core.app.Helper2FA;
-import com.apollocurrency.aplwallet.apl.core.monetary.HoldingType;
-import com.apollocurrency.aplwallet.apl.core.utils.Convert2;
-import com.apollocurrency.aplwallet.apl.exchange.model.DexCurrency;
+import com.apollocurrency.aplwallet.apl.core.model.HoldingType;
+import com.apollocurrency.aplwallet.apl.dex.core.model.DexCurrency;
 import com.apollocurrency.aplwallet.apl.util.Constants;
+import com.apollocurrency.aplwallet.apl.util.Convert2;
 import com.apollocurrency.aplwallet.apl.util.JSON;
+import com.apollocurrency.aplwallet.apl.util.builder.ResponseBuilder;
+import com.apollocurrency.aplwallet.apl.util.exception.ApiErrors;
 import org.json.simple.JSONObject;
 import org.json.simple.JSONStreamAware;
 
 import java.util.Arrays;
 
 /**
- * Use {@link com.apollocurrency.aplwallet.apl.core.rest.utils.ResponseBuilder} and
- * corresponded constant of {@link com.apollocurrency.aplwallet.apl.core.rest.ApiErrors}
+ * Use {@link ResponseBuilder} and
+ * corresponded constant of {@link ApiErrors}
  */
 @Deprecated
 public final class JSONResponses {
@@ -570,7 +570,7 @@ public final class JSONResponses {
         response.put("errorDescription", "Unknown account");
         response.put("account", Long.toUnsignedString(id));
         response.put("accountRS", Convert2.rsAccount(id));
-        response.put("is2FA", Helper2FA.isEnabled2FA(id));
+//        response.put("is2FA", Helper2FA.isEnabled2FA(id));
         return JSON.prepare(response);
     }
 
@@ -617,10 +617,6 @@ public final class JSONResponses {
             default:
                 throw new RuntimeException("Error not found for currency: " + currency);
         }
-    }
-
-    public static JSONStreamAware error2FA(Status2FA status2FA, long accountId) {
-        return accountError(accountId, String.valueOf(status2FA));
     }
 
     public static JSONStreamAware vaultWalletError(long accountId, String notPerformedAction, String errorDetails) {

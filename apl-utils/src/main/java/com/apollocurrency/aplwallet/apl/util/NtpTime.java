@@ -9,9 +9,6 @@ import org.apache.commons.net.ntp.NTPUDPClient;
 import org.apache.commons.net.ntp.TimeInfo;
 import org.slf4j.Logger;
 
-import javax.annotation.PostConstruct;
-import javax.annotation.PreDestroy;
-import javax.enterprise.inject.Vetoed;
 import java.io.IOException;
 import java.net.InetAddress;
 import java.net.SocketException;
@@ -23,7 +20,6 @@ import java.util.concurrent.TimeUnit;
 
 import static org.slf4j.LoggerFactory.getLogger;
 
-@Vetoed
 public class NtpTime {
 
     private static final Logger LOG = getLogger(NtpTime.class);
@@ -66,7 +62,6 @@ public class NtpTime {
         return System.currentTimeMillis() + timeOffset;
     }
 
-    @PostConstruct
     public void start() {
         setUpClient();
         Runnable timeUpdate = this::setTimeDrift;
@@ -84,7 +79,6 @@ public class NtpTime {
         }
     }
 
-    @PreDestroy
     public void shutdown() {
         client.close();
     }

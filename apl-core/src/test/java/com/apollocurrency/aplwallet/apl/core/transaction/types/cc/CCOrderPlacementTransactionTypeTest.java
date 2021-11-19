@@ -4,10 +4,9 @@
 
 package com.apollocurrency.aplwallet.apl.core.transaction.types.cc;
 
-import com.apollocurrency.aplwallet.apl.core.app.AplException;
+import com.apollocurrency.aplwallet.apl.core.model.Transaction;
 import com.apollocurrency.aplwallet.apl.core.chainid.BlockchainConfig;
 import com.apollocurrency.aplwallet.apl.core.chainid.HeightConfig;
-import com.apollocurrency.aplwallet.apl.core.entity.blockchain.Transaction;
 import com.apollocurrency.aplwallet.apl.core.entity.state.account.Account;
 import com.apollocurrency.aplwallet.apl.core.entity.state.account.LedgerEvent;
 import com.apollocurrency.aplwallet.apl.core.entity.state.asset.Asset;
@@ -15,9 +14,10 @@ import com.apollocurrency.aplwallet.apl.core.service.state.account.AccountServic
 import com.apollocurrency.aplwallet.apl.core.service.state.asset.AssetService;
 import com.apollocurrency.aplwallet.apl.core.transaction.TransactionTypes;
 import com.apollocurrency.aplwallet.apl.core.transaction.messages.AbstractAttachment;
-import com.apollocurrency.aplwallet.apl.core.transaction.messages.ColoredCoinsOrderPlacementAttachment;
+import com.apollocurrency.aplwallet.apl.core.transaction.messages.CCOrderPlacementAttachment;
 import com.apollocurrency.aplwallet.apl.util.annotation.FeeMarker;
 import com.apollocurrency.aplwallet.apl.util.annotation.TransactionFee;
+import com.apollocurrency.aplwallet.apl.util.exception.AplException;
 import lombok.SneakyThrows;
 import org.json.simple.JSONObject;
 import org.junit.jupiter.api.Test;
@@ -81,7 +81,7 @@ class CCOrderPlacementTransactionTypeTest {
 
     @Test
     void doStateDependentValidationOK() throws AplException.ValidationException {
-        ColoredCoinsOrderPlacementAttachment attachment1 = mockAttachment(10, 2);
+        CCOrderPlacementAttachment attachment1 = mockAttachment(10, 2);
         Asset asset = mock(Asset.class);
         doReturn(asset).when(assetService).getAsset(ASSET_ID);
         doReturn(20L).when(asset).getInitialQuantityATU();
@@ -197,12 +197,12 @@ class CCOrderPlacementTransactionTypeTest {
         assertTrue(type.isPhasingSafe(), "CC_ORDER_PLACEMENT tx types should support phasing safe");
     }
 
-    private ColoredCoinsOrderPlacementAttachment mockAttachment(long assetId, long quantity, long price) {
-        ColoredCoinsOrderPlacementAttachment attachment = new TestCCOrderPlacementAttachment(assetId, quantity, price);
+    private CCOrderPlacementAttachment mockAttachment(long assetId, long quantity, long price) {
+        CCOrderPlacementAttachment attachment = new TestCCOrderPlacementAttachment(assetId, quantity, price);
         doReturn(attachment).when(tx).getAttachment();
         return attachment;
     }
-    private ColoredCoinsOrderPlacementAttachment mockAttachment(long quantity, long price) {
+    private CCOrderPlacementAttachment mockAttachment(long quantity, long price) {
         return mockAttachment(ASSET_ID, quantity, price);
     }
 
@@ -252,7 +252,7 @@ class CCOrderPlacementTransactionTypeTest {
         }
     }
 
-    private static class TestCCOrderPlacementAttachment extends ColoredCoinsOrderPlacementAttachment {
+    private static class TestCCOrderPlacementAttachment extends CCOrderPlacementAttachment {
         public TestCCOrderPlacementAttachment(long assetId, long quantityATU, long priceATM) {
             super(assetId, quantityATU, priceATM);
         }

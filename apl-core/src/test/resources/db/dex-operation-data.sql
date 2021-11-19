@@ -1,4 +1,4 @@
-delete from dex_operation;
+TRUNCATE TABLE dex_operation;
 INSERT INTO dex_operation
 (db_id ,account                   , stage , eid     , description               , details, finished , ts        ) VALUES
 (1001  ,'APL-RQTU-56W2-AAMY-7MTLB', 4     , 120     , 'Initiate atomic swap'    , null   , false    , '2020-01-10T12:00:01'),

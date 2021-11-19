@@ -4,7 +4,7 @@
 
 package com.apollocurrency.aplwallet.apl.updater.service;
 
-import com.apollocurrency.aplwallet.apl.core.entity.blockchain.Transaction;
+import com.apollocurrency.aplwallet.apl.core.model.Transaction;
 import com.apollocurrency.aplwallet.apl.udpater.intfce.DownloadInfo;
 import com.apollocurrency.aplwallet.apl.updater.AuthorityChecker;
 import com.apollocurrency.aplwallet.apl.updater.AuthorityCheckerImpl;

@@ -5,7 +5,7 @@
 package com.apollocurrency.aplwallet.apl.core.service.prunable.impl;
 
 import com.apollocurrency.aplwallet.apl.core.dao.prunable.PrunableMessageTable;
-import com.apollocurrency.aplwallet.apl.core.entity.blockchain.Transaction;
+import com.apollocurrency.aplwallet.apl.core.model.Transaction;
 import com.apollocurrency.aplwallet.apl.core.entity.prunable.PrunableMessage;
 import com.apollocurrency.aplwallet.apl.core.service.blockchain.Blockchain;
 import com.apollocurrency.aplwallet.apl.core.service.prunable.PrunableMessageService;
@@ -24,9 +24,9 @@ import java.util.List;
 
 @Singleton
 public class PrunableMessageServiceImpl implements PrunableMessageService {
-    private PrunableMessageTable table;
-    private Blockchain blockchain;
-    private AccountPublicKeyService accountPublicKeyService;
+    private final PrunableMessageTable table;
+    private final Blockchain blockchain;
+    private final AccountPublicKeyService accountPublicKeyService;
 
     @Inject
     public PrunableMessageServiceImpl(PrunableMessageTable table, Blockchain blockchain, AccountPublicKeyService accountPublicKeyService) {

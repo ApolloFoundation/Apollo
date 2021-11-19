@@ -4,7 +4,7 @@
 
 package com.apollocurrency.aplwallet.apl.core.service.state.order.impl;
 
-import com.apollocurrency.aplwallet.apl.core.entity.blockchain.Transaction;
+import com.apollocurrency.aplwallet.apl.core.model.Transaction;
 import com.apollocurrency.aplwallet.apl.core.entity.state.Trade;
 import com.apollocurrency.aplwallet.apl.core.entity.state.account.Account;
 import com.apollocurrency.aplwallet.apl.core.entity.state.account.LedgerEvent;
@@ -17,7 +17,7 @@ import com.apollocurrency.aplwallet.apl.core.service.state.order.OrderMatchServi
 import com.apollocurrency.aplwallet.apl.core.service.state.order.OrderService;
 import com.apollocurrency.aplwallet.apl.core.service.state.qualifier.AskOrderService;
 import com.apollocurrency.aplwallet.apl.core.service.state.qualifier.BidOrderService;
-import com.apollocurrency.aplwallet.apl.core.transaction.messages.ColoredCoinsAskOrderPlacement;
+import com.apollocurrency.aplwallet.apl.core.transaction.messages.CCAskOrderPlacementAttachment;
 import com.apollocurrency.aplwallet.apl.core.transaction.messages.CCBidOrderPlacementAttachment;
 import com.apollocurrency.aplwallet.apl.util.ThreadUtils;
 import lombok.extern.slf4j.Slf4j;
@@ -33,7 +33,7 @@ import javax.inject.Singleton;
 public class OrderMatchServiceImpl implements OrderMatchService {
     private final AccountService accountService;
     private final AccountAssetService accountAssetService;
-    private final OrderService<AskOrder, ColoredCoinsAskOrderPlacement> orderAskService;
+    private final OrderService<AskOrder, CCAskOrderPlacementAttachment> orderAskService;
     private final OrderService<BidOrder, CCBidOrderPlacementAttachment> orderBidService;
     private final TradeService tradeService;
 
@@ -41,7 +41,7 @@ public class OrderMatchServiceImpl implements OrderMatchService {
     public OrderMatchServiceImpl(
         final AccountService accountService,
         final AccountAssetService accountAssetService,
-        @AskOrderService final OrderService<AskOrder, ColoredCoinsAskOrderPlacement> orderAskService,
+        @AskOrderService final OrderService<AskOrder, CCAskOrderPlacementAttachment> orderAskService,
         @BidOrderService final OrderService<BidOrder, CCBidOrderPlacementAttachment> orderBidService,
         final TradeService tradeService
     ) {
@@ -91,7 +91,7 @@ public class OrderMatchServiceImpl implements OrderMatchService {
     }
 
     @Override
-    public void addAskOrder(Transaction transaction, ColoredCoinsAskOrderPlacement attachment) {
+    public void addAskOrder(Transaction transaction, CCAskOrderPlacementAttachment attachment) {
         orderAskService.addOrder(transaction, attachment);
         matchOrders(attachment.getAssetId());
     }

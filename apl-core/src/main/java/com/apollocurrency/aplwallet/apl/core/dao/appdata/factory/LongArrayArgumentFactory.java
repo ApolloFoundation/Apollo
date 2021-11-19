@@ -1,19 +1,21 @@
 package com.apollocurrency.aplwallet.apl.core.dao.appdata.factory;
 
-import com.apollocurrency.aplwallet.apl.core.shard.helper.jdbc.SimpleResultSet;
+import lombok.extern.slf4j.Slf4j;
 import org.jdbi.v3.core.argument.AbstractArgumentFactory;
 import org.jdbi.v3.core.argument.Argument;
 import org.jdbi.v3.core.config.ConfigRegistry;
 
 import java.sql.Types;
+import java.util.Arrays;
 
-public class LongArrayArgumentFactory extends AbstractArgumentFactory<Long[]> {
+@Slf4j
+public class LongArrayArgumentFactory extends AbstractArgumentFactory<long[]> {
     public LongArrayArgumentFactory() {
-        super(Types.ARRAY);
+        super(Types.LONGVARCHAR);
     }
 
     @Override
-    protected Argument build(Long[] value, ConfigRegistry config) {
-        return (position, statement, ctx) -> statement.setArray(position, new SimpleResultSet.SimpleArray(value));
+    protected Argument build(long[] value, ConfigRegistry config) {
+        return (position, statement, ctx) -> statement.setString(position, Arrays.toString(value));
     }
 }

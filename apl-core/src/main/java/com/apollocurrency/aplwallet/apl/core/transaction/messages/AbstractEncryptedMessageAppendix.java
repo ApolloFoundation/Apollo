@@ -1,17 +1,17 @@
 /*
- * Copyright © 2018-2019 Apollo Foundation
+ * Copyright © 2018-2021 Apollo Foundation
  */
 
 
 package com.apollocurrency.aplwallet.apl.core.transaction.messages;
 
-import com.apollocurrency.aplwallet.apl.core.app.AplException;
-import com.apollocurrency.aplwallet.apl.core.entity.blockchain.Transaction;
+import com.apollocurrency.aplwallet.apl.core.model.Transaction;
 import com.apollocurrency.aplwallet.apl.core.entity.state.account.Account;
 import com.apollocurrency.aplwallet.apl.core.transaction.Fee;
 import com.apollocurrency.aplwallet.apl.crypto.Convert;
 import com.apollocurrency.aplwallet.apl.crypto.EncryptedData;
 import com.apollocurrency.aplwallet.apl.crypto.NotValidException;
+import com.apollocurrency.aplwallet.apl.util.exception.AplException;
 import org.json.simple.JSONObject;
 
 import java.nio.ByteBuffer;
@@ -19,9 +19,9 @@ import java.util.Map;
 
 public abstract class AbstractEncryptedMessageAppendix extends AbstractAppendix {
 
-    private EncryptedData encryptedData;
-    private boolean isText;
-    private boolean isCompressed;
+    private final EncryptedData encryptedData;
+    private final boolean isText;
+    private final boolean isCompressed;
 
     public AbstractEncryptedMessageAppendix(ByteBuffer buffer) throws AplException.NotValidException {
         super(buffer);
@@ -86,7 +86,7 @@ public abstract class AbstractEncryptedMessageAppendix extends AbstractAppendix 
     }
 
     @Override
-    public void performFullValidation(Transaction transaction, int blockHeight) throws AplException.ValidationException {
+    public void performStateDependentValidation(Transaction transaction, int blockHeight) throws AplException.ValidationException {
         throw new UnsupportedOperationException("Validation for encrypted message appendix is not supported");
     }
 
@@ -101,10 +101,6 @@ public abstract class AbstractEncryptedMessageAppendix extends AbstractAppendix 
 
     public final EncryptedData getEncryptedData() {
         return encryptedData;
-    }
-
-    final void setEncryptedData(EncryptedData encryptedData) {
-        this.encryptedData = encryptedData;
     }
 
     int getEncryptedDataLength() {

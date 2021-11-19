@@ -4,10 +4,9 @@
 
 package com.apollocurrency.aplwallet.apl.core.transaction.types.ms;
 
-import com.apollocurrency.aplwallet.apl.core.app.AplException;
+import com.apollocurrency.aplwallet.apl.core.model.Transaction;
 import com.apollocurrency.aplwallet.apl.core.chainid.BlockchainConfig;
 import com.apollocurrency.aplwallet.apl.core.chainid.HeightConfig;
-import com.apollocurrency.aplwallet.apl.core.entity.blockchain.Transaction;
 import com.apollocurrency.aplwallet.apl.core.entity.state.account.Account;
 import com.apollocurrency.aplwallet.apl.core.entity.state.account.LedgerEvent;
 import com.apollocurrency.aplwallet.apl.core.entity.state.currency.Currency;
@@ -19,6 +18,7 @@ import com.apollocurrency.aplwallet.apl.core.transaction.messages.Attachment;
 import com.apollocurrency.aplwallet.apl.core.transaction.messages.MonetarySystemExchangeAttachment;
 import com.apollocurrency.aplwallet.apl.util.annotation.FeeMarker;
 import com.apollocurrency.aplwallet.apl.util.annotation.TransactionFee;
+import com.apollocurrency.aplwallet.apl.util.exception.AplException;
 import org.json.simple.JSONObject;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -62,10 +62,6 @@ class MSExchangeTransactionTypeTest {
         assertEquals("Currency not active: {\"rateATM\":25,\"version.TestMSExchangeAttachment\":1,\"currency\":\"1\",\"units\":10}", ex.getMessage());
         verify(currencyService).isActive(null);
         verify(currencyService).getCurrency(1L);
-    }
-
-    private Attachment setUpAttachmentMock() {
-        return doReturn(new TestMSExchangeAttachment(1L, 25L, 10L)).when(tx).getAttachment();
     }
 
     @Test
@@ -163,6 +159,11 @@ class MSExchangeTransactionTypeTest {
         boolean haveRecipient = type.canHaveRecipient();
 
         assertFalse(haveRecipient, "Currency exchange types should not have recipient");
+    }
+
+
+    private Attachment setUpAttachmentMock() {
+        return doReturn(new TestMSExchangeAttachment(1L, 25L, 10L)).when(tx).getAttachment();
     }
 
     private static class TestMSExchangeTransactionType extends MSExchangeTransactionType {

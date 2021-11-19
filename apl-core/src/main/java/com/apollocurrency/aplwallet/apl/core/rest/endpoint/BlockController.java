@@ -7,18 +7,19 @@ package com.apollocurrency.aplwallet.apl.core.rest.endpoint;
 import com.apollocurrency.aplwallet.api.dto.BlockDTO;
 import com.apollocurrency.aplwallet.api.dto.ECBlockDTO;
 import com.apollocurrency.aplwallet.api.response.BlocksResponse;
-import com.apollocurrency.aplwallet.apl.core.config.Property;
-import com.apollocurrency.aplwallet.apl.core.entity.blockchain.Block;
-import com.apollocurrency.aplwallet.apl.core.entity.blockchain.EcBlockData;
-import com.apollocurrency.aplwallet.apl.core.rest.ApiErrors;
+import com.apollocurrency.aplwallet.apl.core.model.Block;
+import com.apollocurrency.aplwallet.apl.core.model.EcBlockData;
 import com.apollocurrency.aplwallet.apl.core.rest.converter.BlockConverter;
-import com.apollocurrency.aplwallet.apl.core.rest.parameter.FirstLastIndexBeanParam;
-import com.apollocurrency.aplwallet.apl.core.rest.parameter.LongParameter;
-import com.apollocurrency.aplwallet.apl.core.rest.utils.ResponseBuilder;
+import com.apollocurrency.aplwallet.apl.core.rest.converter.BlockConverterCreator;
 import com.apollocurrency.aplwallet.apl.core.rest.validation.ValidBlockchainHeight;
 import com.apollocurrency.aplwallet.apl.core.rest.validation.ValidTimestamp;
 import com.apollocurrency.aplwallet.apl.core.service.appdata.TimeService;
 import com.apollocurrency.aplwallet.apl.core.service.blockchain.Blockchain;
+import com.apollocurrency.aplwallet.apl.util.api.parameter.FirstLastIndexBeanParam;
+import com.apollocurrency.aplwallet.apl.util.api.parameter.LongParameter;
+import com.apollocurrency.aplwallet.apl.util.builder.ResponseBuilder;
+import com.apollocurrency.aplwallet.apl.util.cdi.config.Property;
+import com.apollocurrency.aplwallet.apl.util.exception.ApiErrors;
 import io.swagger.v3.oas.annotations.OpenAPIDefinition;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
@@ -52,15 +53,15 @@ import java.util.Objects;
 @Path("/block")
 public class BlockController {
     private Blockchain blockchain;
-    private BlockConverter blockConverter;
     public static int maxAPIFetchRecords;
     private TimeService timeService;
+    private BlockConverterCreator blockConverterCreator;
 
     @Inject
-    public BlockController(Blockchain blockchain, BlockConverter blockConverter,
+    public BlockController(Blockchain blockchain, BlockConverterCreator blockConverterCreator,
                            @Property(name = "apl.maxAPIRecords", defaultValue = "100") int maxAPIrecords, TimeService timeService) {
         this.blockchain = Objects.requireNonNull(blockchain);
-        this.blockConverter = Objects.requireNonNull(blockConverter);
+        this.blockConverterCreator = Objects.requireNonNull(blockConverterCreator);
         maxAPIFetchRecords = maxAPIrecords;
         this.timeService = Objects.requireNonNull(timeService);
     }
@@ -146,16 +147,8 @@ public class BlockController {
         if (blockData == null) {
             return response.error(ApiErrors.UNKNOWN_VALUE, "block", blockData).build();
         }
-        if (includeTransactions) {
-            blockchain.getOrLoadTransactions(blockData);
-        }
-        blockConverter.setAddTransactions(includeTransactions);
-        blockConverter.setAddPhasedTransactions(includeExecutedPhased);
+        BlockConverter blockConverter = blockConverterCreator.create(includeTransactions, includeExecutedPhased);
         BlockDTO dto = blockConverter.convert(blockData);
-        if (!includeTransactions) {
-            long count = blockchain.getBlockTransactionCount(blockData.getId());
-            dto.setNumberOfTransactions(count);
-        }
         log.trace("getBlock result: {}", dto);
         return response.bind(dto).build();
     }
@@ -289,8 +282,7 @@ public class BlockController {
         Block lastBlock = blockchain.getLastBlock();
         if (lastBlock != null) {
             indexBeanParam.adjustIndexes(maxAPIFetchRecords);
-            blockConverter.setAddTransactions(includeTransactions);
-            blockConverter.setAddPhasedTransactions(includeExecutedPhased);
+            BlockConverter blockConverter = blockConverterCreator.create(includeTransactions, includeExecutedPhased);
             List<Block> result = blockchain.getBlocksFromShards(indexBeanParam.getFirstIndex(), indexBeanParam.getLastIndex(), timestamp);
             log.trace("getBlocks result [{}]: \t indexBeanParam={}, timestamp={}, includeTransactions={}, includeExecutedPhased={}",
                 result.size(), indexBeanParam, timestamp, includeTransactions, includeExecutedPhased);

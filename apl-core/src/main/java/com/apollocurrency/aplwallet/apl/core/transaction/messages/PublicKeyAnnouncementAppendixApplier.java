@@ -4,7 +4,7 @@
 
 package com.apollocurrency.aplwallet.apl.core.transaction.messages;
 
-import com.apollocurrency.aplwallet.apl.core.entity.blockchain.Transaction;
+import com.apollocurrency.aplwallet.apl.core.model.Transaction;
 import com.apollocurrency.aplwallet.apl.core.entity.state.account.Account;
 import com.apollocurrency.aplwallet.apl.core.service.state.account.AccountPublicKeyService;
 
@@ -25,5 +25,10 @@ public class PublicKeyAnnouncementAppendixApplier implements AppendixApplier<Pub
         if (accountPublicKeyService.setOrVerifyPublicKey(recipientAccount.getId(), appendix.getPublicKey())) {
             accountPublicKeyService.apply(recipientAccount, appendix.getPublicKey());
         }
+    }
+
+    @Override
+    public Class<PublicKeyAnnouncementAppendix> forClass() {
+        return PublicKeyAnnouncementAppendix.class;
     }
 }

@@ -4,7 +4,7 @@
 
 package com.apollocurrency.aplwallet.apl.core.dao.appdata.impl;
 
-import com.apollocurrency.aplwallet.apl.core.dao.TransactionalDataSource;
+import com.apollocurrency.aplwallet.apl.util.db.TransactionalDataSource;
 import com.apollocurrency.aplwallet.apl.core.dao.appdata.ShardRecoveryDaoJdbc;
 import com.apollocurrency.aplwallet.apl.core.entity.appdata.ShardRecovery;
 import org.slf4j.Logger;
@@ -75,7 +75,7 @@ public class ShardRecoveryDaoJdbcImpl implements ShardRecoveryDaoJdbc {
         List<ShardRecovery> result = new ArrayList<>();
         try (PreparedStatement pstmt = con.prepareStatement("SELECT * FROM shard_recovery")) {
             try (ResultSet rs = pstmt.executeQuery()) {
-                ShardRecovery recovery = null;
+                ShardRecovery recovery;
                 while ((recovery = getIfPresent(rs)) != null) {
                     result.add(recovery);
                 }
