@@ -18,7 +18,6 @@ import com.apollocurrency.smc.data.jsonmapper.JsonMapper;
 import com.apollocurrency.smc.data.jsonmapper.event.EventJsonMapper;
 import lombok.Getter;
 import lombok.extern.slf4j.Slf4j;
-import org.eclipse.jetty.websocket.api.WebSocketException;
 
 import javax.annotation.PostConstruct;
 import javax.enterprise.event.ObservesAsync;
@@ -60,7 +59,7 @@ public class SmcEventServer implements SmcEventSocketListener {
         if (lookupService().isContractExist(socket.getContract())) {
             subscriptionManager.register(socket.getContract(), socket);
         } else {
-            throw new WebSocketException("Contract not found, address=" + socket.getContract());
+            throw new ContractNotFoundException(socket.getContract());
         }
     }
 

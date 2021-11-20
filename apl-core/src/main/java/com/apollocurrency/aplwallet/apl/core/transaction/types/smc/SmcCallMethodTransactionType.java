@@ -37,6 +37,7 @@ import com.apollocurrency.smc.contract.fuel.FuelValidator;
 import com.apollocurrency.smc.contract.fuel.OperationPrice;
 import com.apollocurrency.smc.contract.vm.ExecutionLog;
 import com.apollocurrency.smc.data.type.Address;
+import com.apollocurrency.smc.polyglot.PolyglotException;
 import com.google.common.base.Strings;
 import lombok.extern.slf4j.Slf4j;
 import org.json.simple.JSONObject;
@@ -130,7 +131,12 @@ public class SmcCallMethodTransactionType extends AbstractSmcTransactionType {
             context
         );
         var executionLog = new ExecutionLog();
-        processor.process(executionLog);
+        try {
+            processor.process(executionLog);
+        } catch (PolyglotException e) {
+            log.debug("SMC: doStateDependentValidation = INVALID");
+            throw new AplAcceptableTransactionValidationException(e.getMessage(), transaction);
+        }
         if (executionLog.hasError()) {
             log.debug("SMC: doStateDependentValidation = INVALID");
             throw new AplAcceptableTransactionValidationException(executionLog.toJsonString(), transaction);
@@ -168,7 +174,12 @@ public class SmcCallMethodTransactionType extends AbstractSmcTransactionType {
         //syntactical validation
         SmcContractTxProcessor processor = new SyntaxValidator(smartMethod.getMethodWithParams(), context);
         var executionLog = new ExecutionLog();
-        processor.process(executionLog);
+        try {
+            processor.process(executionLog);
+        } catch (PolyglotException e) {
+            log.debug("SMC: doStateIndependentValidation = INVALID");
+            throw new AplUnacceptableTransactionValidationException(e.getMessage(), transaction);
+        }
         if (executionLog.hasError()) {
             log.debug("SMC: doStateIndependentValidation = INVALID");
             throw new AplUnacceptableTransactionValidationException("Syntax error: " + executionLog.toJsonString(), transaction);
@@ -207,7 +218,7 @@ public class SmcCallMethodTransactionType extends AbstractSmcTransactionType {
             smartMethod.getMethodWithParams(),
             smartContract.getAddress(), Long.toUnsignedString(transaction.getId()),
             smartContract.getFuel(), transaction.getAmountATM(), transactionSender);
-        contractService.commit();
+        contractService.commitContractChanges();
         log.trace("Changes were committed");
     }
 

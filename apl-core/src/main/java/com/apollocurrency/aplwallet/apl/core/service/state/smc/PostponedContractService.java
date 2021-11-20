@@ -51,8 +51,9 @@ public interface PostponedContractService {
     void updateContractState(SmartContract contract);
 
     /**
-     * Fix all changes in the blockchain.
+     * Fix all contract changes in the blockchain.
+     * Saves new contract and updates state for existing contracts.
      */
-    void commit();
+    void commitContractChanges();
 
 }

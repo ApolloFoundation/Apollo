@@ -29,6 +29,7 @@ import com.apollocurrency.smc.contract.SmartContract;
 import com.apollocurrency.smc.contract.fuel.FuelValidator;
 import com.apollocurrency.smc.contract.vm.ExecutionLog;
 import com.apollocurrency.smc.data.type.Address;
+import com.apollocurrency.smc.polyglot.PolyglotException;
 import com.google.common.base.Strings;
 import lombok.extern.slf4j.Slf4j;
 import org.json.simple.JSONObject;
@@ -131,11 +132,15 @@ public class SmcPublishContractTransactionType extends AbstractSmcTransactionTyp
             log.error("Needed fuel={} but actual={}", calculatedFuel, smartContract.getFuel());
             throw new AplUnacceptableTransactionValidationException("Not enough fuel to execute this transaction, expected=" + calculatedFuel + " but actual=" + smartContract.getFuel(), transaction);
         }
-
         //syntactical and semantic validation
         SmcContractTxProcessor processor = new PublishContractTxValidator(smartContract, context);
         var executionLog = new ExecutionLog();
-        processor.process(executionLog);
+        try {
+            processor.process(executionLog);
+        } catch (PolyglotException e) {
+            log.debug("SMC: doStateIndependentValidation = INVALID");
+            throw new AplUnacceptableTransactionValidationException(e.getMessage(), transaction);
+        }
         if (executionLog.hasError()) {
             log.debug("SMC: doStateIndependentValidation = INVALID");
             throw new AplUnacceptableTransactionValidationException(executionLog.toJsonString(), transaction);
@@ -161,7 +166,7 @@ public class SmcPublishContractTransactionType extends AbstractSmcTransactionTyp
         log.info("Contract {} published init=[{}], txId={}, fuel={}, amountATM={}, owner={}",
             smartContract.getAddress(), smartContract.getInitCode(), Long.toUnsignedString(transaction.getId()),
             smartContract.getFuel(), transaction.getAmountATM(), smartContract.getOwner());
-        contractService.commit();
+        contractService.commitContractChanges();
         log.trace("Changes were committed");
     }
 
