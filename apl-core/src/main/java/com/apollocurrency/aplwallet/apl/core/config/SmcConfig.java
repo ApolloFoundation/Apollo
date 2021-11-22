@@ -19,11 +19,13 @@ import com.apollocurrency.smc.contract.vm.SMCFreeExecutionMode;
 import com.apollocurrency.smc.contract.vm.SMCPaidExecutionMode;
 import com.apollocurrency.smc.polyglot.config.JsLimitsConfig;
 import com.apollocurrency.smc.polyglot.engine.ExecutionEnv;
+import com.apollocurrency.smc.polyglot.engine.ExecutionMode;
 import com.apollocurrency.smc.polyglot.language.LanguageContext;
 import com.apollocurrency.smc.polyglot.language.LanguageContextFactory;
 import com.apollocurrency.smc.polyglot.security.AllowFullHostAccessPolicy;
 import com.apollocurrency.smc.polyglot.security.AllowHostClassLoadingPolicy;
 import com.apollocurrency.smc.polyglot.security.DenyGlobalObjectsPolicy;
+import lombok.Getter;
 
 import javax.enterprise.inject.Produces;
 import javax.inject.Singleton;
@@ -35,77 +37,6 @@ import javax.inject.Singleton;
 public class SmcConfig {
 
     private final PriceProvider priceProvider = SMCOperationPriceProvider.getInstance();
-
-    private static LanguageContext getLanguageContext() {
-        return LanguageContextFactory.createJSContext(
-            new DenyGlobalObjectsPolicy(),
-            new AllowFullHostAccessPolicy(),
-            new AllowHostClassLoadingPolicy()
-        );
-    }
-
-    @Produces
-    public LanguageContext createLanguageContext() {
-        return getLanguageContext();
-    }
-
-    public SmcContext asContext(int height, Chargeable chargeable, final BlockchainIntegrator integrator) {
-        return new SmcContext() {
-            @Override
-            public BlockchainIntegrator getIntegrator() {
-                return integrator;
-            }
-
-            @Override
-            public ExecutionEnv getExecutionEnv() {
-                return ExecutionEnv.builder()
-                    .mode(new SMCPaidExecutionMode(loadPrice(height), chargeable, true, true, false))
-                    .config(new JsLimitsConfig())
-                    .build();
-            }
-
-            @Override
-            public LanguageContext getLanguageContext() {
-                return createLanguageContext();
-            }
-
-            @Override
-            public OperationPrice getPrice() {
-                return loadPrice(height);
-            }
-        };
-    }
-
-    public SmcContext asViewContext(int height, Chargeable chargeable, final BlockchainIntegrator integrator) {
-        return new SmcContext() {
-            @Override
-            public BlockchainIntegrator getIntegrator() {
-                return integrator;
-            }
-
-            @Override
-            public ExecutionEnv getExecutionEnv() {
-                return ExecutionEnv.builder()
-                    .mode(new SMCFreeExecutionMode(loadPrice(height), chargeable, true, true, false))
-                    .config(new JsLimitsConfig())
-                    .build();
-            }
-
-            @Override
-            public LanguageContext getLanguageContext() {
-                return createLanguageContext();
-            }
-
-            @Override
-            public OperationPrice getPrice() {
-                return loadPrice(height);
-            }
-        };
-    }
-
-    public OperationPrice loadPrice(int height) {
-        return priceProvider.getPrice(height);
-    }
 
     @Produces
     @Singleton
@@ -142,4 +73,74 @@ public class SmcConfig {
             }
         };
     }
+
+    @Produces
+    public LanguageContext createLanguageContext() {
+        return getLanguageContext();
+    }
+
+    public SmcContext asContext(int height, Chargeable chargeable, final BlockchainIntegrator integrator) {
+        return new AbstractContext(height, chargeable, integrator) {
+            @Override
+            protected ExecutionMode getExecutionMode(int height, Chargeable chargeable) {
+                return new SMCPaidExecutionMode(loadPrice(height), chargeable, true, true, false);
+            }
+        };
+    }
+
+    public SmcContext asViewContext(int height, Chargeable chargeable, final BlockchainIntegrator integrator) {
+        return new AbstractContext(height, chargeable, integrator) {
+            @Override
+            protected ExecutionMode getExecutionMode(int height, Chargeable chargeable) {
+                return new SMCFreeExecutionMode(loadPrice(height), chargeable, true, true, false);
+            }
+        };
+    }
+
+    public OperationPrice loadPrice(int height) {
+        return priceProvider.getPrice(height);
+    }
+
+    private abstract class AbstractContext implements SmcContext {
+        private final int height;
+        private final Chargeable chargeable;
+        @Getter
+        private final BlockchainIntegrator integrator;
+
+        public AbstractContext(int height, Chargeable chargeable, BlockchainIntegrator integrator) {
+            this.height = height;
+            this.chargeable = chargeable;
+
+            this.integrator = integrator;
+        }
+
+        protected abstract ExecutionMode getExecutionMode(int height, Chargeable chargeable);
+
+        @Override
+        public ExecutionEnv getExecutionEnv() {
+            return ExecutionEnv.builder()
+                .mode(getExecutionMode(height, chargeable))
+                .config(new JsLimitsConfig())
+                .build();
+        }
+
+        @Override
+        public LanguageContext getLanguageContext() {
+            return createLanguageContext();
+        }
+
+        @Override
+        public OperationPrice getPrice() {
+            return loadPrice(height);
+        }
+    }
+
+    private static LanguageContext getLanguageContext() {
+        return LanguageContextFactory.createJSContext(
+            new DenyGlobalObjectsPolicy(),
+            new AllowFullHostAccessPolicy(),
+            new AllowHostClassLoadingPolicy()
+        );
+    }
+
 }

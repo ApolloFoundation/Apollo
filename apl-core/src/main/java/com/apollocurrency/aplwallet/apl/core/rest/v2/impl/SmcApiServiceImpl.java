@@ -378,7 +378,7 @@ public class SmcApiServiceImpl implements SmcApiService {
         }
         Account contractAccount = getAccountByAddress(body.getAddress());
         if (contractAccount == null) {
-            return builder.error(ApiErrors.INCORRECT_VALUE, "address", body.getAddress()).build();
+            return builder.error(ApiErrors.CONTRACT_NOT_FOUND, body.getAddress()).build();
         }
         if (contractAccount.getPublicKey() == null) {
             contractAccount.setPublicKey(accountService.getPublicKey(contractAccount.getId()));
@@ -403,7 +403,7 @@ public class SmcApiServiceImpl implements SmcApiService {
         ResponseBuilderV2 builder = ResponseBuilderV2.startTiming();
         Account account = getAccountByAddress(addressStr);
         if (account == null) {
-            return builder.error(ApiErrors.INCORRECT_VALUE, "address", addressStr).build();
+            return builder.error(ApiErrors.CONTRACT_NOT_FOUND, addressStr).build();
         }
         var address = new AplAddress(account.getId());
 
@@ -589,7 +589,7 @@ public class SmcApiServiceImpl implements SmcApiService {
         //validate params
         Account contractAccount = getAccountByAddress(body.getAddress());
         if (contractAccount == null) {
-            response.error(ApiErrors.INCORRECT_VALUE, "contract_address", body.getAddress());
+            response.error(ApiErrors.CONTRACT_NOT_FOUND, body.getAddress());
             return null;
         }
         if (contractAccount.getPublicKey() == null) {
@@ -663,7 +663,7 @@ public class SmcApiServiceImpl implements SmcApiService {
         ResponseBuilderV2 builder = ResponseBuilderV2.startTiming();
         Account account = getAccountByAddress(accountStr);
         if (account == null) {
-            return builder.error(ApiErrors.INCORRECT_VALUE, "account", accountStr).build();
+            return builder.error(ApiErrors.CONTRACT_NOT_FOUND, accountStr).build();
         }
         var address = new AplAddress(account.getId());
 
@@ -680,7 +680,7 @@ public class SmcApiServiceImpl implements SmcApiService {
         ResponseBuilderV2 builder = ResponseBuilderV2.startTiming();
         Account account = getAccountByAddress(address);
         if (account == null) {
-            return builder.error(ApiErrors.INCORRECT_VALUE, "address", address).build();
+            return builder.error(ApiErrors.CONTRACT_NOT_FOUND, address).build();
         }
         final AplAddress contract = new AplAddress(account.getId());
         if (!contractService.isContractExist(contract)) {
@@ -745,7 +745,7 @@ public class SmcApiServiceImpl implements SmcApiService {
         ResponseBuilderV2 builder = ResponseBuilderV2.startTiming();
         Account account = getAccountByAddress(addressStr);
         if (account == null) {
-            return builder.error(ApiErrors.INCORRECT_VALUE, "address", addressStr).build();
+            return builder.error(ApiErrors.CONTRACT_NOT_FOUND, addressStr).build();
         }
         var address = new AplAddress(account.getId());
         if (!contractService.isContractExist(address)) {
@@ -780,7 +780,7 @@ public class SmcApiServiceImpl implements SmcApiService {
         if (addressStr != null) {
             Account account = getAccountByAddress(addressStr);
             if (account == null) {
-                return builder.error(ApiErrors.INCORRECT_VALUE, "address", addressStr).build();
+                return builder.error(ApiErrors.CONTRACT_NOT_FOUND, addressStr).build();
             }
             address = new AplAddress(account.getId());
             if (!contractService.isContractExist(address)) {
@@ -817,7 +817,7 @@ public class SmcApiServiceImpl implements SmcApiService {
         ResponseBuilderV2 builder = ResponseBuilderV2.startTiming();
         Account account = getAccountByAddress(addressStr);
         if (account == null) {
-            return builder.error(ApiErrors.INCORRECT_VALUE, "address", addressStr).build();
+            return builder.error(ApiErrors.CONTRACT_NOT_FOUND, addressStr).build();
         }
         var address = new AplAddress(account.getId());
         if (!contractService.isContractExist(address)) {
@@ -864,7 +864,7 @@ public class SmcApiServiceImpl implements SmcApiService {
 
     private Account getAccountByAddress(String addressStr) {
         Account account = null;
-        long addressId = -1;
+        Long addressId = null;
         if (addressStr.startsWith("0x")) {
             var bi = new BigInteger(HexUtils.parseHex(addressStr));
             addressId = bi.longValue();
@@ -875,7 +875,7 @@ public class SmcApiServiceImpl implements SmcApiService {
                 //do nothing
             }
         }
-        if (addressId > 0) {
+        if (addressId != null) {
             account = accountService.getAccount(addressId);
         }
         return account;

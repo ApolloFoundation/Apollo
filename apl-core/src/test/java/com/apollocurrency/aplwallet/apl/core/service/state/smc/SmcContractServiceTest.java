@@ -36,7 +36,7 @@ import com.apollocurrency.smc.polyglot.language.LanguageContextFactory;
 import com.apollocurrency.smc.polyglot.language.SmartSource;
 import com.apollocurrency.smc.polyglot.language.lib.LibraryProvider;
 import com.apollocurrency.smc.polyglot.language.lib.ModuleSource;
-import com.apollocurrency.smc.polyglot.language.preprocessor.Preprocessor;
+import com.apollocurrency.smc.polyglot.language.lib.Preprocessor;
 import lombok.SneakyThrows;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;

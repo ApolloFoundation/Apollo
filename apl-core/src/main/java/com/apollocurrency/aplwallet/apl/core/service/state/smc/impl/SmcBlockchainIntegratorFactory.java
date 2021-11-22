@@ -309,9 +309,11 @@ public class SmcBlockchainIntegratorFactory {
                 txLog.append(rec);
 
             } catch (Exception e) {
-                //TODO adjust error code
-                txReceiptBuilder.errorCode(1L).errorDescription(e.getMessage()).errorDetails(ThreadUtils.last5Stacktrace());
                 log.error("--send money error:", e);
+                //TODO adjust error code
+                txReceiptBuilder.errorCode(1L)
+                    .errorDescription(e.getMessage())
+                    .errorDetails(ThreadUtils.last5Stacktrace());
             }
             var rc = txReceiptBuilder.build();
             log.trace("--send money ---5: receipt={}", rc);
