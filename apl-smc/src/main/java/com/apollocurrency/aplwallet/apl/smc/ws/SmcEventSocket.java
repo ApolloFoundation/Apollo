@@ -87,7 +87,11 @@ public class SmcEventSocket extends WebSocketAdapter {
 
     @Override
     public void onWebSocketError(Throwable cause) {
-        log.error("onError: ", cause);
+        if (cause instanceof ContractNotFoundException) {
+            log.info("onWebSocketError: {}", cause.getMessage());
+        } else {
+            log.error("onWebSocketError: ", cause);
+        }
     }
 
     public Address getContract() {

@@ -35,7 +35,12 @@ public class SmcInMemoryAccountService implements InMemoryAccountService {
             log.trace("Cached: getAccount address={}", address);
         }
         var longId = new AplAddress(address).getLongId();
-        return inMemoryAccounts.computeIfAbsent(longId, accountService::getAccount);
+        var account = inMemoryAccounts.computeIfAbsent(longId, accountService::getAccount);
+        if (account == null) {
+            log.debug("It's new account, address={}", address);
+            account = new Account(longId, null);
+        }
+        return account;
     }
 
     @Override

@@ -21,7 +21,7 @@ import com.apollocurrency.smc.polyglot.SimpleVersion;
 import com.apollocurrency.smc.polyglot.language.LanguageContext;
 import com.apollocurrency.smc.polyglot.language.Languages;
 import com.apollocurrency.smc.polyglot.language.SmartSource;
-import com.apollocurrency.smc.polyglot.language.preprocessor.Preprocessor;
+import com.apollocurrency.smc.polyglot.language.lib.Preprocessor;
 import com.apollocurrency.smc.polyglot.language.validator.Matcher;
 import lombok.extern.slf4j.Slf4j;
 

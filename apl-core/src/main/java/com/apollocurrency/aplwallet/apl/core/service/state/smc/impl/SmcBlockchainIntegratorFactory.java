@@ -266,7 +266,7 @@ public class SmcBlockchainIntegratorFactory {
 
         @Override
         public OperationReceipt sendMoney(Address contract, final Address fromAdr, Address toAdr, BigInteger value) {
-            log.debug("--send money ---1: from={} to={} value={}", fromAdr, toAdr, value);
+            log.trace("--send money ---1: from={} to={} value={}", fromAdr, toAdr, value);
             var txReceiptBuilder = OperationReceipt.builder()
                 .transactionId(Long.toUnsignedString(originatorTransactionId));
 
@@ -275,25 +275,25 @@ public class SmcBlockchainIntegratorFactory {
              */
             AplAddress from = new AplAddress(fromAdr);
             AplAddress to = new AplAddress(toAdr);
-            log.debug("--send money ---2: from={} to={} amount={}", from, to, value);
+            log.trace("--send money ---2: from={} to={} amount={}", from, to, value);
             try {
                 if (from.getLongId() == txSenderAccount.getId()) {//case 1
-                    log.debug("--send money ---2.1: ");
+                    log.trace("--send money ---2.1: ");
                     if (to.getLongId() != txRecipientAccount.getId()) {
                         throw new SendMsgException(contract, "Wrong recipient address");
                     }
                 } else if (from.getLongId() == txRecipientAccount.getId()) {//case 2
-                    log.debug("--send money ---2.2: ");
+                    log.trace("--send money ---2.2: ");
                     //from - is a contract address
                     //to - is an arbitrary address
                 } else {
                     throw new SendMsgException(contract, "Wrong sender address");
                 }
-                log.debug("--send money ---3: sender={} recipient={}", from, to);
+                log.trace("--send money ---3: sender={} recipient={}", from, to);
                 txReceiptBuilder
                     .senderId(Long.toUnsignedString(from.getLongId()))
                     .recipientId(Long.toUnsignedString(to.getLongId()));
-                log.debug("--send money ---4: before blockchain tx, receipt={}", txReceiptBuilder.build());
+                log.trace("--send money ---4: before blockchain tx, receipt={}", txReceiptBuilder.build());
 
                 inMemoryAccountService.addToBalanceAndUnconfirmedBalanceATM(from, value.negate());
                 inMemoryAccountService.addToBalanceAndUnconfirmedBalanceATM(to, value);
@@ -309,11 +309,14 @@ public class SmcBlockchainIntegratorFactory {
                 txLog.append(rec);
 
             } catch (Exception e) {
+                log.error("--send money error:", e);
                 //TODO adjust error code
-                txReceiptBuilder.errorCode(1L).errorDescription(e.getMessage()).errorDetails(ThreadUtils.last5Stacktrace());
+                txReceiptBuilder.errorCode(1L)
+                    .errorDescription(e.getMessage())
+                    .errorDetails(ThreadUtils.last5Stacktrace());
             }
             var rc = txReceiptBuilder.build();
-            log.debug("--send money ---5: receipt={}", rc);
+            log.trace("--send money ---5: receipt={}", rc);
             return rc;
         }
 

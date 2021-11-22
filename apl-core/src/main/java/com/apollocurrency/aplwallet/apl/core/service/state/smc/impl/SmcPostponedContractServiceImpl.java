@@ -71,7 +71,7 @@ public class SmcPostponedContractServiceImpl implements PostponedContractService
         }
     }
 
-    public void commit() {
+    public void commitContractChanges() {
         log.trace("For committing {}", cachedContracts.size());
         lock.lock();
         try {
