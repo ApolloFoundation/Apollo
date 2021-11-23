@@ -22,9 +22,9 @@ import com.apollocurrency.smc.polyglot.engine.ExecutionEnv;
 import com.apollocurrency.smc.polyglot.engine.ExecutionMode;
 import com.apollocurrency.smc.polyglot.language.LanguageContext;
 import com.apollocurrency.smc.polyglot.language.LanguageContextFactory;
-import com.apollocurrency.smc.polyglot.security.AllowFullHostAccessPolicy;
 import com.apollocurrency.smc.polyglot.security.AllowHostClassLoadingPolicy;
 import com.apollocurrency.smc.polyglot.security.DenyGlobalObjectsPolicy;
+import com.apollocurrency.smc.polyglot.security.ExplicitHostAccessPolicy;
 import lombok.Getter;
 
 import javax.enterprise.inject.Produces;
@@ -37,6 +37,14 @@ import javax.inject.Singleton;
 public class SmcConfig {
 
     private final PriceProvider priceProvider = SMCOperationPriceProvider.getInstance();
+
+    public static LanguageContext getSmcLanguageContext() {
+        return LanguageContextFactory.createJSContext(
+            new DenyGlobalObjectsPolicy(),
+            new ExplicitHostAccessPolicy(),
+            new AllowHostClassLoadingPolicy()
+        );
+    }
 
     @Produces
     @Singleton
@@ -76,7 +84,7 @@ public class SmcConfig {
 
     @Produces
     public LanguageContext createLanguageContext() {
-        return getLanguageContext();
+        return getSmcLanguageContext();
     }
 
     public SmcContext asContext(int height, Chargeable chargeable, final BlockchainIntegrator integrator) {
@@ -134,13 +142,4 @@ public class SmcConfig {
             return loadPrice(height);
         }
     }
-
-    private static LanguageContext getLanguageContext() {
-        return LanguageContextFactory.createJSContext(
-            new DenyGlobalObjectsPolicy(),
-            new AllowFullHostAccessPolicy(),
-            new AllowHostClassLoadingPolicy()
-        );
-    }
-
 }
