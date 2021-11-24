@@ -70,6 +70,7 @@ import com.apollocurrency.aplwallet.apl.core.service.state.smc.impl.SmcContractE
 import com.apollocurrency.aplwallet.apl.core.service.state.smc.impl.SmcContractServiceImpl;
 import com.apollocurrency.aplwallet.apl.core.service.state.smc.impl.SmcContractStorageServiceImpl;
 import com.apollocurrency.aplwallet.apl.core.service.state.smc.impl.SmcContractToolServiceImpl;
+import com.apollocurrency.aplwallet.apl.core.service.state.smc.impl.SmcPostponedContractServiceImpl;
 import com.apollocurrency.aplwallet.apl.core.service.state.smc.txlog.SmcTxLogProcessor;
 import com.apollocurrency.aplwallet.apl.core.signature.MultiSigCredential;
 import com.apollocurrency.aplwallet.apl.core.transaction.CachedTransactionTypeFactory;
@@ -99,7 +100,6 @@ import com.apollocurrency.aplwallet.apl.util.env.config.Chain;
 import com.apollocurrency.aplwallet.apl.util.injectable.PropertiesHolder;
 import com.apollocurrency.aplwallet.apl.util.service.TaskDispatchManager;
 import com.apollocurrency.smc.contract.fuel.FuelValidator;
-import com.apollocurrency.smc.txlog.TxLogProcessor;
 import org.jboss.weld.junit.MockBean;
 import org.jboss.weld.junit5.EnableWeld;
 import org.jboss.weld.junit5.WeldInitiator;
@@ -158,7 +158,7 @@ abstract class AbstractSmcTransactionTypeApplyTest extends DbContainerBaseTest {
             AppendixValidatorRegistry.class, NtpTime.class,
             ReferencedTransactionDaoImpl.class, TransactionSignerImpl.class,
             TransactionValidator.class, TransactionApplier.class,
-            SmcConfig.class, SmcBlockchainIntegratorFactory.class,
+            SmcConfig.class, SmcBlockchainIntegratorFactory.class, SmcPostponedContractServiceImpl.class,
             SmcContractTable.class, SmcContractStateTable.class, SmcContractMappingTable.class, SmcContractEventTable.class, SmcContractEventLogTable.class,
             ContractModelToEntityConverter.class, ContractModelToStateEntityConverter.class,
             ContractEventLogModelToLogEntryConverter.class, ContractEventModelToEntityConverter.class,
@@ -186,7 +186,6 @@ abstract class AbstractSmcTransactionTypeApplyTest extends DbContainerBaseTest {
         .addBeans(MockBean.of(blockchain, Blockchain.class, BlockchainImpl.class))
         .addBeans(MockBean.of(mock(AccountControlPhasingService.class), AccountControlPhasingService.class, AccountControlPhasingServiceImpl.class))
         .addBeans(MockBean.of(calculator, FeeCalculator.class))
-        .addBeans(MockBean.of(mock(SmcTxLogProcessor.class), TxLogProcessor.class))
         .build();
 
     @Inject
