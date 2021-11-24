@@ -217,6 +217,21 @@ public class BlockchainConfig {
         }
     }
 
+    public boolean isSmcTransactionsAcceptanceActiveAtHeight(int height) {
+        Optional<Integer> activationHeightOpt = getSmcTransactionsAcceptanceActivationHeight();
+        return activationHeightOpt.isPresent() && height >= activationHeightOpt.get();
+    }
+
+    public Optional<Integer> getSmcTransactionsAcceptanceActivationHeight() {
+        FeaturesHeightRequirement heightRequirement = chain.getFeaturesHeightRequirement();
+        if (heightRequirement != null) {
+            Integer activationHeight = heightRequirement.getSmcTransactionsAcceptanceHeight();
+            return Optional.ofNullable(activationHeight);
+        } else {
+            return Optional.empty();
+        }
+    }
+
     public boolean isTransactionV2ActiveAtHeight(int height) {
         if (getTransactionV2Height().isPresent()) {
             return height >= getTransactionV2Height().get();

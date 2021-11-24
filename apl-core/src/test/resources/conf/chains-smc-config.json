@@ -1,0 +1,117 @@
+[
+  {
+    "chainId": "3fecf3bd-86a3-436b-a1d6-41eefc0bd1c6",
+    "active": true,
+    "wellKnownPeers": [
+      "51.15.250.32",
+      "51.15.130.37"
+    ],
+    "name": "Apollo experimental testnet",
+    "description": "NOT STABLE testnet for experiments. Don't use it if you don't know what is it",
+    "symbol": "Apollo",
+    "prefix": "APL",
+    "project": "Apollo",
+    "initialSupply": 30000000000,
+    "decimals": 8,
+    "genesisLocation": "conf/data/genesisAccounts-testnet.json",
+    "featuresHeightRequirement": {
+      "dexReopenPendingOrdersHeight": 3000,
+      "dexExpiredContractWithFinishedPhasingHeightAndStep3": 5000,
+      "smcTransactionsAcceptanceHeight": 1
+    },
+    "blockchainProperties": [
+      {
+        "height": 0,
+        "blockTime": 1,
+        "maxBlockTimeLimit": 2,
+        "minBlockTimeLimit": 0,
+        "maxBalance": 30000000000
+      },
+      {
+        "height": 1,
+        "blockTime": 1,
+        "maxBlockTimeLimit": 2,
+        "minBlockTimeLimit": 0,
+        "maxBalance": 30000000000,
+        "shardingSettings": {
+          "enabled": false,
+          "frequency": 1
+        },
+        "smcSettings": {
+          "smcMasterAccountId": -1234567890
+        }
+      },
+      {
+        "height": 5,
+        "blockTime": 5,
+        "maxBlockTimeLimit": 7,
+        "minBlockTimeLimit": 3,
+        "maxBalance": 30000000000,
+        "shardingSettings": {
+          "enabled": true,
+          "frequency": 5
+        },
+        "smcSettings": {
+          "smcMasterAccountId": -1111111111
+        }
+      },
+      {
+        "height": 10,
+        "blockTime": 10,
+        "maxBalance": 30000000000,
+        "maxBlockTimeLimit": 12,
+        "minBlockTimeLimit": 8,
+        "shardingSettings": {
+          "frequency": 10
+        }
+      },
+      {
+        "height": 50,
+        "blockTime": 50,
+        "maxBlockTimeLimit": 55,
+        "minBlockTimeLimit": 45,
+        "maxBalance": 30000000000,
+        "shardingSettings": {
+          "enabled": true,
+          "frequency": 50
+        }
+      },
+      {
+        "height": 500,
+        "blockTime": 70,
+        "maxBlockTimeLimit": 77,
+        "minBlockTimeLimit": 63,
+        "maxBalance": 30000000000,
+        "shardingSettings": {
+          "enabled": true,
+          "frequency": 70
+        },
+        "smcSettings": {
+          "smcMasterAccountId": -2222222222
+        }
+      },
+      {
+        "height": 1000,
+        "blockTime": 100,
+        "maxBalance": 30000000000,
+        "maxBlockTimeLimit": 120,
+        "minBlockTimeLimit": 90,
+        "shardingSettings": {
+          "enabled": true,
+          "frequency": 100
+        }
+      },
+      {
+        "height": 20000,
+        "blockTime": 200,
+        "maxBlockTimeLimit": 245,
+        "minBlockTimeLimit": 182,
+        "maxBalance": 30000000000,
+        "shardingSettings": {
+          "enabled": true,
+          "frequency": 200
+        }
+      }
+    ]
+  }
+]

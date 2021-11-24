@@ -23,7 +23,8 @@
       "dexReopenPendingOrdersHeight": 3000,
       "dexExpiredContractWithFinishedPhasingHeightAndStep3": 5000,
       "transactionV2Height": 1,
-      "failedTransactionsAcceptanceHeight": 0
+      "failedTransactionsAcceptanceHeight": 0,
+      "smcTransactionsAcceptanceHeight": 0
     },
     "blockchainProperties": [
       {
@@ -67,6 +68,9 @@
               "rate": 100
             }
           ]
+        },
+        "smcSettings": {
+          "smcMasterAccountId": -1234567890
         }
       },
       {

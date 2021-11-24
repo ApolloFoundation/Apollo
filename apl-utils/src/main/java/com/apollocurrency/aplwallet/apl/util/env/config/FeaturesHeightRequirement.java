@@ -17,6 +17,7 @@ public class FeaturesHeightRequirement {
     private Integer dexExpiredContractWithFinishedPhasingHeightAndStep3;
     private Integer transactionV2Height;
     private Integer failedTransactionsAcceptanceHeight;
+    private Integer smcTransactionsAcceptanceHeight;
     private Integer transactionV3Height;
 
     @JsonCreator
@@ -24,12 +25,14 @@ public class FeaturesHeightRequirement {
                                      @JsonProperty("dexExpiredContractWithFinishedPhasingHeightAndStep3") Integer dexExpiredContractWithFinishedPhasingHeightAndStep3,
                                      @JsonProperty("transactionV2Height") Integer transactionV2Height,
                                      @JsonProperty("failedTransactionsAcceptanceHeight") Integer failedTransactionsAcceptanceHeight,
+                                     @JsonProperty("smcTransactionsAcceptanceHeight") Integer smcTransactionsAcceptanceHeight,
                                      @JsonProperty("transactionV3Height") Integer transactionV3Height
     ) {
         this.dexReopenPendingOrdersHeight = dexReopenPendingOrdersHeight;
         this.dexExpiredContractWithFinishedPhasingHeightAndStep3 = dexExpiredContractWithFinishedPhasingHeightAndStep3;
         this.transactionV2Height = transactionV2Height;
         this.failedTransactionsAcceptanceHeight = failedTransactionsAcceptanceHeight;
+        this.smcTransactionsAcceptanceHeight = smcTransactionsAcceptanceHeight;
         int v2h = transactionV2Height != null ? transactionV2Height: -1;
         this.transactionV3Height = transactionV3Height;
         int v3h = transactionV3Height != null ? transactionV3Height: -1;
@@ -42,6 +45,6 @@ public class FeaturesHeightRequirement {
     }
 
     public FeaturesHeightRequirement copy() {
-        return new FeaturesHeightRequirement(dexReopenPendingOrdersHeight, dexExpiredContractWithFinishedPhasingHeightAndStep3, transactionV2Height, failedTransactionsAcceptanceHeight, transactionV3Height);
+        return new FeaturesHeightRequirement(dexReopenPendingOrdersHeight, dexExpiredContractWithFinishedPhasingHeightAndStep3, transactionV2Height, failedTransactionsAcceptanceHeight, smcTransactionsAcceptanceHeight, transactionV3Height);
     }
 }

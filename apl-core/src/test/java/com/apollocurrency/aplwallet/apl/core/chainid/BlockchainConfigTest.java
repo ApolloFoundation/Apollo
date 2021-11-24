@@ -61,8 +61,8 @@ public class BlockchainConfigTest {
         "TEST",
         "Test",
         10000L, 2,
-            //"data.json",
-        BLOCKCHAIN_PROPERTIES, new FeaturesHeightRequirement(100, 100, 100, 1, 200), Set.of(20, 21, 25, 26), Set.of("1000", "18446744073709551615"));
+        //"data.json",
+        BLOCKCHAIN_PROPERTIES, new FeaturesHeightRequirement(100, 100, 100, 1, 50, 200), Set.of(20, 21, 25, 26), Set.of("1000", "18446744073709551615"));
 
     BlockchainConfig blockchainConfig = new BlockchainConfig(chain, new PropertiesHolder());
     private BlockDao blockDao = mock(BlockDao.class);
@@ -95,20 +95,26 @@ public class BlockchainConfigTest {
         assertEquals(100, blockchainConfig.getDexPendingOrdersReopeningHeight());
         assertTrue(blockchainConfig.isFailedTransactionsAcceptanceActiveAtHeight(1), "Acceptance of the failed transactions should be enabled on '1' height");
         assertFalse(blockchainConfig.isFailedTransactionsAcceptanceActiveAtHeight(0), "Acceptance of the failed transactions should be not enabled until '1' height");
+        assertEquals(50, blockchainConfig.getSmcTransactionsAcceptanceActivationHeight().get());
+        assertTrue(blockchainConfig.isSmcTransactionsAcceptanceActiveAtHeight(51));
+        assertFalse(blockchainConfig.isSmcTransactionsAcceptanceActiveAtHeight(0));
 
         chain.setFeaturesHeightRequirement(null);
         assertNull(blockchainConfig.getDexPendingOrdersReopeningHeight());
         assertFalse(blockchainConfig.isFailedTransactionsAcceptanceActiveAtHeight(1), "Feature config is not present, failed transaction acceptance cannot be active");
+        assertTrue(blockchainConfig.getSmcTransactionsAcceptanceActivationHeight().isEmpty());
+        assertFalse(blockchainConfig.isSmcTransactionsAcceptanceActiveAtHeight(1));
 
         chain.setFeaturesHeightRequirement(new FeaturesHeightRequirement());
         assertNull(blockchainConfig.getDexPendingOrdersReopeningHeight());
-        assertFalse(blockchainConfig.isFailedTransactionsAcceptanceActiveAtHeight(1), "Feature config is empty, failed transaction acceptance cannot be active");
+        assertTrue(blockchainConfig.getSmcTransactionsAcceptanceActivationHeight().isEmpty());
+        assertFalse(blockchainConfig.isFailedTransactionsAcceptanceActiveAtHeight(1));
     }
 
     @Test
     void testInitBlockchainConfigForFeatureHeightRequirementTransactionVersions() {
         blockchainConfig.updateChain(chain);
-        chain.setFeaturesHeightRequirement(new FeaturesHeightRequirement(100, 100, 150, 1, 200));
+        chain.setFeaturesHeightRequirement(new FeaturesHeightRequirement(100, 100, 150, 1, null, 200));
         assertEquals(150, blockchainConfig.getTransactionV2Height().get());
         assertTrue(blockchainConfig.isTransactionV2ActiveAtHeight(200));
         assertFalse(blockchainConfig.isTransactionV2ActiveAtHeight(50));
@@ -117,17 +123,17 @@ public class BlockchainConfigTest {
         assertTrue(blockchainConfig.isTransactionV3ActiveAtHeight(250));
         assertFalse(blockchainConfig.isTransactionV3ActiveAtHeight(150));
 
-        chain.setFeaturesHeightRequirement(new FeaturesHeightRequirement(100, 100, 150, null, null));
+        chain.setFeaturesHeightRequirement(new FeaturesHeightRequirement(100, 100, 150, null, null, null));
         assertEquals(150, blockchainConfig.getTransactionV2Height().get());
         assertFalse(blockchainConfig.getTransactionV3Height().isPresent());
 
-        chain.setFeaturesHeightRequirement(new FeaturesHeightRequirement(100, 100, null, null, null));
+        chain.setFeaturesHeightRequirement(new FeaturesHeightRequirement(100, 100, null, null, null, null));
         assertFalse(blockchainConfig.getTransactionV2Height().isPresent());
         assertFalse(blockchainConfig.getTransactionV3Height().isPresent());
 
-        assertThrows(IllegalArgumentException.class, () -> new FeaturesHeightRequirement(100, 100, null, 1, 200));
+        assertThrows(IllegalArgumentException.class, () -> new FeaturesHeightRequirement(100, 100, null, 1, null, 200));
 
-        assertThrows(IllegalArgumentException.class, () -> new FeaturesHeightRequirement(100, 100, 200, 1, 100));
+        assertThrows(IllegalArgumentException.class, () -> new FeaturesHeightRequirement(100, 100, 200, 1, null, 100));
     }
 
     @Test

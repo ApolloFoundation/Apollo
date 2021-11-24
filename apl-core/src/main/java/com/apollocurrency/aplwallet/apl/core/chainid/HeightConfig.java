@@ -135,10 +135,15 @@ public class HeightConfig {
         return bp.getShardingSettings().getFrequency();
     }
 
+    public long getSmcMasterAccountId() {
+        return bp.getSmcSettings().getSmcMasterAccountId();
+    }
+
     public int getFeeRate(TransactionTypes.TransactionTypeSpec spec) {
         Optional<FeeRate> rate = bp.getTransactionFeeSettings().getFeeRate(spec.getType(), spec.getSubtype());
         return rate.map(FeeRate::getRate).orElse(FeeRate.DEFAULT_RATE);
     }
+
     public BigDecimal getBaseFee(TransactionTypes.TransactionTypeSpec spec, BigDecimal defaultRate) {
         Objects.requireNonNull(spec);
         Objects.requireNonNull(defaultRate);
