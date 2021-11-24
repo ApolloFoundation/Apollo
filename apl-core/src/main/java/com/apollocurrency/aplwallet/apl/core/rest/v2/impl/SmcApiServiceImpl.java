@@ -85,6 +85,7 @@ import javax.ws.rs.core.Response;
 import javax.ws.rs.core.SecurityContext;
 import java.math.BigInteger;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
 import java.util.function.Function;
@@ -290,6 +291,12 @@ public class SmcApiServiceImpl implements SmcApiService {
             return null;
         }
         long senderAccountId = senderAccount.getId();
+        byte[] publicKey;
+        if (senderAccount.getPublicKey() == null) {
+            publicKey = accountService.getPublicKeyByteArray(senderAccount.getId());
+        } else {
+            publicKey = senderAccount.getPublicKey().getPublicKey();
+        }
 
         if (Strings.isNullOrEmpty(body.getName())) {
             response.error(ApiErrors.INCORRECT_VALUE, "contract_name", body.getName());
@@ -307,22 +314,31 @@ public class SmcApiServiceImpl implements SmcApiService {
             response.error(ApiErrors.INCORRECT_VALUE, "fuel_limit", body.getFuelLimit());
             return null;
         }
-        if (StringUtils.isBlank(body.getSecretPhrase())) {
-            response.error(ApiErrors.MISSING_PARAM, "secretPhrase");
-            return null;
-        }
 
         if (!contractToolService.validateContractSource(body.getSource())) {//validate with pattern
             response.error(ApiErrors.CONSTRAINT_VIOLATION, "The contract source code doesn't match the contract template code.");
         }
-
         var contractSource = contractToolService.createSmartSource(body.getName(), body.getSource(), DEFAULT_LANGUAGE_NAME);
-
         SmartSource smartSource = contractToolService.completeContractSource(contractSource);
 
-        var secretPhrase = elGamal.elGamalDecrypt(body.getSecretPhrase());
-
-        if (!verifySender(senderAccountId, secretPhrase)) {
+        String secretPhrase = null;
+        if (StringUtils.isNotBlank(body.getSecretPhrase())) {
+            secretPhrase = elGamal.elGamalDecrypt(body.getSecretPhrase());
+        }
+        if (StringUtils.isNotBlank(body.getPublicKey())) {
+            try {
+                publicKey = Convert.parseHexString(body.getPublicKey());
+            } catch (NumberFormatException e) {
+                log.error(e.getMessage());
+                response.error(ApiErrors.BAD_CREDENTIALS, "Wrong public key");
+                return null;
+            }
+        }
+        if (secretPhrase == null && publicKey == null) {
+            response.error(ApiErrors.MISSING_PARAM, "secretPhrase");
+            return null;
+        }
+        if (!verifySender(senderAccountId, secretPhrase, publicKey)) {
             response.error(ApiErrors.BAD_CREDENTIALS, "Sender doesn't match the secret phrase");
             return null;
         }
@@ -342,31 +358,25 @@ public class SmcApiServiceImpl implements SmcApiService {
             .fuelPrice(fuelPrice)
             .build();
 
-        byte[] publicKey = AccountService.generatePublicKey(senderAccount, attachment.getContractSource());
-        long recipientId = AccountService.getId(publicKey);
+        byte[] generatedPublicKey = AccountService.generatePublicKey(senderAccount, attachment.getContractSource());
+        long recipientId = AccountService.getId(generatedPublicKey);
 
         CreateTransactionRequest txRequest = CreateTransactionRequest.builder()
             .version(2)
             .amountATM(Convert.parseLong(valueStr))
             .senderAccount(senderAccount)
-            .recipientPublicKey(Convert.toHexString(publicKey))
+            .publicKey(publicKey)//it's the sender public key
+            .recipientPublicKey(Convert.toHexString(generatedPublicKey))
             .recipientId(recipientId)
             .secretPhrase(secretPhrase)
             .deadlineValue(String.valueOf(1440))
             .attachment(attachment)
-            .credential(new MultiSigCredential(1, Crypto.getKeySeed(secretPhrase)))
+            .credential((secretPhrase != null) ? new MultiSigCredential(1, Crypto.getKeySeed(secretPhrase)) : null)
             .broadcast(false)
             .validate(false)
             .build();
 
-        Transaction transaction = transactionCreator.createTransactionThrowingException(txRequest);
-
-        log.debug("Transaction id={} sender={} fee={}"
-            , Convert.toHexString(transaction.getId())
-            , Convert.toHexString(senderAccount.getId())
-            , transaction.getFeeATM());
-
-        return transaction;
+        return transactionCreator.createTransactionThrowingException(txRequest);
     }
 
     @Override
@@ -600,6 +610,14 @@ public class SmcApiServiceImpl implements SmcApiService {
             response.error(ApiErrors.INCORRECT_VALUE, "sender", body.getSender());
             return null;
         }
+        long senderAccountId = senderAccount.getId();
+        byte[] publicKey;
+        if (senderAccount.getPublicKey() == null) {
+            publicKey = accountService.getPublicKeyByteArray(senderAccount.getId());
+        } else {
+            publicKey = senderAccount.getPublicKey().getPublicKey();
+        }
+
         if (Strings.isNullOrEmpty(body.getName())) {
             response.error(ApiErrors.INCORRECT_VALUE, "method_name", body.getName());
             return null;
@@ -612,13 +630,24 @@ public class SmcApiServiceImpl implements SmcApiService {
             response.error(ApiErrors.INCORRECT_VALUE, "fuel_limit", body.getFuelLimit());
             return null;
         }
-        if (StringUtils.isBlank(body.getSecretPhrase())) {
+        String secretPhrase = null;
+        if (StringUtils.isNotBlank(body.getSecretPhrase())) {
+            secretPhrase = elGamal.elGamalDecrypt(body.getSecretPhrase());
+        }
+        if (StringUtils.isNotBlank(body.getPublicKey())) {
+            try {
+                publicKey = Convert.parseHexString(body.getPublicKey());
+            } catch (NumberFormatException e) {
+                log.error(e.getMessage());
+                response.error(ApiErrors.BAD_CREDENTIALS, "Wrong public key");
+                return null;
+            }
+        }
+        if (secretPhrase == null && publicKey == null) {
             response.error(ApiErrors.MISSING_PARAM, "secretPhrase");
             return null;
         }
-        var secretPhrase = elGamal.elGamalDecrypt(body.getSecretPhrase());
-
-        if (!verifySender(senderAccount.getId(), secretPhrase)) {
+        if (!verifySender(senderAccountId, secretPhrase, publicKey)) {
             response.error(ApiErrors.BAD_CREDENTIALS, "Sender doesn't match the secret phrase");
             return null;
         }
@@ -638,12 +667,13 @@ public class SmcApiServiceImpl implements SmcApiService {
             .version(2)
             .amountATM(Convert.parseLong(valueStr))
             .senderAccount(senderAccount)
+            .publicKey(publicKey)//it's the sender public key
             .recipientPublicKey(Convert.toHexString(contractAccount.getPublicKey().getPublicKey()))
             .recipientId(contractAccount.getId())
             .secretPhrase(secretPhrase)
             .deadlineValue(String.valueOf(1440))
             .attachment(attachment)
-            .credential(new MultiSigCredential(1, Crypto.getKeySeed(secretPhrase)))
+            .credential((secretPhrase != null) ? new MultiSigCredential(1, Crypto.getKeySeed(secretPhrase)) : null)
             .broadcast(false)
             .validate(false)
             .build();
@@ -857,9 +887,21 @@ public class SmcApiServiceImpl implements SmcApiService {
         return builder.bind(response).build();
     }
 
-    private boolean verifySender(long senderId, String secretPhrase) {
-        var publicKey = Crypto.getPublicKey(secretPhrase);
-        return senderId == AccountService.getId(publicKey);
+    private boolean verifySender(long senderId, String secretPhrase, byte[] publicKeyParam) {
+        byte[] publicKey;
+        if (secretPhrase != null) {
+            publicKey = Crypto.getPublicKey(secretPhrase);
+            if (publicKeyParam != null && !Arrays.equals(publicKey, publicKeyParam)) {
+                return false;
+            }
+        } else {
+            publicKey = publicKeyParam;
+        }
+        if (publicKey == null) {
+            return false;
+        } else {
+            return senderId == AccountService.getId(publicKey);
+        }
     }
 
     private Account getAccountByAddress(String addressStr) {
