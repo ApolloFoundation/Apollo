@@ -16,7 +16,6 @@ class AddressMappingContract extends Contract {
         this.paid = false;
         this.accepted = false;
         this.addresses = Mapping.address();
-        this.balance = new BigInteger("12345678901234567890");
         this.addr1 = address("0xAA010203040506070809BB");
         this.addr3 = SMC.address(this.addr1);
     }

@@ -14,6 +14,7 @@ import com.apollocurrency.aplwallet.apl.core.entity.state.smc.SmcContractStateEn
 import com.apollocurrency.aplwallet.apl.core.model.Transaction;
 import com.apollocurrency.aplwallet.apl.core.model.smc.SmcTxData;
 import com.apollocurrency.aplwallet.apl.core.service.state.account.AccountService;
+import com.apollocurrency.aplwallet.apl.core.service.state.smc.ContractToolService;
 import com.apollocurrency.aplwallet.apl.core.transaction.messages.SmcCallMethodAttachment;
 import com.apollocurrency.aplwallet.apl.core.transaction.messages.SmcPublishContractAttachment;
 import com.apollocurrency.aplwallet.apl.crypto.Convert;
@@ -22,6 +23,7 @@ import com.apollocurrency.aplwallet.apl.testutil.DbUtils;
 import com.apollocurrency.aplwallet.apl.util.exception.AplException;
 import com.apollocurrency.smc.contract.SmartContract;
 import com.apollocurrency.smc.contract.fuel.ContractFuel;
+import com.apollocurrency.smc.polyglot.language.lib.JSLibraryProvider;
 import com.apollocurrency.smc.util.Utils;
 import lombok.SneakyThrows;
 import org.jboss.weld.junit5.EnableWeld;
@@ -54,6 +56,8 @@ class SmcPublishContractTransactionTypeApplyTest extends AbstractSmcTransactionT
     ContractModelToEntityConverter contractModelToEntityConverter;
     @Inject
     ContractModelToStateEntityConverter contractModelToStateEntityConverter;
+    @Inject
+    ContractToolService toolService;
 
     @Test
     void publishSmcApplyAttachment() throws AplException.NotValidException {
@@ -61,7 +65,8 @@ class SmcPublishContractTransactionTypeApplyTest extends AbstractSmcTransactionT
         SmcTxData txData = SmcTxData.builder()
             .sender("APL-X5JH-TJKJ-DVGC-5T2V8")
             .name("TestC")
-            .source("class TestC extends Contract {}")
+            .source("class Contract {}; class TestC extends Contract {}")
+            .baseContract("Contract")
             .params(List.of("123"))
             .amountATM(10_00000000L)
             .fuelLimit(50_000_000L)
@@ -71,9 +76,11 @@ class SmcPublishContractTransactionTypeApplyTest extends AbstractSmcTransactionT
 
         SmcPublishContractAttachment attachment = SmcPublishContractAttachment.builder()
             .contractName(txData.getName())
+            .baseContract(txData.getBaseContract())
             .contractSource(txData.getSource())
             .constructorParams(String.join(",", txData.getParams()))
             .languageName("js")
+            .languageVersion(JSLibraryProvider.LIBRARY_VERSION.toString())
             .fuelLimit(BigInteger.valueOf(txData.getFuelLimit()))
             .fuelPrice(BigInteger.valueOf(txData.getFuelPrice()))
             .build();
@@ -116,10 +123,16 @@ class SmcPublishContractTransactionTypeApplyTest extends AbstractSmcTransactionT
         String senderAccount2RS = "APL-LTR8-GMHB-YG56-4NWSE";
         long senderAccountId2 = Convert.parseAccountId(senderAccount2RS);
 
+        var smartSource = toolService.completeContractSource(
+            toolService.createSmartSource("AddressMappingContract", contractSource, "js")
+        );
+        when(blockchainConfig.isFailedTransactionsAcceptanceActiveAtHeight(lastBlock.getHeight())).thenReturn(true);
+
         SmcTxData txData1 = SmcTxData.builder()
             .sender("APL-X5JH-TJKJ-DVGC-5T2V8")
-            .name("AddressMappingContract")
-            .source(contractSource)
+            .name(smartSource.getName())
+            .source(smartSource.getSourceCode())
+            .baseContract(smartSource.getBaseContract())
             .params(List.of("1400000000", "\"" + new AplAddress(senderAccountId2).getHex() + "\""))
             .amountATM(10_00000000L)
             .fuelLimit(60_000_000L)
@@ -129,9 +142,11 @@ class SmcPublishContractTransactionTypeApplyTest extends AbstractSmcTransactionT
 
         SmcPublishContractAttachment attachment = SmcPublishContractAttachment.builder()
             .contractName(txData1.getName())
-            .contractSource(txData1.getSource())
+            .contractSource(smartSource.getSourceCode())
+            .baseContract(smartSource.getBaseContract())
+            .languageName(smartSource.getLanguageName())
+            .languageVersion(smartSource.getLanguageVersion().toString())
             .constructorParams(String.join(",", txData1.getParams()))
-            .languageName("js")
             .fuelLimit(BigInteger.valueOf(txData1.getFuelLimit()))
             .fuelPrice(BigInteger.valueOf(txData1.getFuelPrice()))
             .build();
