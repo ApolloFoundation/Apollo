@@ -50,6 +50,7 @@ import java.sql.Connection;
 import java.util.List;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNotEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.junit.jupiter.api.Assertions.fail;
@@ -124,6 +125,8 @@ class SmcContractTableTest extends DbContainerBaseTest {
             .address(contractAddress)
             .owner(5678L)
             .transactionId(-123L)
+            .transactionTimestamp(123)
+            .transactionHash(new byte[]{0, 1, 2, 3, 4, 5, 6, 7, 8, 9})
             .contractName("NewDeal2")
             .data("class NewDeal2 extends Contract {}")
             .baseContract("Contract")
@@ -137,7 +140,7 @@ class SmcContractTableTest extends DbContainerBaseTest {
 
         SmcContractEntity actual = table.get(SmcContractTable.KEY_FACTORY.newKey(contractAddress));
         assertNotNull(actual);
-        assertTrue(actual.getDbId() != 0);
+        assertNotEquals(0, actual.getDbId());
         assertEquals(contractAddress, actual.getAddress());
         assertEquals("NewDeal2", actual.getContractName());
     }

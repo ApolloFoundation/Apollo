@@ -4,19 +4,21 @@
 
 CREATE TABLE IF NOT EXISTS `smc_contract`
 (
-    `db_id`          bigint(20) unsigned                     NOT NULL AUTO_INCREMENT,
-    `address`        bigint(20)                              NOT NULL,# contract address
-    `owner`          bigint(20)                              NOT NULL,# owner
-    `transaction_id` bigint(20)                              NOT NULL,# originator, transaction sender (i.e. payer ???)
-    `data`           LONGTEXT COLLATE utf8mb4_unicode_ci     NOT NULL,
-    `name`           varchar(120) COLLATE utf8mb4_unicode_ci NOT NULL,
-    `base_contract`  varchar(120) COLLATE utf8mb4_unicode_ci NOT NULL,# base contract type, i.e. APL20 ...
-    `args`           TEXT COLLATE utf8mb4_unicode_ci                  DEFAULT NULL,
-    `language`       varchar(20) COLLATE utf8mb4_unicode_ci  NOT NULL,
-    `version`        varchar(20) COLLATE utf8mb4_unicode_ci  NOT NULL,
-    `status`         varchar(20) COLLATE utf8mb4_unicode_ci  NOT NULL,
-    `height`         int(11)                                 NOT NULL,
-    `latest`         tinyint(1)                              NOT NULL DEFAULT 1,
+    `db_id`                 bigint(20) unsigned                     NOT NULL AUTO_INCREMENT,
+    `address`               bigint(20)                              NOT NULL,# contract address
+    `owner`                 bigint(20)                              NOT NULL,# owner
+    `transaction_id`        bigint(20)                              NOT NULL,# originator, transaction sender (i.e. payer ???)
+    `transaction_full_hash` binary(32)                              NOT NULL,
+    `transaction_timestamp` int(11)                                 NOT NULL,
+    `data`                  LONGTEXT COLLATE utf8mb4_unicode_ci     NOT NULL,
+    `name`                  varchar(120) COLLATE utf8mb4_unicode_ci NOT NULL,
+    `base_contract`         varchar(120) COLLATE utf8mb4_unicode_ci NOT NULL,# base contract type, i.e. APL20 ...
+    `args`                  TEXT COLLATE utf8mb4_unicode_ci                  DEFAULT NULL,
+    `language`              varchar(20) COLLATE utf8mb4_unicode_ci  NOT NULL,
+    `version`               varchar(20) COLLATE utf8mb4_unicode_ci  NOT NULL,
+    `status`                varchar(20) COLLATE utf8mb4_unicode_ci  NOT NULL,
+    `height`                int(11)                                 NOT NULL,
+    `latest`                tinyint(1)                              NOT NULL DEFAULT 1,
     UNIQUE KEY `db_id` (`db_id`),
     UNIQUE KEY `smc_contract_address_height_idx` (`address`)
 ) ENGINE = ROCKSDB
