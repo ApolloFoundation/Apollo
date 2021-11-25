@@ -17,7 +17,7 @@
     "featuresHeightRequirement": {
       "dexReopenPendingOrdersHeight": 3000,
       "dexExpiredContractWithFinishedPhasingHeightAndStep3": 5000,
-      "smcTransactionsAcceptanceHeight": 1
+      "smartContractTransactionsHeight": 1
     },
     "blockchainProperties": [
       {

@@ -24,7 +24,7 @@
       "dexExpiredContractWithFinishedPhasingHeightAndStep3": 5000,
       "transactionV2Height": 1,
       "failedTransactionsAcceptanceHeight": 0,
-      "smcTransactionsAcceptanceHeight": 0
+      "smartContractTransactionsHeight": 0
     },
     "blockchainProperties": [
       {

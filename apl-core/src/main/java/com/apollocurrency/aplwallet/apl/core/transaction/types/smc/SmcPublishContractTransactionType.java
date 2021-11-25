@@ -9,6 +9,7 @@ import com.apollocurrency.aplwallet.apl.core.config.SmcConfig;
 import com.apollocurrency.aplwallet.apl.core.entity.state.account.Account;
 import com.apollocurrency.aplwallet.apl.core.entity.state.account.LedgerEvent;
 import com.apollocurrency.aplwallet.apl.core.exception.AplAcceptableTransactionValidationException;
+import com.apollocurrency.aplwallet.apl.core.exception.AplTransactionFeatureNotEnabledException;
 import com.apollocurrency.aplwallet.apl.core.exception.AplUnacceptableTransactionValidationException;
 import com.apollocurrency.aplwallet.apl.core.model.Transaction;
 import com.apollocurrency.aplwallet.apl.core.service.blockchain.Blockchain;
@@ -100,9 +101,13 @@ public class SmcPublishContractTransactionType extends AbstractSmcTransactionTyp
         log.debug("SMC: doStateDependentValidation = VALID");
     }
 
+
     @Override
     public void executeStateIndependentValidation(Transaction transaction, AbstractSmcAttachment abstractSmcAttachment) {
         log.debug("SMC: doStateIndependentValidation = ...");
+        if (getBlockchainConfig().getCurrentConfig().getSmcMasterAccountId() == 0) {
+            throw new AplTransactionFeatureNotEnabledException("'Publish contract' transaction is disabled, cause masterAccountId == 0", transaction);
+        }
         SmcPublishContractAttachment attachment = (SmcPublishContractAttachment) abstractSmcAttachment;
         if (Strings.isNullOrEmpty(attachment.getContractName())) {
             throw new AplUnacceptableTransactionValidationException("Empty contract name.", transaction);

@@ -126,7 +126,7 @@ class SmcPublishContractTransactionTypeApplyTest extends AbstractSmcTransactionT
         var smartSource = toolService.completeContractSource(
             toolService.createSmartSource("AddressMappingContract", contractSource, "js")
         );
-        when(blockchainConfig.isFailedTransactionsAcceptanceActiveAtHeight(lastBlock.getHeight())).thenReturn(true);
+        //when(blockchainConfig.isFailedTransactionsAcceptanceActiveAtHeight(lastBlock.getHeight())).thenReturn(true);
 
         SmcTxData txData1 = SmcTxData.builder()
             .sender("APL-X5JH-TJKJ-DVGC-5T2V8")

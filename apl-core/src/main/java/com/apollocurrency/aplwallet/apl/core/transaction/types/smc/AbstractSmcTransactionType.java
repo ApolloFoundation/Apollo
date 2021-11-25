@@ -9,6 +9,7 @@ import com.apollocurrency.aplwallet.apl.core.config.SmcConfig;
 import com.apollocurrency.aplwallet.apl.core.entity.state.account.Account;
 import com.apollocurrency.aplwallet.apl.core.entity.state.account.LedgerEvent;
 import com.apollocurrency.aplwallet.apl.core.exception.AplTransactionExecutionException;
+import com.apollocurrency.aplwallet.apl.core.exception.AplTransactionFeatureNotEnabledException;
 import com.apollocurrency.aplwallet.apl.core.exception.AplUnacceptableTransactionValidationException;
 import com.apollocurrency.aplwallet.apl.core.model.Transaction;
 import com.apollocurrency.aplwallet.apl.core.service.blockchain.Blockchain;
@@ -125,6 +126,9 @@ public abstract class AbstractSmcTransactionType extends TransactionType {
     public abstract void executeStateIndependentValidation(Transaction transaction, AbstractSmcAttachment abstractSmcAttachment) throws AplUnacceptableTransactionValidationException;
 
     private void checkPrecondition(Transaction smcTransaction) {
+        if (!getBlockchainConfig().isSmcTransactionsActiveAtHeight(blockchain.getHeight())) {
+            throw new AplTransactionFeatureNotEnabledException("'Smart-contract transactions'", smcTransaction);
+        }
         smcTransaction.getAttachment().getTransactionTypeSpec();
         if (smcTransaction.getAttachment().getTransactionTypeSpec() != getSpec()) {
             log.error("Invalid transaction attachment, txType={} txId={}", smcTransaction.getType(), smcTransaction.getId());

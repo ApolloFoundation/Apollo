@@ -95,19 +95,19 @@ public class BlockchainConfigTest {
         assertEquals(100, blockchainConfig.getDexPendingOrdersReopeningHeight());
         assertTrue(blockchainConfig.isFailedTransactionsAcceptanceActiveAtHeight(1), "Acceptance of the failed transactions should be enabled on '1' height");
         assertFalse(blockchainConfig.isFailedTransactionsAcceptanceActiveAtHeight(0), "Acceptance of the failed transactions should be not enabled until '1' height");
-        assertEquals(50, blockchainConfig.getSmcTransactionsAcceptanceActivationHeight().get());
-        assertTrue(blockchainConfig.isSmcTransactionsAcceptanceActiveAtHeight(51));
-        assertFalse(blockchainConfig.isSmcTransactionsAcceptanceActiveAtHeight(0));
+        assertEquals(50, blockchainConfig.getSmartContractTransactionsHeight().get());
+        assertTrue(blockchainConfig.isSmcTransactionsActiveAtHeight(51));
+        assertFalse(blockchainConfig.isSmcTransactionsActiveAtHeight(0));
 
         chain.setFeaturesHeightRequirement(null);
         assertNull(blockchainConfig.getDexPendingOrdersReopeningHeight());
         assertFalse(blockchainConfig.isFailedTransactionsAcceptanceActiveAtHeight(1), "Feature config is not present, failed transaction acceptance cannot be active");
-        assertTrue(blockchainConfig.getSmcTransactionsAcceptanceActivationHeight().isEmpty());
-        assertFalse(blockchainConfig.isSmcTransactionsAcceptanceActiveAtHeight(1));
+        assertTrue(blockchainConfig.getSmartContractTransactionsHeight().isEmpty());
+        assertFalse(blockchainConfig.isSmcTransactionsActiveAtHeight(1));
 
         chain.setFeaturesHeightRequirement(new FeaturesHeightRequirement());
         assertNull(blockchainConfig.getDexPendingOrdersReopeningHeight());
-        assertTrue(blockchainConfig.getSmcTransactionsAcceptanceActivationHeight().isEmpty());
+        assertTrue(blockchainConfig.getSmartContractTransactionsHeight().isEmpty());
         assertFalse(blockchainConfig.isFailedTransactionsAcceptanceActiveAtHeight(1));
     }
 
