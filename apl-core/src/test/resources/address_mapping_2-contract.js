@@ -4,7 +4,7 @@ class SimpleTest {
     field3 = new Error("msg");
 }
 
-class AddressMappingContract extends Contract {
+class AddressMappingContract extends Contract2 {
     innerField = new SimpleTest();
 
     constructor(value, vendor) {
