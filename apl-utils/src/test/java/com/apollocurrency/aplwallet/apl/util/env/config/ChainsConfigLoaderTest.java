@@ -83,7 +83,7 @@ public class ChainsConfigLoaderTest {
     private static final Chain CHAIN3 = new Chain(chainId2, false, Arrays.asList("51.15.1.1",
         "51.15.0.0"), Collections.emptyList(), Collections.emptyList(), "1", "2", "3", "4", "5",
         30000000000L, 8,
-        BLOCKCHAIN_PROPERTIES1.subList(0, 3), new FeaturesHeightRequirement(150, 150, 150, null, 50, null), Set.of(), null);
+        BLOCKCHAIN_PROPERTIES1.subList(0, 3), new FeaturesHeightRequirement(150, 150, 150, null, null, null), Set.of(), null);
     private Path tempRootPath;
 
     @BeforeEach

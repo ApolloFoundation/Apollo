@@ -9,10 +9,12 @@ import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import lombok.EqualsAndHashCode;
 import lombok.Getter;
+import lombok.extern.slf4j.Slf4j;
 
 /**
  * @author andrew.zinchenko@gmail.com
  */
+@Slf4j
 @EqualsAndHashCode
 public class SmcSettings {
     @Getter
@@ -21,6 +23,9 @@ public class SmcSettings {
     @JsonCreator
     public SmcSettings(@JsonProperty(value = "smcMasterAccountId", required = true) Long masterAccountId) {
         this.smcMasterAccountId = masterAccountId;
+        if (masterAccountId == 0) {
+            log.warn("Smart-contract transactions acceptance will be disabled for this instance of settings, cause masterAccountId=0.");
+        }
     }
 
     public SmcSettings() {

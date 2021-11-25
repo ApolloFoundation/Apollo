@@ -109,7 +109,7 @@ public class BlockchainProperties {
         this.shardingSettings = shardingSettings == null ? new ShardingSettings() : shardingSettings;
         this.consensusSettings = consensusSettings == null ? new ConsensusSettings() : consensusSettings;
         this.transactionFeeSettings = transactionFeeSettings == null ? new TransactionFeeSettings() : transactionFeeSettings;
-        this.smcSettings = smcSettings == null ? new SmcSettings(0L) : smcSettings;
+        this.smcSettings = smcSettings == null ? new SmcSettings() : smcSettings;
     }
 
     public BlockchainProperties(int height, int maxNumberOfTransactions, int maxArbitraryMessageLength, int blockTime, int maxBlockTimeLimit, int minBlockTimeLimit, long maxBalance, ShardingSettings shardingSettings) {
