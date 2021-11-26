@@ -75,10 +75,13 @@ public class SmcContractServiceImpl implements SmcContractService {
 
     @Override
     @Transactional
-    public void saveContract(SmartContract contract) {
+    public void saveContract(SmartContract contract, long transactionId, byte[] transactionHash) {
         //it's a new contract
         SmcContractEntity smcContractEntity = contractModelToEntityConverter.convert(contract);
         smcContractEntity.setHeight(blockchain.getHeight()); // new height value
+        smcContractEntity.setBlockTimestamp(blockchain.getLastBlockTimestamp());
+        smcContractEntity.setTransactionId(transactionId);
+        smcContractEntity.setTransactionHash(transactionHash);
         SmcContractStateEntity smcContractStateEntity = contractModelToStateConverter.convert(contract);
         smcContractStateEntity.setHeight(blockchain.getHeight()); // new height value
         log.debug("Save smart contract at height {}, smc={}, state={}", smcContractEntity.getHeight(), smcContractEntity, smcContractStateEntity);
@@ -246,8 +249,7 @@ public class SmcContractServiceImpl implements SmcContractService {
         contract.setAddress(Convert2.rsAccount(smcContractEntity.getAddress()));
         contract.setTransaction(Long.toUnsignedString(smcContractEntity.getTransactionId()));
         contract.setAmount(Long.toUnsignedString(smcTransaction.getAmountATM()));
-        contract.setFee(Long.toUnsignedString(smcTransaction.getFeeATM()));
-        contract.setSignature(smcTransaction.getSignature().getHexString());
+        contract.setFullHash(smcTransaction.getFullHashString());
         contract.setTimestamp(Convert2.fromEpochTime(smcTransaction.getBlockTimestamp()));
         contract.setName(smcContractEntity.getContractName());
         contract.setBaseContract(smcContractEntity.getBaseContract());

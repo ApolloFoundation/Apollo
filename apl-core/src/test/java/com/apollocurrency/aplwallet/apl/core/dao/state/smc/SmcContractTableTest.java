@@ -109,7 +109,6 @@ class SmcContractTableTest extends DbContainerBaseTest {
         dbExtension.cleanAndPopulateDb();
     }
 
-
     @Test
     void load() {
         SmcContractEntity entity = table.get(SmcContractTable.KEY_FACTORY.newKey(contractAddress));
@@ -125,7 +124,7 @@ class SmcContractTableTest extends DbContainerBaseTest {
             .address(contractAddress)
             .owner(5678L)
             .transactionId(-123L)
-            .transactionTimestamp(123)
+            .blockTimestamp(123)
             .transactionHash(new byte[]{0, 1, 2, 3, 4, 5, 6, 7, 8, 9})
             .contractName("NewDeal2")
             .data("class NewDeal2 extends Contract {}")

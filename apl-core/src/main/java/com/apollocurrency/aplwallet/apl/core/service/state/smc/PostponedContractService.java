@@ -4,6 +4,7 @@
 
 package com.apollocurrency.aplwallet.apl.core.service.state.smc;
 
+import com.apollocurrency.aplwallet.apl.core.model.Transaction;
 import com.apollocurrency.smc.contract.SmartContract;
 import com.apollocurrency.smc.contract.fuel.Fuel;
 import com.apollocurrency.smc.data.type.Address;
@@ -54,6 +55,6 @@ public interface PostponedContractService {
      * Fix all contract changes in the blockchain.
      * Saves new contract and updates state for existing contracts.
      */
-    void commitContractChanges();
+    void commitContractChanges(Transaction transaction);
 
 }

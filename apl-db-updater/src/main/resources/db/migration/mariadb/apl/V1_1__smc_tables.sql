@@ -9,7 +9,10 @@ CREATE TABLE IF NOT EXISTS `smc_contract`
     `owner`                 bigint(20)                              NOT NULL,# owner
     `transaction_id`        bigint(20)                              NOT NULL,# originator, transaction sender (i.e. payer ???)
     `transaction_full_hash` binary(32)                              NOT NULL,
-    `transaction_timestamp` int(11)                                 NOT NULL,
+    `fuel_price`            bigint(20)                              NOT NULL,
+    `fuel_limit`            bigint(20)                              NOT NULL,
+    `fuel_charged`          bigint(20)                              NOT NULL,
+    `block_timestamp`       int(11)                                 NOT NULL,
     `data`                  LONGTEXT COLLATE utf8mb4_unicode_ci     NOT NULL,
     `name`                  varchar(120) COLLATE utf8mb4_unicode_ci NOT NULL,
     `base_contract`         varchar(120) COLLATE utf8mb4_unicode_ci NOT NULL,# base contract type, i.e. APL20 ...

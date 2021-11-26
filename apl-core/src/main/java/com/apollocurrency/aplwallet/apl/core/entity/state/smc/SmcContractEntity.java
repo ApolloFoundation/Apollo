@@ -23,8 +23,11 @@ public class SmcContractEntity extends VersionedDerivedEntity {
     private long address; //contract address/id
     private long owner; //owner
     private long transactionId;//originator
-    private int transactionTimestamp;
+    private int blockTimestamp;
     private byte[] transactionHash;
+    private long fuelPrice;
+    private long fuelLimit;
+    private long fuelCharged;
 
     private String data;
     private String contractName;
@@ -38,15 +41,19 @@ public class SmcContractEntity extends VersionedDerivedEntity {
 
     @Builder
     public SmcContractEntity(Long dbId, Integer height, long address, long owner,
-                             long transactionId, int transactionTimestamp, byte[] transactionHash,
+                             long transactionId, int blockTimestamp, byte[] transactionHash,
+                             long fuelPrice, long fuelLimit, long fuelCharged,
                              String data, String contractName, String baseContract, String args,
                              String languageName, String languageVersion, String status) {
         super(dbId, height);
         this.address = address;
         this.owner = owner;
         this.transactionId = transactionId;
-        this.transactionTimestamp = transactionTimestamp;
+        this.blockTimestamp = blockTimestamp;
         this.transactionHash = transactionHash;
+        this.fuelPrice = fuelPrice;
+        this.fuelLimit = fuelLimit;
+        this.fuelCharged = fuelCharged;
         this.data = data;
         this.contractName = contractName;
         this.baseContract = baseContract;
@@ -63,13 +70,13 @@ public class SmcContractEntity extends VersionedDerivedEntity {
         if (!super.equals(o)) return false;
         SmcContractEntity entity = (SmcContractEntity) o;
         return address == entity.address && owner == entity.owner
-            && transactionId == entity.transactionId && transactionTimestamp == entity.transactionTimestamp && Arrays.equals(transactionHash, entity.transactionHash)
+            && transactionId == entity.transactionId && Arrays.equals(transactionHash, entity.transactionHash)
             && data.equals(entity.data) && contractName.equals(entity.contractName) && baseContract.equals(entity.baseContract) && Objects.equals(args, entity.args)
             && languageName.equals(entity.languageName) && languageVersion.equals(entity.languageVersion) && status.equals(entity.status);
     }
 
     @Override
     public int hashCode() {
-        return Objects.hash(super.hashCode(), address, owner, transactionId, transactionTimestamp, Arrays.hashCode(transactionHash), data, contractName, baseContract, args, languageName, languageVersion, status);
+        return Objects.hash(super.hashCode(), address, owner, transactionId, Arrays.hashCode(transactionHash), data, contractName, baseContract, args, languageName, languageVersion, status);
     }
 }

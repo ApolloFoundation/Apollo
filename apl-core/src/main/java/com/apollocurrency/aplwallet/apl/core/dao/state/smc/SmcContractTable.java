@@ -79,13 +79,18 @@ public class SmcContractTable extends EntityDbTable<SmcContractEntity> {
     @Override
     public void save(Connection con, SmcContractEntity entity) throws SQLException {
         try (PreparedStatement pstmt = con.prepareStatement("INSERT INTO " + TABLE_NAME +
-                "(address, owner, transaction_id, data, name, base_contract, args, language, version, status, height) " +
-                "VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)"
+                "(address, owner, transaction_id, transaction_full_hash, fuel_price, fuel_limit, fuel_charged, block_timestamp, data, name, base_contract, args, language, version, status, height) " +
+                "VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)"
             , Statement.RETURN_GENERATED_KEYS)) {
             int i = 0;
             pstmt.setLong(++i, entity.getAddress());
             pstmt.setLong(++i, entity.getOwner());
             pstmt.setLong(++i, entity.getTransactionId());
+            pstmt.setBytes(++i, entity.getTransactionHash());
+            pstmt.setLong(++i, entity.getFuelPrice());
+            pstmt.setLong(++i, entity.getFuelLimit());
+            pstmt.setLong(++i, entity.getFuelCharged());
+            pstmt.setInt(++i, entity.getBlockTimestamp());
             pstmt.setString(++i, entity.getData());
             pstmt.setString(++i, entity.getContractName());
             pstmt.setString(++i, entity.getBaseContract());
@@ -107,10 +112,8 @@ public class SmcContractTable extends EntityDbTable<SmcContractEntity> {
         String namePrefix = null;
         StringBuilder sql = new StringBuilder(
             "SELECT sc.*, " +
-                "ss.status as smc_status," +
-                "t.type, t.subtype, t.amount, t.fee, t.signature, t.block_timestamp, t.attachment_bytes  " +
+                "ss.status as smc_status " +
                 "FROM smc_contract sc " +
-                "LEFT JOIN transaction AS t ON sc.transaction_id = t.id " +
                 "LEFT JOIN smc_state ss on sc.address = ss.address " +
                 "WHERE sc.latest = true AND ss.latest = true AND sc.height < ? ");
 
@@ -127,7 +130,7 @@ public class SmcContractTable extends EntityDbTable<SmcContractEntity> {
             sql.append(" AND sc.name LIKE ? ");
             namePrefix = name.replace("%", "\\%").replace("_", "\\_") + "%";
         }
-        sql.append("ORDER BY t.block_timestamp DESC, sc.db_id DESC ");
+        sql.append("ORDER BY sc.block_timestamp DESC, sc.db_id DESC ");
         sql.append(DbUtils.limitsClause(from, to));
 
         try (Connection con = databaseManager.getDataSource().getConnection();

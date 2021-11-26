@@ -153,7 +153,9 @@ public abstract class AbstractSmcTransactionType extends TransactionType {
         } catch (JSRevertException | JSRequirementException e) {
             Fuel fuel = smartContract.getFuel();
             log.info("Refundable exception {} Contract={} Fuel={}", e.getClass().getSimpleName(), smartContract.getAddress(), fuel);
+
             refundRemaining(transaction, senderAccount, fuel);
+
             throw new AplTransactionExecutionException(e.getMessage(), e, transaction);
         } catch (JSAssertionException e) {
             log.info("Assertion exception Contract={}, charged all fee={}", smartContract.getAddress(), smartContract.getFuel().fee());
@@ -164,8 +166,8 @@ public abstract class AbstractSmcTransactionType extends TransactionType {
             e.printStackTrace();
             System.exit(1);
         } catch (PolyglotException e) {
-            log.error(executionLog.toJsonString());
-            throw new AplTransactionExecutionException(e.getMessage(), e, transaction);
+            log.error(e.getClass().getName() + ": " + executionLog.toJsonString());
+            throw new AplTransactionExecutionException(e.getClass().getName(), e, transaction);
         }
         log.debug("Commit the contract state changes...");
         processor.commit();

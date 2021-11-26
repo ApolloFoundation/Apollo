@@ -1714,6 +1714,12 @@ components:
         signature:
           type: string
           format: hex_bytearray
+          description: transaction full hash
+          example: 'AAAAA1890E76C111110991287364128736487136458713645871628756000066'
+        fullHash:
+          type: string
+          format: hex_bytearray
+          description: transaction full hash
           example: 'B98CB1890E76C772A10994B210ED9CF7F9A5488672A5D82C2734BBF9D11505D1'
         timestamp:
           type: integer
@@ -1723,11 +1729,8 @@ components:
         amount:
           type: string
           format: integer
-          example: '34500000000'
-        fee:
-          type: string
-          format: integer
-          example: '0'
+          description: The amount of the transaction in ATMs (1 APL = 10_000_000 ATM)
+          example: '10_00000000'
         status:
           type: string
           description: the contract status - REJECTED, CREATED, PUBLISHED, ACTIVE, CLOSED, DISABLED, DESTRUCTED
@@ -1756,6 +1759,11 @@ components:
           format: int64
           description: the fuel price value
           example: '100'
+        fuelCharged:
+          type: string
+          format: int64
+          description: the charged fuel value
+          example: '3987'
 
     ContractDetailsResponse:
       allOf:
