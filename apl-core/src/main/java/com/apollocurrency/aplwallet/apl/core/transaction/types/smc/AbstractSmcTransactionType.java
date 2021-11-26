@@ -24,6 +24,7 @@ import com.apollocurrency.aplwallet.apl.core.transaction.messages.Appendix;
 import com.apollocurrency.aplwallet.apl.smc.service.SmcContractTxProcessor;
 import com.apollocurrency.aplwallet.apl.util.annotation.FeeMarker;
 import com.apollocurrency.aplwallet.apl.util.annotation.TransactionFee;
+import com.apollocurrency.smc.contract.ContractException;
 import com.apollocurrency.smc.contract.SmartContract;
 import com.apollocurrency.smc.contract.fuel.Fuel;
 import com.apollocurrency.smc.contract.fuel.FuelCalculator;
@@ -165,6 +166,24 @@ public abstract class AbstractSmcTransactionType extends TransactionType {
             log.error("CRITICAL ERROR. PLEASE REPORT TO THE DEVELOPERS.\n", e);
             e.printStackTrace();
             System.exit(1);
+        } catch (ContractException e) {
+            var cause = e.getCause();
+            if (cause == null) {
+                log.error(e.getClass().getName() + ": " + executionLog.toJsonString());
+                throw new AplTransactionExecutionException(e.getClass().getName(), e, transaction);
+            } else {
+                if (cause instanceof JSRevertException || cause instanceof JSRequirementException) {
+                    Fuel fuel = smartContract.getFuel();
+                    log.info("Refundable exception {} Contract={} Fuel={}", e.getClass().getSimpleName(), smartContract.getAddress(), fuel);
+
+                    refundRemaining(transaction, senderAccount, fuel);
+
+                    throw new AplTransactionExecutionException(e.getMessage(), e, transaction);
+                } else if (cause instanceof JSAssertionException) {
+                    log.info("Assertion exception Contract={}, charged all fee={}", smartContract.getAddress(), smartContract.getFuel().fee());
+                    throw new AplTransactionExecutionException(e.getMessage(), e, transaction);
+                }
+            }
         } catch (PolyglotException e) {
             log.error(e.getClass().getName() + ": " + executionLog.toJsonString());
             throw new AplTransactionExecutionException(e.getClass().getName(), e, transaction);
