@@ -22,9 +22,11 @@ public interface SmcContractService {
     /**
      * Save the published contract
      *
-     * @param contract the published contract
+     * @param contract        the published contract
+     * @param transactionId   the transaction identifier, that contains given contract
+     * @param transactionHash the transaction hash, that contains given contract
      */
-    void saveContract(SmartContract contract);
+    void saveContract(SmartContract contract, long transactionId, byte[] transactionHash);
 
     /**
      * Load the saved contract by the given address or null if the given address doesn't correspond the smart contract

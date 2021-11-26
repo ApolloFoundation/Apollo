@@ -16,16 +16,22 @@ public class SmcContractRowMapper extends VersionedDerivedEntityMapper<SmcContra
 
     @Override
     public SmcContractEntity doMap(ResultSet rs, StatementContext ctx) throws SQLException {
-        long address = rs.getLong("address");
-        long owner = rs.getLong("owner");
-        long transactionId = rs.getLong("transaction_id");
-        String data = rs.getString("data");
-        String contractName = rs.getString("name");
-        String languageName = rs.getString("language");
-        String languageVersion = rs.getString("version");
-        String args = rs.getString("args");
-        String status = rs.getString("status");
-        String baseContract = rs.getString("base_contract");
-        return new SmcContractEntity(null, null, address, owner, transactionId, data, contractName, baseContract, args, languageName, languageVersion, status);
+        return SmcContractEntity.builder()
+            .address(rs.getLong("address"))
+            .owner(rs.getLong("owner"))
+            .transactionId(rs.getLong("transaction_id"))
+            .blockTimestamp(rs.getInt("block_timestamp"))
+            .transactionHash(rs.getBytes("transaction_full_hash"))
+            .fuelPrice(rs.getLong("fuel_price"))
+            .fuelLimit(rs.getLong("fuel_limit"))
+            .fuelCharged(rs.getLong("fuel_charged"))
+            .data(rs.getString("data"))
+            .contractName(rs.getString("name"))
+            .baseContract(rs.getString("base_contract"))
+            .languageName(rs.getString("language"))
+            .languageVersion(rs.getString("version"))
+            .args(rs.getString("args"))
+            .status(rs.getString("status"))
+            .build();
     }
 }

@@ -4,6 +4,7 @@
 
 package com.apollocurrency.aplwallet.apl.core.service.state.smc.impl;
 
+import com.apollocurrency.aplwallet.apl.core.model.Transaction;
 import com.apollocurrency.aplwallet.apl.core.service.state.smc.PostponedContractService;
 import com.apollocurrency.aplwallet.apl.core.service.state.smc.SmcContractService;
 import com.apollocurrency.smc.contract.SmartContract;
@@ -71,7 +72,8 @@ public class SmcPostponedContractServiceImpl implements PostponedContractService
         }
     }
 
-    public void commitContractChanges() {
+    @Override
+    public void commitContractChanges(Transaction transaction) {
         log.trace("For committing {}", cachedContracts.size());
         lock.lock();
         try {
@@ -81,7 +83,7 @@ public class SmcPostponedContractServiceImpl implements PostponedContractService
                     contractService.updateContractState(smartContract);
                 } else {
                     log.trace("Save new contract={}", address.getHex());
-                    contractService.saveContract(smartContract);
+                    contractService.saveContract(smartContract, transaction.getId(), transaction.getFullHash());
                 }
             });
             cachedContracts.clear();

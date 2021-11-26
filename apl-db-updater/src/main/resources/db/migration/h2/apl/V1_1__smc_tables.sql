@@ -4,19 +4,24 @@
 
 CREATE TABLE IF NOT EXISTS `smc_contract`
 (
-    `db_id`          bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT PRIMARY KEY,
-    `address`        bigint(20)   NOT NULL,
-    `owner`          bigint(20)   NOT NULL,
-    `transaction_id` bigint(20)   NOT NULL,
-    `data`           LONGTEXT     NOT NULL,
-    `name`           varchar(120) NOT NULL,
-    `base_contract`  varchar(120) NOT NULL,
-    `args`           TEXT                  DEFAULT NULL,
-    `language`       varchar(20)  NOT NULL,
-    `version`        varchar(20)  NOT NULL,
-    `status`         varchar(20)  NOT NULL,
-    `height`         int(11)      NOT NULL,
-    `latest`         tinyint(1)   NOT NULL DEFAULT 1,
+    `db_id`                 bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT PRIMARY KEY,
+    `address`               bigint(20)          NOT NULL,
+    `owner`                 bigint(20)          NOT NULL,
+    `transaction_id`        bigint(20)          NOT NULL,
+    `transaction_full_hash` binary(32)          NOT NULL,
+    `fuel_price`            bigint(20)          NOT NULL,
+    `fuel_limit`            bigint(20)          NOT NULL,
+    `fuel_charged`          bigint(20)          NOT NULL,
+    `block_timestamp`       int(11)             NOT NULL,
+    `data`                  LONGTEXT            NOT NULL,
+    `name`                  varchar(120)        NOT NULL,
+    `base_contract`         varchar(120)        NOT NULL,
+    `args`                  TEXT                         DEFAULT NULL,
+    `language`              varchar(20)         NOT NULL,
+    `version`               varchar(20)         NOT NULL,
+    `status`                varchar(20)         NOT NULL,
+    `height`                int(11)             NOT NULL,
+    `latest`                tinyint(1)          NOT NULL DEFAULT 1,
     UNIQUE KEY `smc_contract_address_height_idx` (`address`)
 );
 
