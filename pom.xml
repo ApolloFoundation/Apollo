@@ -26,9 +26,9 @@
     </repository>
     <!--   arti.firstbridge.work for follwing artifacts: web-wallet, fbcrypto -->
     <repository>
-      <id>apl</id>
+      <id>apl-smc</id>
       <name>arti.firstbridge.work</name>
-      <url>https://arti.firstbridge.work/artifactory/apl</url>
+      <url>https://arti.firstbridge.work/artifactory/apl-smc</url>
     </repository>
   </repositories>
 
