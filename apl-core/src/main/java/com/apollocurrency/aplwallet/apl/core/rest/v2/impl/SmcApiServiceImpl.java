@@ -689,17 +689,31 @@ public class SmcApiServiceImpl implements SmcApiService {
     }
 
     @Override
-    public Response getSmcByOwnerAccount(String accountStr, SecurityContext securityContext) throws NotFoundException {
+    public Response getSmcByOwnerAccount(String accountStr, Integer firstIndex, Integer lastIndex, SecurityContext securityContext) throws NotFoundException {
         ResponseBuilderV2 builder = ResponseBuilderV2.startTiming();
         Account account = getAccountByAddress(accountStr);
         if (account == null) {
             return builder.error(ApiErrors.CONTRACT_NOT_FOUND, accountStr).build();
         }
-        var address = new AplAddress(account.getId());
+        var publisher = new AplAddress(account.getId());
+
+        FirstLastIndexBeanParam indexBeanParam = new FirstLastIndexBeanParam(firstIndex, lastIndex);
+        indexBeanParam.adjustIndexes(maxAPIRecords);
 
         ContractListResponse response = new ContractListResponse();
 
-        List<ContractDetails> contracts = contractService.loadContractsByOwner(address, 0, Integer.MAX_VALUE);
+        List<ContractDetails> contracts = contractService.loadContractsByFilter(
+            null,
+            null,
+            publisher,
+            null,
+            null,
+            -1,
+            indexBeanParam.getFirstIndex(),
+            indexBeanParam.getLastIndex()
+        );
+
+        response.setContracts(contracts);
         response.setContracts(contracts);
 
         return builder.bind(response).build();
@@ -778,12 +792,13 @@ public class SmcApiServiceImpl implements SmcApiService {
             return builder.error(ApiErrors.CONTRACT_NOT_FOUND, addressStr).build();
         }
         var address = new AplAddress(account.getId());
-        if (!contractService.isContractExist(address)) {
-            return ResponseBuilderV2.apiError(ApiErrors.CONTRACT_NOT_FOUND, addressStr).build();
-        }
         ContractListResponse response = new ContractListResponse();
 
         ContractDetails contract = contractService.getContractDetailsByAddress(address);
+        if (contract == null) {
+            return ResponseBuilderV2.apiError(ApiErrors.CONTRACT_NOT_FOUND, addressStr).build();
+        }
+
         response.setContracts(List.of(contract));
 
         return builder.bind(response).build();
@@ -829,6 +844,7 @@ public class SmcApiServiceImpl implements SmcApiService {
 
         List<ContractDetails> contracts = contractService.loadContractsByFilter(
             address,
+            null,
             publisher,
             name,
             smcStatus,

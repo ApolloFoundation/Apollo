@@ -801,6 +801,8 @@ paths:
           schema:
             type: string
             example: 'APL-X5JH-TJKJ-DVGC-5T2V8'
+        - $ref: '#/components/parameters/FirstIndexParameter'
+        - $ref: '#/components/parameters/LastIndexParameter'
       responses:
         200:
           description: successful operation
