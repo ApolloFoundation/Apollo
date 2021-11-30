@@ -254,6 +254,7 @@ public class SmcBlockchainIntegratorFactory {
         public void commit() {
             //commit mapping changes
             cachedMappingRepositories.forEach(CachedMappingRepository::commit);
+            cachedMappingRepositories.clear();
 
             //apply changes from action log
             txLogProcessor.process(txLog);

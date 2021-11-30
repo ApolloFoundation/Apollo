@@ -86,8 +86,8 @@ public class SmcPostponedContractServiceImpl implements PostponedContractService
                     contractService.saveContract(smartContract, transaction.getId(), transaction.getFullHash());
                 }
             });
-            cachedContracts.clear();
         } finally {
+            cachedContracts.clear();
             lock.unlock();
         }
     }

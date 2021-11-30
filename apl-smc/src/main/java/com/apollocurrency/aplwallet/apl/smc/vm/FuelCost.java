@@ -19,8 +19,8 @@ class FuelCost {
     //publish new smart contract
     public static final MemCostFuelCalculator F_PUBLISH = new MemCostFuelCalculator(15_000_000, 10000, MemUnit.BYTE);
 
-    //transfer coins from address to another address
-    public static final ConstantFuelCalculator F_SEND_MONEY = new ConstantFuelCalculator(10_000_000);
+    //transfer coins from an address to another address
+    public static final ConstantFuelCalculator F_SEND_MONEY = new ConstantFuelCalculator(10_000);
 
     //call the contract method
     public static final MemCostFuelCalculator F_CALL = new MemCostFuelCalculator(1_000_000, 10000, MemUnit.BYTE);
@@ -30,6 +30,9 @@ class FuelCost {
 
     //math functions using
     public static final ConstantFuelCalculator F_HASH_SUM = new ConstantFuelCalculator(1_000);
+
+    //state storage using and to refund for removing
+    public static final MemCostFuelCalculator F_STATE_WRITE = new MemCostFuelCalculator(0L, 100L, MemUnit.BYTE);
 
     //store value to Mapping
     public static final ConstantFuelCalculator F_MAPPING_CREATE = new ConstantFuelCalculator(10_000L);
