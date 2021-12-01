@@ -77,7 +77,7 @@ public interface SmcContractService {
      * @param to          the last index
      * @return the list of contracts
      */
-    List<ContractDetails> loadContractsByFilter(Address address, Address transaction, Address owner, String name, ContractStatus status, int height, int from, int to);
+    List<ContractDetails> loadContractsByFilter(Address address, Address transaction, Address owner, String name, String baseContract, Long timestamp, ContractStatus status, int height, int from, int to);
 
     /**
      * Returns the details information about contract given address

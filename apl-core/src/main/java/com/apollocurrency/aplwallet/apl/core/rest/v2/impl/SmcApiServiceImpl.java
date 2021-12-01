@@ -98,7 +98,7 @@ import static com.apollocurrency.smc.util.HexUtils.toHex;
  */
 @Slf4j
 @RequestScoped
-public class SmcApiServiceImpl implements SmcApiService {
+class SmcApiServiceImpl implements SmcApiService {
 
     public static final String DEFAULT_LANGUAGE_NAME = "js";
     private final AccountService accountService;
@@ -708,6 +708,8 @@ public class SmcApiServiceImpl implements SmcApiService {
             publisher,
             null,
             null,
+            null,
+            null,
             -1,
             indexBeanParam.getFirstIndex(),
             indexBeanParam.getLastIndex()
@@ -805,13 +807,14 @@ public class SmcApiServiceImpl implements SmcApiService {
     }
 
     @Override
-    public Response getSmcList(String addressStr, String publisherStr, String name, String status, Integer firstIndex, Integer lastIndex, SecurityContext securityContext) throws NotFoundException {
+    public Response getSmcList(String addressStr, String publisherStr, String name, String baseContract, Long timestamp, Long transactionId, String status, Integer firstIndex, Integer lastIndex, SecurityContext securityContext) throws NotFoundException {
         ResponseBuilderV2 builder = ResponseBuilderV2.startTiming();
 
         FirstLastIndexBeanParam indexBeanParam = new FirstLastIndexBeanParam(firstIndex, lastIndex);
         indexBeanParam.adjustIndexes(maxAPIRecords);
         AplAddress address = null;
         AplAddress publisher = null;
+        AplAddress transaction = null;
 
         ContractStatus smcStatus = null;
         if (status != null) {
@@ -840,13 +843,18 @@ public class SmcApiServiceImpl implements SmcApiService {
             }
             publisher = new AplAddress(account.getId());
         }
+        if (transactionId != null) {
+            transaction = new AplAddress(transactionId);
+        }
         ContractListResponse response = new ContractListResponse();
 
         List<ContractDetails> contracts = contractService.loadContractsByFilter(
             address,
-            null,
+            transaction,
             publisher,
             name,
+            baseContract,
+            timestamp,
             smcStatus,
             -1,
             indexBeanParam.getFirstIndex(),

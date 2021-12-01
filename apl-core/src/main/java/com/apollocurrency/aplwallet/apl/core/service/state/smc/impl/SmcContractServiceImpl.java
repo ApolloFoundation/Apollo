@@ -17,6 +17,7 @@ import com.apollocurrency.aplwallet.apl.core.service.blockchain.Blockchain;
 import com.apollocurrency.aplwallet.apl.core.service.state.smc.SmcContractService;
 import com.apollocurrency.aplwallet.apl.smc.model.AplAddress;
 import com.apollocurrency.aplwallet.apl.smc.model.AplContractSpec;
+import com.apollocurrency.aplwallet.apl.util.Convert2;
 import com.apollocurrency.aplwallet.apl.util.cdi.Transactional;
 import com.apollocurrency.smc.contract.AddressNotFoundException;
 import com.apollocurrency.smc.contract.ContractSource;
@@ -197,17 +198,18 @@ public class SmcContractServiceImpl implements SmcContractService {
     }
 
     @Override
-    public List<ContractDetails> loadContractsByFilter(Address address, Address transaction, Address owner, String name, ContractStatus status, int height, int from, int to) {
+    public List<ContractDetails> loadContractsByFilter(Address address, Address transaction, Address owner, String name, String baseContract, Long timestamp, ContractStatus status, int height, int from, int to) {
         Long contractId = address != null ? new AplAddress(address).getLongId() : null;
         Long txId = transaction != null ? new AplAddress(transaction).getLongId() : null;
         Long ownerId = owner != null ? new AplAddress(owner).getLongId() : null;
-        List<ContractDetails> result = smcContractTable.getContractsByFilter(contractId, txId, ownerId, name, status != null ? status.name() : null, height < 0 ? blockchain.getHeight() : height, from, to);
+        Integer blockTimestamp = timestamp == null ? null : Convert2.toEpochTime(timestamp);
+        List<ContractDetails> result = smcContractTable.getContractsByFilter(contractId, txId, ownerId, name, baseContract, blockTimestamp, status != null ? status.name() : null, height < 0 ? blockchain.getHeight() : height, from, to);
         return result;
     }
 
     @Override
     public ContractDetails getContractDetailsByAddress(Address address) {
-        var result = loadContractsByFilter(address, null, null, null, null, -1, 0, 1);
+        var result = loadContractsByFilter(address, null, null, null, null, null, null, -1, 0, 1);
         if (!result.isEmpty()) {
             return result.get(0);
         }

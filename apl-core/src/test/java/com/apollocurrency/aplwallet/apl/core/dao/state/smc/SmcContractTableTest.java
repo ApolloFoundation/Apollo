@@ -181,7 +181,7 @@ class SmcContractTableTest extends DbContainerBaseTest {
         when(attachment.getFuelPrice()).thenReturn(BigInteger.ONE);
 
         //WHEN
-        return table.getContractsByFilter(address, null, owner, name, status, height, from, to);
+        return table.getContractsByFilter(address, null, owner, name, null, null, status, height, from, to);
     }
 
     @Test

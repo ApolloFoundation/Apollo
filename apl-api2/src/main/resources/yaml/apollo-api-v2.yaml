@@ -843,7 +843,30 @@ paths:
           required: false
           schema:
             type: string
-            example: 'APL20-1721'
+            example: 'MyAPL20-1721'
+        - name: baseContract
+          in: query
+          description: The base class name
+          required: false
+          schema:
+            type: string
+            example: 'APL20'
+        - name: timestamp
+          in: query
+          description: The timestamp of the block that contains contract transaction, Unix timestamp in milliseconds
+          required: false
+          schema:
+            type: integer
+            format: int64
+            example: 1591696372000
+        - name: transaction
+          in: query
+          description: The transaction that contains contract
+          required: false
+          schema:
+            type: integer
+            format: int64
+            example: 387615916963
         - name: status
           in: query
           description: The contract status

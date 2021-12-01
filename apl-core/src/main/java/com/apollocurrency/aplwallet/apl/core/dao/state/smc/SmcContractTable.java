@@ -108,8 +108,9 @@ public class SmcContractTable extends EntityDbTable<SmcContractEntity> {
         }
     }
 
-    public List<ContractDetails> getContractsByFilter(Long address, Long txId, Long owner, String name, String status, int height, int from, int to) {
+    public List<ContractDetails> getContractsByFilter(Long address, Long txId, Long owner, String name, String baseContract, Integer blockTimestamp, String status, int height, int from, int to) {
         String namePrefix = null;
+        String baseContractPrefix = null;
         StringBuilder sql = new StringBuilder(
             "SELECT sc.*, " +
                 "ss.status as smc_status " +
@@ -129,6 +130,13 @@ public class SmcContractTable extends EntityDbTable<SmcContractEntity> {
         if (name != null && !name.isEmpty()) {
             sql.append(" AND sc.name LIKE ? ");
             namePrefix = name.replace("%", "\\%").replace("_", "\\_") + "%";
+        }
+        if (baseContract != null && !baseContract.isEmpty()) {
+            sql.append(" AND sc.base_contract LIKE ? ");
+            baseContractPrefix = baseContract.replace("%", "\\%").replace("_", "\\_") + "%";
+        }
+        if (blockTimestamp != null) {
+            sql.append(" AND sc.block_timestamp = ? ");
         }
         if (status != null) {
             sql.append(" AND ss.status = ? ");
@@ -151,6 +159,12 @@ public class SmcContractTable extends EntityDbTable<SmcContractEntity> {
             }
             if (namePrefix != null) {
                 pstm.setString(++i, namePrefix);
+            }
+            if (baseContractPrefix != null) {
+                pstm.setString(++i, baseContractPrefix);
+            }
+            if (blockTimestamp != null) {
+                pstm.setInt(++i, blockTimestamp);
             }
             if (status != null) {
                 pstm.setString(++i, status);
