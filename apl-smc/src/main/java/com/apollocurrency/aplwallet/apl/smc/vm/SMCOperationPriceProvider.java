@@ -72,6 +72,11 @@ public class SMCOperationPriceProvider implements PriceProvider {
         }
 
         @Override
+        public FuelCalculator writeState() {
+            return FuelCost.F_STATE_WRITE;
+        }
+
+        @Override
         public FuelCalculator createMapping() {
             return FuelCost.F_MAPPING_CREATE;
         }

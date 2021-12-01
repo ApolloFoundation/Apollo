@@ -5,7 +5,9 @@
 package com.apollocurrency.aplwallet.apl.core.service.state.smc;
 
 import com.apollocurrency.aplwallet.apl.core.chainid.BlockchainConfig;
-import com.apollocurrency.smc.contract.fuel.FuelValidator;
+import com.apollocurrency.aplwallet.apl.core.exception.AplUnacceptableTransactionValidationException;
+import com.apollocurrency.aplwallet.apl.core.model.Transaction;
+import com.apollocurrency.aplwallet.apl.core.transaction.messages.AbstractSmcAttachment;
 import lombok.extern.slf4j.Slf4j;
 
 import javax.inject.Inject;
@@ -17,11 +19,12 @@ import java.math.BigInteger;
  */
 @Slf4j
 @Singleton
-public class SmcFuelValidator implements FuelValidator {
+public class SmcFuelValidator {
     private static final BigInteger LIMIT_MIN_VALUE = BigInteger.valueOf(100_000);//in Fuel unit
-    private static final BigInteger LIMIT_MAX_VALUE = BigInteger.valueOf(Long.MAX_VALUE);
+    private static final BigInteger LIMIT_MAX_VALUE = BigInteger.valueOf(Integer.MAX_VALUE);
 
     private static final BigInteger PRICE_MIN_VALUE = BigInteger.valueOf(10_000);//in ATM
+    private static final BigInteger PRICE_MAX_VALUE = BigInteger.valueOf(1_000_000);//in ATM
     private final BlockchainConfig blockchainConfig;
 
     @Inject
@@ -29,19 +32,28 @@ public class SmcFuelValidator implements FuelValidator {
         this.blockchainConfig = blockchainConfig;
     }
 
-    @Override
-    public boolean validateLimitValue(BigInteger limit) {
+    public void validate(Transaction transaction) {
         //TODO add boundary values into blockchain config
         //blockchainConfig.getCurrentConfig().getMaxBalanceATM();
-        boolean rc = limit.compareTo(LIMIT_MIN_VALUE) > 0
-            && limit.compareTo(LIMIT_MAX_VALUE) < 0;
-        return true;
+        AbstractSmcAttachment attachment = (AbstractSmcAttachment) transaction.getAttachment();
+        if (attachment.getFuelLimit().compareTo(LIMIT_MIN_VALUE) < 0) {
+            throw new AplUnacceptableTransactionValidationException("Fuel limit value less than MIN value, expected at least "
+                + LIMIT_MIN_VALUE + " ATM", transaction);
+        }
+        if (attachment.getFuelPrice().compareTo(PRICE_MIN_VALUE) < 0) {
+            throw new AplUnacceptableTransactionValidationException("Fuel price value less than MIN value, expected at least "
+                + PRICE_MIN_VALUE + " ATM", transaction);
+        }
     }
 
-    @Override
-    public boolean validatePriceValue(BigInteger price) {
+    public void validate(AbstractSmcAttachment attachment) {
         //TODO add boundary values into blockchain config
-        boolean rc = price.compareTo(PRICE_MIN_VALUE) > 0;
-        return true;
+        //blockchainConfig.getCurrentConfig().getMaxBalanceATM();
+        if (attachment.getFuelLimit().compareTo(LIMIT_MIN_VALUE) < 0) {
+            throw new IllegalArgumentException("Fuel limit value less than MIN value, expected at least " + LIMIT_MIN_VALUE + " ATM");
+        }
+        if (attachment.getFuelPrice().compareTo(PRICE_MIN_VALUE) < 0) {
+            throw new IllegalArgumentException("Fuel price value less than MIN value, expected at least " + PRICE_MIN_VALUE + " ATM");
+        }
     }
 }

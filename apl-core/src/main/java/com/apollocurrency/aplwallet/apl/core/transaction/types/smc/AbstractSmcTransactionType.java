@@ -7,7 +7,6 @@ package com.apollocurrency.aplwallet.apl.core.transaction.types.smc;
 import com.apollocurrency.aplwallet.apl.core.chainid.BlockchainConfig;
 import com.apollocurrency.aplwallet.apl.core.config.SmcConfig;
 import com.apollocurrency.aplwallet.apl.core.entity.state.account.Account;
-import com.apollocurrency.aplwallet.apl.core.entity.state.account.LedgerEvent;
 import com.apollocurrency.aplwallet.apl.core.exception.AplTransactionExecutionException;
 import com.apollocurrency.aplwallet.apl.core.exception.AplTransactionFeatureNotEnabledException;
 import com.apollocurrency.aplwallet.apl.core.exception.AplUnacceptableTransactionValidationException;
@@ -16,19 +15,19 @@ import com.apollocurrency.aplwallet.apl.core.service.blockchain.Blockchain;
 import com.apollocurrency.aplwallet.apl.core.service.state.account.AccountService;
 import com.apollocurrency.aplwallet.apl.core.service.state.smc.ContractToolService;
 import com.apollocurrency.aplwallet.apl.core.service.state.smc.PostponedContractService;
+import com.apollocurrency.aplwallet.apl.core.service.state.smc.SmcContractService;
+import com.apollocurrency.aplwallet.apl.core.service.state.smc.SmcFuelValidator;
 import com.apollocurrency.aplwallet.apl.core.service.state.smc.impl.SmcBlockchainIntegratorFactory;
+import com.apollocurrency.aplwallet.apl.core.service.state.smc.impl.SmcPostponedContractServiceImpl;
 import com.apollocurrency.aplwallet.apl.core.transaction.Fee;
 import com.apollocurrency.aplwallet.apl.core.transaction.TransactionType;
 import com.apollocurrency.aplwallet.apl.core.transaction.messages.AbstractSmcAttachment;
 import com.apollocurrency.aplwallet.apl.core.transaction.messages.Appendix;
 import com.apollocurrency.aplwallet.apl.smc.service.SmcContractTxProcessor;
-import com.apollocurrency.aplwallet.apl.util.annotation.FeeMarker;
-import com.apollocurrency.aplwallet.apl.util.annotation.TransactionFee;
 import com.apollocurrency.smc.contract.ContractException;
 import com.apollocurrency.smc.contract.SmartContract;
 import com.apollocurrency.smc.contract.fuel.Fuel;
 import com.apollocurrency.smc.contract.fuel.FuelCalculator;
-import com.apollocurrency.smc.contract.fuel.FuelValidator;
 import com.apollocurrency.smc.contract.vm.ExecutionLog;
 import com.apollocurrency.smc.polyglot.JSAssertionException;
 import com.apollocurrency.smc.polyglot.JSRequirementException;
@@ -46,20 +45,20 @@ import java.math.BigInteger;
 public abstract class AbstractSmcTransactionType extends TransactionType {
     protected PostponedContractService contractService;
     protected ContractToolService contractToolService;
-    protected final FuelValidator fuelMinMaxValidator;
+    protected final SmcFuelValidator fuelMinMaxValidator;
     protected final SmcBlockchainIntegratorFactory integratorFactory;
     protected final Blockchain blockchain;
     protected final SmcConfig smcConfig;
 
     AbstractSmcTransactionType(BlockchainConfig blockchainConfig, Blockchain blockchain,
                                AccountService accountService,
-                               PostponedContractService contractService,
+                               SmcContractService contractService,
                                ContractToolService contractToolService,
-                               FuelValidator fuelMinMaxValidator,
+                               SmcFuelValidator fuelMinMaxValidator,
                                SmcBlockchainIntegratorFactory integratorFactory,
                                SmcConfig smcConfig) {
         super(blockchainConfig, accountService);
-        this.contractService = contractService;
+        this.contractService = new SmcPostponedContractServiceImpl(contractService);
         this.contractToolService = contractToolService;
         this.fuelMinMaxValidator = fuelMinMaxValidator;
         this.integratorFactory = integratorFactory;
@@ -114,13 +113,7 @@ public abstract class AbstractSmcTransactionType extends TransactionType {
     public final void doStateIndependentValidation(Transaction transaction) throws AplUnacceptableTransactionValidationException {
         checkPrecondition(transaction);
         AbstractSmcAttachment attachment = (AbstractSmcAttachment) transaction.getAttachment();
-        if (!fuelMinMaxValidator.validateLimitValue(attachment.getFuelLimit())) {
-            throw new AplUnacceptableTransactionValidationException("Fuel limit value doesn't correspond to the MIN or MAX values.", transaction);
-        }
-        if (!fuelMinMaxValidator.validatePriceValue(attachment.getFuelPrice())) {
-            throw new AplUnacceptableTransactionValidationException("Fuel price value doesn't correspond to the MIN or MAX values.", transaction);
-        }
-
+        fuelMinMaxValidator.validate(transaction);
         executeStateIndependentValidation(transaction, attachment);
     }
 
@@ -136,7 +129,8 @@ public abstract class AbstractSmcTransactionType extends TransactionType {
             throw new AplUnacceptableTransactionValidationException("Invalid transaction attachment: " + smcTransaction.getAttachment().getTransactionTypeSpec(), smcTransaction);
         }
     }
-
+/*
+    DON'T REMOVE
     protected void refundRemaining(Transaction transaction, Account senderAccount, Fuel fuel) {
         if (fuel.hasRemaining()) {
             //refund remaining fuel
@@ -144,6 +138,7 @@ public abstract class AbstractSmcTransactionType extends TransactionType {
             getAccountService().addToBalanceAndUnconfirmedBalanceATM(senderAccount, LedgerEvent.SMC_REFUNDED_FEE, transaction.getId(), fuel.refundedFee().longValueExact());
         }
     }
+*/
 
     protected void executeContract(Transaction transaction, Account senderAccount, SmartContract smartContract, SmcContractTxProcessor processor) {
         var executionLog = new ExecutionLog();
@@ -153,10 +148,7 @@ public abstract class AbstractSmcTransactionType extends TransactionType {
 
         } catch (JSRevertException | JSRequirementException e) {
             Fuel fuel = smartContract.getFuel();
-            log.info("Refundable exception {} Contract={} Fuel={}", e.getClass().getSimpleName(), smartContract.getAddress(), fuel);
-
-            refundRemaining(transaction, senderAccount, fuel);
-
+            log.info("JS exception {} Contract={} Fuel={}", e.getClass().getSimpleName(), smartContract.getAddress(), fuel);
             throw new AplTransactionExecutionException(e.getMessage(), e, transaction);
         } catch (JSAssertionException e) {
             log.info("Assertion exception Contract={}, charged all fee={}", smartContract.getAddress(), smartContract.getFuel().fee());
@@ -174,10 +166,7 @@ public abstract class AbstractSmcTransactionType extends TransactionType {
             } else {
                 if (cause instanceof JSRevertException || cause instanceof JSRequirementException) {
                     Fuel fuel = smartContract.getFuel();
-                    log.info("Refundable exception {} Contract={} Fuel={}", e.getClass().getSimpleName(), smartContract.getAddress(), fuel);
-
-                    refundRemaining(transaction, senderAccount, fuel);
-
+                    log.info("JS exception {} Contract={} Fuel={}", e.getClass().getSimpleName(), smartContract.getAddress(), fuel);
                     throw new AplTransactionExecutionException(e.getMessage(), e, transaction);
                 } else if (cause instanceof JSAssertionException) {
                     log.info("Assertion exception Contract={}, charged all fee={}", smartContract.getAddress(), smartContract.getFuel().fee());
@@ -190,9 +179,6 @@ public abstract class AbstractSmcTransactionType extends TransactionType {
         }
         log.debug("Commit the contract state changes...");
         processor.commit();
-        @TransactionFee({FeeMarker.BACK_FEE, FeeMarker.FUEL})
-        Fuel fuel = smartContract.getFuel();
-        refundRemaining(transaction, senderAccount, fuel);
     }
 
     static class SmcFuelBasedFee extends Fee.FuelBasedFee {

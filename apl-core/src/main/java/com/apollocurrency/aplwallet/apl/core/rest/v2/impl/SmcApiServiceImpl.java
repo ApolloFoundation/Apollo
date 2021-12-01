@@ -37,6 +37,7 @@ import com.apollocurrency.aplwallet.apl.core.rest.v2.converter.SmartMethodMapper
 import com.apollocurrency.aplwallet.apl.core.service.state.account.AccountService;
 import com.apollocurrency.aplwallet.apl.core.service.state.smc.ContractToolService;
 import com.apollocurrency.aplwallet.apl.core.service.state.smc.SmcContractService;
+import com.apollocurrency.aplwallet.apl.core.service.state.smc.SmcFuelValidator;
 import com.apollocurrency.aplwallet.apl.core.service.state.smc.impl.SmcBlockchainIntegratorFactory;
 import com.apollocurrency.aplwallet.apl.core.signature.MultiSigCredential;
 import com.apollocurrency.aplwallet.apl.core.transaction.common.TxBContext;
@@ -98,7 +99,7 @@ import static com.apollocurrency.smc.util.HexUtils.toHex;
  */
 @Slf4j
 @RequestScoped
-public class SmcApiServiceImpl implements SmcApiService {
+class SmcApiServiceImpl implements SmcApiService {
 
     public static final String DEFAULT_LANGUAGE_NAME = "js";
     private final AccountService accountService;
@@ -114,6 +115,7 @@ public class SmcApiServiceImpl implements SmcApiService {
     private final CallMethodResultMapper methodResultMapper;
     private final MethodSpecMapper methodSpecMapper;
     private final ElGamalEncryptor elGamal;
+    private final SmcFuelValidator fuelValidator;
 
 
     @Inject
@@ -129,7 +131,8 @@ public class SmcApiServiceImpl implements SmcApiService {
                              CallMethodResultMapper methodResultMapper,
                              MethodSpecMapper methodSpecMapper,
                              @Property(name = "apl.maxAPIRecords", defaultValue = "100") int maxAPIRecords,
-                             ElGamalEncryptor elGamal) {
+                             ElGamalEncryptor elGamal,
+                             SmcFuelValidator fuelValidator) {
         this.accountService = accountService;
         this.contractService = contractService;
         this.contractToolService = contractToolService;
@@ -143,6 +146,7 @@ public class SmcApiServiceImpl implements SmcApiService {
         this.methodSpecMapper = methodSpecMapper;
         this.maxAPIRecords = maxAPIRecords;
         this.elGamal = elGamal;
+        this.fuelValidator = fuelValidator;
     }
 
     @Override
@@ -357,6 +361,13 @@ public class SmcApiServiceImpl implements SmcApiService {
             .fuelLimit(fuelLimit)
             .fuelPrice(fuelPrice)
             .build();
+
+        try {
+            fuelValidator.validate(attachment);
+        } catch (Exception e) {
+            response.error(ApiErrors.CONTRACT_VALIDATION_ERROR, e.getMessage());
+            return null;
+        }
 
         byte[] generatedPublicKey = AccountService.generatePublicKey(senderAccount, attachment.getContractSource());
         long recipientId = AccountService.getId(generatedPublicKey);
@@ -663,6 +674,13 @@ public class SmcApiServiceImpl implements SmcApiService {
             .fuelPrice(fuelPrice)
             .build();
 
+        try {
+            fuelValidator.validate(attachment);
+        } catch (Exception e) {
+            response.error(ApiErrors.CONTRACT_VALIDATION_ERROR, e.getMessage());
+            return null;
+        }
+
         CreateTransactionRequest txRequest = CreateTransactionRequest.builder()
             .version(2)
             .amountATM(Convert.parseLong(valueStr))
@@ -689,17 +707,33 @@ public class SmcApiServiceImpl implements SmcApiService {
     }
 
     @Override
-    public Response getSmcByOwnerAccount(String accountStr, SecurityContext securityContext) throws NotFoundException {
+    public Response getSmcByOwnerAccount(String accountStr, Integer firstIndex, Integer lastIndex, SecurityContext securityContext) throws NotFoundException {
         ResponseBuilderV2 builder = ResponseBuilderV2.startTiming();
         Account account = getAccountByAddress(accountStr);
         if (account == null) {
             return builder.error(ApiErrors.CONTRACT_NOT_FOUND, accountStr).build();
         }
-        var address = new AplAddress(account.getId());
+        var publisher = new AplAddress(account.getId());
+
+        FirstLastIndexBeanParam indexBeanParam = new FirstLastIndexBeanParam(firstIndex, lastIndex);
+        indexBeanParam.adjustIndexes(maxAPIRecords);
 
         ContractListResponse response = new ContractListResponse();
 
-        List<ContractDetails> contracts = contractService.loadContractsByOwner(address, 0, Integer.MAX_VALUE);
+        List<ContractDetails> contracts = contractService.loadContractsByFilter(
+            null,
+            null,
+            publisher,
+            null,
+            null,
+            null,
+            null,
+            -1,
+            indexBeanParam.getFirstIndex(),
+            indexBeanParam.getLastIndex()
+        );
+
+        response.setContracts(contracts);
         response.setContracts(contracts);
 
         return builder.bind(response).build();
@@ -778,25 +812,27 @@ public class SmcApiServiceImpl implements SmcApiService {
             return builder.error(ApiErrors.CONTRACT_NOT_FOUND, addressStr).build();
         }
         var address = new AplAddress(account.getId());
-        if (!contractService.isContractExist(address)) {
-            return ResponseBuilderV2.apiError(ApiErrors.CONTRACT_NOT_FOUND, addressStr).build();
-        }
         ContractListResponse response = new ContractListResponse();
 
         ContractDetails contract = contractService.getContractDetailsByAddress(address);
+        if (contract == null) {
+            return ResponseBuilderV2.apiError(ApiErrors.CONTRACT_NOT_FOUND, addressStr).build();
+        }
+
         response.setContracts(List.of(contract));
 
         return builder.bind(response).build();
     }
 
     @Override
-    public Response getSmcList(String addressStr, String publisherStr, String name, String status, Integer firstIndex, Integer lastIndex, SecurityContext securityContext) throws NotFoundException {
+    public Response getSmcList(String addressStr, String publisherStr, String name, String baseContract, Long timestamp, Long transactionId, String status, Integer firstIndex, Integer lastIndex, SecurityContext securityContext) throws NotFoundException {
         ResponseBuilderV2 builder = ResponseBuilderV2.startTiming();
 
         FirstLastIndexBeanParam indexBeanParam = new FirstLastIndexBeanParam(firstIndex, lastIndex);
         indexBeanParam.adjustIndexes(maxAPIRecords);
         AplAddress address = null;
         AplAddress publisher = null;
+        AplAddress transaction = null;
 
         ContractStatus smcStatus = null;
         if (status != null) {
@@ -825,12 +861,18 @@ public class SmcApiServiceImpl implements SmcApiService {
             }
             publisher = new AplAddress(account.getId());
         }
+        if (transactionId != null) {
+            transaction = new AplAddress(transactionId);
+        }
         ContractListResponse response = new ContractListResponse();
 
         List<ContractDetails> contracts = contractService.loadContractsByFilter(
             address,
+            transaction,
             publisher,
             name,
+            baseContract,
+            timestamp,
             smcStatus,
             -1,
             indexBeanParam.getFirstIndex(),

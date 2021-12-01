@@ -32,12 +32,12 @@ import com.apollocurrency.smc.blockchain.event.ContractEventManagerFactory;
 import com.apollocurrency.smc.blockchain.storage.CachedMappingRepository;
 import com.apollocurrency.smc.blockchain.storage.ContractMappingRepositoryFactory;
 import com.apollocurrency.smc.contract.AddressNotFoundException;
+import com.apollocurrency.smc.contract.ContractException;
 import com.apollocurrency.smc.contract.SmartContract;
 import com.apollocurrency.smc.contract.SmartMethod;
 import com.apollocurrency.smc.contract.fuel.Fuel;
 import com.apollocurrency.smc.contract.vm.ContractEventManager;
 import com.apollocurrency.smc.contract.vm.ExecutionLog;
-import com.apollocurrency.smc.contract.vm.SendMsgException;
 import com.apollocurrency.smc.contract.vm.global.BlockchainInfo;
 import com.apollocurrency.smc.contract.vm.global.SMCBlock;
 import com.apollocurrency.smc.contract.vm.global.SMCTransaction;
@@ -254,6 +254,7 @@ public class SmcBlockchainIntegratorFactory {
         public void commit() {
             //commit mapping changes
             cachedMappingRepositories.forEach(CachedMappingRepository::commit);
+            cachedMappingRepositories.clear();
 
             //apply changes from action log
             txLogProcessor.process(txLog);
@@ -280,14 +281,14 @@ public class SmcBlockchainIntegratorFactory {
                 if (from.getLongId() == txSenderAccount.getId()) {//case 1
                     log.trace("--send money ---2.1: ");
                     if (to.getLongId() != txRecipientAccount.getId()) {
-                        throw new SendMsgException(contract, "Wrong recipient address");
+                        throw new ContractException(contract, "Wrong recipient address");
                     }
                 } else if (from.getLongId() == txRecipientAccount.getId()) {//case 2
                     log.trace("--send money ---2.2: ");
                     //from - is a contract address
                     //to - is an arbitrary address
                 } else {
-                    throw new SendMsgException(contract, "Wrong sender address");
+                    throw new ContractException(contract, "Wrong sender address");
                 }
                 log.trace("--send money ---3: sender={} recipient={}", from, to);
                 txReceiptBuilder

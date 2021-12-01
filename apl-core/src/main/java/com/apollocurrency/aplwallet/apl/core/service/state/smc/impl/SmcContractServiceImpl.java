@@ -13,17 +13,12 @@ import com.apollocurrency.aplwallet.apl.core.dao.state.smc.SmcContractTable;
 import com.apollocurrency.aplwallet.apl.core.entity.state.smc.SmcContractEntity;
 import com.apollocurrency.aplwallet.apl.core.entity.state.smc.SmcContractStateEntity;
 import com.apollocurrency.aplwallet.apl.core.exception.AplCoreContractViolationException;
-import com.apollocurrency.aplwallet.apl.core.model.Transaction;
 import com.apollocurrency.aplwallet.apl.core.service.blockchain.Blockchain;
 import com.apollocurrency.aplwallet.apl.core.service.state.smc.SmcContractService;
-import com.apollocurrency.aplwallet.apl.core.transaction.TransactionTypes;
-import com.apollocurrency.aplwallet.apl.core.transaction.messages.SmcPublishContractAttachment;
-import com.apollocurrency.aplwallet.apl.core.utils.CollectionUtil;
 import com.apollocurrency.aplwallet.apl.smc.model.AplAddress;
 import com.apollocurrency.aplwallet.apl.smc.model.AplContractSpec;
 import com.apollocurrency.aplwallet.apl.util.Convert2;
 import com.apollocurrency.aplwallet.apl.util.cdi.Transactional;
-import com.apollocurrency.aplwallet.apl.util.db.DbClause;
 import com.apollocurrency.smc.contract.AddressNotFoundException;
 import com.apollocurrency.smc.contract.ContractSource;
 import com.apollocurrency.smc.contract.ContractStatus;
@@ -43,7 +38,6 @@ import javax.inject.Singleton;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
-import java.util.stream.Collectors;
 
 /**
  * @author andrew.zinchenko@gmail.com
@@ -204,63 +198,22 @@ public class SmcContractServiceImpl implements SmcContractService {
     }
 
     @Override
-    public List<ContractDetails> loadContractsByOwner(Address owner, int from, int limit) {
-        long id = new AplAddress(owner).getLongId();
-        List<ContractDetails> result = CollectionUtil.toList(
-            smcContractTable.getManyBy(new DbClause.LongClause("owner", id), from, limit))
-            .stream()
-            .map(value -> getContractDetailsByTransaction(new AplAddress(value.getTransactionId())))
-            .collect(Collectors.toList());
-        return result;
-    }
-
-    @Override
-    public List<ContractDetails> loadContractsByFilter(Address address, Address owner, String name, ContractStatus status, int height, int from, int to) {
+    public List<ContractDetails> loadContractsByFilter(Address address, Address transaction, Address owner, String name, String baseContract, Long timestamp, ContractStatus status, int height, int from, int to) {
         Long contractId = address != null ? new AplAddress(address).getLongId() : null;
+        Long txId = transaction != null ? new AplAddress(transaction).getLongId() : null;
         Long ownerId = owner != null ? new AplAddress(owner).getLongId() : null;
-        List<ContractDetails> result = smcContractTable.getContractsByFilter(contractId, ownerId, name, status != null ? status.name() : null, height < 0 ? blockchain.getHeight() : height, from, to);
+        Integer blockTimestamp = timestamp == null ? null : Convert2.toEpochTime(timestamp);
+        List<ContractDetails> result = smcContractTable.getContractsByFilter(contractId, txId, ownerId, name, baseContract, blockTimestamp, status != null ? status.name() : null, height < 0 ? blockchain.getHeight() : height, from, to);
         return result;
     }
 
     @Override
     public ContractDetails getContractDetailsByAddress(Address address) {
-        SmcContractEntity smcEntity = loadContractEntity(address);
-        AplAddress txAddress = new AplAddress(smcEntity.getTransactionId());
-        return getContractDetailsByTransaction(txAddress);
-    }
-
-    @Override
-    public ContractDetails getContractDetailsByTransaction(Address txAddress) {
-        Transaction smcTransaction = blockchain.getTransaction(new AplAddress(txAddress).getLongId());
-        if (smcTransaction == null) {
-            log.error("Transaction not found, addr={}", txAddress.getHex());
-            throw new IllegalArgumentException("Transaction not found, addr=" + txAddress.getHex());
+        var result = loadContractsByFilter(address, null, null, null, null, null, null, -1, 0, 1);
+        if (!result.isEmpty()) {
+            return result.get(0);
         }
-        if (smcTransaction.getAttachment().getTransactionTypeSpec() != TransactionTypes.TransactionTypeSpec.SMC_PUBLISH) {
-            throw new IllegalStateException("Invalid transaction attachment: " + smcTransaction.getAttachment().getTransactionTypeSpec()
-                + ", expected " + TransactionTypes.TransactionTypeSpec.SMC_PUBLISH);
-        }
-        SmcPublishContractAttachment attachment = (SmcPublishContractAttachment) smcTransaction.getAttachment();
-        AplAddress contractAddress = new AplAddress(smcTransaction.getRecipientId());
-
-        SmcContractEntity smcContractEntity = loadContractEntity(contractAddress);
-
-        ContractDetails contract = new ContractDetails();
-        contract.setAddress(Convert2.rsAccount(smcContractEntity.getAddress()));
-        contract.setTransaction(Long.toUnsignedString(smcContractEntity.getTransactionId()));
-        contract.setAmount(Long.toUnsignedString(smcTransaction.getAmountATM()));
-        contract.setFullHash(smcTransaction.getFullHashString());
-        contract.setTimestamp(Convert2.fromEpochTime(smcTransaction.getBlockTimestamp()));
-        contract.setName(smcContractEntity.getContractName());
-        contract.setBaseContract(smcContractEntity.getBaseContract());
-        contract.setParams(smcContractEntity.getArgs());
-        contract.setSrc(smcContractEntity.getData());
-        contract.setFuelLimit(attachment.getFuelLimit().toString());
-        contract.setFuelPrice(attachment.getFuelPrice().toString());
-        SmcContractStateEntity smcContractStateEntity = loadContractStateEntity(contractAddress, true);
-        contract.setStatus(smcContractStateEntity != null ? smcContractStateEntity.getStatus() : ContractStatus.CREATED.name());
-        log.trace("Transaction details, tx addr={} {}", txAddress, contract);
-        return contract;
+        return null;
     }
 
     @Override

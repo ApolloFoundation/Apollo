@@ -108,20 +108,21 @@ public class SmcContractTable extends EntityDbTable<SmcContractEntity> {
         }
     }
 
-    public List<ContractDetails> getContractsByFilter(Long address, Long owner, String name, String status, int height, int from, int to) {
+    public List<ContractDetails> getContractsByFilter(Long address, Long txId, Long owner, String name, String baseContract, Integer blockTimestamp, String status, int height, int from, int to) {
         String namePrefix = null;
+        String baseContractPrefix = null;
         StringBuilder sql = new StringBuilder(
             "SELECT sc.*, " +
                 "ss.status as smc_status " +
                 "FROM smc_contract sc " +
                 "LEFT JOIN smc_state ss on sc.address = ss.address " +
-                "WHERE sc.latest = true AND ss.latest = true AND sc.height < ? ");
+                "WHERE sc.latest = true AND sc.height <= ? AND ss.latest = true ");
 
-        if (status != null) {
-            sql.append(" AND ss.status = ? ");
-        }
         if (address != null) {
             sql.append(" AND sc.address = ? ");
+        }
+        if (txId != null) {
+            sql.append(" AND sc.transaction_id = ? ");
         }
         if (owner != null) {
             sql.append(" AND sc.owner = ? ");
@@ -130,6 +131,16 @@ public class SmcContractTable extends EntityDbTable<SmcContractEntity> {
             sql.append(" AND sc.name LIKE ? ");
             namePrefix = name.replace("%", "\\%").replace("_", "\\_") + "%";
         }
+        if (baseContract != null && !baseContract.isEmpty()) {
+            sql.append(" AND sc.base_contract LIKE ? ");
+            baseContractPrefix = baseContract.replace("%", "\\%").replace("_", "\\_") + "%";
+        }
+        if (blockTimestamp != null) {
+            sql.append(" AND sc.block_timestamp = ? ");
+        }
+        if (status != null) {
+            sql.append(" AND ss.status = ? ");
+        }
         sql.append("ORDER BY sc.block_timestamp DESC, sc.db_id DESC ");
         sql.append(DbUtils.limitsClause(from, to));
 
@@ -137,17 +148,26 @@ public class SmcContractTable extends EntityDbTable<SmcContractEntity> {
              PreparedStatement pstm = con.prepareStatement(sql.toString())) {
             int i = 0;
             pstm.setInt(++i, height);
-            if (status != null) {
-                pstm.setString(++i, status);
-            }
             if (address != null) {
                 pstm.setLong(++i, address);
+            }
+            if (txId != null) {
+                pstm.setLong(++i, txId);
             }
             if (owner != null) {
                 pstm.setLong(++i, owner);
             }
             if (namePrefix != null) {
                 pstm.setString(++i, namePrefix);
+            }
+            if (baseContractPrefix != null) {
+                pstm.setString(++i, baseContractPrefix);
+            }
+            if (blockTimestamp != null) {
+                pstm.setInt(++i, blockTimestamp);
+            }
+            if (status != null) {
+                pstm.setString(++i, status);
             }
             DbUtils.setLimits(++i, pstm, from, to);
             pstm.setFetchSize(50);

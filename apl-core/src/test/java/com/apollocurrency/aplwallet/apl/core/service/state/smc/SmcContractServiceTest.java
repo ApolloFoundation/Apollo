@@ -18,8 +18,6 @@ import com.apollocurrency.aplwallet.apl.core.service.blockchain.Blockchain;
 import com.apollocurrency.aplwallet.apl.core.service.state.smc.impl.SmcContractServiceImpl;
 import com.apollocurrency.aplwallet.apl.core.service.state.smc.impl.SmcContractToolServiceImpl;
 import com.apollocurrency.aplwallet.apl.core.transaction.messages.SmcPublishContractAttachment;
-import com.apollocurrency.aplwallet.apl.core.utils.CollectionUtil;
-import com.apollocurrency.aplwallet.apl.crypto.Convert;
 import com.apollocurrency.aplwallet.apl.smc.model.AplAddress;
 import com.apollocurrency.aplwallet.apl.util.Convert2;
 import com.apollocurrency.smc.contract.AddressNotFoundException;
@@ -50,7 +48,6 @@ import java.util.List;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
-import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
@@ -245,47 +242,6 @@ class SmcContractServiceTest {
 
         //THEN
         assertEquals(smartContract, newContract);
-    }
-    @Test
-    void getContractDetails() {
-        //GIVEN
-        Transaction smcTransaction = mock(Transaction.class);
-        when(smcTransaction.getAttachment()).thenReturn(smcPublishContractAttachment);
-        when(smcTransaction.getRecipientId()).thenReturn(smcTxData.getRecipientAddress().getLongId());
-        when(smcTransaction.getFullHashString()).thenReturn(Convert.toHexString(TRANSACTION_HASH));
-        when(smcTransaction.getBlockTimestamp()).thenReturn(1234567890);
-        when(smcContractTable.get(SmcContractTable.KEY_FACTORY.newKey(smcTxData.getRecipientAddress().getLongId()))).thenReturn(smcContractEntity);
-        when(smcContractStateTable.get(SmcContractStateTable.KEY_FACTORY.newKey(smcTxData.getRecipientAddress().getLongId()))).thenReturn(smcContractStateEntity);
-        when(blockchain.getTransaction(TX_ID)).thenReturn(smcTransaction);
-        //WHEN
-        var response = contractService.getContractDetailsByTransaction(new AplAddress(TX_ID));
-
-        //THEN
-        assertEquals(convertToRS(smartContract.getAddress()), response.getAddress());
-        assertEquals(smartContract.getFuel().limit().toString(), response.getFuelLimit());
-        assertEquals(smartContract.getFuel().price().toString(), response.getFuelPrice());
-    }
-
-    @Test
-    void loadMyContracts() {
-        //GIVEN
-        when(smcContractTable.getManyBy(any(), any(int.class), any(int.class)))
-            .thenReturn(CollectionUtil.toDbIterator(List.of(smcContractEntity)));
-        Transaction smcTransaction = mock(Transaction.class);
-        when(smcTransaction.getAttachment()).thenReturn(smcPublishContractAttachment);
-        when(smcTransaction.getRecipientId()).thenReturn(smcTxData.getRecipientAddress().getLongId());
-        when(smcTransaction.getFullHashString()).thenReturn(Convert.toHexString(TRANSACTION_HASH));
-        when(smcTransaction.getBlockTimestamp()).thenReturn(1234567890);
-        when(smcContractTable.get(SmcContractTable.KEY_FACTORY.newKey(smcTxData.getRecipientAddress().getLongId()))).thenReturn(smcContractEntity);
-        when(smcContractStateTable.get(SmcContractStateTable.KEY_FACTORY.newKey(smcTxData.getRecipientAddress().getLongId()))).thenReturn(smcContractStateEntity);
-        when(blockchain.getTransaction(TX_ID)).thenReturn(smcTransaction);
-
-        //WHEN
-        var loadedContracts = contractService.loadContractsByOwner(smcTxData.getSenderAddress(), 0, Integer.MAX_VALUE);
-        //THEN
-        assertEquals(1, loadedContracts.size());
-        assertEquals(convertToRS(smartContract.getAddress()), loadedContracts.get(0).getAddress());
-        assertEquals(convertToString(smartContract.getTxId()), loadedContracts.get(0).getTransaction());
     }
 
     @SneakyThrows
