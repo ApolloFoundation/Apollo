@@ -606,8 +606,7 @@ public abstract class TransactionType {
 
         public TransactionAmounts(Transaction transaction) {
             long amountATM = transaction.getAmountATM();
-            //TODO implement a procedure to operate with fuelLimit and fuelPrice values
-            @TransactionFee({FeeMarker.FEE, FeeMarker.FUEL})
+            @TransactionFee({FeeMarker.FEE})
             long feeATM = transaction.getFeeATM();
             if (transaction.referencedTransactionFullHash() != null) {
                 feeATM = Math.addExact(feeATM, blockchainConfig.getUnconfirmedPoolDepositAtm());

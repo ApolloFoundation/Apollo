@@ -19,9 +19,10 @@ import java.math.BigInteger;
 @Singleton
 public class SmcFuelValidator implements FuelValidator {
     private static final BigInteger LIMIT_MIN_VALUE = BigInteger.valueOf(100_000);//in Fuel unit
-    private static final BigInteger LIMIT_MAX_VALUE = BigInteger.valueOf(Long.MAX_VALUE);
+    private static final BigInteger LIMIT_MAX_VALUE = BigInteger.valueOf(Integer.MAX_VALUE);
 
     private static final BigInteger PRICE_MIN_VALUE = BigInteger.valueOf(10_000);//in ATM
+    private static final BigInteger PRICE_MAX_VALUE = BigInteger.valueOf(1_000_000);//in ATM
     private final BlockchainConfig blockchainConfig;
 
     @Inject
@@ -33,15 +34,14 @@ public class SmcFuelValidator implements FuelValidator {
     public boolean validateLimitValue(BigInteger limit) {
         //TODO add boundary values into blockchain config
         //blockchainConfig.getCurrentConfig().getMaxBalanceATM();
-        boolean rc = limit.compareTo(LIMIT_MIN_VALUE) > 0
+        return limit.compareTo(LIMIT_MIN_VALUE) >= 0
             && limit.compareTo(LIMIT_MAX_VALUE) < 0;
-        return true;
     }
 
     @Override
     public boolean validatePriceValue(BigInteger price) {
         //TODO add boundary values into blockchain config
-        boolean rc = price.compareTo(PRICE_MIN_VALUE) > 0;
-        return true;
+        return price.compareTo(PRICE_MIN_VALUE) >= 0 &&
+            price.compareTo(PRICE_MAX_VALUE) <= 0;
     }
 }

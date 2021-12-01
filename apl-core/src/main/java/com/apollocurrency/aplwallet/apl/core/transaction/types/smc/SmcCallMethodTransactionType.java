@@ -15,7 +15,7 @@ import com.apollocurrency.aplwallet.apl.core.model.Transaction;
 import com.apollocurrency.aplwallet.apl.core.service.blockchain.Blockchain;
 import com.apollocurrency.aplwallet.apl.core.service.state.account.AccountService;
 import com.apollocurrency.aplwallet.apl.core.service.state.smc.ContractToolService;
-import com.apollocurrency.aplwallet.apl.core.service.state.smc.PostponedContractService;
+import com.apollocurrency.aplwallet.apl.core.service.state.smc.SmcContractService;
 import com.apollocurrency.aplwallet.apl.core.service.state.smc.impl.SmcBlockchainIntegratorFactory;
 import com.apollocurrency.aplwallet.apl.core.transaction.Fee;
 import com.apollocurrency.aplwallet.apl.core.transaction.TransactionTypes;
@@ -58,7 +58,7 @@ public class SmcCallMethodTransactionType extends AbstractSmcTransactionType {
     @Inject
     public SmcCallMethodTransactionType(BlockchainConfig blockchainConfig, Blockchain blockchain,
                                         AccountService accountService,
-                                        PostponedContractService contractService,
+                                        SmcContractService contractService,
                                         ContractToolService contractToolService,
                                         FuelValidator fuelValidator,
                                         SmcBlockchainIntegratorFactory integratorFactory,

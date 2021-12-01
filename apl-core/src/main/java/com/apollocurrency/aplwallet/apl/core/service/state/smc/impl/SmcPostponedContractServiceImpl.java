@@ -12,39 +12,26 @@ import com.apollocurrency.smc.contract.fuel.Fuel;
 import com.apollocurrency.smc.data.type.Address;
 import lombok.extern.slf4j.Slf4j;
 
-import javax.inject.Inject;
-import javax.inject.Singleton;
 import java.util.HashMap;
 import java.util.Map;
-import java.util.concurrent.locks.Lock;
-import java.util.concurrent.locks.ReentrantLock;
 
 /**
  * @author andrew.zinchenko@gmail.com
  */
 @Slf4j
-@Singleton
 public class SmcPostponedContractServiceImpl implements PostponedContractService {
     private final SmcContractService contractService;
     private final Map<Address, SmartContract> cachedContracts;
-    private final Lock lock;
 
-    @Inject
     public SmcPostponedContractServiceImpl(SmcContractService contractService) {
         this.contractService = contractService;
         this.cachedContracts = new HashMap<>();
-        this.lock = new ReentrantLock();
     }
 
     @Override
     public void saveContract(SmartContract contract) {
         log.trace("Save in memory collection, contract={}", contract.getAddress().getHex());
-        lock.lock();
-        try {
-            cachedContracts.put(contract.getAddress(), contract);
-        } finally {
-            lock.unlock();
-        }
+        cachedContracts.put(contract.getAddress(), contract);
     }
 
     @Override
@@ -64,18 +51,12 @@ public class SmcPostponedContractServiceImpl implements PostponedContractService
     @Override
     public void updateContractState(SmartContract contract) {
         log.trace("Update in memory collection, contract={}", contract.getAddress().getHex());
-        lock.lock();
-        try {
-            cachedContracts.put(contract.getAddress(), contract);
-        } finally {
-            lock.unlock();
-        }
+        cachedContracts.put(contract.getAddress(), contract);
     }
 
     @Override
     public void commitContractChanges(Transaction transaction) {
         log.trace("For committing {}", cachedContracts.size());
-        lock.lock();
         try {
             cachedContracts.forEach((address, smartContract) -> {
                 if (contractService.isContractExist(address)) {
@@ -88,7 +69,6 @@ public class SmcPostponedContractServiceImpl implements PostponedContractService
             });
         } finally {
             cachedContracts.clear();
-            lock.unlock();
         }
     }
 }

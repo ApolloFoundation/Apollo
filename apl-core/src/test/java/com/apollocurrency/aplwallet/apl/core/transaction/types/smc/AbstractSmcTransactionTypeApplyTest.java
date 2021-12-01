@@ -62,7 +62,7 @@ import com.apollocurrency.aplwallet.apl.core.service.state.account.impl.AccountC
 import com.apollocurrency.aplwallet.apl.core.service.state.account.impl.AccountPublicKeyServiceImpl;
 import com.apollocurrency.aplwallet.apl.core.service.state.account.impl.AccountServiceImpl;
 import com.apollocurrency.aplwallet.apl.core.service.state.smc.ContractToolService;
-import com.apollocurrency.aplwallet.apl.core.service.state.smc.PostponedContractService;
+import com.apollocurrency.aplwallet.apl.core.service.state.smc.SmcContractService;
 import com.apollocurrency.aplwallet.apl.core.service.state.smc.SmcFuelValidator;
 import com.apollocurrency.aplwallet.apl.core.service.state.smc.event.SmcContractEventManagerClassFactory;
 import com.apollocurrency.aplwallet.apl.core.service.state.smc.impl.SmcBlockchainIntegratorFactory;
@@ -193,7 +193,7 @@ abstract class AbstractSmcTransactionTypeApplyTest extends DbContainerBaseTest {
     @Inject
     AccountService accountService;
     @Inject
-    PostponedContractService contractService;
+    SmcContractService contractService;
     @Inject
     ContractToolService contractToolService;
     @Inject
