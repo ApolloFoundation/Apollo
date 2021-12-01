@@ -27,7 +27,6 @@ import com.apollocurrency.aplwallet.apl.util.env.config.Chain;
 import com.apollocurrency.aplwallet.apl.util.io.JsonBuffer;
 import com.apollocurrency.aplwallet.apl.util.io.PayloadResult;
 import com.apollocurrency.aplwallet.apl.util.io.Result;
-import com.apollocurrency.smc.contract.fuel.FuelValidator;
 import lombok.SneakyThrows;
 import org.json.simple.JSONObject;
 import org.junit.jupiter.api.BeforeAll;
@@ -69,7 +68,7 @@ class TxSerializerV3Test {
     TxBContext context;
     TransactionTypeFactory transactionTypeFactory;
     TransactionBuilderFactory transactionBuilderFactory;
-    FuelValidator fuelValidator;
+    SmcFuelValidator fuelValidator;
 
     @BeforeAll
     static void beforeAll() {

@@ -16,6 +16,7 @@ import com.apollocurrency.aplwallet.apl.core.service.blockchain.Blockchain;
 import com.apollocurrency.aplwallet.apl.core.service.state.account.AccountService;
 import com.apollocurrency.aplwallet.apl.core.service.state.smc.ContractToolService;
 import com.apollocurrency.aplwallet.apl.core.service.state.smc.SmcContractService;
+import com.apollocurrency.aplwallet.apl.core.service.state.smc.SmcFuelValidator;
 import com.apollocurrency.aplwallet.apl.core.service.state.smc.impl.SmcBlockchainIntegratorFactory;
 import com.apollocurrency.aplwallet.apl.core.transaction.TransactionTypes;
 import com.apollocurrency.aplwallet.apl.core.transaction.messages.AbstractAttachment;
@@ -27,7 +28,6 @@ import com.apollocurrency.aplwallet.apl.smc.service.tx.PublishContractTxProcesso
 import com.apollocurrency.aplwallet.apl.smc.service.tx.PublishContractTxValidator;
 import com.apollocurrency.aplwallet.apl.util.rlp.RlpReader;
 import com.apollocurrency.smc.contract.SmartContract;
-import com.apollocurrency.smc.contract.fuel.FuelValidator;
 import com.apollocurrency.smc.contract.vm.ExecutionLog;
 import com.apollocurrency.smc.data.type.Address;
 import com.apollocurrency.smc.polyglot.PolyglotException;
@@ -53,7 +53,7 @@ public class SmcPublishContractTransactionType extends AbstractSmcTransactionTyp
                                              AccountService accountService,
                                              SmcContractService contractService,
                                              ContractToolService contractToolService,
-                                             FuelValidator fuelValidator,
+                                             SmcFuelValidator fuelValidator,
                                              SmcBlockchainIntegratorFactory integratorFactory,
                                              SmcConfig smcConfig) {
         super(blockchainConfig, blockchain, accountService, contractService, contractToolService, fuelValidator, integratorFactory, smcConfig);

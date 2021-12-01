@@ -99,7 +99,6 @@ import com.apollocurrency.aplwallet.apl.util.cdi.transaction.JdbiHandleFactory;
 import com.apollocurrency.aplwallet.apl.util.env.config.Chain;
 import com.apollocurrency.aplwallet.apl.util.injectable.PropertiesHolder;
 import com.apollocurrency.aplwallet.apl.util.service.TaskDispatchManager;
-import com.apollocurrency.smc.contract.fuel.FuelValidator;
 import org.jboss.weld.junit.MockBean;
 import org.jboss.weld.junit5.EnableWeld;
 import org.jboss.weld.junit5.WeldInitiator;
@@ -218,7 +217,7 @@ abstract class AbstractSmcTransactionTypeApplyTest extends DbContainerBaseTest {
 
     Block lastBlock = btd.BLOCK_12;
 
-    FuelValidator fuelValidator = new SmcFuelValidator(blockchainConfig);
+    SmcFuelValidator fuelValidator = new SmcFuelValidator(blockchainConfig);
     SmcConfig smcConfig = new SmcConfig();
 
     @BeforeAll

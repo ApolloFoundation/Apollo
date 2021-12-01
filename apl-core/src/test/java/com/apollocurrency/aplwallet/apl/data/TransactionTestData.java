@@ -44,7 +44,6 @@ import com.apollocurrency.aplwallet.apl.core.transaction.types.update.CriticalUp
 import com.apollocurrency.aplwallet.apl.core.transaction.types.update.ImportantUpdateTransactionType;
 import com.apollocurrency.aplwallet.apl.crypto.Convert;
 import com.apollocurrency.aplwallet.apl.util.exception.AplException;
-import com.apollocurrency.smc.contract.fuel.FuelValidator;
 import lombok.Getter;
 import lombok.NonNull;
 
@@ -148,7 +147,7 @@ public class TransactionTestData {
     @Getter
     private AccountService accountService;
     private Blockchain blockchain;
-    private FuelValidator fuelValidator;
+    private SmcFuelValidator fuelValidator;
     private SmcConfig smcConfig;
 
     public TransactionTypeFactory getTransactionTypeFactory() {

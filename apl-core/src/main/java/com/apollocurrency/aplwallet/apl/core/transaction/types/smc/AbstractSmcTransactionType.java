@@ -16,6 +16,7 @@ import com.apollocurrency.aplwallet.apl.core.service.state.account.AccountServic
 import com.apollocurrency.aplwallet.apl.core.service.state.smc.ContractToolService;
 import com.apollocurrency.aplwallet.apl.core.service.state.smc.PostponedContractService;
 import com.apollocurrency.aplwallet.apl.core.service.state.smc.SmcContractService;
+import com.apollocurrency.aplwallet.apl.core.service.state.smc.SmcFuelValidator;
 import com.apollocurrency.aplwallet.apl.core.service.state.smc.impl.SmcBlockchainIntegratorFactory;
 import com.apollocurrency.aplwallet.apl.core.service.state.smc.impl.SmcPostponedContractServiceImpl;
 import com.apollocurrency.aplwallet.apl.core.transaction.Fee;
@@ -27,7 +28,6 @@ import com.apollocurrency.smc.contract.ContractException;
 import com.apollocurrency.smc.contract.SmartContract;
 import com.apollocurrency.smc.contract.fuel.Fuel;
 import com.apollocurrency.smc.contract.fuel.FuelCalculator;
-import com.apollocurrency.smc.contract.fuel.FuelValidator;
 import com.apollocurrency.smc.contract.vm.ExecutionLog;
 import com.apollocurrency.smc.polyglot.JSAssertionException;
 import com.apollocurrency.smc.polyglot.JSRequirementException;
@@ -45,7 +45,7 @@ import java.math.BigInteger;
 public abstract class AbstractSmcTransactionType extends TransactionType {
     protected PostponedContractService contractService;
     protected ContractToolService contractToolService;
-    protected final FuelValidator fuelMinMaxValidator;
+    protected final SmcFuelValidator fuelMinMaxValidator;
     protected final SmcBlockchainIntegratorFactory integratorFactory;
     protected final Blockchain blockchain;
     protected final SmcConfig smcConfig;
@@ -54,7 +54,7 @@ public abstract class AbstractSmcTransactionType extends TransactionType {
                                AccountService accountService,
                                SmcContractService contractService,
                                ContractToolService contractToolService,
-                               FuelValidator fuelMinMaxValidator,
+                               SmcFuelValidator fuelMinMaxValidator,
                                SmcBlockchainIntegratorFactory integratorFactory,
                                SmcConfig smcConfig) {
         super(blockchainConfig, accountService);
@@ -113,13 +113,7 @@ public abstract class AbstractSmcTransactionType extends TransactionType {
     public final void doStateIndependentValidation(Transaction transaction) throws AplUnacceptableTransactionValidationException {
         checkPrecondition(transaction);
         AbstractSmcAttachment attachment = (AbstractSmcAttachment) transaction.getAttachment();
-        if (!fuelMinMaxValidator.validateLimitValue(attachment.getFuelLimit())) {
-            throw new AplUnacceptableTransactionValidationException("Fuel limit value doesn't correspond to MIN or MAX values.", transaction);
-        }
-        if (!fuelMinMaxValidator.validatePriceValue(attachment.getFuelPrice())) {
-            throw new AplUnacceptableTransactionValidationException("Fuel price value doesn't correspond to MIN or MAX values.", transaction);
-        }
-
+        fuelMinMaxValidator.validate(transaction);
         executeStateIndependentValidation(transaction, attachment);
     }
 

@@ -17,22 +17,22 @@ class FuelCost {
     public static final ConstantFuelCalculator F_ZERO = ConstantFuelCalculator.ZERO_FUEL_CALCULATOR;
 
     //publish new smart contract
-    public static final MemCostFuelCalculator F_PUBLISH = new MemCostFuelCalculator(15_000_000, 10000, MemUnit.BYTE);
+    public static final MemCostFuelCalculator F_PUBLISH = new MemCostFuelCalculator(15_000_000, 1000, MemUnit.BYTE);
 
     //transfer coins from an address to another address
     public static final ConstantFuelCalculator F_SEND_MONEY = new ConstantFuelCalculator(10_000);
 
     //call the contract method
-    public static final MemCostFuelCalculator F_CALL = new MemCostFuelCalculator(1_000_000, 10000, MemUnit.BYTE);
+    public static final MemCostFuelCalculator F_CALL = new MemCostFuelCalculator(1_000_000, 1000, MemUnit.BYTE);
 
     //call another contract method from the contract
-    public static final MemCostFuelCalculator F_SEND_MESSAGE = new MemCostFuelCalculator(1_000_000, 10000, MemUnit.BYTE);
+    public static final MemCostFuelCalculator F_SEND_MESSAGE = new MemCostFuelCalculator(1_000_000, 1000, MemUnit.BYTE);
 
     //math functions using
-    public static final ConstantFuelCalculator F_HASH_SUM = new ConstantFuelCalculator(1_000);
+    public static final ConstantFuelCalculator F_HASH_SUM = new ConstantFuelCalculator(10_000);
 
     //state storage using and to refund for removing
-    public static final MemCostFuelCalculator F_STATE_WRITE = new MemCostFuelCalculator(0L, 100L, MemUnit.BYTE);
+    public static final MemCostFuelCalculator F_STATE_WRITE = new MemCostFuelCalculator(0L, 1000L, MemUnit.BYTE);
 
     //store value to Mapping
     public static final ConstantFuelCalculator F_MAPPING_CREATE = new ConstantFuelCalculator(10_000L);
