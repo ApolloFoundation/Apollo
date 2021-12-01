@@ -37,6 +37,7 @@ import com.apollocurrency.aplwallet.apl.core.rest.v2.converter.SmartMethodMapper
 import com.apollocurrency.aplwallet.apl.core.service.state.account.AccountService;
 import com.apollocurrency.aplwallet.apl.core.service.state.smc.ContractToolService;
 import com.apollocurrency.aplwallet.apl.core.service.state.smc.SmcContractService;
+import com.apollocurrency.aplwallet.apl.core.service.state.smc.SmcFuelValidator;
 import com.apollocurrency.aplwallet.apl.core.service.state.smc.impl.SmcBlockchainIntegratorFactory;
 import com.apollocurrency.aplwallet.apl.core.signature.MultiSigCredential;
 import com.apollocurrency.aplwallet.apl.core.transaction.common.TxBContext;
@@ -114,6 +115,7 @@ class SmcApiServiceImpl implements SmcApiService {
     private final CallMethodResultMapper methodResultMapper;
     private final MethodSpecMapper methodSpecMapper;
     private final ElGamalEncryptor elGamal;
+    private final SmcFuelValidator fuelValidator;
 
 
     @Inject
@@ -129,7 +131,8 @@ class SmcApiServiceImpl implements SmcApiService {
                              CallMethodResultMapper methodResultMapper,
                              MethodSpecMapper methodSpecMapper,
                              @Property(name = "apl.maxAPIRecords", defaultValue = "100") int maxAPIRecords,
-                             ElGamalEncryptor elGamal) {
+                             ElGamalEncryptor elGamal,
+                             SmcFuelValidator fuelValidator) {
         this.accountService = accountService;
         this.contractService = contractService;
         this.contractToolService = contractToolService;
@@ -143,6 +146,7 @@ class SmcApiServiceImpl implements SmcApiService {
         this.methodSpecMapper = methodSpecMapper;
         this.maxAPIRecords = maxAPIRecords;
         this.elGamal = elGamal;
+        this.fuelValidator = fuelValidator;
     }
 
     @Override
@@ -357,6 +361,13 @@ class SmcApiServiceImpl implements SmcApiService {
             .fuelLimit(fuelLimit)
             .fuelPrice(fuelPrice)
             .build();
+
+        try {
+            fuelValidator.validate(attachment);
+        } catch (Exception e) {
+            response.error(ApiErrors.CONTRACT_VALIDATION_ERROR, e.getMessage());
+            return null;
+        }
 
         byte[] generatedPublicKey = AccountService.generatePublicKey(senderAccount, attachment.getContractSource());
         long recipientId = AccountService.getId(generatedPublicKey);
@@ -662,6 +673,13 @@ class SmcApiServiceImpl implements SmcApiService {
             .fuelLimit(fuelLimit)
             .fuelPrice(fuelPrice)
             .build();
+
+        try {
+            fuelValidator.validate(attachment);
+        } catch (Exception e) {
+            response.error(ApiErrors.CONTRACT_VALIDATION_ERROR, e.getMessage());
+            return null;
+        }
 
         CreateTransactionRequest txRequest = CreateTransactionRequest.builder()
             .version(2)

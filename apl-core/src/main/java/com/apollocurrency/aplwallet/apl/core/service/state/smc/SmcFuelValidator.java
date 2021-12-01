@@ -37,10 +37,23 @@ public class SmcFuelValidator {
         //blockchainConfig.getCurrentConfig().getMaxBalanceATM();
         AbstractSmcAttachment attachment = (AbstractSmcAttachment) transaction.getAttachment();
         if (attachment.getFuelLimit().compareTo(LIMIT_MIN_VALUE) < 0) {
-            throw new AplUnacceptableTransactionValidationException("Fuel limit value less than MIN value, expected at least " + LIMIT_MIN_VALUE, transaction);
+            throw new AplUnacceptableTransactionValidationException("Fuel limit value less than MIN value, expected at least "
+                + LIMIT_MIN_VALUE + " ATM", transaction);
         }
         if (attachment.getFuelPrice().compareTo(PRICE_MIN_VALUE) < 0) {
-            throw new AplUnacceptableTransactionValidationException("Fuel price value less than MIN value, expected at least " + PRICE_MIN_VALUE, transaction);
+            throw new AplUnacceptableTransactionValidationException("Fuel price value less than MIN value, expected at least "
+                + PRICE_MIN_VALUE + " ATM", transaction);
+        }
+    }
+
+    public void validate(AbstractSmcAttachment attachment) {
+        //TODO add boundary values into blockchain config
+        //blockchainConfig.getCurrentConfig().getMaxBalanceATM();
+        if (attachment.getFuelLimit().compareTo(LIMIT_MIN_VALUE) < 0) {
+            throw new IllegalArgumentException("Fuel limit value less than MIN value, expected at least " + LIMIT_MIN_VALUE + " ATM");
+        }
+        if (attachment.getFuelPrice().compareTo(PRICE_MIN_VALUE) < 0) {
+            throw new IllegalArgumentException("Fuel price value less than MIN value, expected at least " + PRICE_MIN_VALUE + " ATM");
         }
     }
 }
