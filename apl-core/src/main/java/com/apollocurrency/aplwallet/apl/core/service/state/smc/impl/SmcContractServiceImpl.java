@@ -208,12 +208,9 @@ public class SmcContractServiceImpl implements SmcContractService {
     }
 
     @Override
-    public ContractDetails getContractDetailsByAddress(Address address) {
+    public List<ContractDetails> getContractDetailsByAddress(Address address) {
         var result = loadContractsByFilter(address, null, null, null, null, null, null, -1, 0, 1);
-        if (!result.isEmpty()) {
-            return result.get(0);
-        }
-        return null;
+        return result;
     }
 
     @Override

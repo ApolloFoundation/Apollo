@@ -85,7 +85,7 @@ public interface SmcContractService {
      * @param address the given contract address
      * @return the details information about contract
      */
-    ContractDetails getContractDetailsByAddress(Address address);
+    List<ContractDetails> getContractDetailsByAddress(Address address);
 
     /**
      * Returns the list of ASR module names.

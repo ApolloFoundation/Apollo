@@ -92,19 +92,19 @@ public class SmcPublishContractTransactionType extends AbstractSmcTransactionTyp
 
     @Override
     public void doStateDependentValidation(Transaction transaction) {
-        log.debug("SMC: doStateDependentValidation = ...");
+        log.debug("SMC: doStateDependentValidation = ...  txId={}", transaction.getStringId());
         Address address = new AplAddress(transaction.getRecipientId());
         if (contractService.isContractExist(address)) {
-            log.debug("SMC: doStateDependentValidation = INVALID");
+            log.debug("SMC: doStateDependentValidation = INVALID  txId={}", transaction.getStringId());
             throw new AplAcceptableTransactionValidationException("Contract already exists, address=" + address, transaction);
         }
-        log.debug("SMC: doStateDependentValidation = VALID");
+        log.debug("SMC: doStateDependentValidation = VALID  txId={}", transaction.getStringId());
     }
 
 
     @Override
     public void executeStateIndependentValidation(Transaction transaction, AbstractSmcAttachment abstractSmcAttachment) {
-        log.debug("SMC: doStateIndependentValidation = ...");
+        log.debug("SMC: doStateIndependentValidation = ... txId={}", transaction.getStringId());
         if (getBlockchainConfig().getCurrentConfig().getSmcMasterAccountId() == 0) {
             throw new AplTransactionFeatureNotEnabledException("'Publish contract' transaction is disabled, cause masterAccountId == 0", transaction);
         }
@@ -143,19 +143,19 @@ public class SmcPublishContractTransactionType extends AbstractSmcTransactionTyp
         try {
             processor.process(executionLog);
         } catch (PolyglotException e) {
-            log.debug("SMC: doStateIndependentValidation = INVALID");
+            log.debug("SMC: doStateIndependentValidation = INVALID txId={}", transaction.getStringId());
             throw new AplUnacceptableTransactionValidationException(e.getMessage(), transaction);
         }
         if (executionLog.hasError()) {
-            log.debug("SMC: doStateIndependentValidation = INVALID");
+            log.debug("SMC: doStateIndependentValidation = INVALID txId={}", transaction.getStringId());
             throw new AplUnacceptableTransactionValidationException(executionLog.toJsonString(), transaction);
         }
-        log.debug("SMC: doStateIndependentValidation = VALID");
+        log.debug("SMC: doStateIndependentValidation = VALID txId={}", transaction.getStringId());
     }
 
     @Override
     public void applyAttachment(Transaction transaction, Account senderAccount, Account recipientAccount) {
-        log.debug("SMC: applyAttachment: publish smart contract and call constructor.");
+        log.debug("SMC: applyAttachment: publish smart contract and call constructor, txId={}", transaction.getStringId());
         SmartContract smartContract = contractToolService.createNewContract(transaction);
         SmcPublishContractAttachment attachment = (SmcPublishContractAttachment) transaction.getAttachment();
         var context = smcConfig.asContext(blockchain.getHeight(),
@@ -172,7 +172,7 @@ public class SmcPublishContractTransactionType extends AbstractSmcTransactionTyp
             smartContract.getAddress(), smartContract.getInitCode(), Long.toUnsignedString(transaction.getId()),
             smartContract.getFuel(), transaction.getAmountATM(), smartContract.getOwner());
         contractService.commitContractChanges(transaction);
-        log.trace("Changes were committed");
+        log.trace("Changes were committed, txId={}", transaction.getStringId());
     }
 
     @Override
