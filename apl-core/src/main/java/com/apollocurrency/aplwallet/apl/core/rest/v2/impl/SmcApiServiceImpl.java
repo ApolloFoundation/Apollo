@@ -843,12 +843,12 @@ class SmcApiServiceImpl implements SmcApiService {
         }
 
         if (publisherStr != null) {
-            Account account = getAccountByAddress(publisherStr);
-            if (account == null) {
-                return builder.error(ApiErrors.INCORRECT_VALUE, "publisher", publisherStr).build();
+            var publisherId = getIdByAddress(publisherStr);
+            if (publisherId != null) {
+                publisher = new AplAddress(publisherId);
             }
-            publisher = new AplAddress(account.getId());
         }
+
         if (transactionAddr != null) {
             var transactionId = getIdByAddress(transactionAddr);
             if (transactionId != null) {
