@@ -62,12 +62,12 @@ import com.apollocurrency.aplwallet.apl.core.service.state.account.impl.AccountC
 import com.apollocurrency.aplwallet.apl.core.service.state.account.impl.AccountPublicKeyServiceImpl;
 import com.apollocurrency.aplwallet.apl.core.service.state.account.impl.AccountServiceImpl;
 import com.apollocurrency.aplwallet.apl.core.service.state.smc.ContractToolService;
-import com.apollocurrency.aplwallet.apl.core.service.state.smc.SmcContractService;
+import com.apollocurrency.aplwallet.apl.core.service.state.smc.SmcContractRepository;
 import com.apollocurrency.aplwallet.apl.core.service.state.smc.SmcFuelValidator;
 import com.apollocurrency.aplwallet.apl.core.service.state.smc.event.SmcContractEventManagerClassFactory;
 import com.apollocurrency.aplwallet.apl.core.service.state.smc.impl.SmcBlockchainIntegratorFactory;
 import com.apollocurrency.aplwallet.apl.core.service.state.smc.impl.SmcContractEventServiceImpl;
-import com.apollocurrency.aplwallet.apl.core.service.state.smc.impl.SmcContractServiceImpl;
+import com.apollocurrency.aplwallet.apl.core.service.state.smc.impl.SmcContractRepositoryImpl;
 import com.apollocurrency.aplwallet.apl.core.service.state.smc.impl.SmcContractStorageServiceImpl;
 import com.apollocurrency.aplwallet.apl.core.service.state.smc.impl.SmcContractToolServiceImpl;
 import com.apollocurrency.aplwallet.apl.core.service.state.smc.impl.SmcPostponedContractServiceImpl;
@@ -161,7 +161,7 @@ abstract class AbstractSmcTransactionTypeApplyTest extends DbContainerBaseTest {
             SmcContractTable.class, SmcContractStateTable.class, SmcContractMappingTable.class, SmcContractEventTable.class, SmcContractEventLogTable.class,
             ContractModelToEntityConverter.class, ContractModelToStateEntityConverter.class,
             ContractEventLogModelToLogEntryConverter.class, ContractEventModelToEntityConverter.class,
-            SmcContractServiceImpl.class, SmcContractToolServiceImpl.class, SmcContractStorageServiceImpl.class, SmcContractEventServiceImpl.class,
+            SmcContractRepositoryImpl.class, SmcContractToolServiceImpl.class, SmcContractStorageServiceImpl.class, SmcContractEventServiceImpl.class,
             SmcTxLogProcessor.class, SmcMappingRepositoryClassFactory.class, SmcContractEventManagerClassFactory.class
         )
         .addBeans(MockBean.of(extension.getDatabaseManager(), DatabaseManager.class))
@@ -192,7 +192,7 @@ abstract class AbstractSmcTransactionTypeApplyTest extends DbContainerBaseTest {
     @Inject
     AccountService accountService;
     @Inject
-    SmcContractService contractService;
+    SmcContractRepository contractService;
     @Inject
     ContractToolService contractToolService;
     @Inject

@@ -14,11 +14,9 @@ import com.apollocurrency.aplwallet.apl.core.model.Transaction;
 import com.apollocurrency.aplwallet.apl.core.service.blockchain.Blockchain;
 import com.apollocurrency.aplwallet.apl.core.service.state.account.AccountService;
 import com.apollocurrency.aplwallet.apl.core.service.state.smc.ContractToolService;
-import com.apollocurrency.aplwallet.apl.core.service.state.smc.PostponedContractService;
-import com.apollocurrency.aplwallet.apl.core.service.state.smc.SmcContractService;
+import com.apollocurrency.aplwallet.apl.core.service.state.smc.SmcContractRepository;
 import com.apollocurrency.aplwallet.apl.core.service.state.smc.SmcFuelValidator;
 import com.apollocurrency.aplwallet.apl.core.service.state.smc.impl.SmcBlockchainIntegratorFactory;
-import com.apollocurrency.aplwallet.apl.core.service.state.smc.impl.SmcPostponedContractServiceImpl;
 import com.apollocurrency.aplwallet.apl.core.transaction.Fee;
 import com.apollocurrency.aplwallet.apl.core.transaction.TransactionType;
 import com.apollocurrency.aplwallet.apl.core.transaction.messages.AbstractSmcAttachment;
@@ -43,7 +41,7 @@ import java.math.BigInteger;
  */
 @Slf4j
 public abstract class AbstractSmcTransactionType extends TransactionType {
-    protected PostponedContractService contractService;
+    protected SmcContractRepository contractRepository;
     protected ContractToolService contractToolService;
     protected final SmcFuelValidator fuelMinMaxValidator;
     protected final SmcBlockchainIntegratorFactory integratorFactory;
@@ -52,13 +50,13 @@ public abstract class AbstractSmcTransactionType extends TransactionType {
 
     AbstractSmcTransactionType(BlockchainConfig blockchainConfig, Blockchain blockchain,
                                AccountService accountService,
-                               SmcContractService contractService,
+                               SmcContractRepository contractRepository,
                                ContractToolService contractToolService,
                                SmcFuelValidator fuelMinMaxValidator,
                                SmcBlockchainIntegratorFactory integratorFactory,
                                SmcConfig smcConfig) {
         super(blockchainConfig, accountService);
-        this.contractService = new SmcPostponedContractServiceImpl(contractService);
+        this.contractRepository = contractRepository;
         this.contractToolService = contractToolService;
         this.fuelMinMaxValidator = fuelMinMaxValidator;
         this.integratorFactory = integratorFactory;

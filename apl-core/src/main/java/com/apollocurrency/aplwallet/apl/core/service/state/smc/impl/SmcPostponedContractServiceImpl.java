@@ -6,7 +6,7 @@ package com.apollocurrency.aplwallet.apl.core.service.state.smc.impl;
 
 import com.apollocurrency.aplwallet.apl.core.model.Transaction;
 import com.apollocurrency.aplwallet.apl.core.service.state.smc.PostponedContractService;
-import com.apollocurrency.aplwallet.apl.core.service.state.smc.SmcContractService;
+import com.apollocurrency.aplwallet.apl.core.service.state.smc.SmcContractRepository;
 import com.apollocurrency.smc.contract.SmartContract;
 import com.apollocurrency.smc.contract.fuel.Fuel;
 import com.apollocurrency.smc.data.type.Address;
@@ -20,11 +20,11 @@ import java.util.Map;
  */
 @Slf4j
 public class SmcPostponedContractServiceImpl implements PostponedContractService {
-    private final SmcContractService contractService;
+    private final SmcContractRepository contractRepository;
     private final Map<Address, SmartContract> cachedContracts;
 
-    public SmcPostponedContractServiceImpl(SmcContractService contractService) {
-        this.contractService = contractService;
+    public SmcPostponedContractServiceImpl(SmcContractRepository contractRepository) {
+        this.contractRepository = contractRepository;
         this.cachedContracts = new HashMap<>();
     }
 
@@ -36,14 +36,14 @@ public class SmcPostponedContractServiceImpl implements PostponedContractService
 
     @Override
     public SmartContract loadContract(Address address, Address originator, Address caller, Fuel contractFuel) {
-        return cachedContracts.computeIfAbsent(address, contract -> contractService.loadContract(address, originator, caller, contractFuel));
+        return cachedContracts.computeIfAbsent(address, contract -> contractRepository.loadContract(address, originator, caller, contractFuel));
     }
 
     @Override
     public boolean isContractExist(Address address) {
         var rc = cachedContracts.containsKey(address);
         if (!rc) {
-            rc = contractService.isContractExist(address);
+            rc = contractRepository.isContractExist(address);
         }
         return rc;
     }
@@ -59,12 +59,12 @@ public class SmcPostponedContractServiceImpl implements PostponedContractService
         log.trace("For committing {}", cachedContracts.size());
         try {
             cachedContracts.forEach((address, smartContract) -> {
-                if (contractService.isContractExist(address)) {
+                if (contractRepository.isContractExist(address)) {
                     log.trace("Update sate on address={}, state={}", address.getHex(), smartContract.getSerializedObject());
-                    contractService.updateContractState(smartContract);
+                    contractRepository.updateContractState(smartContract);
                 } else {
                     log.trace("Save new contract={}", address.getHex());
-                    contractService.saveContract(smartContract, transaction.getId(), transaction.getFullHash());
+                    contractRepository.saveContract(smartContract, transaction.getId(), transaction.getFullHash());
                 }
             });
         } finally {

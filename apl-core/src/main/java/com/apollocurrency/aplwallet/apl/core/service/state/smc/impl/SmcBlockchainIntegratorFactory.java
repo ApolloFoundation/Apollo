@@ -14,7 +14,7 @@ import com.apollocurrency.aplwallet.apl.core.service.blockchain.Blockchain;
 import com.apollocurrency.aplwallet.apl.core.service.state.account.AccountService;
 import com.apollocurrency.aplwallet.apl.core.service.state.smc.ContractToolService;
 import com.apollocurrency.aplwallet.apl.core.service.state.smc.InMemoryAccountService;
-import com.apollocurrency.aplwallet.apl.core.service.state.smc.SmcContractService;
+import com.apollocurrency.aplwallet.apl.core.service.state.smc.SmcContractRepository;
 import com.apollocurrency.aplwallet.apl.core.service.state.smc.event.SmcContractEventManagerClassFactory;
 import com.apollocurrency.aplwallet.apl.core.service.state.smc.txlog.SendMoneyRecord;
 import com.apollocurrency.aplwallet.apl.core.transaction.messages.AbstractSmcAttachment;
@@ -65,7 +65,7 @@ public class SmcBlockchainIntegratorFactory {
     private final Blockchain blockchain;
     private final ServerInfoService serverInfoService;
     private final BlockConverter blockConverter;
-    private final SmcContractService contractService;
+    private final SmcContractRepository contractService;
     private final ContractToolService contractToolService;
     private final SmcMappingRepositoryClassFactory smcMappingRepositoryClassFactory;
     private final SmcContractEventManagerClassFactory smcContractEventManagerClassFactory;
@@ -73,7 +73,7 @@ public class SmcBlockchainIntegratorFactory {
     private final HashSumProvider hashSumProvider;
 
     @Inject
-    public SmcBlockchainIntegratorFactory(AccountService accountService, Blockchain blockchain, ServerInfoService serverInfoService, SmcContractService contractService, ContractToolService contractToolService, SmcMappingRepositoryClassFactory smcMappingRepositoryClassFactory, SmcContractEventManagerClassFactory smcContractEventManagerClassFactory, TxLogProcessor txLogProcessor, HashSumProvider hashSumProvider) {
+    public SmcBlockchainIntegratorFactory(AccountService accountService, Blockchain blockchain, ServerInfoService serverInfoService, SmcContractRepository contractService, ContractToolService contractToolService, SmcMappingRepositoryClassFactory smcMappingRepositoryClassFactory, SmcContractEventManagerClassFactory smcContractEventManagerClassFactory, TxLogProcessor txLogProcessor, HashSumProvider hashSumProvider) {
         this.accountService = Objects.requireNonNull(accountService);
         this.blockchain = Objects.requireNonNull(blockchain);
         this.serverInfoService = Objects.requireNonNull(serverInfoService);

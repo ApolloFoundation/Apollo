@@ -36,6 +36,7 @@ import com.apollocurrency.aplwallet.apl.core.rest.v2.converter.MethodSpecMapper;
 import com.apollocurrency.aplwallet.apl.core.rest.v2.converter.SmartMethodMapper;
 import com.apollocurrency.aplwallet.apl.core.service.state.account.AccountService;
 import com.apollocurrency.aplwallet.apl.core.service.state.smc.ContractToolService;
+import com.apollocurrency.aplwallet.apl.core.service.state.smc.SmcContractRepository;
 import com.apollocurrency.aplwallet.apl.core.service.state.smc.SmcContractService;
 import com.apollocurrency.aplwallet.apl.core.service.state.smc.SmcFuelValidator;
 import com.apollocurrency.aplwallet.apl.core.service.state.smc.impl.SmcBlockchainIntegratorFactory;
@@ -103,6 +104,7 @@ class SmcApiServiceImpl implements SmcApiService {
 
     public static final String DEFAULT_LANGUAGE_NAME = "js";
     private final AccountService accountService;
+    private final SmcContractRepository contractRepository;
     private final SmcContractService contractService;
     private final ContractToolService contractToolService;
     private final SmcContractEventService eventService;
@@ -121,6 +123,7 @@ class SmcApiServiceImpl implements SmcApiService {
     @Inject
     public SmcApiServiceImpl(BlockchainConfig blockchainConfig,
                              AccountService accountService,
+                             SmcContractRepository contractRepository,
                              SmcContractService contractService,
                              ContractToolService contractToolService,
                              SmcContractEventService eventService,
@@ -134,6 +137,7 @@ class SmcApiServiceImpl implements SmcApiService {
                              ElGamalEncryptor elGamal,
                              SmcFuelValidator fuelValidator) {
         this.accountService = accountService;
+        this.contractRepository = contractRepository;
         this.contractService = contractService;
         this.contractToolService = contractToolService;
         this.eventService = eventService;
@@ -398,7 +402,7 @@ class SmcApiServiceImpl implements SmcApiService {
             return builder.error(ApiErrors.INCORRECT_VALUE, "members").build();
         }
         Long contractId = getIdByAddress(body.getAddress());
-        if (contractId == null || !contractService.isContractExist(new AplAddress(contractId))) {
+        if (contractId == null || !contractRepository.isContractExist(new AplAddress(contractId))) {
             return builder.error(ApiErrors.CONTRACT_NOT_FOUND, body.getAddress()).build();
         }
         var executionLog = new ExecutionLog();
@@ -418,12 +422,12 @@ class SmcApiServiceImpl implements SmcApiService {
     public Response getSmcSpecificationByAddress(String addressStr, SecurityContext securityContext) throws NotFoundException {
         ResponseBuilderV2 builder = ResponseBuilderV2.startTiming();
         Long accountId = getIdByAddress(addressStr);
-        if (accountId == null || !contractService.isContractExist(new AplAddress(accountId))) {
+        if (accountId == null || !contractRepository.isContractExist(new AplAddress(accountId))) {
             return builder.error(ApiErrors.CONTRACT_NOT_FOUND, addressStr).build();
         }
         var address = new AplAddress(accountId);
         var response = new ContractSpecResponse();
-        var aplContractSpec = contractService.loadAsrModuleSpec(address);
+        var aplContractSpec = contractRepository.loadAsrModuleSpec(address);
         var contractSpec = aplContractSpec.getContractSpec();
         var notViewMethods = contractSpec.getMembers().stream()
             .filter(member -> member.getType() == ContractSpec.MemberType.FUNCTION && member.getStateMutability() != ContractSpec.StateMutability.VIEW
@@ -471,9 +475,11 @@ class SmcApiServiceImpl implements SmcApiService {
         response.getMembers().addAll(methodSpecMapper.convert(notViewMethods));
         response.getMembers().addAll(methodSpecMapper.convert(events));
 
-        response.setInheritedContracts(contractService.getInheritedAsrModules(contractSpec.getType()
-            , aplContractSpec.getLanguage()
-            , aplContractSpec.getVersion()));
+        response.setInheritedContracts(
+            contractService.getInheritedAsrModules(contractSpec.getType()
+                , aplContractSpec.getLanguage()
+                , aplContractSpec.getVersion())
+        );
 
         return builder.bind(response).build();
     }
@@ -509,7 +515,7 @@ class SmcApiServiceImpl implements SmcApiService {
     }
 
     private List<ResultValue> processAllViewMethods(Address contractAddress, List<ContractMethod> members, ExecutionLog executionLog) {
-        SmartContract smartContract = contractService.loadContract(
+        SmartContract smartContract = contractRepository.loadContract(
             contractAddress,
             contractAddress,
             new ContractFuel(contractAddress, BigInteger.ZERO, BigInteger.ONE)
@@ -554,7 +560,7 @@ class SmcApiServiceImpl implements SmcApiService {
         AplAddress contractAddress = new AplAddress(transaction.getRecipientId());
         final AplAddress transactionSender = new AplAddress(transaction.getSenderId());
         try {
-            smartContract = contractService.loadContract(
+            smartContract = contractRepository.loadContract(
                 contractAddress,
                 transactionSender,
                 new ContractFuel(contractAddress, attachment.getFuelLimit(), attachment.getFuelPrice())
@@ -711,7 +717,7 @@ class SmcApiServiceImpl implements SmcApiService {
 
         ContractListResponse response = new ContractListResponse();
 
-        List<ContractDetails> contracts = contractService.loadContractsByFilter(
+        List<ContractDetails> contracts = contractRepository.loadContractsByFilter(
             null,
             null,
             publisher,
@@ -734,7 +740,7 @@ class SmcApiServiceImpl implements SmcApiService {
     public Response getSmcEvents(String address, ContractEventsRequest body, SecurityContext securityContext) throws NotFoundException {
         ResponseBuilderV2 builder = ResponseBuilderV2.startTiming();
         Long contractId = getIdByAddress(address);
-        if (contractId == null || !contractService.isContractExist(new AplAddress(contractId))) {
+        if (contractId == null || !contractRepository.isContractExist(new AplAddress(contractId))) {
             return builder.error(ApiErrors.CONTRACT_NOT_FOUND, address).build();
         }
         String eventName;
@@ -793,13 +799,13 @@ class SmcApiServiceImpl implements SmcApiService {
     public Response getSmcByAddress(String addressStr, SecurityContext securityContext) throws NotFoundException {
         ResponseBuilderV2 builder = ResponseBuilderV2.startTiming();
         Long contractId = getIdByAddress(addressStr);
-        if (contractId == null || !contractService.isContractExist(new AplAddress(contractId))) {
+        if (contractId == null || !contractRepository.isContractExist(new AplAddress(contractId))) {
             return builder.error(ApiErrors.CONTRACT_NOT_FOUND, addressStr).build();
         }
         var address = new AplAddress(contractId);
         ContractListResponse response = new ContractListResponse();
 
-        var contracts = contractService.getContractDetailsByAddress(address);
+        var contracts = contractRepository.getContractDetailsByAddress(address);
 
         response.setContracts(contracts);
 
@@ -831,7 +837,7 @@ class SmcApiServiceImpl implements SmcApiService {
                 return builder.error(ApiErrors.CONTRACT_NOT_FOUND, addressStr).build();
             }
             address = new AplAddress(account.getId());
-            if (!contractService.isContractExist(address)) {
+            if (!contractRepository.isContractExist(address)) {
                 return ResponseBuilderV2.apiError(ApiErrors.CONTRACT_NOT_FOUND, addressStr).build();
             }
         }
@@ -851,7 +857,7 @@ class SmcApiServiceImpl implements SmcApiService {
         }
         ContractListResponse response = new ContractListResponse();
 
-        List<ContractDetails> contracts = contractService.loadContractsByFilter(
+        List<ContractDetails> contracts = contractRepository.loadContractsByFilter(
             address,
             transaction,
             publisher,
@@ -873,11 +879,11 @@ class SmcApiServiceImpl implements SmcApiService {
     public Response getSmcStateByAddress(String addressStr, SecurityContext securityContext) throws NotFoundException {
         ResponseBuilderV2 builder = ResponseBuilderV2.startTiming();
         Long accountId = getIdByAddress(addressStr);
-        if (accountId == null || !contractService.isContractExist(new AplAddress(accountId))) {
+        if (accountId == null || !contractRepository.isContractExist(new AplAddress(accountId))) {
             return builder.error(ApiErrors.CONTRACT_NOT_FOUND, addressStr).build();
         }
         ContractStateResponse response = new ContractStateResponse();
-        String contractState = contractService.loadSerializedContract(new AplAddress(accountId));
+        String contractState = contractRepository.loadSerializedContract(new AplAddress(accountId));
         response.setState(contractState);
 
         return builder.bind(response).build();

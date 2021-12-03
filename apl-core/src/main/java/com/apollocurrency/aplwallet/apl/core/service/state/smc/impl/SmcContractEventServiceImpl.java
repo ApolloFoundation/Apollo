@@ -10,7 +10,7 @@ import com.apollocurrency.aplwallet.apl.core.converter.db.smc.ContractEventModel
 import com.apollocurrency.aplwallet.apl.core.dao.state.smc.SmcContractEventLogTable;
 import com.apollocurrency.aplwallet.apl.core.dao.state.smc.SmcContractEventTable;
 import com.apollocurrency.aplwallet.apl.core.service.blockchain.Blockchain;
-import com.apollocurrency.aplwallet.apl.core.service.state.smc.SmcContractService;
+import com.apollocurrency.aplwallet.apl.core.service.state.smc.SmcContractRepository;
 import com.apollocurrency.aplwallet.apl.smc.events.SmcEventType;
 import com.apollocurrency.aplwallet.apl.smc.model.AplContractEvent;
 import com.apollocurrency.aplwallet.apl.smc.service.SmcContractEventService;
@@ -46,7 +46,7 @@ public class SmcContractEventServiceImpl implements SmcContractEventService {
     private final ContractEventModelToEntityConverter entityConverter;
     private final HashSumProvider hashSumProvider;
     private final Event<AplContractEvent> cdiContractEvent;
-    private final SmcContractService smcContractService;
+    private final SmcContractRepository smcContractRepository;
     private final JsonMapper jsonMapper;
 
     @Inject
@@ -56,7 +56,7 @@ public class SmcContractEventServiceImpl implements SmcContractEventService {
                                        ContractEventModelToEntityConverter contractEventModelToEntityConverter,
                                        HashSumProvider hashSumProvider,
                                        Event<AplContractEvent> cdiContractEvent,
-                                       SmcContractService smcContractService) {
+                                       SmcContractRepository smcContractRepository) {
         this.blockchain = blockchain;
         this.contractEventTable = contractEventTable;
         this.contractEventLogTable = contractEventLogTable;
@@ -64,13 +64,13 @@ public class SmcContractEventServiceImpl implements SmcContractEventService {
         this.entityConverter = contractEventModelToEntityConverter;
         this.hashSumProvider = hashSumProvider;
         this.cdiContractEvent = cdiContractEvent;
-        this.smcContractService = smcContractService;
+        this.smcContractRepository = smcContractRepository;
         this.jsonMapper = new EventJsonMapper();
     }
 
     @Override
     public boolean isContractExist(Address contract) {
-        return smcContractService.isContractExist(contract);
+        return smcContractRepository.isContractExist(contract);
     }
 
     @Override

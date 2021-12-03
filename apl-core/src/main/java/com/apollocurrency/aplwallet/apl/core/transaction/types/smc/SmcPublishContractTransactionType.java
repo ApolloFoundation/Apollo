@@ -15,9 +15,10 @@ import com.apollocurrency.aplwallet.apl.core.model.Transaction;
 import com.apollocurrency.aplwallet.apl.core.service.blockchain.Blockchain;
 import com.apollocurrency.aplwallet.apl.core.service.state.account.AccountService;
 import com.apollocurrency.aplwallet.apl.core.service.state.smc.ContractToolService;
-import com.apollocurrency.aplwallet.apl.core.service.state.smc.SmcContractService;
+import com.apollocurrency.aplwallet.apl.core.service.state.smc.SmcContractRepository;
 import com.apollocurrency.aplwallet.apl.core.service.state.smc.SmcFuelValidator;
 import com.apollocurrency.aplwallet.apl.core.service.state.smc.impl.SmcBlockchainIntegratorFactory;
+import com.apollocurrency.aplwallet.apl.core.service.state.smc.impl.SmcPostponedContractServiceImpl;
 import com.apollocurrency.aplwallet.apl.core.transaction.TransactionTypes;
 import com.apollocurrency.aplwallet.apl.core.transaction.messages.AbstractAttachment;
 import com.apollocurrency.aplwallet.apl.core.transaction.messages.AbstractSmcAttachment;
@@ -51,12 +52,12 @@ public class SmcPublishContractTransactionType extends AbstractSmcTransactionTyp
     @Inject
     public SmcPublishContractTransactionType(BlockchainConfig blockchainConfig, Blockchain blockchain,
                                              AccountService accountService,
-                                             SmcContractService contractService,
+                                             SmcContractRepository contractRepository,
                                              ContractToolService contractToolService,
                                              SmcFuelValidator fuelValidator,
                                              SmcBlockchainIntegratorFactory integratorFactory,
                                              SmcConfig smcConfig) {
-        super(blockchainConfig, blockchain, accountService, contractService, contractToolService, fuelValidator, integratorFactory, smcConfig);
+        super(blockchainConfig, blockchain, accountService, contractRepository, contractToolService, fuelValidator, integratorFactory, smcConfig);
     }
 
     @Override
@@ -87,11 +88,12 @@ public class SmcPublishContractTransactionType extends AbstractSmcTransactionTyp
 
     @Override
     public boolean isDuplicate(Transaction transaction, Map<TransactionTypes.TransactionTypeSpec, Map<String, Integer>> duplicates) {
-        return isDuplicate(getSpec(), Long.toUnsignedString(transaction.getId()), duplicates, true);
+        return isDuplicate(getSpec(), TransactionTypes.TransactionTypeSpec.SMC_PUBLISH.name(), duplicates, true);
     }
 
     @Override
     public void doStateDependentValidation(Transaction transaction) {
+        var contractService = new SmcPostponedContractServiceImpl(contractRepository);
         log.debug("SMC: doStateDependentValidation = ...  txId={}", transaction.getStringId());
         Address address = new AplAddress(transaction.getRecipientId());
         if (contractService.isContractExist(address)) {
@@ -129,9 +131,7 @@ public class SmcPublishContractTransactionType extends AbstractSmcTransactionTyp
             smartContract,
             integratorFactory.createMockProcessor(transaction.getId())
         );
-        var pcf = new SmcFuelBasedFee(
-            context.getPrice().contractPublishing()
-        );
+        var pcf = new SmcFuelBasedFee(context.getPrice().contractPublishing());
         BigInteger calculatedFuel = pcf.calcFuel(smartContract);
         if (!smartContract.getFuel().tryToCharge(calculatedFuel)) {
             log.error("Needed fuel={} but actual={}", calculatedFuel, smartContract.getFuel());
@@ -163,6 +163,7 @@ public class SmcPublishContractTransactionType extends AbstractSmcTransactionTyp
             integratorFactory.createProcessor(transaction, attachment, senderAccount, recipientAccount, getLedgerEvent())
         );
         log.debug("Before processing Address={} Fuel={}", smartContract.getAddress(), smartContract.getFuel());
+        var contractService = new SmcPostponedContractServiceImpl(contractRepository);
 
         executeContract(transaction, senderAccount, smartContract, new PublishContractTxProcessor(smartContract, context));
 
