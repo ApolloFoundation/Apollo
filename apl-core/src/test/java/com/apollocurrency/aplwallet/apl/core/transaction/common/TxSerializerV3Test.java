@@ -13,7 +13,7 @@ import com.apollocurrency.aplwallet.apl.core.service.blockchain.TransactionBuild
 import com.apollocurrency.aplwallet.apl.core.service.state.account.AccountPublicKeyService;
 import com.apollocurrency.aplwallet.apl.core.service.state.account.AccountService;
 import com.apollocurrency.aplwallet.apl.core.service.state.smc.ContractToolService;
-import com.apollocurrency.aplwallet.apl.core.service.state.smc.SmcContractService;
+import com.apollocurrency.aplwallet.apl.core.service.state.smc.SmcContractRepository;
 import com.apollocurrency.aplwallet.apl.core.service.state.smc.SmcFuelValidator;
 import com.apollocurrency.aplwallet.apl.core.service.state.smc.impl.SmcBlockchainIntegratorFactory;
 import com.apollocurrency.aplwallet.apl.core.transaction.CachedTransactionTypeFactory;
@@ -59,7 +59,7 @@ class TxSerializerV3Test {
     @Mock
     Chain chain;
     @Mock
-    SmcContractService contractService;
+    SmcContractRepository contractService;
     @Mock
     ContractToolService contractToolService;
     @Mock

@@ -136,7 +136,7 @@ public class SmcContractTable extends EntityDbTable<SmcContractEntity> {
             baseContractPrefix = baseContract.replace("%", "\\%").replace("_", "\\_") + "%";
         }
         if (blockTimestamp != null) {
-            sql.append(" AND sc.block_timestamp = ? ");
+            sql.append(" AND sc.block_timestamp >= ? ");
         }
         if (status != null) {
             sql.append(" AND ss.status = ? ");

@@ -864,9 +864,9 @@ paths:
           description: The transaction that contains contract
           required: false
           schema:
-            type: integer
+            type: string
             format: int64
-            example: 387615916963
+            example: 387615916963 or 0x34a11bc0012
         - name: status
           in: query
           description: The contract status

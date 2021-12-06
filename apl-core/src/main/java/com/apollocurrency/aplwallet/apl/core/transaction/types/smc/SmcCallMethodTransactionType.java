@@ -15,9 +15,10 @@ import com.apollocurrency.aplwallet.apl.core.model.Transaction;
 import com.apollocurrency.aplwallet.apl.core.service.blockchain.Blockchain;
 import com.apollocurrency.aplwallet.apl.core.service.state.account.AccountService;
 import com.apollocurrency.aplwallet.apl.core.service.state.smc.ContractToolService;
-import com.apollocurrency.aplwallet.apl.core.service.state.smc.SmcContractService;
+import com.apollocurrency.aplwallet.apl.core.service.state.smc.SmcContractRepository;
 import com.apollocurrency.aplwallet.apl.core.service.state.smc.SmcFuelValidator;
 import com.apollocurrency.aplwallet.apl.core.service.state.smc.impl.SmcBlockchainIntegratorFactory;
+import com.apollocurrency.aplwallet.apl.core.service.state.smc.impl.SmcPostponedContractServiceImpl;
 import com.apollocurrency.aplwallet.apl.core.transaction.Fee;
 import com.apollocurrency.aplwallet.apl.core.transaction.TransactionTypes;
 import com.apollocurrency.aplwallet.apl.core.transaction.messages.AbstractAttachment;
@@ -58,7 +59,7 @@ public class SmcCallMethodTransactionType extends AbstractSmcTransactionType {
     @Inject
     public SmcCallMethodTransactionType(BlockchainConfig blockchainConfig, Blockchain blockchain,
                                         AccountService accountService,
-                                        SmcContractService contractService,
+                                        SmcContractRepository contractService,
                                         ContractToolService contractToolService,
                                         SmcFuelValidator fuelValidator,
                                         SmcBlockchainIntegratorFactory integratorFactory,
@@ -100,10 +101,11 @@ public class SmcCallMethodTransactionType extends AbstractSmcTransactionType {
 
     @Override
     public void doStateDependentValidation(Transaction transaction) {
-        log.debug("SMC: doStateDependentValidation = ...");
+        log.debug("SMC: doStateDependentValidation = ... txId={}", transaction.getStringId());
         Address address = new AplAddress(transaction.getRecipientId());
         SmcCallMethodAttachment attachment = (SmcCallMethodAttachment) transaction.getAttachment();
         final AplAddress transactionSender = new AplAddress(transaction.getSenderId());
+        var contractService = new SmcPostponedContractServiceImpl(contractRepository);
         SmartContract smartContract;
         try {
             smartContract = contractService.loadContract(
@@ -134,19 +136,19 @@ public class SmcCallMethodTransactionType extends AbstractSmcTransactionType {
         try {
             processor.process(executionLog);
         } catch (PolyglotException e) {
-            log.debug("SMC: doStateDependentValidation = INVALID");
+            log.debug("SMC: doStateDependentValidation = INVALID txId={}", transaction.getStringId());
             throw new AplAcceptableTransactionValidationException(e.getMessage(), transaction);
         }
         if (executionLog.hasError()) {
-            log.debug("SMC: doStateDependentValidation = INVALID");
+            log.debug("SMC: doStateDependentValidation = INVALID txId={}", transaction.getStringId());
             throw new AplAcceptableTransactionValidationException(executionLog.toJsonString(), transaction);
         }
-        log.debug("SMC: doStateDependentValidation = VALID");
+        log.debug("SMC: doStateDependentValidation = VALID txId={}", transaction.getStringId());
     }
 
     @Override
     public void executeStateIndependentValidation(Transaction transaction, AbstractSmcAttachment abstractSmcAttachment) {
-        log.debug("SMC: doStateIndependentValidation = ...");
+        log.debug("SMC: doStateIndependentValidation = ... txId={}", transaction.getStringId());
         SmcCallMethodAttachment attachment = (SmcCallMethodAttachment) abstractSmcAttachment;
         if (Strings.isNullOrEmpty(attachment.getMethodName())) {
             throw new AplUnacceptableTransactionValidationException("Empty contract method name.", transaction);
@@ -177,22 +179,23 @@ public class SmcCallMethodTransactionType extends AbstractSmcTransactionType {
         try {
             processor.process(executionLog);
         } catch (PolyglotException e) {
-            log.debug("SMC: doStateIndependentValidation = INVALID");
+            log.debug("SMC: doStateIndependentValidation = INVALID txId={}", transaction.getStringId());
             throw new AplUnacceptableTransactionValidationException(e.getMessage(), transaction);
         }
         if (executionLog.hasError()) {
-            log.debug("SMC: doStateIndependentValidation = INVALID");
+            log.debug("SMC: doStateIndependentValidation = INVALID txId={}", transaction.getStringId());
             throw new AplUnacceptableTransactionValidationException("Syntax error: " + executionLog.toJsonString(), transaction);
         }
-        log.debug("SMC: doStateIndependentValidation = VALID");
+        log.debug("SMC: doStateIndependentValidation = VALID txId={}", transaction.getStringId());
     }
 
     @Override
     public void applyAttachment(Transaction transaction, Account senderAccount, Account recipientAccount) {
-        log.debug("SMC: applyAttachment: call method. ");
+        log.debug("SMC: applyAttachment: call method txId={}", transaction.getStringId());
         SmcCallMethodAttachment attachment = (SmcCallMethodAttachment) transaction.getAttachment();
         Address address = new AplAddress(transaction.getRecipientId());
         final AplAddress transactionSender = new AplAddress(transaction.getSenderId());
+        var contractService = new SmcPostponedContractServiceImpl(contractRepository);
         SmartContract smartContract = contractService.loadContract(
             address,
             transactionSender,
@@ -216,10 +219,10 @@ public class SmcCallMethodTransactionType extends AbstractSmcTransactionType {
         contractService.updateContractState(smartContract);
         log.info("Called method {} on contract={}, txId={}, fuel={}, amountATM={}, tx.sender={}",
             smartMethod.getMethodWithParams(),
-            smartContract.getAddress(), Long.toUnsignedString(transaction.getId()),
+            smartContract.getAddress(), transaction.getStringId(),
             smartContract.getFuel(), transaction.getAmountATM(), transactionSender);
         contractService.commitContractChanges(transaction);
-        log.trace("Changes were committed");
+        log.trace("Changes were committed, txId={}", transaction.getStringId());
     }
 
     private Fee.FuelBasedFee getFuelBasedFee(OperationPrice price, long amount) {

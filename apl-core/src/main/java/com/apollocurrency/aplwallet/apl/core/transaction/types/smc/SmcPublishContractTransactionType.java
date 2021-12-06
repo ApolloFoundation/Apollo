@@ -15,9 +15,10 @@ import com.apollocurrency.aplwallet.apl.core.model.Transaction;
 import com.apollocurrency.aplwallet.apl.core.service.blockchain.Blockchain;
 import com.apollocurrency.aplwallet.apl.core.service.state.account.AccountService;
 import com.apollocurrency.aplwallet.apl.core.service.state.smc.ContractToolService;
-import com.apollocurrency.aplwallet.apl.core.service.state.smc.SmcContractService;
+import com.apollocurrency.aplwallet.apl.core.service.state.smc.SmcContractRepository;
 import com.apollocurrency.aplwallet.apl.core.service.state.smc.SmcFuelValidator;
 import com.apollocurrency.aplwallet.apl.core.service.state.smc.impl.SmcBlockchainIntegratorFactory;
+import com.apollocurrency.aplwallet.apl.core.service.state.smc.impl.SmcPostponedContractServiceImpl;
 import com.apollocurrency.aplwallet.apl.core.transaction.TransactionTypes;
 import com.apollocurrency.aplwallet.apl.core.transaction.messages.AbstractAttachment;
 import com.apollocurrency.aplwallet.apl.core.transaction.messages.AbstractSmcAttachment;
@@ -51,12 +52,12 @@ public class SmcPublishContractTransactionType extends AbstractSmcTransactionTyp
     @Inject
     public SmcPublishContractTransactionType(BlockchainConfig blockchainConfig, Blockchain blockchain,
                                              AccountService accountService,
-                                             SmcContractService contractService,
+                                             SmcContractRepository contractRepository,
                                              ContractToolService contractToolService,
                                              SmcFuelValidator fuelValidator,
                                              SmcBlockchainIntegratorFactory integratorFactory,
                                              SmcConfig smcConfig) {
-        super(blockchainConfig, blockchain, accountService, contractService, contractToolService, fuelValidator, integratorFactory, smcConfig);
+        super(blockchainConfig, blockchain, accountService, contractRepository, contractToolService, fuelValidator, integratorFactory, smcConfig);
     }
 
     @Override
@@ -87,24 +88,25 @@ public class SmcPublishContractTransactionType extends AbstractSmcTransactionTyp
 
     @Override
     public boolean isDuplicate(Transaction transaction, Map<TransactionTypes.TransactionTypeSpec, Map<String, Integer>> duplicates) {
-        return isDuplicate(getSpec(), Long.toUnsignedString(transaction.getId()), duplicates, true);
+        return isDuplicate(getSpec(), TransactionTypes.TransactionTypeSpec.SMC_PUBLISH.name(), duplicates, true);
     }
 
     @Override
     public void doStateDependentValidation(Transaction transaction) {
-        log.debug("SMC: doStateDependentValidation = ...");
+        var contractService = new SmcPostponedContractServiceImpl(contractRepository);
+        log.debug("SMC: doStateDependentValidation = ...  txId={}", transaction.getStringId());
         Address address = new AplAddress(transaction.getRecipientId());
         if (contractService.isContractExist(address)) {
-            log.debug("SMC: doStateDependentValidation = INVALID");
+            log.debug("SMC: doStateDependentValidation = INVALID  txId={}", transaction.getStringId());
             throw new AplAcceptableTransactionValidationException("Contract already exists, address=" + address, transaction);
         }
-        log.debug("SMC: doStateDependentValidation = VALID");
+        log.debug("SMC: doStateDependentValidation = VALID  txId={}", transaction.getStringId());
     }
 
 
     @Override
     public void executeStateIndependentValidation(Transaction transaction, AbstractSmcAttachment abstractSmcAttachment) {
-        log.debug("SMC: doStateIndependentValidation = ...");
+        log.debug("SMC: doStateIndependentValidation = ... txId={}", transaction.getStringId());
         if (getBlockchainConfig().getCurrentConfig().getSmcMasterAccountId() == 0) {
             throw new AplTransactionFeatureNotEnabledException("'Publish contract' transaction is disabled, cause masterAccountId == 0", transaction);
         }
@@ -129,9 +131,7 @@ public class SmcPublishContractTransactionType extends AbstractSmcTransactionTyp
             smartContract,
             integratorFactory.createMockProcessor(transaction.getId())
         );
-        var pcf = new SmcFuelBasedFee(
-            context.getPrice().contractPublishing()
-        );
+        var pcf = new SmcFuelBasedFee(context.getPrice().contractPublishing());
         BigInteger calculatedFuel = pcf.calcFuel(smartContract);
         if (!smartContract.getFuel().tryToCharge(calculatedFuel)) {
             log.error("Needed fuel={} but actual={}", calculatedFuel, smartContract.getFuel());
@@ -143,19 +143,19 @@ public class SmcPublishContractTransactionType extends AbstractSmcTransactionTyp
         try {
             processor.process(executionLog);
         } catch (PolyglotException e) {
-            log.debug("SMC: doStateIndependentValidation = INVALID");
+            log.debug("SMC: doStateIndependentValidation = INVALID txId={}", transaction.getStringId());
             throw new AplUnacceptableTransactionValidationException(e.getMessage(), transaction);
         }
         if (executionLog.hasError()) {
-            log.debug("SMC: doStateIndependentValidation = INVALID");
+            log.debug("SMC: doStateIndependentValidation = INVALID txId={}", transaction.getStringId());
             throw new AplUnacceptableTransactionValidationException(executionLog.toJsonString(), transaction);
         }
-        log.debug("SMC: doStateIndependentValidation = VALID");
+        log.debug("SMC: doStateIndependentValidation = VALID txId={}", transaction.getStringId());
     }
 
     @Override
     public void applyAttachment(Transaction transaction, Account senderAccount, Account recipientAccount) {
-        log.debug("SMC: applyAttachment: publish smart contract and call constructor.");
+        log.debug("SMC: applyAttachment: publish smart contract and call constructor, txId={}", transaction.getStringId());
         SmartContract smartContract = contractToolService.createNewContract(transaction);
         SmcPublishContractAttachment attachment = (SmcPublishContractAttachment) transaction.getAttachment();
         var context = smcConfig.asContext(blockchain.getHeight(),
@@ -163,6 +163,7 @@ public class SmcPublishContractTransactionType extends AbstractSmcTransactionTyp
             integratorFactory.createProcessor(transaction, attachment, senderAccount, recipientAccount, getLedgerEvent())
         );
         log.debug("Before processing Address={} Fuel={}", smartContract.getAddress(), smartContract.getFuel());
+        var contractService = new SmcPostponedContractServiceImpl(contractRepository);
 
         executeContract(transaction, senderAccount, smartContract, new PublishContractTxProcessor(smartContract, context));
 
@@ -172,7 +173,7 @@ public class SmcPublishContractTransactionType extends AbstractSmcTransactionTyp
             smartContract.getAddress(), smartContract.getInitCode(), Long.toUnsignedString(transaction.getId()),
             smartContract.getFuel(), transaction.getAmountATM(), smartContract.getOwner());
         contractService.commitContractChanges(transaction);
-        log.trace("Changes were committed");
+        log.trace("Changes were committed, txId={}", transaction.getStringId());
     }
 
     @Override
