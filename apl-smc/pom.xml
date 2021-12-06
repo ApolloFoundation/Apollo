@@ -10,7 +10,7 @@
   <parent>
     <artifactId>apollo-blockchain</artifactId>
     <groupId>com.apollocurrency</groupId>
-    <version>1.50.24</version>
+    <version>1.50.25</version>
   </parent>
 
   <artifactId>apl-smc</artifactId>
