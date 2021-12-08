@@ -325,6 +325,7 @@ class SmcApiServiceImpl implements SmcApiService {
 
         if (!contractToolService.validateContractSource(body.getSource())) {//validate with pattern
             response.error(ApiErrors.CONSTRAINT_VIOLATION, "The contract source code doesn't match the contract template code.");
+            return null;
         }
         var contractSource = contractToolService.createSmartSource(body.getName(), body.getSource(), DEFAULT_LANGUAGE_NAME);
         SmartSource smartSource = contractToolService.completeContractSource(contractSource);

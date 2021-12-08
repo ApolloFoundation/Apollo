@@ -5,7 +5,7 @@
 package com.apollocurrency.aplwallet.apl.core.dao.state.smc;
 
 import com.apollocurrency.aplwallet.apl.core.converter.db.smc.SmcContractStateRowMapper;
-import com.apollocurrency.aplwallet.apl.core.dao.state.derived.VersionedDeletableEntityDbTable;
+import com.apollocurrency.aplwallet.apl.core.dao.state.derived.EntityDbTable;
 import com.apollocurrency.aplwallet.apl.core.dao.state.keyfactory.DbKey;
 import com.apollocurrency.aplwallet.apl.core.dao.state.keyfactory.LongKeyFactory;
 import com.apollocurrency.aplwallet.apl.core.db.DatabaseManager;
@@ -25,7 +25,7 @@ import java.sql.Statement;
 /**
  * @author andrew.zinchenko@gmail.com
  */
-public class SmcContractStateTable extends VersionedDeletableEntityDbTable<SmcContractStateEntity> {
+public class SmcContractStateTable extends EntityDbTable<SmcContractStateEntity> {
     public static final LongKeyFactory<SmcContractStateEntity> KEY_FACTORY = new LongKeyFactory<>("address") {
         @Override
         public DbKey newKey(SmcContractStateEntity contract) {
@@ -42,7 +42,7 @@ public class SmcContractStateTable extends VersionedDeletableEntityDbTable<SmcCo
 
     @Inject
     public SmcContractStateTable(DatabaseManager databaseManager, Event<FullTextOperationData> fullTextOperationDataEvent) {
-        super(TABLE_NAME, KEY_FACTORY, null, databaseManager, fullTextOperationDataEvent);
+        super(TABLE_NAME, KEY_FACTORY, true, null, databaseManager, fullTextOperationDataEvent);
     }
 
     @Override
