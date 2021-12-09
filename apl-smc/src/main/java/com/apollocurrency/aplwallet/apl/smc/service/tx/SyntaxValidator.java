@@ -5,7 +5,6 @@
 package com.apollocurrency.aplwallet.apl.smc.service.tx;
 
 import com.apollocurrency.aplwallet.apl.smc.SmcContext;
-import com.apollocurrency.smc.contract.vm.ExecutionLog;
 import com.apollocurrency.smc.contract.vm.ResultValue;
 import lombok.extern.slf4j.Slf4j;
 
@@ -31,17 +30,15 @@ public class SyntaxValidator extends AbstractSmcContractTxProcessor {
     }
 
     @Override
-    protected ResultValue executeContract(ExecutionLog executionLog) {
+    public ResultValue process() {
         var result = ResultValue.UNDEFINED_RESULT;
         var isValid = smcMachine.parse(script);
         if (!isValid) {
-            executionLog.setErrorCode(CONTRACT_METHOD_VALIDATION_ERROR.getErrorCode());
+            getExecutionLog().setErrorCode(CONTRACT_METHOD_VALIDATION_ERROR.getErrorCode());
             result.setErrorCode(CONTRACT_METHOD_VALIDATION_ERROR.getErrorCode());
             result.setOutput(List.of(false));
             result.setErrorDescription(smcMachine.getExecutionLog().toJsonString());
         }
-        executionLog.join(smcMachine.getExecutionLog());
-        smcMachine.resetExecutionLog();
         return result;
     }
 }

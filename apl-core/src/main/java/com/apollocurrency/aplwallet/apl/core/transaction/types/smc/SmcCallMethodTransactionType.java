@@ -36,7 +36,6 @@ import com.apollocurrency.smc.contract.SmartMethod;
 import com.apollocurrency.smc.contract.fuel.ContractFuel;
 import com.apollocurrency.smc.contract.fuel.Fuel;
 import com.apollocurrency.smc.contract.fuel.OperationPrice;
-import com.apollocurrency.smc.contract.vm.ExecutionLog;
 import com.apollocurrency.smc.data.type.Address;
 import com.apollocurrency.smc.polyglot.PolyglotException;
 import com.google.common.base.Strings;
@@ -127,21 +126,16 @@ public class SmcCallMethodTransactionType extends AbstractSmcTransactionType {
             integratorFactory.createMockProcessor(transaction.getId())
         );
         //syntactical and semantic validation
-        SmcContractTxProcessor processor = new CallMethodTxValidator(
-            smartContract,
-            smartMethod,
-            context
-        );
-        var executionLog = new ExecutionLog();
+        SmcContractTxProcessor processor = new CallMethodTxValidator(smartContract, smartMethod, context);
         try {
-            processor.process(executionLog);
+            processor.process();
         } catch (PolyglotException e) {
             log.debug("SMC: doStateDependentValidation = INVALID txId={}", transaction.getStringId());
             throw new AplAcceptableTransactionValidationException(e.getMessage(), transaction);
         }
-        if (executionLog.hasError()) {
+        if (processor.getExecutionLog().hasError()) {
             log.debug("SMC: doStateDependentValidation = INVALID txId={}", transaction.getStringId());
-            throw new AplAcceptableTransactionValidationException(executionLog.toJsonString(), transaction);
+            throw new AplAcceptableTransactionValidationException(processor.getExecutionLog().toJsonString(), transaction);
         }
         log.debug("SMC: doStateDependentValidation = VALID txId={}", transaction.getStringId());
     }
@@ -175,16 +169,15 @@ public class SmcCallMethodTransactionType extends AbstractSmcTransactionType {
 
         //syntactical validation
         SmcContractTxProcessor processor = new SyntaxValidator(smartMethod.getMethodWithParams(), context);
-        var executionLog = new ExecutionLog();
         try {
-            processor.process(executionLog);
+            processor.process();
         } catch (PolyglotException e) {
             log.debug("SMC: doStateIndependentValidation = INVALID txId={}", transaction.getStringId());
             throw new AplUnacceptableTransactionValidationException(e.getMessage(), transaction);
         }
-        if (executionLog.hasError()) {
+        if (processor.getExecutionLog().hasError()) {
             log.debug("SMC: doStateIndependentValidation = INVALID txId={}", transaction.getStringId());
-            throw new AplUnacceptableTransactionValidationException("Syntax error: " + executionLog.toJsonString(), transaction);
+            throw new AplUnacceptableTransactionValidationException("Syntax error: " + processor.getExecutionLog().toJsonString(), transaction);
         }
         log.debug("SMC: doStateIndependentValidation = VALID txId={}", transaction.getStringId());
     }

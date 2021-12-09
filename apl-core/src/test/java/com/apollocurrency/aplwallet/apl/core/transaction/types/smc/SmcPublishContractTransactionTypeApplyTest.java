@@ -9,8 +9,6 @@ import com.apollocurrency.aplwallet.apl.core.converter.db.smc.ContractModelToSta
 import com.apollocurrency.aplwallet.apl.core.entity.state.account.Account;
 import com.apollocurrency.aplwallet.apl.core.entity.state.account.LedgerEvent;
 import com.apollocurrency.aplwallet.apl.core.entity.state.account.PublicKey;
-import com.apollocurrency.aplwallet.apl.core.entity.state.smc.SmcContractEntity;
-import com.apollocurrency.aplwallet.apl.core.entity.state.smc.SmcContractStateEntity;
 import com.apollocurrency.aplwallet.apl.core.model.Transaction;
 import com.apollocurrency.aplwallet.apl.core.model.smc.SmcTxData;
 import com.apollocurrency.aplwallet.apl.core.service.state.account.AccountService;
@@ -39,9 +37,11 @@ import java.util.List;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.doNothing;
+import static org.mockito.Mockito.spy;
 import static org.mockito.Mockito.when;
 
 /**
@@ -115,6 +115,55 @@ class SmcPublishContractTransactionTypeApplyTest extends AbstractSmcTransactionT
         assertEquals(new AplAddress(newTx.getId()).getHex(), smartContract.getTxId().getHex());
     }
 
+    @Test
+    void publishSmcApplyAttachmentWithJSException() throws AplException.NotValidException {
+        //GIVEN
+        SmcTxData txData = SmcTxData.builder()
+            .sender("APL-X5JH-TJKJ-DVGC-5T2V8")
+            .name("TestC")
+            .source("class TestC extends Contract2 {}")
+            .baseContract("Contract")
+            .params(List.of("123"))
+            .amountATM(10_00000000L)
+            .fuelLimit(50_000_000L)
+            .fuelPrice(100L)
+            .secret("1")
+            .build();
+
+        SmcPublishContractAttachment attachment = SmcPublishContractAttachment.builder()
+            .contractName(txData.getName())
+            .baseContract(txData.getBaseContract())
+            .contractSource(txData.getSource())
+            .constructorParams(String.join(",", txData.getParams()))
+            .languageName("js")
+            .languageVersion(JSLibraryProvider.LIBRARY_VERSION.toString())
+            .fuelLimit(BigInteger.valueOf(txData.getFuelLimit()))
+            .fuelPrice(BigInteger.valueOf(txData.getFuelPrice()))
+            .build();
+
+        var spyApplier = spy(txApplier);
+
+        long senderAccountId = Convert.parseAccountId(txData.getSender());
+        Account account = new Account(senderAccountId, 100_000_00000000L, 100_000_00000000L, 100_000_00000000L, 0L, 10);
+
+        byte[] recipientPublicKey = AccountService.generatePublicKey(account, attachment.getContractSource());
+        long recipientId = AccountService.getId(recipientPublicKey);
+
+        Transaction newTx = createTransaction(txData, attachment, account, recipientPublicKey, recipientId);
+        assertNotNull(newTx);
+        newTx.setBlock(lastBlock);
+
+        doNothing().when(spyAccountService).addToBalanceATM(any(Account.class), any(LedgerEvent.class), eq(newTx.getId()), eq(-txData.getAmountATM()), eq(-(txData.getFuelLimit() * txData.getFuelPrice())));
+        doNothing().when(spyAccountService).addToBalanceAndUnconfirmedBalanceATM(any(Account.class), any(LedgerEvent.class), eq(newTx.getId()), eq(txData.getAmountATM()));
+        long senderId = AccountService.getId(newTx.getSenderPublicKey());
+        when(publicKeyDao.searchAll(senderId)).thenReturn(new PublicKey(senderId, newTx.getSenderPublicKey(), newTx.getHeight()));
+        when(blockchainConfig.isFailedTransactionsAcceptanceActiveAtHeight(lastBlock.getHeight())).thenReturn(true);
+
+        //WHEN
+        assertThrows(RuntimeException.class, () -> DbUtils.inTransaction(extension, connection -> spyApplier.apply(newTx)));
+
+    }
+
     @SneakyThrows
     @Test
     void callSmcApplyAttachmentInThreeTransaction() throws AplException.NotValidException {
@@ -175,9 +224,6 @@ class SmcPublishContractTransactionTypeApplyTest extends AbstractSmcTransactionT
             new AplAddress(newTx.getSenderId()),
             new ContractFuel(contractAddress, attachment.getFuelLimit(), attachment.getFuelPrice())
         );
-
-        SmcContractEntity contractEntity = contractModelToEntityConverter.convert(smartContract);
-        SmcContractStateEntity contractStateEntity = contractModelToStateEntityConverter.convert(smartContract);
 
         //THEN
         assertNotNull(smartContract);

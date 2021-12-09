@@ -29,7 +29,6 @@ import com.apollocurrency.aplwallet.apl.smc.service.tx.PublishContractTxProcesso
 import com.apollocurrency.aplwallet.apl.smc.service.tx.PublishContractTxValidator;
 import com.apollocurrency.aplwallet.apl.util.rlp.RlpReader;
 import com.apollocurrency.smc.contract.SmartContract;
-import com.apollocurrency.smc.contract.vm.ExecutionLog;
 import com.apollocurrency.smc.data.type.Address;
 import com.apollocurrency.smc.polyglot.PolyglotException;
 import com.google.common.base.Strings;
@@ -139,16 +138,15 @@ public class SmcPublishContractTransactionType extends AbstractSmcTransactionTyp
         }
         //syntactical and semantic validation
         SmcContractTxProcessor processor = new PublishContractTxValidator(smartContract, context);
-        var executionLog = new ExecutionLog();
         try {
-            processor.process(executionLog);
+            processor.process();
         } catch (PolyglotException e) {
             log.debug("SMC: doStateIndependentValidation = INVALID txId={}", transaction.getStringId());
             throw new AplUnacceptableTransactionValidationException(e.getMessage(), transaction);
         }
-        if (executionLog.hasError()) {
+        if (processor.getExecutionLog().hasError()) {
             log.debug("SMC: doStateIndependentValidation = INVALID txId={}", transaction.getStringId());
-            throw new AplUnacceptableTransactionValidationException(executionLog.toJsonString(), transaction);
+            throw new AplUnacceptableTransactionValidationException(processor.getExecutionLog().toJsonString(), transaction);
         }
         log.debug("SMC: doStateIndependentValidation = VALID txId={}", transaction.getStringId());
     }

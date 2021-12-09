@@ -8,7 +8,6 @@ import com.apollocurrency.aplwallet.apl.smc.SmcContext;
 import com.apollocurrency.smc.contract.ContractStatus;
 import com.apollocurrency.smc.contract.SmartContract;
 import com.apollocurrency.smc.contract.SmartMethod;
-import com.apollocurrency.smc.contract.vm.ExecutionLog;
 import com.apollocurrency.smc.contract.vm.ResultValue;
 import lombok.extern.slf4j.Slf4j;
 
@@ -37,18 +36,16 @@ public class CallMethodTxValidator extends AbstractSmcContractTxProcessor {
     }
 
     @Override
-    public ResultValue executeContract(ExecutionLog executionLog) {
+    public ResultValue process() {
         validateStatus(ContractStatus.ACTIVE);
         var result = ResultValue.from(smartMethod);
         var isValid = smcMachine.validateMethod(getSmartContract(), smartMethod);
         if (!isValid) {
-            executionLog.setErrorCode(CONTRACT_METHOD_VALIDATION_ERROR.getErrorCode());
+            getExecutionLog().setErrorCode(CONTRACT_METHOD_VALIDATION_ERROR.getErrorCode());
             result.setErrorCode(CONTRACT_METHOD_VALIDATION_ERROR.getErrorCode());
             result.setOutput(List.of(false));
             result.setErrorDescription(smcMachine.getExecutionLog().toJsonString());
         }
-        executionLog.join(smcMachine.getExecutionLog());
-        smcMachine.resetExecutionLog();
         return result;
     }
 }

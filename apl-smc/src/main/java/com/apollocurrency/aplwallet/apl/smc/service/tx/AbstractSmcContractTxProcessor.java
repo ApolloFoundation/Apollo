@@ -7,13 +7,11 @@ package com.apollocurrency.aplwallet.apl.smc.service.tx;
 import com.apollocurrency.aplwallet.apl.smc.SmcContext;
 import com.apollocurrency.aplwallet.apl.smc.service.SmcContractTxProcessor;
 import com.apollocurrency.smc.contract.SmartContract;
-import com.apollocurrency.smc.contract.fuel.OutOfFuelException;
 import com.apollocurrency.smc.contract.vm.ContractVirtualMachine;
 import com.apollocurrency.smc.contract.vm.ExecutionLog;
-import com.apollocurrency.smc.contract.vm.ResultValue;
-import com.apollocurrency.smc.polyglot.PolyglotException;
 import com.apollocurrency.smc.polyglot.engine.ExecutionEnv;
 import com.apollocurrency.smc.polyglot.engine.ExecutionException;
+import lombok.Getter;
 import lombok.extern.slf4j.Slf4j;
 
 import static com.apollocurrency.aplwallet.apl.util.exception.ApiErrors.CONTRACT_PROCESSING_ERROR;
@@ -28,6 +26,8 @@ public abstract class AbstractSmcContractTxProcessor implements SmcContractTxPro
     protected final ContractVirtualMachine smcMachine;
     private final SmartContract smartContract;
     private final SmcContext context;
+    @Getter
+    private final ExecutionLog executionLog;
 
     protected AbstractSmcContractTxProcessor(SmcContext context) {
         this(null, context);
@@ -36,7 +36,8 @@ public abstract class AbstractSmcContractTxProcessor implements SmcContractTxPro
     protected AbstractSmcContractTxProcessor(SmartContract smartContract, SmcContext context) {
         this.smartContract = smartContract;
         this.context = context;
-        this.smcMachine = new AplMachine(context);
+        this.executionLog = new ExecutionLog();
+        this.smcMachine = new AplMachine(context, executionLog);
     }
 
     @Override
@@ -53,24 +54,9 @@ public abstract class AbstractSmcContractTxProcessor implements SmcContractTxPro
     }
 
     @Override
-    public ResultValue process(ExecutionLog executionLog) throws OutOfFuelException, PolyglotException {
-        try {
-
-            return executeContract(executionLog);
-
-        } catch (PolyglotException e) {
-            var msg = putExceptionToLog(executionLog, e);
-            log.error(msg);
-            throw e;
-        }
-    }
-
-    @Override
     public void commit() {
         context.getIntegrator().commit();
     }
-
-    protected abstract ResultValue executeContract(ExecutionLog executionLog) throws OutOfFuelException, PolyglotException;
 
     protected String putExceptionToLog(ExecutionLog executionLog, Exception e) {
         var msg = String.format("Call method error %s:%s", e.getClass().getName(), e.getMessage());

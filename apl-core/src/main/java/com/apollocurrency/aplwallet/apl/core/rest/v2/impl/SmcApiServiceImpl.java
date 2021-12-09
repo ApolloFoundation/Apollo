@@ -281,9 +281,8 @@ class SmcApiServiceImpl implements SmcApiService {
             log.error("Needed fuel={} but actual={}", calculatedFuel, smartContract.getFuel());
             return builder.error(ApiErrors.CONTRACT_VALIDATION_ERROR, "Not enough fuel to execute this transaction, expected=" + calculatedFuel + " but actual=" + smartContract.getFuel()).build();
         }
-
-        ExecutionLog executionLog = new ExecutionLog();
-        processor.process(executionLog);
+        processor.process();
+        ExecutionLog executionLog = processor.getExecutionLog();
         if (executionLog.hasError()) {
             log.debug("smart contract validation = INVALID");
             return builder.error(ApiErrors.CONTRACT_VALIDATION_ERROR, executionLog.toJsonString()).build();
@@ -529,7 +528,9 @@ class SmcApiServiceImpl implements SmcApiService {
 
         SmcContractTxBatchProcessor processor = new CallViewMethodTxProcessor(smartContract, methods, context);
 
-        return processor.batchProcess(executionLog);
+        var rc = processor.batchProcess();
+        executionLog.join(processor.getExecutionLog());
+        return rc;
     }
 
     @Override
@@ -593,9 +594,8 @@ class SmcApiServiceImpl implements SmcApiService {
             log.error("Needed fuel={} but actual={}", calculatedFuel, smartContract.getFuel());
             return builder.error(ApiErrors.CONTRACT_VALIDATION_ERROR, "Not enough fuel to execute this transaction, expected=" + calculatedFuel + " but actual=" + smartContract.getFuel()).build();
         }
-
-        ExecutionLog executionLog = new ExecutionLog();
-        processor.process(executionLog);
+        processor.process();
+        ExecutionLog executionLog = processor.getExecutionLog();
         if (executionLog.hasError()) {
             log.debug("method smart contract validation = INVALID");
             return builder.error(ApiErrors.CONTRACT_METHOD_VALIDATION_ERROR, executionLog.toJsonString()).build();
@@ -904,7 +904,7 @@ class SmcApiServiceImpl implements SmcApiService {
             } catch (Exception e) {
                 return builder.error(ApiErrors.INCORRECT_PARAM, "address", e.getMessage()).build();
             }
-            bi = new BigInteger(Long.toUnsignedString(addressId));
+            bi = BigInteger.valueOf(addressId);
         }
 
         AddressSpecResponse response = new AddressSpecResponse();

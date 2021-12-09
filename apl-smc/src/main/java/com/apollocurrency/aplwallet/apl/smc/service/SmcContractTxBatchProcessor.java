@@ -4,7 +4,6 @@
 
 package com.apollocurrency.aplwallet.apl.smc.service;
 
-import com.apollocurrency.smc.contract.vm.ExecutionLog;
 import com.apollocurrency.smc.contract.vm.ResultValue;
 
 import java.util.List;
@@ -19,9 +18,8 @@ public interface SmcContractTxBatchProcessor extends SmcContractTxProcessor {
      * Batch processing. Validate, perform the smart contract and manipulate balances
      * Call the function/method of the smart contract.
      *
-     * @param executionLog execution log
      * @return list of the contract executions
      */
-    List<ResultValue> batchProcess(ExecutionLog executionLog);
+    List<ResultValue> batchProcess();
 
 }

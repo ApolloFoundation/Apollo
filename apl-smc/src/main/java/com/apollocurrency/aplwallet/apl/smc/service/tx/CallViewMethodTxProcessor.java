@@ -9,7 +9,6 @@ import com.apollocurrency.aplwallet.apl.smc.service.SmcContractTxBatchProcessor;
 import com.apollocurrency.smc.contract.ContractStatus;
 import com.apollocurrency.smc.contract.SmartContract;
 import com.apollocurrency.smc.contract.SmartMethod;
-import com.apollocurrency.smc.contract.vm.ExecutionLog;
 import com.apollocurrency.smc.contract.vm.ResultValue;
 import lombok.extern.slf4j.Slf4j;
 
@@ -30,30 +29,23 @@ public class CallViewMethodTxProcessor extends AbstractSmcContractTxProcessor im
     }
 
     @Override
-    public List<ResultValue> batchProcess(ExecutionLog executionLog) {
+    public List<ResultValue> batchProcess() {
         try {
 
-            return batchExecuteContract(executionLog);
+            log.debug("Smart method={}", smartMethods);
+            validateStatus(ContractStatus.ACTIVE);
+            //call the method and charge the fuel
+            return smcMachine.callViewMethod(getSmartContract(), smartMethods);
 
         } catch (Exception e) {
-            var msg = putExceptionToLog(executionLog, e);
+            var msg = putExceptionToLog(getExecutionLog(), e);
             log.error(msg, e);
             return List.of();
         }
     }
 
-    private List<ResultValue> batchExecuteContract(ExecutionLog executionLog) {
-        log.debug("Smart method={}", smartMethods);
-        validateStatus(ContractStatus.ACTIVE);
-        //call the method and charge the fuel
-        var result = smcMachine.callViewMethod(getSmartContract(), smartMethods);
-        executionLog.join(smcMachine.getExecutionLog());
-        smcMachine.resetExecutionLog();
-        return result;
-    }
-
     @Override
-    protected ResultValue executeContract(ExecutionLog executionLog) {
+    public ResultValue process() {
         return ResultValue.UNDEFINED_RESULT;
     }
 }
