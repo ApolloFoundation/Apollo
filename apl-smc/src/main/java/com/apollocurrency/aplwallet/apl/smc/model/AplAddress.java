@@ -10,7 +10,6 @@ import com.apollocurrency.smc.data.type.Address;
 import com.apollocurrency.smc.util.HexUtils;
 import com.fasterxml.jackson.annotation.JsonProperty;
 
-import java.math.BigInteger;
 import java.util.Objects;
 
 /**
@@ -27,13 +26,20 @@ public class AplAddress implements Address {
     }
 
     public AplAddress(Address address) {
-        this.id = new BigInteger(address.get()).longValueExact();
+        this(address.get());
+    }
+
+    public AplAddress(byte[] bytes) {
+        if (bytes.length > Long.BYTES) {
+            throw new ArithmeticException("AplAddress out of long range");
+        }
+        this.id = HexUtils.toLong(bytes);
     }
 
     public static AplAddress valueOf(String address) {
         if (HexUtils.isHex(address)) {
             byte[] bytes = HexUtils.parseHex(address);
-            return new AplAddress(new BigInteger(bytes).longValueExact());
+            return new AplAddress(bytes);
         } else {
             return new AplAddress(Convert.parseAccountId(address));
         }
@@ -49,7 +55,7 @@ public class AplAddress implements Address {
 
     @Override
     public byte[] get() {
-        return BigInteger.valueOf(id).toByteArray();
+        return Convert.longToBytes(id);
     }
 
     @Override
