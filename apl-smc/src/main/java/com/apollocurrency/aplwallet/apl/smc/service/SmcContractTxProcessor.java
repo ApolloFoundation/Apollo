@@ -20,11 +20,17 @@ public interface SmcContractTxProcessor {
      * Validate, perform the smart contract and manipulate balances
      * Call the function/method of the smart contract.
      *
-     * @param executionLog execution log
      * @return result of the contract execution
      * @throws OutOfFuelException not enough fuel to execute contract
      */
-    ResultValue process(ExecutionLog executionLog) throws OutOfFuelException;
+    ResultValue process() throws OutOfFuelException;
+
+    /**
+     * Returns the execution log
+     *
+     * @return the execution log
+     */
+    ExecutionLog getExecutionLog();
 
     /**
      * Commit all changes.

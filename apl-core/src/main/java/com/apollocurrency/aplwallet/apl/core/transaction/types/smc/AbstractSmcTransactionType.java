@@ -26,10 +26,6 @@ import com.apollocurrency.smc.contract.ContractException;
 import com.apollocurrency.smc.contract.SmartContract;
 import com.apollocurrency.smc.contract.fuel.Fuel;
 import com.apollocurrency.smc.contract.fuel.FuelCalculator;
-import com.apollocurrency.smc.contract.vm.ExecutionLog;
-import com.apollocurrency.smc.polyglot.JSAssertionException;
-import com.apollocurrency.smc.polyglot.JSRequirementException;
-import com.apollocurrency.smc.polyglot.JSRevertException;
 import com.apollocurrency.smc.polyglot.PolyglotException;
 import com.apollocurrency.smc.polyglot.engine.InternalNotRecoverableException;
 import lombok.extern.slf4j.Slf4j;
@@ -139,40 +135,28 @@ public abstract class AbstractSmcTransactionType extends TransactionType {
 */
 
     protected void executeContract(Transaction transaction, Account senderAccount, SmartContract smartContract, SmcContractTxProcessor processor) {
-        var executionLog = new ExecutionLog();
         try {
-
-            processor.process(executionLog);
-
-        } catch (JSRevertException | JSRequirementException e) {
-            Fuel fuel = smartContract.getFuel();
-            log.info("JS exception {} Contract={} Fuel={}", e.getClass().getSimpleName(), smartContract.getAddress(), fuel);
-            throw new AplTransactionExecutionException(e.getMessage(), e, transaction);
-        } catch (JSAssertionException e) {
-            log.info("Assertion exception Contract={}, charged all fee={}", smartContract.getAddress(), smartContract.getFuel().fee());
-            throw new AplTransactionExecutionException(e.getMessage(), e, transaction);
+            processor.process();
         } catch (InternalNotRecoverableException e) {
-            log.error(executionLog.toJsonString());
+            log.error(processor.getExecutionLog().toJsonString());
             log.error("CRITICAL ERROR. PLEASE REPORT TO THE DEVELOPERS.\n", e);
             e.printStackTrace();
             System.exit(1);
         } catch (ContractException e) {
             var cause = e.getCause();
+            String message;
             if (cause == null) {
-                log.error(e.getClass().getName() + ": " + executionLog.toJsonString());
-                throw new AplTransactionExecutionException(e.getClass().getName(), e, transaction);
+                log.error(e.getClass().getName() + ": " + processor.getExecutionLog().toJsonString());
+                message = e.getClass().getName();
             } else {
-                if (cause instanceof JSRevertException || cause instanceof JSRequirementException) {
-                    Fuel fuel = smartContract.getFuel();
-                    log.info("JS exception {} Contract={} Fuel={}", e.getClass().getSimpleName(), smartContract.getAddress(), fuel);
-                    throw new AplTransactionExecutionException(e.getMessage(), e, transaction);
-                } else if (cause instanceof JSAssertionException) {
-                    log.info("Assertion exception Contract={}, charged all fee={}", smartContract.getAddress(), smartContract.getFuel().fee());
-                    throw new AplTransactionExecutionException(e.getMessage(), e, transaction);
-                }
+                //cause instanceof JSRevertException or JSRequirementException or JSAssertionException or JSException
+                Fuel fuel = smartContract.getFuel();
+                message = e.getMessage();
+                log.info("{}:{} Contract={} Fuel={}", e.getClass().getSimpleName(), message, smartContract.getAddress(), fuel);
             }
+            throw new AplTransactionExecutionException(message, e, transaction);
         } catch (PolyglotException e) {
-            log.error(e.getClass().getName() + ": " + executionLog.toJsonString());
+            log.error(e.getClass().getName() + ": " + processor.getExecutionLog().toJsonString());
             throw new AplTransactionExecutionException(e.getClass().getName(), e, transaction);
         }
         log.debug("Commit the contract state changes...");
