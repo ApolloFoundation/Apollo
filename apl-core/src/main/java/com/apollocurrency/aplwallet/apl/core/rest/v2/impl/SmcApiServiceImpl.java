@@ -893,23 +893,15 @@ class SmcApiServiceImpl implements SmcApiService {
     @Override
     public Response parseAddress(String address, SecurityContext securityContext) throws NotFoundException {
         ResponseBuilderV2 builder = ResponseBuilderV2.startTiming();
-        long addressId;
-        BigInteger bi;
-        if (address.startsWith("0x")) {
-            bi = new BigInteger(HexUtils.parseHex(address));
-            addressId = bi.longValue();
-        } else {
-            try {
-                addressId = Convert.parseAccountId(address);
-            } catch (Exception e) {
-                return builder.error(ApiErrors.INCORRECT_PARAM, "address", e.getMessage()).build();
-            }
-            bi = BigInteger.valueOf(addressId);
+        Long addressId = getIdByAddress(address);
+        if (addressId == null) {
+            return builder.error(ApiErrors.INCORRECT_PARAM, "address", address).build();
         }
+        BigInteger bi = BigInteger.valueOf(addressId);
 
         AddressSpecResponse response = new AddressSpecResponse();
         response.setRs(Convert2.rsAccount(addressId));
-        response.setHex(toHex(bi));
+        response.setHex(toHex(bi.toByteArray()));
         response.setLong(Long.toString(addressId));
         response.setUlong(Long.toUnsignedString(addressId));
 
@@ -944,15 +936,14 @@ class SmcApiServiceImpl implements SmcApiService {
     private Long getIdByAddress(String addressStr) {
         Long addressId = null;
         if (addressStr != null && !addressStr.isBlank()) {
-            if (addressStr.startsWith("0x")) {
-                var bi = new BigInteger(HexUtils.parseHex(addressStr));
-                addressId = bi.longValue();
-            } else {
-                try {
+            try {
+                if (addressStr.startsWith("0x")) {
+                    addressId = new BigInteger(HexUtils.parseHex(addressStr)).longValueExact();
+                } else {
                     addressId = Convert.parseAccountId(addressStr);
-                } catch (Exception e) {
-                    //do nothing
                 }
+            } catch (Exception e) {
+                //do nothing
             }
         }
         return addressId;

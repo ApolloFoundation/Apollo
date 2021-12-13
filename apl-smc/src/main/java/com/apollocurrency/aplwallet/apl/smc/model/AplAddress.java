@@ -38,8 +38,7 @@ public class AplAddress implements Address {
 
     public static AplAddress valueOf(String address) {
         if (HexUtils.isHex(address)) {
-            byte[] bytes = HexUtils.parseHex(address);
-            return new AplAddress(bytes);
+            return new AplAddress(HexUtils.parseHex(address));
         } else {
             return new AplAddress(Convert.parseAccountId(address));
         }

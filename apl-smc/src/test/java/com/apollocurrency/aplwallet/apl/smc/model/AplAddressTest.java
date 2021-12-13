@@ -91,10 +91,10 @@ class AplAddressTest {
         assertEquals(0L, addressZ.getLongId());
     }
 
-    @Test
-    void newInstanceOutOfRange() {
+    @ParameterizedTest
+    @ValueSource(strings = {"0x00e74cf6524db7ad47", "0x00b5a1ea4dfa666b92"})
+    void newInstanceOutOfRange(String s) {
         //GIVEN //WHEN //THEN
-        assertThrows(IllegalArgumentException.class, () -> AplAddress.valueOf("0x012"));
-        assertThrows(ArithmeticException.class, () -> AplAddress.valueOf("0x00e74cf6524db7ad47"));
+        assertThrows(ArithmeticException.class, () -> AplAddress.valueOf(s));
     }
 }
