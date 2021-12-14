@@ -72,15 +72,6 @@ public class TransactionImpl implements Transaction {
     private volatile byte[] fullHash;
     private volatile String errorMessage;
     private volatile boolean hasValidSignature = false;
-    /**
-     * Transaction V3 properties
-     */
-    /*private final String chainId;
-    private final BigInteger nonce;
-    private final BigInteger amount;
-    private final BigInteger fuelLimit;
-    private final BigInteger fuelPrice;
-    private final long longTimestamp;*/
 
     TransactionImpl(BuilderImpl builder) {
 
@@ -584,15 +575,6 @@ public class TransactionImpl implements Transaction {
             PrunableEncryptedMessageAppendix.class, appendix -> prunableEncryptedMessage = (PrunableEncryptedMessageAppendix) appendix,
             PhasingAppendix.class, appendix -> phasing = (PhasingAppendix) appendix
         );
-
-        /**
-         * Transaction V3 properties
-         */
-        /*private String chainId;
-        private BigInteger nonce;
-        private BigInteger amount;
-        private BigInteger fuelLimit;
-        private BigInteger fuelPrice;*/
 
         public BuilderImpl(byte version, byte[] senderPublicKey, long amountATM, long feeATM, short deadline,
                            AbstractAttachment attachment, int timestamp, TransactionType transactionType) {

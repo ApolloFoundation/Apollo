@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2020-2021. Apollo Foundation.
+ * Copyright (c) 2021. Apollo Foundation.
  */
 
 package com.apollocurrency.aplwallet.apl.core.transaction.messages;
@@ -8,8 +8,6 @@ import com.apollocurrency.aplwallet.apl.core.exception.AplCoreContractViolationE
 import com.apollocurrency.aplwallet.apl.core.transaction.TransactionTypes;
 import com.apollocurrency.aplwallet.apl.crypto.Convert;
 import com.apollocurrency.aplwallet.apl.crypto.NotValidException;
-import com.apollocurrency.aplwallet.apl.util.rlp.RlpList;
-import com.apollocurrency.aplwallet.apl.util.rlp.RlpReader;
 import lombok.Builder;
 import lombok.EqualsAndHashCode;
 import lombok.Getter;
@@ -66,16 +64,6 @@ public class SmcPublishContractAttachment extends AbstractSmcAttachment {
         }
     }
 
-    public SmcPublishContractAttachment(RlpReader reader) {
-        super(reader);
-        this.contractName = reader.readString();
-        this.baseContract = reader.readString();
-        this.contractSource = reader.readString();
-        this.constructorParams = reader.readString();
-        this.languageName = reader.readString();
-        this.languageVersion = reader.readString();
-    }
-
     public SmcPublishContractAttachment(JSONObject attachmentData) {
         super(attachmentData);
         this.contractName = String.valueOf(attachmentData.get(CONTRACT_NAME_FIELD));
@@ -109,18 +97,6 @@ public class SmcPublishContractAttachment extends AbstractSmcAttachment {
         json.put(CONSTRUCTOR_PARAMS_FIELD, this.constructorParams);
         json.put(LANGUAGE_FIELD, this.languageName);
         json.put(LANGUAGE_VERSION_FIELD, this.languageVersion);
-    }
-
-    @Override
-    public void putMyBytes(RlpList.RlpListBuilder builder) {
-        super.putMyBytes(builder);
-        builder
-            .add(contractName)
-            .add(baseContract)
-            .add(contractSource)
-            .add(constructorParams)
-            .add(languageName)
-            .add(languageVersion);
     }
 
     @Override

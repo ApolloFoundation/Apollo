@@ -51,9 +51,9 @@ public class ChainsConfigLoaderTest {
             new ConsensusSettings(new AdaptiveForgingSettings(true, 10, 0)),
             new TransactionFeeSettings(Map.of((short) 0x0000, new FeeRate((byte) 0, (byte) 0, 22, BigDecimal.TEN, null, null),
                 (short) 0x0001, new FeeRate((byte) 0, (byte) 1, 0, null, new BigDecimal("22.1111"), new BigDecimal[]{new BigDecimal("1.2"), new BigDecimal("2.3222"), new BigDecimal("1.111")}),
-                (short) 0x0101, new FeeRate((byte) 1, (byte) 1, 100, null, null, new BigDecimal[0]))), new SmcSettings(-1234567890L)),
+                (short) 0x0101, new FeeRate((byte) 1, (byte) 1, 100, null, null, new BigDecimal[0]))), new SmcSettings("1234567890")),
         new BlockchainProperties(100100, 300, 160, 0, 5, 7, 2, 30000000000L,
-            new ShardingSettings(true, "SHA-512"), new ConsensusSettings(new AdaptiveForgingSettings()), new TransactionFeeSettings(), new SmcSettings(-1L))
+            new ShardingSettings(true, "SHA-512"), new ConsensusSettings(new AdaptiveForgingSettings()), new TransactionFeeSettings(), new SmcSettings("abbc0123"))
     );
     private static final List<BlockchainProperties> BLOCKCHAIN_PROPERTIES2 = Collections.singletonList(
         new BlockchainProperties(0, 2000, 160, 10, 2, 3, 1, (long) 1e8)
@@ -83,7 +83,7 @@ public class ChainsConfigLoaderTest {
     private static final Chain CHAIN3 = new Chain(chainId2, false, Arrays.asList("51.15.1.1",
         "51.15.0.0"), Collections.emptyList(), Collections.emptyList(), "1", "2", "3", "4", "5",
         30000000000L, 8,
-        BLOCKCHAIN_PROPERTIES1.subList(0, 3), new FeaturesHeightRequirement(150, 150, 150, null, null, null), Set.of(), null);
+        BLOCKCHAIN_PROPERTIES1.subList(0, 3), new FeaturesHeightRequirement(150, 150, 150, null, null), Set.of(), null);
     private Path tempRootPath;
 
     @BeforeEach

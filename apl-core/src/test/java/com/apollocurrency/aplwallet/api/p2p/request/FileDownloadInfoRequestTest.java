@@ -15,7 +15,7 @@ import java.util.UUID;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 
-class ileDownloadInfoRequestTest {
+class FileDownloadInfoRequestTest {
     @Test
     void testConversionFromJson() throws IOException, ParseException {
         UUID chainId = UUID.randomUUID();

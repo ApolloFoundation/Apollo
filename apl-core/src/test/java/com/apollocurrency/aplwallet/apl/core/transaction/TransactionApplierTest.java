@@ -69,9 +69,7 @@ class TransactionApplierTest {
     @Mock AbstractAppendix appendix;
     @Mock TransactionType type;
 
-
     AccountService accountService;
-
 
     TransactionApplier applier;
     TransactionTestData td;

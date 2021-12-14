@@ -23,7 +23,6 @@ import org.json.simple.JSONObject;
 import org.json.simple.parser.JSONParser;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.BeforeEach;
-import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
@@ -142,28 +141,4 @@ class TxSerializerToJsonTest {
         assertArrayEquals(t1.getSignature().bytes(), txFromJson.getSignature().bytes());
     }
 
-    @Disabled
-    @SneakyThrows
-    @Test
-    void serializeV2andV3toTheSameJson() {
-        //GIVEN
-        //Rlp encoded Tx V3
-        //TODO fix tx bytes cause the structure was changed
-        String expected = "0b30a466666666663662642d303061332d333436622d616164362d3631666566633062643163368205a084060246ca82014b887acb9b4da22ff07001a039dc2e813bb45ff063a376e316b10cd0addd7306555ca0dd2890194d3796015288461282f08a3184740a6482138880f861f83b8001844465616c8d636c617373204465616c207b7d9a226669727374506172616d222c3132332c2230783938373635228a6a617661736372697074e30401a030b7c63fde11877d7affd4c64f47f314dc1d7baaa7faf4fab905a8bd61e6a732c0f84df84b8839dc2e813bb45ff0b84055719abd90fb66d63da4d2fafc88b7f270edb7ffe399fd569b3d4478cbd3300fe6092c96b309de1adbf9a80fa04e67d1fa5dd68e60901fd81640c772e87f520e";
-        TransactionBuilderFactory transactionBuilderFactory = new TransactionBuilderFactory(td.getTransactionTypeFactory(), blockchainConfig);
-        Transaction tx = transactionBuilderFactory.newTransaction(Convert.parseHexString(expected));
-
-        //WHEN
-        TxSerializer serializer2 = context.createSerializer(2);
-        TxSerializer serializer3 = context.createSerializer(3);
-        PayloadResult result2 = PayloadResult.createJsonResult();
-        PayloadResult result3 = PayloadResult.createJsonResult();
-        serializer2.serialize(tx, result2);
-        serializer3.serialize(tx, result3);
-
-        //THEN
-        assertNotNull(result2.array());
-        assertNotNull(result3.array());
-        assertArrayEquals(result2.array(), result3.array());
-    }
 }

@@ -23,11 +23,10 @@ public interface SignatureParser {
 
     /**
      * Parse the byte array and build the signature object
-     * @deprecated
+     *
      * @param buffer input data array
      * @return the signature object
      */
-    @Deprecated(since = "TransactionV3")
     Signature parse(ByteBuffer buffer);
 
     Signature parse(byte[] bytes);
@@ -38,7 +37,8 @@ public interface SignatureParser {
 
     /**
      * Returns V1 or V2 signature size.
-     * Don't use for RLP encoded signature (V3).
+     * Don't use for RLP encoded signature.
+     *
      * @param count the participant count
      * @return size of V1 or V2 signature
      */

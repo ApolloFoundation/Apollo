@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2020-2021. Apollo Foundation.
+ * Copyright (c) 2021. Apollo Foundation.
  */
 
 package com.apollocurrency.aplwallet.apl.core.transaction.messages;
@@ -8,8 +8,6 @@ import com.apollocurrency.aplwallet.apl.core.exception.AplCoreContractViolationE
 import com.apollocurrency.aplwallet.apl.core.transaction.TransactionTypes;
 import com.apollocurrency.aplwallet.apl.crypto.Convert;
 import com.apollocurrency.aplwallet.apl.crypto.NotValidException;
-import com.apollocurrency.aplwallet.apl.util.rlp.RlpList;
-import com.apollocurrency.aplwallet.apl.util.rlp.RlpReader;
 import lombok.Builder;
 import lombok.EqualsAndHashCode;
 import lombok.Getter;
@@ -47,12 +45,6 @@ public class SmcCallMethodAttachment extends AbstractSmcAttachment {
         }
     }
 
-    public SmcCallMethodAttachment(RlpReader reader) {
-        super(reader);
-        this.methodName = reader.readString();
-        this.methodParams = reader.readString();
-    }
-
     public SmcCallMethodAttachment(JSONObject attachmentData) {
         super(attachmentData);
         this.methodName = String.valueOf(attachmentData.get(METHOD_NAME_FIELD));
@@ -78,14 +70,6 @@ public class SmcCallMethodAttachment extends AbstractSmcAttachment {
         super.putMyJSON(json);
         json.put(METHOD_NAME_FIELD, this.methodName);
         json.put(METHOD_PARAMS_FIELD, this.methodParams);
-    }
-
-    @Override
-    public void putMyBytes(RlpList.RlpListBuilder builder) {
-        super.putMyBytes(builder);
-        builder
-            .add(methodName)
-            .add(methodParams);
     }
 
     @Override

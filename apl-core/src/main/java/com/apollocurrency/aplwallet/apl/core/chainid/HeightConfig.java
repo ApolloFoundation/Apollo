@@ -1,5 +1,5 @@
 /*
- * Copyright © 2018 Apollo Foundation
+ * Copyright © 2018-2021 Apollo Foundation
  */
 
 package com.apollocurrency.aplwallet.apl.core.chainid;
@@ -135,8 +135,24 @@ public class HeightConfig {
         return bp.getShardingSettings().getFrequency();
     }
 
-    public long getSmcMasterAccountId() {
-        return bp.getSmcSettings().getSmcMasterAccountId();
+    public byte[] getSmcMasterAccountPublicKey() {
+        return bp.getSmcSettings().getMasterAccountPK();
+    }
+
+    public BigInteger getSmcFuelLimitMinValue() {
+        return BigInteger.valueOf(bp.getSmcSettings().getFuelLimitMinValue());
+    }
+
+    public BigInteger getSmcFuelLimitMaxValue() {
+        return BigInteger.valueOf(bp.getSmcSettings().getFuelLimitMaxValue());
+    }
+
+    public BigInteger getSmcFuelPriceMinValue() {
+        return BigInteger.valueOf(bp.getSmcSettings().getFuelPriceMinValue());
+    }
+
+    public BigInteger getSmcFuelPriceMaxValue() {
+        return BigInteger.valueOf(bp.getSmcSettings().getFuelPriceMaxValue());
     }
 
     public int getFeeRate(TransactionTypes.TransactionTypeSpec spec) {

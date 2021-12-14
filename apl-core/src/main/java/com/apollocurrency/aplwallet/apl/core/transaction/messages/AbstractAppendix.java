@@ -9,8 +9,6 @@ import com.apollocurrency.aplwallet.apl.core.model.Transaction;
 import com.apollocurrency.aplwallet.apl.core.transaction.Fee;
 import com.apollocurrency.aplwallet.apl.util.exception.AplException;
 import com.apollocurrency.aplwallet.apl.util.io.WriteBuffer;
-import com.apollocurrency.aplwallet.apl.util.rlp.RlpList;
-import com.apollocurrency.aplwallet.apl.util.rlp.RlpReader;
 import lombok.EqualsAndHashCode;
 import org.json.simple.JSONObject;
 
@@ -29,13 +27,8 @@ public abstract class AbstractAppendix implements Appendix {
         this.version = ((Number) attachmentData.get("version." + getAppendixName())).byteValue();
     }
 
-    @Deprecated(since = "TransactionV3")
     AbstractAppendix(ByteBuffer buffer) {
         this.version = buffer.get();
-    }
-
-    AbstractAppendix(RlpReader reader) {
-        this.version = reader.readByte();
     }
 
     AbstractAppendix(int version) {
@@ -85,32 +78,12 @@ public abstract class AbstractAppendix implements Appendix {
         }
     }
 
-    /**
-     * @deprecated use {@link #putBytes(RlpList.RlpListBuilder)}
-     */
-    @Deprecated(since = "TransactionV3")
     @Override
     public final void putBytes(ByteBuffer buffer) {
         if (version > 0) {
             buffer.put(version);
         }
         putMyBytes(buffer);
-    }
-
-
-    @Override
-    public final void putBytes(RlpList.RlpListBuilder builder) {
-        RlpList.RlpListBuilder attachment = RlpList.builder()
-            .add( getAppendixFlag() )
-            .add(version);
-
-        putMyBytes(attachment);
-
-        builder.add(attachment.build());
-    }
-
-    public void putMyBytes(RlpList.RlpListBuilder builder){
-        throw new UnsupportedOperationException("Unsupported RLP writer for appendix=" + getAppendixName());
     }
 
     @Override

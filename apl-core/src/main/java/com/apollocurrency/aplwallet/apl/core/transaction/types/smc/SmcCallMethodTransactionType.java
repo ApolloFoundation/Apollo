@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2018-2021. Apollo Foundation.
+ * Copyright (c) 2021. Apollo Foundation.
  */
 
 package com.apollocurrency.aplwallet.apl.core.transaction.types.smc;
@@ -29,7 +29,6 @@ import com.apollocurrency.aplwallet.apl.smc.service.SmcContractTxProcessor;
 import com.apollocurrency.aplwallet.apl.smc.service.tx.CallMethodTxProcessor;
 import com.apollocurrency.aplwallet.apl.smc.service.tx.CallMethodTxValidator;
 import com.apollocurrency.aplwallet.apl.smc.service.tx.SyntaxValidator;
-import com.apollocurrency.aplwallet.apl.util.rlp.RlpReader;
 import com.apollocurrency.smc.contract.AddressNotFoundException;
 import com.apollocurrency.smc.contract.SmartContract;
 import com.apollocurrency.smc.contract.SmartMethod;
@@ -80,11 +79,6 @@ public class SmcCallMethodTransactionType extends AbstractSmcTransactionType {
     public AbstractAttachment parseAttachment(ByteBuffer buffer) {
         buffer.order(ByteOrder.LITTLE_ENDIAN);
         return new SmcCallMethodAttachment(buffer);
-    }
-
-    @Override
-    public AbstractAttachment parseAttachment(RlpReader reader) {
-        return new SmcCallMethodAttachment(reader);
     }
 
     @Override
@@ -216,6 +210,11 @@ public class SmcCallMethodTransactionType extends AbstractSmcTransactionType {
             smartContract.getFuel(), transaction.getAmountATM(), transactionSender);
         contractService.commitContractChanges(transaction);
         log.trace("Changes were committed, txId={}", transaction.getStringId());
+    }
+
+    @Override
+    public boolean canHaveRecipient() {
+        return true;
     }
 
     private Fee.FuelBasedFee getFuelBasedFee(OperationPrice price, long amount) {

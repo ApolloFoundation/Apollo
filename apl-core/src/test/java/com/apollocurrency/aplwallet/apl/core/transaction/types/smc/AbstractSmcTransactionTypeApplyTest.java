@@ -83,7 +83,7 @@ import com.apollocurrency.aplwallet.apl.core.transaction.TransactionVersionValid
 import com.apollocurrency.aplwallet.apl.core.transaction.common.TxBContext;
 import com.apollocurrency.aplwallet.apl.core.transaction.messages.AbstractSmcAttachment;
 import com.apollocurrency.aplwallet.apl.core.transaction.messages.AppendixApplierRegistry;
-import com.apollocurrency.aplwallet.apl.core.transaction.messages.AppendixApplierRegistryHelper;
+import com.apollocurrency.aplwallet.apl.core.transaction.messages.AppendixApplierRegistryInitializer;
 import com.apollocurrency.aplwallet.apl.core.transaction.messages.AppendixValidatorRegistry;
 import com.apollocurrency.aplwallet.apl.core.transaction.messages.PrunableLoadingService;
 import com.apollocurrency.aplwallet.apl.core.transaction.messages.PublicKeyAnnouncementAppendixApplier;
@@ -163,7 +163,8 @@ abstract class AbstractSmcTransactionTypeApplyTest extends DbContainerBaseTest {
             ContractModelToEntityConverter.class, ContractModelToStateEntityConverter.class,
             ContractEventLogModelToLogEntryConverter.class, ContractEventModelToEntityConverter.class,
             SmcContractRepositoryImpl.class, SmcContractServiceImpl.class, SmcContractToolServiceImpl.class, SmcContractStorageServiceImpl.class, SmcContractEventServiceImpl.class,
-            SmcTxLogProcessor.class, SmcMappingRepositoryClassFactory.class, SmcContractEventManagerClassFactory.class
+            SmcTxLogProcessor.class, SmcMappingRepositoryClassFactory.class, SmcContractEventManagerClassFactory.class,
+            AppendixApplierRegistryInitializer.class
         )
         .addBeans(MockBean.of(extension.getDatabaseManager(), DatabaseManager.class))
         .addBeans(MockBean.of(mock(InMemoryCacheManager.class), InMemoryCacheManager.class))
@@ -189,6 +190,8 @@ abstract class AbstractSmcTransactionTypeApplyTest extends DbContainerBaseTest {
         .build();
 
     @Inject
+    AppendixApplierRegistryInitializer appendixApplierRegistryInitializer;
+    @Inject
     TransactionApplier txApplier;
     @Inject
     AccountService accountService;
@@ -198,8 +201,6 @@ abstract class AbstractSmcTransactionTypeApplyTest extends DbContainerBaseTest {
     ContractToolService contractToolService;
     @Inject
     SmcBlockchainIntegratorFactory integratorFactory;
-    @Inject
-    PublicKeyAnnouncementAppendixApplier applier;
     @Inject
     AppendixApplierRegistry registry;
     AccountService spyAccountService;
@@ -228,7 +229,6 @@ abstract class AbstractSmcTransactionTypeApplyTest extends DbContainerBaseTest {
 
     @BeforeEach
     void setUp() {
-        AppendixApplierRegistryHelper.addApplier(applier, registry);
         doReturn(chain).when(blockchainConfig).getChain();
         doReturn(lastBlock.getHeight()).when(blockchain).getHeight();
 

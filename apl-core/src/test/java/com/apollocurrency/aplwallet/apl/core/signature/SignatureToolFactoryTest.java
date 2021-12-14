@@ -89,7 +89,7 @@ class SignatureToolFactoryTest extends AbstractSigData {
     void selectParser() {
         assertTrue(SignatureToolFactory.selectParser(1).isPresent());
         assertTrue(SignatureToolFactory.selectParser(2).isPresent());
-        assertTrue(SignatureToolFactory.selectParser(3).isPresent());
+        assertTrue(SignatureToolFactory.selectParser(3).isEmpty());
         assertTrue(SignatureToolFactory.selectParser(4).isEmpty());
     }
 
@@ -97,7 +97,7 @@ class SignatureToolFactoryTest extends AbstractSigData {
     void selectSigner() {
         assertTrue(SignatureToolFactory.selectSigner(1).isPresent());
         assertTrue(SignatureToolFactory.selectSigner(2).isPresent());
-        assertTrue(SignatureToolFactory.selectSigner(3).isPresent());
+        assertTrue(SignatureToolFactory.selectSigner(3).isEmpty());
         assertTrue(SignatureToolFactory.selectSigner(4).isEmpty());
     }
 

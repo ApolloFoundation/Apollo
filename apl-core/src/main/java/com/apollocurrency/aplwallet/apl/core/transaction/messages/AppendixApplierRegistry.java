@@ -17,13 +17,8 @@ public class AppendixApplierRegistry {
     public AppendixApplierRegistry() {
     }
 
-
     void init(Instance<AppendixApplier<?>> instances) {
         instances.iterator().forEachRemaining(e -> appliers.put(e.forClass(), e));
-    }
-
-    void addApplier(AppendixApplier<?> applier) {
-        appliers.put(applier.forClass(), applier);
     }
 
     public AppendixApplierRegistry(Collection<AppendixApplier<?>> appliers) {

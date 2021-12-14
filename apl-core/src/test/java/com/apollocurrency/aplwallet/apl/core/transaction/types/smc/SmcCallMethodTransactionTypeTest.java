@@ -15,9 +15,6 @@ import com.apollocurrency.aplwallet.apl.core.service.state.smc.SmcContractReposi
 import com.apollocurrency.aplwallet.apl.core.service.state.smc.SmcFuelValidator;
 import com.apollocurrency.aplwallet.apl.core.service.state.smc.impl.SmcBlockchainIntegratorFactory;
 import com.apollocurrency.aplwallet.apl.core.transaction.messages.SmcCallMethodAttachment;
-import com.apollocurrency.aplwallet.apl.util.rlp.RlpList;
-import com.apollocurrency.aplwallet.apl.util.rlp.RlpReader;
-import com.apollocurrency.aplwallet.apl.util.rlp.RlpWriteBuffer;
 import lombok.SneakyThrows;
 import org.json.simple.JSONObject;
 import org.json.simple.parser.JSONParser;
@@ -82,32 +79,6 @@ class SmcCallMethodTransactionTypeTest {
         JSONObject jsonObject = (JSONObject) parser.parse(SMC_CALL_METHOD_ATTACHMENT_JSON);
         //WHEN
         SmcCallMethodAttachment attachment = (SmcCallMethodAttachment) smcCallMethodTransactionType.parseAttachment(jsonObject);
-
-        //THEN
-        assertNotNull(attachment);
-        assertEquals("purchase", attachment.getMethodName());
-        assertEquals("\"123\",\"0x0A0B0C0D0E0F\"", attachment.getMethodParams());
-        assertEquals( BigInteger.valueOf(5000L), attachment.getFuelLimit());
-        assertEquals( BigInteger.valueOf(100L), attachment.getFuelPrice());
-    }
-
-    @SneakyThrows
-    @Test
-    void parseAttachment_Rlp() {
-        //GIVEN
-        JSONParser parser = new JSONParser();
-        JSONObject jsonObject = (JSONObject) parser.parse(SMC_CALL_METHOD_ATTACHMENT_JSON);
-        SmcCallMethodAttachment att1 = (SmcCallMethodAttachment) smcCallMethodTransactionType.parseAttachment(jsonObject);
-        RlpWriteBuffer buffer = new RlpWriteBuffer();
-        RlpList.RlpListBuilder listBuilder = RlpList.builder();
-        att1.putBytes(listBuilder);
-        buffer.write(listBuilder.build());
-        byte[] input = buffer.toByteArray();
-
-        //WHEN
-        RlpReader reader = new RlpReader(input).readListReader().readListReader();
-        reader.readByte();//read appendix flag = 0x00
-        SmcCallMethodAttachment attachment = (SmcCallMethodAttachment) smcCallMethodTransactionType.parseAttachment(reader);
 
         //THEN
         assertNotNull(attachment);

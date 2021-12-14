@@ -1,9 +1,10 @@
 /*
- * Copyright (c) 2020-2021. Apollo Foundation.
+ * Copyright (c) 2021. Apollo Foundation.
  */
 
 package com.apollocurrency.aplwallet.apl.core.chainid;
 
+import com.apollocurrency.aplwallet.apl.crypto.Convert;
 import com.apollocurrency.aplwallet.apl.util.env.config.Chain;
 import com.apollocurrency.aplwallet.apl.util.env.config.ChainsConfigLoader;
 import com.apollocurrency.aplwallet.apl.util.env.config.SmcSettings;
@@ -16,8 +17,10 @@ import org.junit.jupiter.params.provider.CsvSource;
 import java.util.Map;
 import java.util.UUID;
 
+import static org.junit.jupiter.api.Assertions.assertArrayEquals;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.mockito.Mockito.doReturn;
 import static org.mockito.Mockito.mock;
 
@@ -34,7 +37,7 @@ class SmcSettingsTest {
     @Test
     void copy() {
         //GIVEN
-        var cfg1 = new SmcSettings(1234567890L);
+        var cfg1 = new SmcSettings("1234567890");
         //WHEN
         var cfg2 = cfg1.copy();
         //THEN
@@ -42,17 +45,27 @@ class SmcSettingsTest {
     }
 
     @Test
-    void testMasterAccountIdDefaultValue() {
+    void testMasterAccountPKDefaultValue() {
         //GIVEN
         //WHEM
         var cfg = new SmcSettings();
         //THEN
-        assertEquals(0L, cfg.getSmcMasterAccountId());
+        assertNull(cfg.getMasterAccountPK());
     }
 
-    @CsvSource({"1, -1234567890", "3, -1234567890", "5,-1111111111", "9,-1111111111", "11,0", "50,0", "500,-2222222222", "999,-2222222222", "1000,0", "20000,0"})
+    @CsvSource({
+        "1,aa8a4621988974e669d115b5e0d48234eed145ff2ac94ec1012805459470fe1e",
+        "3,aa8a4621988974e669d115b5e0d48234eed145ff2ac94ec1012805459470fe1e",
+        "5,bb8a4621988974e669d115b5e0d48234eed145ff2ac94ec1012805459470fe1e",
+        "9,bb8a4621988974e669d115b5e0d48234eed145ff2ac94ec1012805459470fe1e",
+        "11,",
+        "50,",
+        "500,cc8a4621988974e669d115b5e0d48234eed145ff2ac94ec1012805459470fe1e",
+        "999,cc8a4621988974e669d115b5e0d48234eed145ff2ac94ec1012805459470fe1e",
+        "1000,",
+        "20000,"})
     @ParameterizedTest
-    void test_atHeight_AllCorrectConfigs(int height, long accountId) {
+    void test_atHeight_AllCorrectConfigs(int height, String pk) {
         //GIVEN
         ChainsConfigLoader chainsConfigLoader = new ChainsConfigLoader(CONFIG_NAME);
         Map<UUID, Chain> loadedChains = chainsConfigLoader.load();
@@ -66,6 +79,6 @@ class SmcSettingsTest {
         log.trace("result = {}", result);
         //THEN
         assertNotNull(result);
-        assertEquals(accountId, result.getSmcMasterAccountId());
+        assertArrayEquals(Convert.parseHexString(pk), result.getSmcMasterAccountPublicKey());
     }
 }

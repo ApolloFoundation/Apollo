@@ -148,7 +148,6 @@ public abstract class TransactionType {
      * @return deserialized attachment for this transaction type
      * @throws AplException.NotValidException when any validation error occurred during deserialization (avoid throwing it)
      */
-    @Deprecated(since = "TransactionV3")
     public abstract AbstractAttachment parseAttachment(ByteBuffer buffer) throws AplException.NotValidException;
 
     /**
@@ -620,8 +619,4 @@ public abstract class TransactionType {
         }
     }
 
-    public boolean isSmartContractAddressed(Transaction transaction){
-        return transaction.getType().getSpec() == TransactionTypes.TransactionTypeSpec.SMC_PUBLISH
-            || transaction.getType().getSpec() == TransactionTypes.TransactionTypeSpec.SMC_CALL_METHOD;
-    }
 }

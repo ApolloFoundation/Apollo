@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2018-2020. Apollo Foundation.
+ * Copyright (c) 2021. Apollo Foundation.
  */
 
 package com.apollocurrency.aplwallet.apl.core.transaction.types.smc;
@@ -19,15 +19,23 @@ import com.apollocurrency.aplwallet.apl.core.service.state.smc.SmcContractReposi
 import com.apollocurrency.aplwallet.apl.core.service.state.smc.SmcFuelValidator;
 import com.apollocurrency.aplwallet.apl.core.service.state.smc.impl.SmcBlockchainIntegratorFactory;
 import com.apollocurrency.aplwallet.apl.core.service.state.smc.impl.SmcPostponedContractServiceImpl;
+import com.apollocurrency.aplwallet.apl.core.signature.Credential;
+import com.apollocurrency.aplwallet.apl.core.signature.MultiSigCredential;
+import com.apollocurrency.aplwallet.apl.core.signature.SignatureToolFactory;
+import com.apollocurrency.aplwallet.apl.core.signature.SignatureVerifier;
 import com.apollocurrency.aplwallet.apl.core.transaction.TransactionTypes;
+import com.apollocurrency.aplwallet.apl.core.transaction.TransactionWrapperHelper;
+import com.apollocurrency.aplwallet.apl.core.transaction.common.TxBContext;
 import com.apollocurrency.aplwallet.apl.core.transaction.messages.AbstractAttachment;
 import com.apollocurrency.aplwallet.apl.core.transaction.messages.AbstractSmcAttachment;
 import com.apollocurrency.aplwallet.apl.core.transaction.messages.SmcPublishContractAttachment;
+import com.apollocurrency.aplwallet.apl.crypto.Convert;
 import com.apollocurrency.aplwallet.apl.smc.model.AplAddress;
 import com.apollocurrency.aplwallet.apl.smc.service.SmcContractTxProcessor;
 import com.apollocurrency.aplwallet.apl.smc.service.tx.PublishContractTxProcessor;
 import com.apollocurrency.aplwallet.apl.smc.service.tx.PublishContractTxValidator;
-import com.apollocurrency.aplwallet.apl.util.rlp.RlpReader;
+import com.apollocurrency.aplwallet.apl.util.io.PayloadResult;
+import com.apollocurrency.aplwallet.apl.util.io.Result;
 import com.apollocurrency.smc.contract.SmartContract;
 import com.apollocurrency.smc.data.type.Address;
 import com.apollocurrency.smc.polyglot.PolyglotException;
@@ -41,6 +49,7 @@ import java.math.BigInteger;
 import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
 import java.util.Map;
+import java.util.Optional;
 
 /**
  * @author andrew.zinchenko@gmail.com
@@ -48,6 +57,8 @@ import java.util.Map;
 @Slf4j
 @Singleton
 public class SmcPublishContractTransactionType extends AbstractSmcTransactionType {
+    private final TxBContext txBContext;
+
     @Inject
     public SmcPublishContractTransactionType(BlockchainConfig blockchainConfig, Blockchain blockchain,
                                              AccountService accountService,
@@ -57,6 +68,7 @@ public class SmcPublishContractTransactionType extends AbstractSmcTransactionTyp
                                              SmcBlockchainIntegratorFactory integratorFactory,
                                              SmcConfig smcConfig) {
         super(blockchainConfig, blockchain, accountService, contractRepository, contractToolService, fuelValidator, integratorFactory, smcConfig);
+        this.txBContext = TxBContext.newInstance(blockchainConfig.getChain());
     }
 
     @Override
@@ -73,11 +85,6 @@ public class SmcPublishContractTransactionType extends AbstractSmcTransactionTyp
     public AbstractAttachment parseAttachment(ByteBuffer buffer) {
         buffer.order(ByteOrder.LITTLE_ENDIAN);
         return new SmcPublishContractAttachment(buffer);
-    }
-
-    @Override
-    public AbstractAttachment parseAttachment(RlpReader reader) {
-        return new SmcPublishContractAttachment(reader);
     }
 
     @Override
@@ -102,13 +109,17 @@ public class SmcPublishContractTransactionType extends AbstractSmcTransactionTyp
         log.debug("SMC: doStateDependentValidation = VALID  txId={}", transaction.getStringId());
     }
 
-
     @Override
     public void executeStateIndependentValidation(Transaction transaction, AbstractSmcAttachment abstractSmcAttachment) {
         log.debug("SMC: doStateIndependentValidation = ... txId={}", transaction.getStringId());
-        if (getBlockchainConfig().getCurrentConfig().getSmcMasterAccountId() == 0) {
-            throw new AplTransactionFeatureNotEnabledException("'Publish contract' transaction is disabled, cause masterAccountId == 0", transaction);
+        if (getBlockchainConfig().getCurrentConfig().getSmcMasterAccountPublicKey() == null) {
+            throw new AplTransactionFeatureNotEnabledException("'Publish contract' transaction is disabled, cause masterAccountPublicKey is null", transaction);
         }
+        //Verify multi-signature of the given transaction to avoid suspicious transactions
+        if (!verifySignature(transaction)) {
+            throw new AplUnacceptableTransactionValidationException("Multi-signature verification failed.", transaction);
+        }
+
         SmcPublishContractAttachment attachment = (SmcPublishContractAttachment) abstractSmcAttachment;
         if (Strings.isNullOrEmpty(attachment.getContractName())) {
             throw new AplUnacceptableTransactionValidationException("Empty contract name.", transaction);
@@ -175,7 +186,47 @@ public class SmcPublishContractTransactionType extends AbstractSmcTransactionTyp
     }
 
     @Override
+    public boolean canHaveRecipient() {
+        return false;
+    }
+
+    @Override
     public boolean mustHaveRecipient() {
         return false;
+    }
+
+    /**
+     * Returns the credential to verify the 'Publish smart-contract' transaction signature
+     *
+     * @param transaction given transaction
+     * @return the credential to verify the given transaction signature
+     */
+    private MultiSigCredential getCredential(Transaction transaction) {
+        var masterPK = getBlockchainConfig().getCurrentConfig().getSmcMasterAccountPublicKey();
+        if (masterPK != null) {
+            log.trace("Smc master credentials: masterAccountPK={}", Convert.toHexString(masterPK));
+            return new MultiSigCredential(2, masterPK, transaction.getSenderPublicKey());
+        } else {
+            throw new AplUnacceptableTransactionValidationException("Unknown master account public key.", transaction);
+        }
+    }
+
+    public boolean verifySignature(Transaction transaction) {
+        if (transaction.getSignature() == null) {
+            return false;
+        }
+        Credential signatureCredential;
+        Optional<SignatureVerifier> signatureVerifierOptional = SignatureToolFactory.selectValidator(transaction.getVersion());
+        if (signatureVerifierOptional.isEmpty()) {
+            log.error("Unsupported version: '{}' of the transaction: '{}'", transaction.getVersion(), transaction.getStringId());
+            return false;
+        }
+        SignatureVerifier signatureVerifier = signatureVerifierOptional.get();
+        signatureCredential = getCredential(transaction);
+        Result byteArrayTx = PayloadResult.createLittleEndianByteArrayResult();
+        txBContext.createSerializer(transaction.getVersion())
+            .serialize(TransactionWrapperHelper.createUnsignedTransaction(transaction), byteArrayTx);
+
+        return signatureVerifier.verify(byteArrayTx.array(), transaction.getSignature(), signatureCredential);
     }
 }

@@ -62,7 +62,7 @@ public class BlockchainConfigTest {
         "Test",
         10000L, 2,
         //"data.json",
-        BLOCKCHAIN_PROPERTIES, new FeaturesHeightRequirement(100, 100, 100, 1, 50, 200), Set.of(20, 21, 25, 26), Set.of("1000", "18446744073709551615"));
+        BLOCKCHAIN_PROPERTIES, new FeaturesHeightRequirement(100, 100, 100, 1, 50), Set.of(20, 21, 25, 26), Set.of("1000", "18446744073709551615"));
 
     BlockchainConfig blockchainConfig = new BlockchainConfig(chain, new PropertiesHolder());
     private BlockDao blockDao = mock(BlockDao.class);
@@ -114,26 +114,17 @@ public class BlockchainConfigTest {
     @Test
     void testInitBlockchainConfigForFeatureHeightRequirementTransactionVersions() {
         blockchainConfig.updateChain(chain);
-        chain.setFeaturesHeightRequirement(new FeaturesHeightRequirement(100, 100, 150, 1, null, 200));
+        chain.setFeaturesHeightRequirement(new FeaturesHeightRequirement(100, 100, 150, 1, null));
         assertEquals(150, blockchainConfig.getTransactionV2Height().get());
         assertTrue(blockchainConfig.isTransactionV2ActiveAtHeight(200));
         assertFalse(blockchainConfig.isTransactionV2ActiveAtHeight(50));
 
-        assertEquals(200, blockchainConfig.getTransactionV3Height().get());
-        assertTrue(blockchainConfig.isTransactionV3ActiveAtHeight(250));
-        assertFalse(blockchainConfig.isTransactionV3ActiveAtHeight(150));
 
-        chain.setFeaturesHeightRequirement(new FeaturesHeightRequirement(100, 100, 150, null, null, null));
+        chain.setFeaturesHeightRequirement(new FeaturesHeightRequirement(100, 100, 150, null, null));
         assertEquals(150, blockchainConfig.getTransactionV2Height().get());
-        assertFalse(blockchainConfig.getTransactionV3Height().isPresent());
 
-        chain.setFeaturesHeightRequirement(new FeaturesHeightRequirement(100, 100, null, null, null, null));
+        chain.setFeaturesHeightRequirement(new FeaturesHeightRequirement(100, 100, null, null, null));
         assertFalse(blockchainConfig.getTransactionV2Height().isPresent());
-        assertFalse(blockchainConfig.getTransactionV3Height().isPresent());
-
-        assertThrows(IllegalArgumentException.class, () -> new FeaturesHeightRequirement(100, 100, null, 1, null, 200));
-
-        assertThrows(IllegalArgumentException.class, () -> new FeaturesHeightRequirement(100, 100, 200, 1, null, 100));
     }
 
     @Test

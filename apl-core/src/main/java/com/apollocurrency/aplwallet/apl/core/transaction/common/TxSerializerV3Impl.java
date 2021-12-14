@@ -1,11 +1,10 @@
 /*
- * Copyright (c)  2018-2021. Apollo Foundation.
+ * Copyright (c)  2019-2021. Apollo Foundation.
  */
 
 package com.apollocurrency.aplwallet.apl.core.transaction.common;
 
 import com.apollocurrency.aplwallet.apl.core.model.Transaction;
-import com.apollocurrency.aplwallet.apl.util.io.WriteBuffer;
 import com.apollocurrency.aplwallet.apl.core.transaction.TransactionUtils;
 import com.apollocurrency.aplwallet.apl.core.transaction.messages.Appendix;
 import com.apollocurrency.aplwallet.apl.util.io.WriteBuffer;
@@ -66,7 +65,7 @@ public class TxSerializerV3Impl extends AbstractTxSerializer {
 
         RlpList.RlpListBuilder attachmentsList = RlpList.builder();
         for (Appendix appendage : transaction.getAppendages()) {
-            appendage.putBytes(attachmentsList);
+            //appendage.putBytes(attachmentsList);
             payloadSize += appendage.getFullSize();
         }
         buffer.write(attachmentsList.build());
