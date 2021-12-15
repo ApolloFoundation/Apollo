@@ -245,7 +245,7 @@ class MultiSigData implements MultiSig {
                         " The count doesn't match the data array length.");
                 }
             } catch (BufferUnderflowException e) {
-                String message = "Can't parse signature bytes, cause: " + e.getMessage();
+                String message = "Can't parse signature bytes, cause: " + e.getClass().getSimpleName() + ":" + e.getMessage();
                 log.error(message);
                 throw new SignatureParseException(message);
             }

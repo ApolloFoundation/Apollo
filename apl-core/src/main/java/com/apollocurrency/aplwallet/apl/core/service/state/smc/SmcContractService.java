@@ -44,13 +44,4 @@ public interface SmcContractService {
      */
     AplContractSpec loadAsrModuleSpec(String asrModuleName, String language, Version version);
 
-    /**
-     * Generate the uniq smart-contract address.
-     *
-     * @param account the transaction sender account id
-     * @param salt    salt for generation routine
-     * @return generated public key for the published smart-contract
-     */
-    byte[] generatePublicKey(long account, String salt);
-
 }

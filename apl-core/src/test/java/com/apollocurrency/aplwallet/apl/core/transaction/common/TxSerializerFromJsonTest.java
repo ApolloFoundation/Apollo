@@ -42,6 +42,7 @@ class TxSerializerFromJsonTest {
     Chain chain;
     TxBContext context;
     TransactionJsonSerializer jsonSerializer;
+    LegacyJsonSerializer legacyJsonSerializer;
 
     TransactionTestData td = new TransactionTestData();
 
@@ -50,6 +51,7 @@ class TxSerializerFromJsonTest {
         context = TxBContext.newInstance(chain);
         doReturn(chain).when(blockchainConfig).getChain();
         jsonSerializer = new TransactionJsonSerializerImpl(prunableLoadingService, blockchainConfig);
+        legacyJsonSerializer = new LegacyJsonSerializer(prunableLoadingService);
         GenesisImporter.CREATOR_ID = 1739068987193023818L;
     }
 
@@ -115,7 +117,7 @@ class TxSerializerFromJsonTest {
         log.info("                  next tx");
         log.info("txId={} unsigned={}", txFromJson.getId(), Long.toUnsignedString(txFromJson.getId()));
 
-        JSONObject jsonLegacy = jsonSerializer.toLegacyJsonFormat(txFromJson);
+        JSONObject jsonLegacy = legacyJsonSerializer.toLegacyJsonFormat(txFromJson);
 
         assertNotNull(jsonLegacy);
         //assertEquals(txId, txFromJson.getId());

@@ -88,7 +88,6 @@ import com.apollocurrency.aplwallet.apl.core.transaction.messages.AppendixApplie
 import com.apollocurrency.aplwallet.apl.core.transaction.messages.AppendixValidatorRegistry;
 import com.apollocurrency.aplwallet.apl.core.transaction.messages.PrunableLoadingService;
 import com.apollocurrency.aplwallet.apl.core.transaction.messages.PublicKeyAnnouncementAppendixApplier;
-import com.apollocurrency.aplwallet.apl.crypto.Convert;
 import com.apollocurrency.aplwallet.apl.crypto.Crypto;
 import com.apollocurrency.aplwallet.apl.data.BlockTestData;
 import com.apollocurrency.aplwallet.apl.data.TransactionTestData;
@@ -250,12 +249,10 @@ abstract class AbstractSmcTransactionTypeApplyTest extends DbContainerBaseTest {
         transactionCreator = new TransactionCreator(validator, propertiesHolder, timeService, calculator, blockchain, processor, transactionTypeFactory, transactionBuilderFactory, signerService, blockchainConfig);
     }
 
-    Transaction createTransaction(SmcTxData body, AbstractSmcAttachment attachment, Account senderAccount, byte[] recipientPublicKey, long recipientId) {
+    Transaction createTransaction(SmcTxData body, AbstractSmcAttachment attachment, Account senderAccount) {
         CreateTransactionRequest txRequest = CreateTransactionRequest.builder()
             .version(2)
             .senderAccount(senderAccount)
-            .recipientPublicKey(Convert.toHexString(recipientPublicKey))
-            .recipientId(recipientId)
             .amountATM(body.getAmountATM())
             .feeATM(body.getFuelLimit() * body.getFuelPrice())
             .secretPhrase(body.getSecret())

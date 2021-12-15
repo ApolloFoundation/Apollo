@@ -47,6 +47,7 @@ class TxSerializerToJsonTest {
     Chain chain;
     TxBContext context;
     TransactionJsonSerializer jsonSerializer;
+    LegacyJsonSerializer legacyJsonSerializer;
 
     TransactionTestData td = new TransactionTestData();
 
@@ -60,6 +61,8 @@ class TxSerializerToJsonTest {
         context = TxBContext.newInstance(chain);
         doReturn(chain).when(blockchainConfig).getChain();
         jsonSerializer = new TransactionJsonSerializerImpl(prunableLoadingService, blockchainConfig);
+        legacyJsonSerializer = new LegacyJsonSerializer(prunableLoadingService);
+
     }
 
     @SneakyThrows
@@ -93,7 +96,7 @@ class TxSerializerToJsonTest {
         assertEquals(t1.getId(), txFromJson.getId());
         assertArrayEquals(t1.getSignature().bytes(), txFromJson.getSignature().bytes());
 
-        JSONObject jsonLegacy = jsonSerializer.toLegacyJsonFormat(txFromJson);
+        JSONObject jsonLegacy = legacyJsonSerializer.toLegacyJsonFormat(txFromJson);
 
         assertNotNull(jsonLegacy);
         assertEquals(jsonLegacy, ((JsonBuffer) result.getBuffer()).getJsonObject());
@@ -109,7 +112,7 @@ class TxSerializerToJsonTest {
         Transaction t1 = td.TRANSACTION_14;
 
         //WHEN
-        JSONObject jsonLegacy = jsonSerializer.toLegacyJsonFormat(t1);
+        JSONObject jsonLegacy = legacyJsonSerializer.toLegacyJsonFormat(t1);
         String jsonObjectString = jsonLegacy.toJSONString();
         JSONObject jsonObject2 = (JSONObject) new JSONParser().parse(jsonObjectString);
 

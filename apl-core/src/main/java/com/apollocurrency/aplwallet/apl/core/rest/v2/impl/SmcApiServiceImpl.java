@@ -268,10 +268,10 @@ class SmcApiServiceImpl implements SmcApiService {
         if (transaction == null) {
             return builder.build();
         }
-        SmartContract smartContract = contractToolService.createNewContract(transaction);
+        SmartContract smartContract = contractToolService.createMockContract(transaction);
         var context = smcConfig.asContext(accountService.getBlockchainHeight(),
             smartContract,
-            integratorFactory.createMockProcessor(transaction.getId())
+            integratorFactory.createMockProcessor(new AplAddress(smartContract.getTxId()).getLongId())
         );
         //syntactical and semantic validation
         SmcContractTxProcessor processor = new PublishContractTxValidator(smartContract, context);
@@ -373,20 +373,14 @@ class SmcApiServiceImpl implements SmcApiService {
             return null;
         }
 
-        byte[] generatedPublicKey = contractService.generatePublicKey(senderAccount.getId(), attachment.getContractSource());
-        long recipientId = AccountService.getId(generatedPublicKey);
-
         CreateTransactionRequest txRequest = CreateTransactionRequest.builder()
             .version(2)
             .amountATM(Convert.parseLong(valueStr))
             .senderAccount(senderAccount)
             .publicKey(publicKey)//it's the sender public key
-            .recipientPublicKey(Convert.toHexString(generatedPublicKey))
-            .recipientId(recipientId)
             .secretPhrase(secretPhrase)
             .deadlineValue(String.valueOf(1440))
             .attachment(attachment)
-            .credential((secretPhrase != null) ? new MultiSigCredential(1, Crypto.getKeySeed(secretPhrase)) : null)
             .broadcast(false)
             .validate(false)
             .build();

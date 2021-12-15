@@ -86,16 +86,21 @@ public class SmcContractToolServiceImpl implements ContractToolService {
     }
 
     @Override
-    public SmartContract createNewContract(Transaction smcTransaction) {
-        if (smcTransaction.getAttachment().getTransactionTypeSpec() != TransactionTypes.TransactionTypeSpec.SMC_PUBLISH) {
-            throw new AplCoreContractViolationException("Invalid transaction attachment: " + smcTransaction.getAttachment().getTransactionTypeSpec()
-                + ", expected " + TransactionTypes.TransactionTypeSpec.SMC_PUBLISH + ", transaction_id=" + smcTransaction.getStringId());
-        }
-        SmcPublishContractAttachment attachment = (SmcPublishContractAttachment) smcTransaction.getAttachment();
+    public SmartContract createMockContract(Transaction smcTransaction) {
+        SmcPublishContractAttachment attachment = getSmcPublishContractAttachment(smcTransaction);
+        return createSmartContract(attachment, 0, smcTransaction.getSenderId());
+    }
 
-        final Address contractAddress = new AplAddress(smcTransaction.getRecipientId());
-        final Address transactionSender = new AplAddress(smcTransaction.getSenderId());
-        final Address txId = new AplAddress(smcTransaction.getId());
+    @Override
+    public SmartContract createNewContract(Transaction smcTransaction) {
+        SmcPublishContractAttachment attachment = getSmcPublishContractAttachment(smcTransaction);
+        return createSmartContract(attachment, smcTransaction.getId(), smcTransaction.getSenderId());
+    }
+
+    private SmartContract createSmartContract(SmcPublishContractAttachment attachment, long contractId, long senderAccountId) {
+        final Address contractAddress = new AplAddress(contractId);
+        final Address transactionSender = new AplAddress(senderAccountId);
+        final Address txId = new AplAddress(contractAddress);
 
         final SmartSource smartSource = createSmartSource(attachment);
 
@@ -114,6 +119,14 @@ public class SmcContractToolServiceImpl implements ContractToolService {
         log.debug("Created contract={}", contract);
 
         return contract;
+    }
+
+    private SmcPublishContractAttachment getSmcPublishContractAttachment(Transaction smcTransaction) {
+        if (smcTransaction.getAttachment().getTransactionTypeSpec() != TransactionTypes.TransactionTypeSpec.SMC_PUBLISH) {
+            throw new AplCoreContractViolationException("Invalid transaction attachment: " + smcTransaction.getAttachment().getTransactionTypeSpec()
+                + ", expected " + TransactionTypes.TransactionTypeSpec.SMC_PUBLISH + ", transaction_id=" + smcTransaction.getStringId());
+        }
+        return (SmcPublishContractAttachment) smcTransaction.getAttachment();
     }
 
 }

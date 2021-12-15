@@ -101,7 +101,7 @@ public class SmcPublishContractTransactionType extends AbstractSmcTransactionTyp
     public void doStateDependentValidation(Transaction transaction) {
         var contractService = new SmcPostponedContractServiceImpl(contractRepository);
         log.debug("SMC: doStateDependentValidation = ...  txId={}", transaction.getStringId());
-        Address address = new AplAddress(transaction.getRecipientId());
+        Address address = new AplAddress(transaction.getId());
         if (contractService.isContractExist(address)) {
             log.debug("SMC: doStateDependentValidation = INVALID  txId={}", transaction.getStringId());
             throw new AplAcceptableTransactionValidationException("Contract already exists, address=" + address, transaction);
@@ -187,11 +187,6 @@ public class SmcPublishContractTransactionType extends AbstractSmcTransactionTyp
 
     @Override
     public boolean canHaveRecipient() {
-        return false;
-    }
-
-    @Override
-    public boolean mustHaveRecipient() {
         return false;
     }
 

@@ -6,9 +6,9 @@ import com.apollocurrency.aplwallet.api.v2.model.BlockchainInfo;
 import com.apollocurrency.aplwallet.api.v2.model.HealthResponse;
 import com.apollocurrency.aplwallet.apl.core.app.GenesisImporter;
 import com.apollocurrency.aplwallet.apl.core.chainid.BlockchainConfig;
+import com.apollocurrency.aplwallet.apl.core.db.DatabaseManager;
 import com.apollocurrency.aplwallet.apl.core.entity.state.account.Account;
 import com.apollocurrency.aplwallet.apl.core.rest.v2.ResponseBuilderV2;
-import com.apollocurrency.aplwallet.apl.core.db.DatabaseManager;
 import com.apollocurrency.aplwallet.apl.core.service.blockchain.MemPool;
 import com.apollocurrency.aplwallet.apl.core.service.state.BlockChainInfoService;
 import com.apollocurrency.aplwallet.apl.core.service.state.account.AccountService;
@@ -47,7 +47,7 @@ public class InfoApiServiceImpl implements InfoApiService {
         ResponseBuilderV2 builder = ResponseBuilderV2.startTiming();
 
         BlockchainInfo blockchainState = new BlockchainInfo();
-        blockchainState.setChainid(blockchainConfig.getChain().getChainId().toString());
+        blockchainState.setChainid(blockchainConfig.getChain().getChainId());
         blockchainState.setGenesisAccount(Long.toUnsignedString(GenesisImporter.CREATOR_ID));
         blockchainState.setTicker(blockchainConfig.getCoinSymbol());
         blockchainState.setConsensus("POS");

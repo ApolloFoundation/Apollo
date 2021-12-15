@@ -38,11 +38,11 @@ public class SmcFuelValidator {
 
     public void validate(AbstractSmcAttachment attachment, Function<String, RuntimeException> exceptionSupplier) {
         if (attachment.getFuelLimit().compareTo(blockchainConfig.getCurrentConfig().getSmcFuelLimitMinValue()) < 0) {
-            var msg = "Fuel limit value less than MIN value, expected at least " + blockchainConfig.getCurrentConfig().getSmcFuelLimitMinValue() + " ATM";
+            var msg = "Fuel limit value less than MIN value, expected at least " + blockchainConfig.getCurrentConfig().getSmcFuelLimitMinValue();
             throw exceptionSupplier.apply(msg);
         }
         if (attachment.getFuelLimit().compareTo(blockchainConfig.getCurrentConfig().getSmcFuelLimitMaxValue()) > 0) {
-            var msg = "Fuel limit value greater than MAX value, expected up to " + blockchainConfig.getCurrentConfig().getSmcFuelLimitMaxValue() + " ATM";
+            var msg = "Fuel limit value greater than MAX value, expected up to " + blockchainConfig.getCurrentConfig().getSmcFuelLimitMaxValue();
             throw exceptionSupplier.apply(msg);
         }
         if (attachment.getFuelPrice().compareTo(blockchainConfig.getCurrentConfig().getSmcFuelPriceMinValue()) < 0) {

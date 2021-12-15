@@ -36,7 +36,7 @@ public interface Appendix {
     }
 
     /**
-     * Returns the size of transaction appendixes in bytes.
+     * Returns the appendix size in bytes.
      * <i>fullSize</i> can be less or equal than <i>size</i>
      *
      * @return size in bytes
