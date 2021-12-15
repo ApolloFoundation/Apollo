@@ -7,7 +7,10 @@ package com.apollocurrency.aplwallet.apl.core.service.state.smc.impl;
 import com.apollocurrency.aplwallet.apl.core.config.SmcConfig;
 import com.apollocurrency.aplwallet.apl.core.exception.AplCoreContractViolationException;
 import com.apollocurrency.aplwallet.apl.core.service.state.smc.SmcContractService;
+import com.apollocurrency.aplwallet.apl.crypto.Convert;
+import com.apollocurrency.aplwallet.apl.crypto.Crypto;
 import com.apollocurrency.aplwallet.apl.smc.model.AplContractSpec;
+import com.apollocurrency.aplwallet.apl.util.Convert2;
 import com.apollocurrency.smc.polyglot.Version;
 import com.apollocurrency.smc.polyglot.language.LanguageContext;
 import com.apollocurrency.smc.polyglot.language.lib.LibraryProvider;
@@ -74,6 +77,15 @@ public class SmcContractServiceImpl implements SmcContractService {
                 + language + ":" + version + "], expected language="
                 + libraryProvider.getLanguageName() + ", version=" + libraryProvider.getLanguageVersion());
         }
+    }
+
+    @Override
+    public byte[] generatePublicKey(long account, String salt) {
+        var sha256 = Crypto.sha256();
+        sha256.update(Convert.toBytes(Convert2.rsAccount(account)));
+        sha256.update(Crypto.getSecureRandom().generateSeed(32));
+        sha256.update(Convert.toBytes(salt));
+        return Crypto.getPublicKey(sha256.digest());
     }
 
 }

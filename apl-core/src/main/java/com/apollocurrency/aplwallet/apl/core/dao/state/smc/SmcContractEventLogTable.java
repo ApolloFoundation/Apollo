@@ -1,5 +1,5 @@
 /*
- * Copyright © 2018-2019 Apollo Foundation.
+ * Copyright © 2020-2021 Apollo Foundation.
  */
 package com.apollocurrency.aplwallet.apl.core.dao.state.smc;
 
@@ -31,7 +31,9 @@ import java.util.ArrayList;
 import java.util.List;
 
 /**
- * Account ledger table
+ * Smart-contract events table
+ *
+ * @author andrew.zinchenko@gmail.com
  */
 @Slf4j
 @Singleton

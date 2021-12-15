@@ -63,6 +63,7 @@ import com.apollocurrency.aplwallet.apl.core.service.state.account.impl.AccountP
 import com.apollocurrency.aplwallet.apl.core.service.state.account.impl.AccountServiceImpl;
 import com.apollocurrency.aplwallet.apl.core.service.state.smc.ContractToolService;
 import com.apollocurrency.aplwallet.apl.core.service.state.smc.SmcContractRepository;
+import com.apollocurrency.aplwallet.apl.core.service.state.smc.SmcContractService;
 import com.apollocurrency.aplwallet.apl.core.service.state.smc.SmcFuelValidator;
 import com.apollocurrency.aplwallet.apl.core.service.state.smc.event.SmcContractEventManagerClassFactory;
 import com.apollocurrency.aplwallet.apl.core.service.state.smc.impl.SmcBlockchainIntegratorFactory;
@@ -196,7 +197,9 @@ abstract class AbstractSmcTransactionTypeApplyTest extends DbContainerBaseTest {
     @Inject
     AccountService accountService;
     @Inject
-    SmcContractRepository contractService;
+    SmcContractRepository contractRepository;
+    @Inject
+    SmcContractService contractService;
     @Inject
     ContractToolService contractToolService;
     @Inject
@@ -240,8 +243,8 @@ abstract class AbstractSmcTransactionTypeApplyTest extends DbContainerBaseTest {
         spyAccountService = spy(accountService);
         context = TxBContext.newInstance(chain);
         transactionTypeFactory = new CachedTransactionTypeFactory(List.of(
-            new SmcPublishContractTransactionType(blockchainConfig, blockchain, spyAccountService, contractService, contractToolService, fuelValidator, integratorFactory, smcConfig),
-            new SmcCallMethodTransactionType(blockchainConfig, blockchain, spyAccountService, contractService, contractToolService, fuelValidator, integratorFactory, smcConfig)
+            new SmcPublishContractTransactionType(blockchainConfig, blockchain, spyAccountService, contractRepository, contractToolService, fuelValidator, integratorFactory, smcConfig),
+            new SmcCallMethodTransactionType(blockchainConfig, blockchain, spyAccountService, contractRepository, contractToolService, fuelValidator, integratorFactory, smcConfig)
         ));
         transactionBuilderFactory = new TransactionBuilderFactory(transactionTypeFactory, blockchainConfig);
         transactionCreator = new TransactionCreator(validator, propertiesHolder, timeService, calculator, blockchain, processor, transactionTypeFactory, transactionBuilderFactory, signerService, blockchainConfig);

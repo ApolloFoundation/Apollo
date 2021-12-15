@@ -204,7 +204,7 @@ public class SmcPublishContractTransactionType extends AbstractSmcTransactionTyp
     private MultiSigCredential getCredential(Transaction transaction) {
         var masterPK = getBlockchainConfig().getCurrentConfig().getSmcMasterAccountPublicKey();
         if (masterPK != null) {
-            log.trace("Smc master credentials: masterAccountPK={}", Convert.toHexString(masterPK));
+            log.trace("Smc master credentials: publicKey={}", Convert.toHexString(masterPK));
             return new MultiSigCredential(2, masterPK, transaction.getSenderPublicKey());
         } else {
             throw new AplUnacceptableTransactionValidationException("Unknown master account public key.", transaction);

@@ -373,7 +373,7 @@ class SmcApiServiceImpl implements SmcApiService {
             return null;
         }
 
-        byte[] generatedPublicKey = AccountService.generatePublicKey(senderAccount, attachment.getContractSource());
+        byte[] generatedPublicKey = contractService.generatePublicKey(senderAccount.getId(), attachment.getContractSource());
         long recipientId = AccountService.getId(generatedPublicKey);
 
         CreateTransactionRequest txRequest = CreateTransactionRequest.builder()

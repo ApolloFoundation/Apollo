@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2018-2020. Apollo Foundation.
+ * Copyright (c) 2020-2021. Apollo Foundation.
  */
 
 package com.apollocurrency.aplwallet.apl.core.dao.state.smc;
@@ -27,6 +27,8 @@ import java.util.ArrayList;
 import java.util.List;
 
 /**
+ * Smart-contract master table
+ *
  * @author andrew.zinchenko@gmail.com
  */
 public class SmcContractTable extends EntityDbTable<SmcContractEntity> {
@@ -108,6 +110,7 @@ public class SmcContractTable extends EntityDbTable<SmcContractEntity> {
         }
     }
 
+    //TODO use a special wrapping object for query filter params with default settings and statement adjustments
     public List<ContractDetails> getContractsByFilter(Long address, Long txId, Long owner, String name, String baseContract, Integer blockTimestamp, String status, int height, int from, int to) {
         String namePrefix = null;
         String baseContractPrefix = null;
@@ -144,6 +147,7 @@ public class SmcContractTable extends EntityDbTable<SmcContractEntity> {
         sql.append("ORDER BY sc.block_timestamp DESC, sc.db_id DESC ");
         sql.append(DbUtils.limitsClause(from, to));
 
+        //TODO try to use JdbcQueryExecutionHelper
         try (Connection con = databaseManager.getDataSource().getConnection();
              PreparedStatement pstm = con.prepareStatement(sql.toString())) {
             int i = 0;

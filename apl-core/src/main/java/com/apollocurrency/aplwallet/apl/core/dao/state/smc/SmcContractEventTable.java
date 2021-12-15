@@ -1,5 +1,5 @@
 /*
- * Copyright © 2018-2019 Apollo Foundation.
+ * Copyright © 2020-2021 Apollo Foundation.
  */
 package com.apollocurrency.aplwallet.apl.core.dao.state.smc;
 
@@ -22,7 +22,9 @@ import java.sql.SQLException;
 import java.sql.Statement;
 
 /**
- * Account ledger table
+ * Smart-contract events master table
+ *
+ * @author andrew.zinchenko@gmail.com
  */
 @Singleton
 public class SmcContractEventTable extends EntityDbTable<SmcContractEventEntity> {

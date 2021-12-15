@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2018-2020. Apollo Foundation.
+ * Copyright (c) 2020-2021. Apollo Foundation.
  */
 
 package com.apollocurrency.aplwallet.apl.core.dao.state.smc;
@@ -23,6 +23,9 @@ import java.sql.SQLException;
 import java.sql.Statement;
 
 /**
+ * Smart-contract state table
+ * To obtain the full state of the smart-contract use both state and mapping tables.
+ *
  * @author andrew.zinchenko@gmail.com
  */
 public class SmcContractStateTable extends EntityDbTable<SmcContractStateEntity> {
