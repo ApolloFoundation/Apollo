@@ -38,7 +38,11 @@
           "frequency": 1
         },
         "smcSettings": {
-          "smcMasterAccountId": -1234567890
+          "masterAccountPublicKey": "aa8a4621988974e669d115b5e0d48234eed145ff2ac94ec1012805459470fe1e",
+          "fuelLimitMinValue": 10000000,
+          "fuelLimitMaxValue": 30000000000,
+          "fuelPriceMinValue": 10000,
+          "fuelPriceMaxValue": 100000000
         }
       },
       {
@@ -52,7 +56,11 @@
           "frequency": 5
         },
         "smcSettings": {
-          "smcMasterAccountId": -1111111111
+          "masterAccountPublicKey": "bb8a4621988974e669d115b5e0d48234eed145ff2ac94ec1012805459470fe1e",
+          "fuelLimitMinValue": 10000000,
+          "fuelLimitMaxValue": 30000000000,
+          "fuelPriceMinValue": 10000,
+          "fuelPriceMaxValue": 100000000
         }
       },
       {
@@ -87,7 +95,11 @@
           "frequency": 70
         },
         "smcSettings": {
-          "smcMasterAccountId": -2222222222
+          "masterAccountPublicKey": "cc8a4621988974e669d115b5e0d48234eed145ff2ac94ec1012805459470fe1e",
+          "fuelLimitMinValue": 10000000,
+          "fuelLimitMaxValue": 30000000000,
+          "fuelPriceMinValue": 10000,
+          "fuelPriceMaxValue": 100000000
         }
       },
       {

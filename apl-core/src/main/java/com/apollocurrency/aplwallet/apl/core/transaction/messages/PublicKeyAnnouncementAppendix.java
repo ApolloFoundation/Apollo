@@ -4,11 +4,9 @@
 
 package com.apollocurrency.aplwallet.apl.core.transaction.messages;
 
-import com.apollocurrency.aplwallet.apl.core.model.Transaction;
 import com.apollocurrency.aplwallet.apl.core.entity.state.account.Account;
+import com.apollocurrency.aplwallet.apl.core.model.Transaction;
 import com.apollocurrency.aplwallet.apl.crypto.Convert;
-import com.apollocurrency.aplwallet.apl.util.rlp.RlpList;
-import com.apollocurrency.aplwallet.apl.util.rlp.RlpReader;
 import org.json.simple.JSONObject;
 
 import java.nio.ByteBuffer;
@@ -22,11 +20,6 @@ public class PublicKeyAnnouncementAppendix extends AbstractAppendix {
         super(buffer);
         this.publicKey = new byte[32];
         buffer.get(this.publicKey);
-    }
-
-    public PublicKeyAnnouncementAppendix(RlpReader reader) {
-        super(reader);
-        this.publicKey = reader.read();
     }
 
     public PublicKeyAnnouncementAppendix(JSONObject attachmentData) {
@@ -58,12 +51,6 @@ public class PublicKeyAnnouncementAppendix extends AbstractAppendix {
     @Override
     public void putMyBytes(ByteBuffer buffer) {
         buffer.put(publicKey);
-    }
-
-    @Override
-    public void putMyBytes(RlpList.RlpListBuilder builder) {
-        builder
-            .add(publicKey);
     }
 
     @Override

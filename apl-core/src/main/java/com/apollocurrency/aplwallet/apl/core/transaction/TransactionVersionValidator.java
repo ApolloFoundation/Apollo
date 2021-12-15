@@ -31,9 +31,6 @@ public class TransactionVersionValidator {
     }
 
     public int getActualVersion() {
-        if (blockchainConfig.isTransactionV3ActiveAtHeight(blockchain.getHeight())) {
-            return 3;
-        }
         if (blockchainConfig.isTransactionV2ActiveAtHeight(blockchain.getHeight())) {
             return 2;
         }

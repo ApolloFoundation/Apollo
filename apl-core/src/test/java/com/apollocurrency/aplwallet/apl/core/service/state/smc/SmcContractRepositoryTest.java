@@ -108,7 +108,7 @@ class SmcContractRepositoryTest {
         contractToolService = new SmcContractToolServiceImpl(blockchain, smcConfig);
 
         smcTxData = SmcTxData.builder()
-            .address("APL-632K-TWX3-2ALQ-973CU")
+            .address(new AplAddress(TX_ID).toRS())
             .recipient("APL-632K-TWX3-2ALQ-973CU")
             .sender("APL-X5JH-TJKJ-DVGC-5T2V8")
             .name("Deal")
@@ -175,8 +175,8 @@ class SmcContractRepositoryTest {
     void loadContract() {
         //GIVEN
         Fuel fuel = new ContractFuel(smcTxData.getSenderAddress(), smcTxData.getFuelLimit(), smcTxData.getFuelPrice());
-        when(smcContractTable.get(SmcContractTable.KEY_FACTORY.newKey(smcTxData.getRecipientAddress().getLongId()))).thenReturn(smcContractEntity);
-        when(smcContractStateTable.get(SmcContractStateTable.KEY_FACTORY.newKey(smcTxData.getRecipientAddress().getLongId()))).thenReturn(smcContractStateEntity);
+        when(smcContractTable.get(SmcContractTable.KEY_FACTORY.newKey(smcTxData.getContractAddress().getLongId()))).thenReturn(smcContractEntity);
+        when(smcContractStateTable.get(SmcContractStateTable.KEY_FACTORY.newKey(smcTxData.getContractAddress().getLongId()))).thenReturn(smcContractStateEntity);
 
         //WHEN
         SmartContract loaded = contractRepository.loadContract(smcTxData.getContractAddress(), smcTxData.getSenderAddress(), fuel);
@@ -205,7 +205,7 @@ class SmcContractRepositoryTest {
         //GIVEN
         String jsonObject = "{\"value\":6789}";
         smcContractStateEntity.setSerializedObject(jsonObject);
-        when(smcContractStateTable.get(SmcContractStateTable.KEY_FACTORY.newKey(smcTxData.getRecipientAddress().getLongId()))).thenReturn(smcContractStateEntity);
+        when(smcContractStateTable.get(SmcContractStateTable.KEY_FACTORY.newKey(smcTxData.getContractAddress().getLongId()))).thenReturn(smcContractStateEntity);
 
         //WHEN
         String serializedObject = contractRepository.loadSerializedContract(smcTxData.getContractAddress());
@@ -232,7 +232,6 @@ class SmcContractRepositoryTest {
         //GIVEN
         Transaction smcTransaction = mock(Transaction.class);
         when(smcTransaction.getAttachment()).thenReturn(smcPublishContractAttachment);
-        when(smcTransaction.getRecipientId()).thenReturn(smcTxData.getRecipientAddress().getLongId());
         when(smcTransaction.getSenderId()).thenReturn(smcTxData.getSenderAddress().getLongId());
         when(smcTransaction.getId()).thenReturn(TX_ID);
         //WHEN

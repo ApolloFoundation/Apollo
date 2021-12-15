@@ -4,9 +4,6 @@
 
 package com.apollocurrency.aplwallet.apl.core.transaction.messages;
 
-import com.apollocurrency.aplwallet.apl.util.rlp.RlpList;
-import com.apollocurrency.aplwallet.apl.util.rlp.RlpReader;
-import com.apollocurrency.aplwallet.apl.util.rlp.RlpWriteBuffer;
 import lombok.SneakyThrows;
 import org.json.simple.JSONObject;
 import org.json.simple.parser.JSONParser;
@@ -38,25 +35,6 @@ class SmcCallMethodAttachmentTest {
 
         //WHEN
         SmcCallMethodAttachment attachment = new SmcCallMethodAttachment(json);
-
-        //THEN
-        assertEquals(expected.getMethodName(), attachment.getMethodName());
-        assertEquals(expected.getMethodParams(), attachment.getMethodParams());
-    }
-
-    @Test
-    void putMyBytes_RlpWriter() {
-        //GIVEN
-        RlpWriteBuffer buffer = new RlpWriteBuffer();
-        RlpList.RlpListBuilder listBuilder = RlpList.builder();
-        expected.putBytes(listBuilder);
-        buffer.write(listBuilder.build());
-        byte[] input = buffer.toByteArray();
-
-        //WHEN
-        RlpReader reader = new RlpReader(input).readListReader().readListReader();
-        reader.readByte();//read appendix flag = 0x00
-        SmcCallMethodAttachment attachment = new SmcCallMethodAttachment(reader);
 
         //THEN
         assertEquals(expected.getMethodName(), attachment.getMethodName());

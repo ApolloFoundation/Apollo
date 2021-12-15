@@ -5,8 +5,6 @@
 package com.apollocurrency.aplwallet.apl.core.transaction.messages;
 
 import com.apollocurrency.aplwallet.apl.crypto.Convert;
-import com.apollocurrency.aplwallet.apl.util.rlp.RlpList;
-import com.apollocurrency.aplwallet.apl.util.rlp.RlpReader;
 import lombok.Getter;
 import org.json.simple.JSONObject;
 
@@ -22,12 +20,6 @@ public abstract class AbstractSmcAttachment extends AbstractAttachment {
     private final BigInteger fuelLimit;
     @Getter
     private final BigInteger fuelPrice;
-
-    AbstractSmcAttachment(RlpReader reader) {
-        super(reader);
-        this.fuelLimit = reader.readBigInteger();
-        this.fuelPrice = reader.readBigInteger();
-    }
 
     public AbstractSmcAttachment(BigInteger fuelLimit, BigInteger fuelPrice) {
         super();
@@ -54,13 +46,6 @@ public abstract class AbstractSmcAttachment extends AbstractAttachment {
     public void putMyJSON(JSONObject json) {
         json.put(FUEL_LIMIT_FIELD, this.fuelLimit.longValueExact());
         json.put(FUEL_PRICE_FIELD, this.fuelPrice.longValueExact());
-    }
-
-    @Override
-    public void putMyBytes(RlpList.RlpListBuilder builder) {
-        builder
-            .add(fuelLimit)
-            .add(fuelPrice);
     }
 
     @Override

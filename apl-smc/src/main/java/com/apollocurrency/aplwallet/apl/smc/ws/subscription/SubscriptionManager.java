@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2020-2021. Apollo Foundation.
+ * Copyright (c) 2021. Apollo Foundation.
  */
 
 package com.apollocurrency.aplwallet.apl.smc.ws.subscription;

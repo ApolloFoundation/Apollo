@@ -43,6 +43,7 @@ import com.apollocurrency.aplwallet.apl.core.transaction.types.smc.SmcPublishCon
 import com.apollocurrency.aplwallet.apl.core.transaction.types.update.CriticalUpdateTransactiionType;
 import com.apollocurrency.aplwallet.apl.core.transaction.types.update.ImportantUpdateTransactionType;
 import com.apollocurrency.aplwallet.apl.crypto.Convert;
+import com.apollocurrency.aplwallet.apl.util.env.config.Chain;
 import com.apollocurrency.aplwallet.apl.util.exception.AplException;
 import lombok.Getter;
 import lombok.NonNull;
@@ -81,6 +82,7 @@ import static com.apollocurrency.aplwallet.apl.data.IndexTestData.TRANSACTION_IN
 import static com.apollocurrency.aplwallet.apl.data.IndexTestData.TRANSACTION_INDEX_2;
 import static com.apollocurrency.aplwallet.apl.data.IndexTestData.TRANSACTION_INDEX_3;
 import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.when;
 
 public class TransactionTestData {
 
@@ -156,6 +158,8 @@ public class TransactionTestData {
 
     public TransactionTestData() {
         blockchainConfig = mock(BlockchainConfig.class);
+        Chain chain = mock(Chain.class);
+        when(blockchainConfig.getChain()).thenReturn(chain);
         fuelValidator = new SmcFuelValidator(blockchainConfig);
         smcConfig = new SmcConfig();
         blockchain = mock(Blockchain.class);

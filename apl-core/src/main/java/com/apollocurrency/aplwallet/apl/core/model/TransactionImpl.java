@@ -25,7 +25,6 @@ import com.apollocurrency.aplwallet.apl.util.io.Result;
 import lombok.NonNull;
 import lombok.extern.slf4j.Slf4j;
 
-import java.math.BigInteger;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
@@ -72,15 +71,6 @@ public class TransactionImpl implements Transaction {
     private volatile byte[] fullHash;
     private volatile String errorMessage;
     private volatile boolean hasValidSignature = false;
-    /**
-     * Transaction V3 properties
-     */
-    /*private final String chainId;
-    private final BigInteger nonce;
-    private final BigInteger amount;
-    private final BigInteger fuelLimit;
-    private final BigInteger fuelPrice;
-    private final long longTimestamp;*/
 
     TransactionImpl(BuilderImpl builder) {
 
@@ -575,24 +565,19 @@ public class TransactionImpl implements Transaction {
         private short index = -1;
         private String errorMessage;
 
+        /**
+         * Map of allowed transaction appendixes.
+         * Used in builder to make a routine of transaction building more simple.
+         */
         private final Map<Class<? extends AbstractAppendix>, Consumer<AbstractAppendix>> appendagesMap = Map.of(
             MessageAppendix.class, appendix -> message = (MessageAppendix) appendix,
-            EncryptedMessageAppendix.class, appendix -> encryptedMessage= (EncryptedMessageAppendix) appendix,
+            EncryptedMessageAppendix.class, appendix -> encryptedMessage = (EncryptedMessageAppendix) appendix,
             EncryptToSelfMessageAppendix.class, appendix -> encryptToSelfMessage = (EncryptToSelfMessageAppendix) appendix,
             PublicKeyAnnouncementAppendix.class, appendix -> publicKeyAnnouncement = (PublicKeyAnnouncementAppendix) appendix,
             PrunablePlainMessageAppendix.class, appendix -> prunablePlainMessage = (PrunablePlainMessageAppendix) appendix,
             PrunableEncryptedMessageAppendix.class, appendix -> prunableEncryptedMessage = (PrunableEncryptedMessageAppendix) appendix,
             PhasingAppendix.class, appendix -> phasing = (PhasingAppendix) appendix
         );
-
-        /**
-         * Transaction V3 properties
-         */
-        /*private String chainId;
-        private BigInteger nonce;
-        private BigInteger amount;
-        private BigInteger fuelLimit;
-        private BigInteger fuelPrice;*/
 
         public BuilderImpl(byte version, byte[] senderPublicKey, long amountATM, long feeATM, short deadline,
                            AbstractAttachment attachment, int timestamp, TransactionType transactionType) {
@@ -607,22 +592,6 @@ public class TransactionImpl implements Transaction {
                 throw new IllegalArgumentException("Timestamp cannot be less than 0");
             }
             this.timestamp = timestamp;
-        }
-
-        public BuilderImpl(String chainId,
-                           TransactionType transactionType, byte version,
-                           byte[] senderPublicKey, BigInteger nonce,
-                           BigInteger amount, BigInteger fuelLimit, BigInteger fuelPrice,
-                           int deadline, long timestamp,
-                           AbstractAttachment attachment ) {
-
-            this(version, senderPublicKey, amount.longValueExact(), fuelLimit.multiply(fuelPrice).longValueExact(),
-                (short) deadline, attachment, (int) timestamp, transactionType);
-            /*this.chainId = chainId;
-            this.nonce = nonce;
-            this.amount = amount;
-            this.fuelLimit = fuelLimit;
-            this.fuelPrice = fuelPrice;*/
         }
 
         @Override

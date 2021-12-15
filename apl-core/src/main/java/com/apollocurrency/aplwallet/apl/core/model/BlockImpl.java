@@ -271,9 +271,7 @@ public final class BlockImpl implements Block {
     @Override
     public long getGeneratorId() {
         if (generatorId == 0) {
-            String error = "GeneratorId should be assigned !";
-            log.error(error);
-            throw new AplBlockException(error, this);
+            throw new AplBlockException("GeneratorId should be assigned !", this);
         }
         return generatorId;
     }

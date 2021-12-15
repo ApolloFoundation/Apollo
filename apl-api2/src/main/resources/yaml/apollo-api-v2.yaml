@@ -630,12 +630,12 @@ paths:
     post:
       tags:
         - smc
-      summary: Returns signed PublishContract transaction
+      summary: Create an unsigned PublishContract transaction
       description: |
-        Returns signed PublishContract transaction as a byte array.
+        Returns an unsigned PublishContract transaction as a byte array.
       operationId: createPublishContractTx
       requestBody:
-        description: the contract source and constructor paramters
+        description: the contract source and constructor parameters
         content:
           application/json:
             schema:
@@ -648,27 +648,21 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/TransactionArrayResp'
-        401:
-          description: Unauthorized Error
-        403:
-          description: Access Forbidden
         400:
           $ref: '#/components/responses/BadRequest'
         500:
           $ref: '#/components/responses/ServerError'
-      security:
-        - bearerAuth: [ ]
 
   /@@smc/validate:
     post:
       tags:
         - smc
-      summary: Validate the smart contract
+      summary: Validate the smart contract source code
       description: |
-        Validate the smart contract.
+        Validate the smart contract source code, check syntax errors etc.
       operationId: validatePublishContractTx
       requestBody:
-        description: the contract source and constructor paramters
+        description: the contract source and constructor parameters
         content:
           application/json:
             schema:
@@ -681,16 +675,10 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/BaseResponse'
-        401:
-          description: Unauthorized Error
-        403:
-          description: Access Forbidden
         400:
           $ref: '#/components/responses/BadRequest'
         500:
           $ref: '#/components/responses/ServerError'
-      security:
-        - bearerAuth: [ ]
 
   /@@smc/method/call:
     post:
@@ -701,7 +689,7 @@ paths:
         Returns signed transaction to call the contract method.
       operationId: createCallContractMethodTx
       requestBody:
-        description: the contract method and method paramters
+        description: the contract method and method parameters
         content:
           application/json:
             schema:
@@ -714,27 +702,21 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/TransactionArrayResp'
-        401:
-          description: Unauthorized Error
-        403:
-          description: Access Forbidden
         400:
           $ref: '#/components/responses/BadRequest'
         500:
           $ref: '#/components/responses/ServerError'
-      security:
-        - bearerAuth: [ ]
 
   /@@smc/method/validate:
     post:
       tags:
         - smc
-      summary: Validate the method calling
+      summary: Validate the source code of the method calling
       description: |
-        Validate the methdo calling.
+        Validate the source code of the method calling, check syntax errors etc.
       operationId: validateCallContractMethodTx
       requestBody:
-        description: the contract method and method paramters
+        description: the contract method and method parameters
         content:
           application/json:
             schema:
@@ -747,23 +729,17 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/BaseResponse'
-        401:
-          description: Unauthorized Error
-        403:
-          description: Access Forbidden
         400:
           $ref: '#/components/responses/BadRequest'
         500:
           $ref: '#/components/responses/ServerError'
-      security:
-        - bearerAuth: [ ]
 
   /@@smc/method/read:
     post:
       tags:
         - smc
-      summary: call view method of the smartcontract
-      description: call view method of the smartcontract and return value.
+      summary: read the smart contract
+      description: read the smart contract and return result value.
       operationId: callViewMethod
       requestBody:
         content:
@@ -777,10 +753,6 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/ResultValueResponse'
-        401:
-          description: Unauthorized Error
-        403:
-          description: Access Forbidden
         400:
           $ref: '#/components/responses/BadRequest'
         500:
@@ -790,8 +762,8 @@ paths:
     get:
       tags:
         - smc
-      summary: Get list of the smartcontract objects given account id.
-      description: Return the list of the smart contracts by account id.
+      summary: Get a list of the smart contracts published by a certain account.
+      description: Return a list of the smart contracts published by a certain account.
       operationId: getSmcByOwnerAccount
       parameters:
         - name: account
@@ -819,8 +791,8 @@ paths:
     get:
       tags:
         - smc
-      summary: Get list of detail contract information.
-      description: Returns list of the detail contract information.
+      summary: Get list of the smart contract details
+      description: Returns list of the smart contract details
       operationId: getSmcList
       parameters:
         - name: address
@@ -866,7 +838,7 @@ paths:
           schema:
             type: string
             format: int64
-            example: 387615916963 or 0x34a11bc0012
+            example: 387615916963
         - name: status
           in: query
           description: The contract status
@@ -894,8 +866,8 @@ paths:
     get:
       tags:
         - smc
-      summary: Get detail contract information given address.
-      description: Returns detail contract information.
+      summary: Get the smart contract details given address.
+      description: Returns the smart contract details given address.
       operationId: getSmcByAddress
       parameters:
         - name: address
@@ -1051,7 +1023,7 @@ paths:
         - smc
         - asr
       summary: Get the contract constructor of the given ASR module.
-      description: Returns the contract constructur
+      description: Returns the contract constructor
       operationId: getAsrModuleInitSpec
       parameters:
         - name: module
@@ -1092,8 +1064,8 @@ paths:
       tags:
         - smc
         - asr
-      summary: Get the ASR module source.
-      description: Returns the source of the ASR module
+      summary: Get the ASR module source code.
+      description: Returns the source code of the ASR module
       operationId: getAsrModuleSource
       parameters:
         - name: module
@@ -1171,16 +1143,15 @@ paths:
         500:
           $ref: '#/components/responses/ServerError'
 
-  /@@smc/debug/{address}:
+  /@@smc/conversion/{address}:
     get:
       tags:
         - smc
-      summary: Get the address value as a hex string.
-      description: Returns the given address as a hex string. Valid input formats are Reed-Solomone code, long and unsigned long
+      summary: Returns the given address in four formats a hex, Reed-Solomone code, long and unsigned long string.
+      description: Returns the given address in four formats a hex, Reed-Solomone code, long and unsigned long string. Valid input formats are hex, Reed-Solomone code, long and unsigned long
       operationId: parseAddress
       parameters:
         - name: address
-
           in: path
           description: The contract address
           required: true
@@ -1307,7 +1278,7 @@ components:
         amount:
           type: integer
           format: int64
-          description: the amount
+          description: the amount of ATM
 
     AccountReqTest:
       required:
@@ -1347,7 +1318,7 @@ components:
           type: string
           example: 18446744072474983726
         hex:
-          description: hex value
+          description: hex value of account number
           type: string
           example: 0xffffffffb669fd2e
 
@@ -1468,8 +1439,8 @@ components:
           properties:
             chainid:
               type: string
-              format: hex_bytearray
-              example: 'a2e9b946290b48b69985dc2e5a5860a1'
+              format: uuid
+              example: '3fecf3bd-86a3-436b-a1d6-41eefc0bd1c6'
             ticker:
               type: string
               example: 'USDS'
@@ -1670,11 +1641,11 @@ components:
         fuelLimit:
           type: string
           description: the scalar value equal to the maximum amount of fuel; fuel limit
-          example: '5000'
+          example: '5000000'
         fuelPrice:
           type: string
           description: the scalar value equal to the number of ATM; fuel price
-          example: '100'
+          example: '10000'
 
     CallMethodResult:
       type: object
@@ -1740,12 +1711,12 @@ components:
           type: string
           format: hex_bytearray
           description: transaction full hash
-          example: 'AAAAA1890E76C111110991287364128736487136458713645871628756000066'
+          example: '569e87c6a14e8fbb9830df24227d77cea23e8af64df0fec83fbbe490c9dd7367'
         fullHash:
           type: string
           format: hex_bytearray
           description: transaction full hash
-          example: 'B98CB1890E76C772A10994B210ED9CF7F9A5488672A5D82C2734BBF9D11505D1'
+          example: 'bcf47c41cd01bb7da6e2ca0cdb098f69c6d6e833592c48c17dac69a4dd0416ef'
         timestamp:
           type: integer
           format: int64
@@ -2251,11 +2222,11 @@ components:
         fuelLimit:
           type: string
           description: the fuel value
-          example: '5000'
+          example: '5000000'
         fuelPrice:
           type: string
           description: the fuel price value
-          example: '100'
+          example: '10000'
 
     QueryCountResult:
       allOf:

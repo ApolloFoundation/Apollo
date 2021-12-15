@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2018-2020. Apollo Foundation.
+ * Copyright (c) 2021. Apollo Foundation.
  */
 
 package com.apollocurrency.aplwallet.apl.core.transaction.types.smc;
@@ -99,11 +99,6 @@ public abstract class AbstractSmcTransactionType extends TransactionType {
     }
 
     @Override
-    public boolean canHaveRecipient() {
-        return true;
-    }
-
-    @Override
     public final void doStateIndependentValidation(Transaction transaction) throws AplUnacceptableTransactionValidationException {
         checkPrecondition(transaction);
         AbstractSmcAttachment attachment = (AbstractSmcAttachment) transaction.getAttachment();
@@ -114,13 +109,12 @@ public abstract class AbstractSmcTransactionType extends TransactionType {
     public abstract void executeStateIndependentValidation(Transaction transaction, AbstractSmcAttachment abstractSmcAttachment) throws AplUnacceptableTransactionValidationException;
 
     private void checkPrecondition(Transaction smcTransaction) {
+        if (smcTransaction.getVersion() < 2) {
+            log.error("Inconsistent transaction fields, the '{}' transaction type doesn't match the transaction version.", getSpec().getCompatibleName());
+            throw new AplUnacceptableTransactionValidationException("Unsupported transaction version: " + smcTransaction.getVersion(), smcTransaction);
+        }
         if (!getBlockchainConfig().isSmcTransactionsActiveAtHeight(blockchain.getHeight())) {
             throw new AplTransactionFeatureNotEnabledException("'Smart-contract transactions'", smcTransaction);
-        }
-        smcTransaction.getAttachment().getTransactionTypeSpec();
-        if (smcTransaction.getAttachment().getTransactionTypeSpec() != getSpec()) {
-            log.error("Invalid transaction attachment, txType={} txId={}", smcTransaction.getType(), smcTransaction.getId());
-            throw new AplUnacceptableTransactionValidationException("Invalid transaction attachment: " + smcTransaction.getAttachment().getTransactionTypeSpec(), smcTransaction);
         }
     }
 /*

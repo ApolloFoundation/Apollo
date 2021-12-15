@@ -24,10 +24,21 @@ public interface ContractToolService {
 
     /**
      * Creates a new smart contract instance. That one is not persisted in the blockchain.
+     * The address of the smart contract is a transaction id.
      *
      * @param smcTransaction blockchain transaction instance
      * @return smart contract instance
      */
     SmartContract createNewContract(Transaction smcTransaction);
+
+    /**
+     * Creates a mock smart contract instance. That one is not persisted in the blockchain.
+     * This address of this smart contract instance is ZERO address.
+     * This one used for contract source code validation.
+     *
+     * @param smcTransaction blockchain transaction instance
+     * @return smart contract instance
+     */
+    SmartContract createMockContract(Transaction smcTransaction);
 
 }

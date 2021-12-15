@@ -130,29 +130,6 @@ public interface Transaction {
 
     long getECBlockId();
 
-    /**
-     * Transaction V3 properties
-     */
-    //String getChainId();
-
-    /**
-     * the number of transactions sent by the sender
-     * @return the number of transactions sent by the sender
-     */
-    //BigInteger getNonce();
-
-    //BigInteger getAmount();//long:getAmountATM
-
-    //BigInteger getFuelPrice();
-    //BigInteger getFuelLimit();
-
-    //long getLongTimestamp();//int getTimestamp
-
-    /**
-     * end V3 properties
-     **/
-
-
     boolean ofType(TransactionTypes.TransactionTypeSpec spec);
 
     default boolean isNotOfType(TransactionTypes.TransactionTypeSpec spec){

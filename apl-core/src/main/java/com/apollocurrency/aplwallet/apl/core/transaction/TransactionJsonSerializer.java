@@ -15,15 +15,5 @@ public interface TransactionJsonSerializer {
 
     JSONObject toJson(Transaction transaction);
 
-    /**
-     * Only use for tests.
-     *
-     * @param transaction the given transaction
-     * @return serialized transaction as a JSONObject
-     * @deprecated
-     */
-    @Deprecated(forRemoval = true)
-    JSONObject toLegacyJsonFormat(Transaction transaction);
-
     JSONObject getPrunableAttachmentJSON(Transaction transaction);
 }

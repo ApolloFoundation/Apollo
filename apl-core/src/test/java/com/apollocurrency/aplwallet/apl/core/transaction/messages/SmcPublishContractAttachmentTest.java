@@ -4,9 +4,6 @@
 
 package com.apollocurrency.aplwallet.apl.core.transaction.messages;
 
-import com.apollocurrency.aplwallet.apl.util.rlp.RlpList;
-import com.apollocurrency.aplwallet.apl.util.rlp.RlpReader;
-import com.apollocurrency.aplwallet.apl.util.rlp.RlpWriteBuffer;
 import lombok.SneakyThrows;
 import org.json.simple.JSONObject;
 import org.junit.jupiter.api.Test;
@@ -40,27 +37,6 @@ class SmcPublishContractAttachmentTest {
 
         //WHEN
         SmcPublishContractAttachment attachment = new SmcPublishContractAttachment(json);
-
-        //THEN
-        assertEquals(expected.getContractName(), attachment.getContractName());
-        assertEquals(expected.getContractSource(), attachment.getContractSource());
-        assertEquals(expected.getConstructorParams(), attachment.getConstructorParams());
-        assertEquals(expected.getLanguageName(), attachment.getLanguageName());
-    }
-
-    @Test
-    void putMyBytesToRlpWriter() {
-        //GIVEN
-        RlpWriteBuffer buffer = new RlpWriteBuffer();
-        RlpList.RlpListBuilder listBuilder = RlpList.builder();
-        expected.putBytes(listBuilder);
-        buffer.write(listBuilder.build());
-        byte[] input = buffer.toByteArray();
-
-        //WHEN
-        RlpReader reader = new RlpReader(input).readListReader().readListReader();
-        reader.readByte();//read appendix flag = 0x00
-        SmcPublishContractAttachment attachment = new SmcPublishContractAttachment(reader);
 
         //THEN
         assertEquals(expected.getContractName(), attachment.getContractName());

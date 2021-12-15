@@ -5,34 +5,22 @@
 package com.apollocurrency.aplwallet.apl.core.service.state.account;
 
 import com.apollocurrency.aplwallet.apl.core.app.GenesisImporter;
-import com.apollocurrency.aplwallet.apl.core.model.Block;
 import com.apollocurrency.aplwallet.apl.core.entity.state.account.Account;
 import com.apollocurrency.aplwallet.apl.core.entity.state.account.LedgerEvent;
 import com.apollocurrency.aplwallet.apl.core.entity.state.account.PublicKey;
 import com.apollocurrency.aplwallet.apl.core.exception.DoubleSpendingException;
 import com.apollocurrency.aplwallet.apl.core.model.Balances;
+import com.apollocurrency.aplwallet.apl.core.model.Block;
 import com.apollocurrency.aplwallet.apl.crypto.AplIdGenerator;
 import com.apollocurrency.aplwallet.apl.crypto.Crypto;
-import com.apollocurrency.aplwallet.apl.util.Convert2;
 import com.apollocurrency.aplwallet.apl.util.db.DbIterator;
 
-import java.nio.charset.StandardCharsets;
 import java.util.List;
 
 /**
  * @author andrew.zinchenko@gmail.com
  */
 public interface AccountService {
-
-    static byte[] generatePublicKey(Account account, String salt) {
-        return Crypto.getPublicKey(
-            Crypto.getKeySeed(
-                Convert2.rsAccount(account.getId())                             // account reference
-                , account.getNonce().toByteArray()                              // nonce
-                , Crypto.sha256().digest(salt.getBytes(StandardCharsets.UTF_8)) // salt
-            )
-        );
-    }
 
     static long getId(byte[] publicKey) {
         byte[] publicKeyHash = Crypto.sha256().digest(publicKey);
@@ -146,6 +134,4 @@ public interface AccountService {
      * @return created account
      */
     Account addAccount(long id, boolean isGenesis);
-
-    void logAccountLedger(Account account, LedgerEvent event, long eventId, long change);
 }

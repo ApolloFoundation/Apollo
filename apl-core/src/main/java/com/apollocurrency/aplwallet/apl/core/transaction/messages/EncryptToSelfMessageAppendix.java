@@ -7,7 +7,6 @@ package com.apollocurrency.aplwallet.apl.core.transaction.messages;
 import com.apollocurrency.aplwallet.apl.core.model.Transaction;
 import com.apollocurrency.aplwallet.apl.crypto.EncryptedData;
 import com.apollocurrency.aplwallet.apl.util.exception.AplException;
-import com.apollocurrency.aplwallet.apl.util.rlp.RlpReader;
 import org.json.simple.JSONObject;
 
 import java.nio.ByteBuffer;
@@ -20,10 +19,6 @@ public class EncryptToSelfMessageAppendix extends AbstractEncryptedMessageAppend
 
     public EncryptToSelfMessageAppendix(ByteBuffer buffer) throws AplException.NotValidException {
         super(buffer);
-    }
-
-    public EncryptToSelfMessageAppendix(RlpReader reader) {
-        super(reader);
     }
 
     public EncryptToSelfMessageAppendix(JSONObject attachmentData) {

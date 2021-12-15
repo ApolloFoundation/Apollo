@@ -1,5 +1,5 @@
 /*
- * Copyright (c)  2018-2020. Apollo Foundation.
+ * Copyright (c)  2020-2021. Apollo Foundation.
  */
 
 package com.apollocurrency.aplwallet.apl.core.signature;
@@ -27,21 +27,20 @@ import java.util.Set;
 public class SignatureToolFactory {
 
     //TODO: read from properties, example: "elliptic-curve=Curve25519", "pk-size=32"
-    private static final List<String> DEFAULT_MULTISIG_V3_PARAMS = List.of();
+    private static final List<String> DEFAULT_MULTISIG_PARAMS = List.of();
 
-    private static final SignatureVerifier multiSigValidator = new MultiSigVerifierImpl(DEFAULT_MULTISIG_V3_PARAMS);
+    private static final SignatureVerifier multiSigValidator = new MultiSigVerifierImpl(DEFAULT_MULTISIG_PARAMS);
 
     private static final SignatureVerifier[] validators = new SignatureVerifier[]
         {new SignatureVerifierV1(), multiSigValidator, multiSigValidator};
 
     private static final SignatureParser[] parsers = new SignatureParser[]
-        {new SigData.Parser(), new MultiSigData.Parser(), new MultiSigData.ParserV3()};
+        {new SigData.Parser(), new MultiSigData.Parser()};
 
-    private static final DocumentSigner[] docSigners = new DocumentSigner[] {
-            new DocumentSignerV1()
-            , new MultiSigSigner(parsers[1], DEFAULT_MULTISIG_V3_PARAMS)
-            , new MultiSigSigner(parsers[2], DEFAULT_MULTISIG_V3_PARAMS)
-        };
+    private static final DocumentSigner[] docSigners = new DocumentSigner[]{
+        new DocumentSignerV1()
+        , new MultiSigSigner(parsers[1], DEFAULT_MULTISIG_PARAMS)
+    };
 
     public static Signature createSignature(byte[] signature) {
         return new SigData(Objects.requireNonNull(signature));
@@ -54,7 +53,6 @@ public class SignatureToolFactory {
             case 1:
                 return new SignatureCredential(keys[0]);
             case 2:
-            case 3:
                 return new MultiSigCredential(keys.length, keys);
             default:
                 throw new UnsupportedTransactionVersion("Can't crate credential a given transaction version: " + transactionVersion);

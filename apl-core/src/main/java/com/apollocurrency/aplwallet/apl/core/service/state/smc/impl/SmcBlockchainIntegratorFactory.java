@@ -73,7 +73,15 @@ public class SmcBlockchainIntegratorFactory {
     private final HashSumProvider hashSumProvider;
 
     @Inject
-    public SmcBlockchainIntegratorFactory(AccountService accountService, Blockchain blockchain, ServerInfoService serverInfoService, SmcContractRepository contractService, ContractToolService contractToolService, SmcMappingRepositoryClassFactory smcMappingRepositoryClassFactory, SmcContractEventManagerClassFactory smcContractEventManagerClassFactory, TxLogProcessor txLogProcessor, HashSumProvider hashSumProvider) {
+    public SmcBlockchainIntegratorFactory(AccountService accountService,
+                                          Blockchain blockchain,
+                                          ServerInfoService serverInfoService,
+                                          SmcContractRepository contractService,
+                                          ContractToolService contractToolService,
+                                          SmcMappingRepositoryClassFactory smcMappingRepositoryClassFactory,
+                                          SmcContractEventManagerClassFactory smcContractEventManagerClassFactory,
+                                          TxLogProcessor txLogProcessor,
+                                          HashSumProvider hashSumProvider) {
         this.accountService = Objects.requireNonNull(accountService);
         this.blockchain = Objects.requireNonNull(blockchain);
         this.serverInfoService = Objects.requireNonNull(serverInfoService);
@@ -115,34 +123,12 @@ public class SmcBlockchainIntegratorFactory {
             new SmcInMemoryAccountService(accountService));
     }
 
-    private class ReadonlyIntegrator implements BlockchainIntegrator {
+    private abstract class BaseIntegrator implements BlockchainIntegrator {
 
         final InMemoryAccountService inMemoryAccountService;
 
-        public ReadonlyIntegrator(InMemoryAccountService inMemoryAccountService) {
+        public BaseIntegrator(InMemoryAccountService inMemoryAccountService) {
             this.inMemoryAccountService = inMemoryAccountService;
-        }
-
-        private static final String READONLY_INTEGRATOR = "Readonly integrator.";
-
-        @Override
-        public TxLog txLogger() {
-            return new DevNullLog();//it's suitable for the ReadOnly integrator
-        }
-
-        @Override
-        public void commit() {
-            //nothing to do
-        }
-
-        @Override
-        public OperationReceipt sendMessage(Address contract, Address from, Address to, SmartMethod data) {
-            throw new UnsupportedOperationException(READONLY_INTEGRATOR);
-        }
-
-        @Override
-        public OperationReceipt sendMoney(Address contract, Address fromAdr, Address toAdr, BigInteger value) {
-            throw new UnsupportedOperationException(READONLY_INTEGRATOR);
         }
 
         @Override
@@ -181,21 +167,6 @@ public class SmcBlockchainIntegratorFactory {
         }
 
         @Override
-        public ContractBlockchainTransaction getBlockchainTransaction() {
-            throw new UnsupportedOperationException(READONLY_INTEGRATOR);
-        }
-
-        @Override
-        public ContractMappingRepositoryFactory createMappingFactory(Address contract) {
-            return smcMappingRepositoryClassFactory.createReadonlyMappingFactory(contract);
-        }
-
-        @Override
-        public ContractEventManager createEventManager(Address contract) {
-            return smcContractEventManagerClassFactory.createMockEventManagerFactory().create(contract);
-        }
-
-        @Override
         public SmartContract loadSmartContract(Address contractAddress, Address originator, Address caller, Fuel contractFuel) {
             return contractService.loadContract(contractAddress, originator, caller, contractFuel);
         }
@@ -212,7 +183,51 @@ public class SmcBlockchainIntegratorFactory {
         }
     }
 
-    private class FullIntegrator extends ReadonlyIntegrator {
+    private class ReadonlyIntegrator extends BaseIntegrator {
+        private static final String READONLY_INTEGRATOR = "Readonly integrator.";
+
+        public ReadonlyIntegrator(InMemoryAccountService inMemoryAccountService) {
+            super(inMemoryAccountService);
+        }
+
+        @Override
+        public TxLog txLogger() {
+            return new DevNullLog();//it's suitable for ReadOnly integrator
+        }
+
+        @Override
+        public void commit() {
+            //nothing to do
+        }
+
+        @Override
+        public OperationReceipt sendMessage(Address contract, Address from, Address to, SmartMethod data) {
+            throw new UnsupportedOperationException(READONLY_INTEGRATOR);
+        }
+
+        @Override
+        public OperationReceipt sendMoney(Address contract, Address fromAdr, Address toAdr, BigInteger value) {
+            throw new UnsupportedOperationException(READONLY_INTEGRATOR);
+        }
+
+        @Override
+        public ContractBlockchainTransaction getBlockchainTransaction() {
+            throw new UnsupportedOperationException(READONLY_INTEGRATOR);
+        }
+
+        @Override
+        public ContractMappingRepositoryFactory createMappingFactory(Address contract) {
+            return smcMappingRepositoryClassFactory.createReadonlyMappingFactory(contract);
+        }
+
+        @Override
+        public ContractEventManager createEventManager(Address contract) {
+            return smcContractEventManagerClassFactory.createMockEventManagerFactory().create(contract);
+        }
+
+    }
+
+    private class FullIntegrator extends BaseIntegrator {
 
         final long originatorTransactionId;
         final Account txSenderAccount;

@@ -16,8 +16,7 @@ public class TxBContextImpl extends TxBContext {
     @Getter
     private final Chain chain;
 
-    private TxSerializer txSerializerV2;
-    private TxSerializer txSerializerV3;
+    private volatile TxSerializer txSerializerV2;
 
     protected TxBContextImpl(Chain chain) {
         Objects.requireNonNull(chain);
@@ -38,16 +37,6 @@ public class TxBContextImpl extends TxBContext {
                     }
                 }
                 return txSerializerV2;
-
-            case 3:
-                if (txSerializerV3 == null) {
-                    synchronized (this) {
-                        if (txSerializerV3 == null) {
-                            txSerializerV3 = new TxSerializerV3Impl(this);
-                        }
-                    }
-                }
-                return txSerializerV3;
             default:
                 throw new IllegalArgumentException("Illegal transaction version: " + version);
         }

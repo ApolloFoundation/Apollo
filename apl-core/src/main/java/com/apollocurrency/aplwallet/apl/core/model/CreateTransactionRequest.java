@@ -55,13 +55,4 @@ public class CreateTransactionRequest {
 
     private Attachment attachment;
 
-    /**
-     * Transaction V3 properties
-     */
-    /*private String chainId;
-    private BigInteger nonce;
-    private BigInteger amount;
-    private BigInteger fuelLimit;
-    private BigInteger fuelPrice;*/
-
 }

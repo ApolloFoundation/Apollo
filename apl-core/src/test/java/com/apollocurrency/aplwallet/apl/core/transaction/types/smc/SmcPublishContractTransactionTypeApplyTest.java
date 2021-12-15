@@ -88,10 +88,7 @@ class SmcPublishContractTransactionTypeApplyTest extends AbstractSmcTransactionT
         long senderAccountId = Convert.parseAccountId(txData.getSender());
         Account account = new Account(senderAccountId, 100_000_00000000L, 100_000_00000000L, 100_000_00000000L, 0L, 10);
 
-        byte[] recipientPublicKey = AccountService.generatePublicKey(account, attachment.getContractSource());
-        long recipientId = AccountService.getId(recipientPublicKey);
-
-        Transaction newTx = createTransaction(txData, attachment, account, recipientPublicKey, recipientId);
+        Transaction newTx = createTransaction(txData, attachment, account);
         assertNotNull(newTx);
         newTx.setBlock(lastBlock);
 
@@ -103,7 +100,7 @@ class SmcPublishContractTransactionTypeApplyTest extends AbstractSmcTransactionT
         //WHEN
         DbUtils.inTransaction(extension, connection -> txApplier.apply(newTx));
         AplAddress contractAddress = new AplAddress(newTx.getRecipientId());
-        SmartContract smartContract = contractService.loadContract(
+        SmartContract smartContract = contractRepository.loadContract(
             contractAddress,
             new AplAddress(newTx.getSenderId()),
             new AplAddress(newTx.getSenderId()),
@@ -146,10 +143,7 @@ class SmcPublishContractTransactionTypeApplyTest extends AbstractSmcTransactionT
         long senderAccountId = Convert.parseAccountId(txData.getSender());
         Account account = new Account(senderAccountId, 100_000_00000000L, 100_000_00000000L, 100_000_00000000L, 0L, 10);
 
-        byte[] recipientPublicKey = AccountService.generatePublicKey(account, attachment.getContractSource());
-        long recipientId = AccountService.getId(recipientPublicKey);
-
-        Transaction newTx = createTransaction(txData, attachment, account, recipientPublicKey, recipientId);
+        Transaction newTx = createTransaction(txData, attachment, account);
         assertNotNull(newTx);
         newTx.setBlock(lastBlock);
 
@@ -203,10 +197,7 @@ class SmcPublishContractTransactionTypeApplyTest extends AbstractSmcTransactionT
         long senderAccountId = Convert.parseAccountId(txData1.getSender());
         Account account = new Account(senderAccountId, 100_000_00000000L, 100_000_00000000L, 100_000_00000000L, 0L, 10);
 
-        byte[] recipientPublicKey = AccountService.generatePublicKey(account, attachment.getContractSource());
-        long recipientId = AccountService.getId(recipientPublicKey);
-
-        Transaction newTx = createTransaction(txData1, attachment, account, recipientPublicKey, recipientId);
+        Transaction newTx = createTransaction(txData1, attachment, account);
         assertNotNull(newTx);
         newTx.setBlock(lastBlock);
 
@@ -218,7 +209,7 @@ class SmcPublishContractTransactionTypeApplyTest extends AbstractSmcTransactionT
         //WHEN
         DbUtils.inTransaction(extension, connection -> txApplier.apply(newTx));
         AplAddress contractAddress = new AplAddress(newTx.getRecipientId());
-        SmartContract smartContract = contractService.loadContract(
+        SmartContract smartContract = contractRepository.loadContract(
             contractAddress,
             new AplAddress(newTx.getSenderId()),
             new AplAddress(newTx.getSenderId()),
@@ -233,7 +224,6 @@ class SmcPublishContractTransactionTypeApplyTest extends AbstractSmcTransactionT
         SmcTxData txData2 = SmcTxData.builder()
             .sender(senderAccount2RS)
             .recipient(Convert.defaultRsAccount(newTx.getRecipientId()))
-            .recipientPublicKey(Convert.toHexString(recipientPublicKey))
             .method("set")
             .params(Collections.emptyList())
             .amountATM(0L)
@@ -252,7 +242,7 @@ class SmcPublishContractTransactionTypeApplyTest extends AbstractSmcTransactionT
 
         Account account2 = new Account(senderAccountId2, 10_000_000_00000000L, 10_000_000_00000000L, 1000000000L, 0L, 1);
 
-        Transaction newTx2 = createTransaction(txData2, attachment2, account2, Convert.parseHexString(txData2.getRecipientPublicKey()), Convert.parseAccountId(txData2.getRecipient()));
+        Transaction newTx2 = createTransaction(txData2, attachment2, account2);
         assertNotNull(newTx2);
         newTx2.setBlock(lastBlock);
 
@@ -264,7 +254,7 @@ class SmcPublishContractTransactionTypeApplyTest extends AbstractSmcTransactionT
         //WHEN
         DbUtils.inTransaction(extension, connection -> txApplier.apply(newTx2));
         AplAddress contractAddress2 = new AplAddress(newTx2.getRecipientId());
-        SmartContract smartContract2 = contractService.loadContract(
+        SmartContract smartContract2 = contractRepository.loadContract(
             contractAddress,
             new AplAddress(newTx2.getSenderId()),
             new AplAddress(newTx2.getSenderId()),
@@ -279,7 +269,6 @@ class SmcPublishContractTransactionTypeApplyTest extends AbstractSmcTransactionT
         SmcTxData txData3 = SmcTxData.builder()
             .sender(senderAccount2RS)
             .recipient(Convert.defaultRsAccount(newTx.getRecipientId()))
-            .recipientPublicKey(Convert.toHexString(recipientPublicKey))
             .method("read")
             .params(Collections.emptyList())
             .fuelLimit(15_000_000L)
@@ -297,7 +286,7 @@ class SmcPublishContractTransactionTypeApplyTest extends AbstractSmcTransactionT
         long senderAccountId3 = Convert.parseAccountId(txData3.getSender());
         Account account3 = new Account(senderAccountId3, 10_000_000_00000000L, 10_000_000_00000000L, 1000000000L, 0L, 1);
 
-        Transaction newTx3 = createTransaction(txData3, attachment3, account3, Convert.parseHexString(txData3.getRecipientPublicKey()), Convert.parseAccountId(txData3.getRecipient()));
+        Transaction newTx3 = createTransaction(txData3, attachment3, account3);
         assertNotNull(newTx3);
         newTx3.setBlock(lastBlock);
 
@@ -309,7 +298,7 @@ class SmcPublishContractTransactionTypeApplyTest extends AbstractSmcTransactionT
         //WHEN
         DbUtils.inTransaction(extension, connection -> txApplier.apply(newTx3));
         AplAddress contractAddress3 = new AplAddress(newTx3.getRecipientId());
-        SmartContract smartContract3 = contractService.loadContract(
+        SmartContract smartContract3 = contractRepository.loadContract(
             contractAddress3,
             new AplAddress(newTx3.getSenderId()),
             new AplAddress(newTx3.getSenderId()),

@@ -63,6 +63,7 @@ import com.apollocurrency.aplwallet.apl.core.service.state.account.impl.AccountP
 import com.apollocurrency.aplwallet.apl.core.service.state.account.impl.AccountServiceImpl;
 import com.apollocurrency.aplwallet.apl.core.service.state.smc.ContractToolService;
 import com.apollocurrency.aplwallet.apl.core.service.state.smc.SmcContractRepository;
+import com.apollocurrency.aplwallet.apl.core.service.state.smc.SmcContractService;
 import com.apollocurrency.aplwallet.apl.core.service.state.smc.SmcFuelValidator;
 import com.apollocurrency.aplwallet.apl.core.service.state.smc.event.SmcContractEventManagerClassFactory;
 import com.apollocurrency.aplwallet.apl.core.service.state.smc.impl.SmcBlockchainIntegratorFactory;
@@ -83,11 +84,10 @@ import com.apollocurrency.aplwallet.apl.core.transaction.TransactionVersionValid
 import com.apollocurrency.aplwallet.apl.core.transaction.common.TxBContext;
 import com.apollocurrency.aplwallet.apl.core.transaction.messages.AbstractSmcAttachment;
 import com.apollocurrency.aplwallet.apl.core.transaction.messages.AppendixApplierRegistry;
-import com.apollocurrency.aplwallet.apl.core.transaction.messages.AppendixApplierRegistryHelper;
+import com.apollocurrency.aplwallet.apl.core.transaction.messages.AppendixApplierRegistryInitializer;
 import com.apollocurrency.aplwallet.apl.core.transaction.messages.AppendixValidatorRegistry;
 import com.apollocurrency.aplwallet.apl.core.transaction.messages.PrunableLoadingService;
 import com.apollocurrency.aplwallet.apl.core.transaction.messages.PublicKeyAnnouncementAppendixApplier;
-import com.apollocurrency.aplwallet.apl.crypto.Convert;
 import com.apollocurrency.aplwallet.apl.crypto.Crypto;
 import com.apollocurrency.aplwallet.apl.data.BlockTestData;
 import com.apollocurrency.aplwallet.apl.data.TransactionTestData;
@@ -163,7 +163,8 @@ abstract class AbstractSmcTransactionTypeApplyTest extends DbContainerBaseTest {
             ContractModelToEntityConverter.class, ContractModelToStateEntityConverter.class,
             ContractEventLogModelToLogEntryConverter.class, ContractEventModelToEntityConverter.class,
             SmcContractRepositoryImpl.class, SmcContractServiceImpl.class, SmcContractToolServiceImpl.class, SmcContractStorageServiceImpl.class, SmcContractEventServiceImpl.class,
-            SmcTxLogProcessor.class, SmcMappingRepositoryClassFactory.class, SmcContractEventManagerClassFactory.class
+            SmcTxLogProcessor.class, SmcMappingRepositoryClassFactory.class, SmcContractEventManagerClassFactory.class,
+            AppendixApplierRegistryInitializer.class
         )
         .addBeans(MockBean.of(extension.getDatabaseManager(), DatabaseManager.class))
         .addBeans(MockBean.of(mock(InMemoryCacheManager.class), InMemoryCacheManager.class))
@@ -189,17 +190,19 @@ abstract class AbstractSmcTransactionTypeApplyTest extends DbContainerBaseTest {
         .build();
 
     @Inject
+    AppendixApplierRegistryInitializer appendixApplierRegistryInitializer;
+    @Inject
     TransactionApplier txApplier;
     @Inject
     AccountService accountService;
     @Inject
-    SmcContractRepository contractService;
+    SmcContractRepository contractRepository;
+    @Inject
+    SmcContractService contractService;
     @Inject
     ContractToolService contractToolService;
     @Inject
     SmcBlockchainIntegratorFactory integratorFactory;
-    @Inject
-    PublicKeyAnnouncementAppendixApplier applier;
     @Inject
     AppendixApplierRegistry registry;
     AccountService spyAccountService;
@@ -228,7 +231,6 @@ abstract class AbstractSmcTransactionTypeApplyTest extends DbContainerBaseTest {
 
     @BeforeEach
     void setUp() {
-        AppendixApplierRegistryHelper.addApplier(applier, registry);
         doReturn(chain).when(blockchainConfig).getChain();
         doReturn(lastBlock.getHeight()).when(blockchain).getHeight();
 
@@ -240,19 +242,17 @@ abstract class AbstractSmcTransactionTypeApplyTest extends DbContainerBaseTest {
         spyAccountService = spy(accountService);
         context = TxBContext.newInstance(chain);
         transactionTypeFactory = new CachedTransactionTypeFactory(List.of(
-            new SmcPublishContractTransactionType(blockchainConfig, blockchain, spyAccountService, contractService, contractToolService, fuelValidator, integratorFactory, smcConfig),
-            new SmcCallMethodTransactionType(blockchainConfig, blockchain, spyAccountService, contractService, contractToolService, fuelValidator, integratorFactory, smcConfig)
+            new SmcPublishContractTransactionType(blockchainConfig, blockchain, spyAccountService, contractRepository, contractToolService, fuelValidator, integratorFactory, smcConfig),
+            new SmcCallMethodTransactionType(blockchainConfig, blockchain, spyAccountService, contractRepository, contractToolService, fuelValidator, integratorFactory, smcConfig)
         ));
         transactionBuilderFactory = new TransactionBuilderFactory(transactionTypeFactory, blockchainConfig);
         transactionCreator = new TransactionCreator(validator, propertiesHolder, timeService, calculator, blockchain, processor, transactionTypeFactory, transactionBuilderFactory, signerService, blockchainConfig);
     }
 
-    Transaction createTransaction(SmcTxData body, AbstractSmcAttachment attachment, Account senderAccount, byte[] recipientPublicKey, long recipientId) {
+    Transaction createTransaction(SmcTxData body, AbstractSmcAttachment attachment, Account senderAccount) {
         CreateTransactionRequest txRequest = CreateTransactionRequest.builder()
             .version(2)
             .senderAccount(senderAccount)
-            .recipientPublicKey(Convert.toHexString(recipientPublicKey))
-            .recipientId(recipientId)
             .amountATM(body.getAmountATM())
             .feeATM(body.getFuelLimit() * body.getFuelPrice())
             .secretPhrase(body.getSecret())

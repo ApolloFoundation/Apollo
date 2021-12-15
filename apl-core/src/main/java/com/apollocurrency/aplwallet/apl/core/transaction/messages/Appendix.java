@@ -20,12 +20,11 @@
 
 package com.apollocurrency.aplwallet.apl.core.transaction.messages;
 
-import com.apollocurrency.aplwallet.apl.core.model.Transaction;
 import com.apollocurrency.aplwallet.apl.core.entity.state.account.Account;
+import com.apollocurrency.aplwallet.apl.core.model.Transaction;
 import com.apollocurrency.aplwallet.apl.core.transaction.Fee;
-import com.apollocurrency.aplwallet.apl.util.io.WriteBuffer;
 import com.apollocurrency.aplwallet.apl.util.exception.AplException;
-import com.apollocurrency.aplwallet.apl.util.rlp.RlpList;
+import com.apollocurrency.aplwallet.apl.util.io.WriteBuffer;
 import org.json.simple.JSONObject;
 
 import java.nio.ByteBuffer;
@@ -37,7 +36,7 @@ public interface Appendix {
     }
 
     /**
-     * Returns the size of transaction in bytes.
+     * Returns the appendix size in bytes.
      * <i>fullSize</i> can be less or equal than <i>size</i>
      *
      * @return size in bytes
@@ -54,13 +53,7 @@ public interface Appendix {
 
     void putBytes(WriteBuffer buffer);
 
-    /**
-     * @deprecated use {@link #putBytes(RlpList.RlpListBuilder)}
-     */
-    @Deprecated(since = "TransactionV3")
     void putBytes(ByteBuffer buffer);
-
-    void putBytes(RlpList.RlpListBuilder builder);
 
     JSONObject getJSONObject();
 

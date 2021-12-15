@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2018-2020. Apollo Foundation.
+ * Copyright (c) 2020-2021. Apollo Foundation.
  */
 
 package com.apollocurrency.aplwallet.apl.core.entity.state.smc;
@@ -8,6 +8,7 @@ import com.apollocurrency.aplwallet.apl.core.entity.state.derived.VersionedDeriv
 import lombok.Builder;
 import lombok.Getter;
 import lombok.Setter;
+import lombok.ToString;
 
 import java.util.Arrays;
 import java.util.Objects;
@@ -17,6 +18,7 @@ import java.util.Objects;
  */
 @Getter
 @Setter
+@ToString
 public class SmcContractEntity extends VersionedDerivedEntity {
     private long address; //contract address/id
     private long owner; //owner
@@ -76,26 +78,5 @@ public class SmcContractEntity extends VersionedDerivedEntity {
     @Override
     public int hashCode() {
         return Objects.hash(super.hashCode(), address, owner, transactionId, Arrays.hashCode(transactionHash), data, contractName, baseContract, args, languageName, languageVersion, status);
-    }
-
-    @Override
-    public String toString() {
-        return "SmcContractEntity{" +
-            "address=" + address +
-            ", owner=" + owner +
-            ", transactionId=" + transactionId +
-            ", blockTimestamp=" + blockTimestamp +
-            ", transactionHash=" + Arrays.toString(transactionHash) +
-            ", fuelPrice=" + fuelPrice +
-            ", fuelLimit=" + fuelLimit +
-            ", fuelCharged=" + fuelCharged +
-            ", data.length=" + data.length() +
-            ", contractName='" + contractName + '\'' +
-            ", baseContract='" + baseContract + '\'' +
-            ", args='" + args + '\'' +
-            ", languageName='" + languageName + '\'' +
-            ", languageVersion='" + languageVersion + '\'' +
-            ", status='" + status + '\'' +
-            "} " + super.toString();
     }
 }
