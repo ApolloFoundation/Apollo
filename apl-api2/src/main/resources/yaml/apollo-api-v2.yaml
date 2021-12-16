@@ -653,6 +653,33 @@ paths:
         500:
           $ref: '#/components/responses/ServerError'
 
+  /@@smc/publish/multisig:
+    post:
+      tags:
+        - smc
+      summary: Create an unsigned PublishContract transaction
+      description: |
+        Returns an unsigned PublishContract transaction as a byte array.
+      operationId: createPublishContractTxMultisig
+      requestBody:
+        description: the contract source and constructor parameters
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PublishContractReq'
+        required: true
+      responses:
+        200:
+          description: successful operation
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TransactionArrayResp'
+        400:
+          $ref: '#/components/responses/BadRequest'
+        500:
+          $ref: '#/components/responses/ServerError'
+
   /@@smc/validate:
     post:
       tags:
