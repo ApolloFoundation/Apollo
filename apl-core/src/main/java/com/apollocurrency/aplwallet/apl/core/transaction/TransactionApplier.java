@@ -18,6 +18,8 @@ import com.apollocurrency.aplwallet.apl.core.transaction.messages.AppendixApplie
 import com.apollocurrency.aplwallet.apl.core.transaction.messages.Attachment;
 import com.apollocurrency.aplwallet.apl.core.transaction.messages.PrunableLoadingService;
 import com.apollocurrency.aplwallet.apl.crypto.Convert;
+import com.apollocurrency.aplwallet.apl.util.annotation.FeeMarker;
+import com.apollocurrency.aplwallet.apl.util.annotation.TransactionFee;
 import lombok.extern.slf4j.Slf4j;
 
 import javax.inject.Inject;
@@ -47,6 +49,7 @@ public class TransactionApplier {
         this.blockchain = blockchain;
     }
 
+    @TransactionFee(FeeMarker.UNCONFIRMED_BALANCE)
     // returns false if double spending
     public boolean applyUnconfirmed(Transaction transaction) {
         if (transaction.isFailed()) {
@@ -72,6 +75,7 @@ public class TransactionApplier {
         return true;
     }
 
+    @TransactionFee({FeeMarker.BALANCE, FeeMarker.UNCONFIRMED_BALANCE})
     public void apply(Transaction transaction) {
         if (transaction.isFailed()) {
             applyFailed(transaction);
@@ -163,12 +167,14 @@ public class TransactionApplier {
         }
     }
 
+    @TransactionFee({FeeMarker.BALANCE, FeeMarker.FEE})
     private void applyFailed(Transaction transaction) {
         long feeATM = transaction.getFeeATM();
         Account sender = accountService.getAccount(transaction.getSenderId());
         accountService.addToBalanceATM(sender, LedgerEvent.FAILED_VALIDATION_TRANSACTION_FEE, transaction.getId(), 0, -feeATM);
     }
 
+    @TransactionFee({FeeMarker.UNCONFIRMED_BALANCE, FeeMarker.FEE})
     private boolean applyUnconfirmedFailed(Transaction tx) {
         Account sender = accountService.getAccount(tx.getSenderId());
         if (sender.getUnconfirmedBalanceATM() >= tx.getFeeATM()) {
@@ -179,6 +185,7 @@ public class TransactionApplier {
         }
     }
 
+    @TransactionFee(FeeMarker.UNDO_UNCONFIRMED_BALANCE)
     private void undoUnconfirmedFailed(Transaction tx) {
         Account sender = accountService.getAccount(tx.getSenderId());
         accountService.addToUnconfirmedBalanceATM(sender, LedgerEvent.FAILED_VALIDATION_TRANSACTION_FEE, tx.getId(), 0, tx.getFeeATM());

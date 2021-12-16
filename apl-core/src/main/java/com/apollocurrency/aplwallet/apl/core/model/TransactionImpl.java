@@ -31,6 +31,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
+import java.util.function.Consumer;
 
 import static com.apollocurrency.aplwallet.apl.core.transaction.TransactionTypes.TransactionTypeSpec.SET_PHASING_ONLY;
 import static com.apollocurrency.aplwallet.apl.core.transaction.TransactionUtils.calculateFullHash;
@@ -564,6 +565,20 @@ public class TransactionImpl implements Transaction {
         private short index = -1;
         private String errorMessage;
 
+        /**
+         * Map of allowed transaction appendixes.
+         * Used in builder to make a routine of transaction building more simple.
+         */
+        private final Map<Class<? extends AbstractAppendix>, Consumer<AbstractAppendix>> appendagesMap = Map.of(
+            MessageAppendix.class, appendix -> message = (MessageAppendix) appendix,
+            EncryptedMessageAppendix.class, appendix -> encryptedMessage = (EncryptedMessageAppendix) appendix,
+            EncryptToSelfMessageAppendix.class, appendix -> encryptToSelfMessage = (EncryptToSelfMessageAppendix) appendix,
+            PublicKeyAnnouncementAppendix.class, appendix -> publicKeyAnnouncement = (PublicKeyAnnouncementAppendix) appendix,
+            PrunablePlainMessageAppendix.class, appendix -> prunablePlainMessage = (PrunablePlainMessageAppendix) appendix,
+            PrunableEncryptedMessageAppendix.class, appendix -> prunableEncryptedMessage = (PrunableEncryptedMessageAppendix) appendix,
+            PhasingAppendix.class, appendix -> phasing = (PhasingAppendix) appendix
+        );
+
         public BuilderImpl(byte version, byte[] senderPublicKey, long amountATM, long feeATM, short deadline,
                            AbstractAttachment attachment, int timestamp, TransactionType transactionType) {
             this.version = version;
@@ -605,6 +620,18 @@ public class TransactionImpl implements Transaction {
             return this;
         }
 
+        @Override
+        public BuilderImpl appendix(AbstractAppendix appendix) {
+            Consumer<AbstractAppendix> consumer = appendagesMap.get(appendix.getClass());
+            if(consumer == null){
+                throw new IllegalStateException("Incompatible appendix: name="+appendix.getAppendixName()+" class="+appendix.getClass().getName());
+            }else{
+                consumer.accept(appendix);
+            }
+            return this;
+        }
+
+        @Override
         public BuilderImpl appendix(AbstractAttachment attachment) {
             this.attachment = attachment;
             return this;

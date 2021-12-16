@@ -64,7 +64,7 @@ public class KeyStoreController {
 
     @Inject
     public KeyStoreController(KMSService KMSService, SecureStorageService secureStorageService,
-                              @Property(name = "apl.maxKeyStoreFileSize") Integer maxKeyStoreSize)  {
+                              @Property(name = "apl.maxKeyStoreFileSize") Integer maxKeyStoreSize) {
         this.KMSService = KMSService;
         this.secureStorageService = secureStorageService;
         this.maxKeyStoreSize = maxKeyStoreSize;
@@ -144,7 +144,7 @@ public class KeyStoreController {
                     passPhrase = IOUtils.toString(item.openStream());
                 } else {
                     return ResponseBuilder.apiError(ApiErrors.ACCOUNT_2FA_ERROR,
-                        "Failed to upload file. Unknown parameter:"  + item.getFieldName()).build();
+                        "Failed to upload file. Unknown parameter:" + item.getFieldName()).build();
                 }
             }
         } catch (FileUploadException | IOException ex) {
@@ -161,7 +161,7 @@ public class KeyStoreController {
         if (status.isOK()) {
             return Response.status(200).build();
         } else {
-            return ResponseBuilder.apiError(ApiErrors.ACCOUNT_2FA_ERROR,  status.message).build();
+            return ResponseBuilder.apiError(ApiErrors.ACCOUNT_2FA_ERROR, status.message).build();
         }
     }
 

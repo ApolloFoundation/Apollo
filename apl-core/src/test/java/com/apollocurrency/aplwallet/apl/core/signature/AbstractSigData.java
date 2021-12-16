@@ -11,6 +11,7 @@ import com.apollocurrency.aplwallet.apl.crypto.Convert;
  */
 abstract class AbstractSigData {
     public static final byte[] ZERO4BYTES = {0, 0, 0, 0};
+    public static final String ZERO4BYTES_STRING = Convert.toHexString(ZERO4BYTES);
 
     public static final byte[] PUBLIC_KEY1 = Convert.parseHexString("39dc2e813bb45ff063a376e316b10cd0addd7306555ca0dd2890194d37960152");
     public static final byte[] SIGNATURE1 = Convert.parseHexString("7ecae5825a24dedc42dd11e2239ced7ad797c6d6c9aedc3d3275204630b7e20832f9543d1063787ea1f32ab0993ea733aa46a52664755d9e54f211cdc3c5c5fd");

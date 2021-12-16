@@ -33,7 +33,15 @@ public class TransactionUtils {
     }
 
     public static byte getVersionSubtypeByte(Transaction transaction) {
-        return (byte) ((transaction.getVersion() << 4) & 0xf0 | transaction.getType().getSpec().getSubtype() & 0x0f);
+        return (byte) ((transaction.getVersion() << 4) & 0xF0 | transaction.getType().getSpec().getSubtype() & 0x0F);
+    }
+
+    public static byte getVersion(byte versionSubType) {
+        return (byte) ((versionSubType & 0xF0) >> 4);
+    }
+
+    public static byte getSubtype(byte versionSubType) {
+        return (byte) (versionSubType & 0x0F);
     }
 
     public static int getTransactionFlags(Transaction transaction) {

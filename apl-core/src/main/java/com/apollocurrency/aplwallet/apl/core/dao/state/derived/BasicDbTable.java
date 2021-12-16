@@ -136,7 +136,7 @@ public abstract class BasicDbTable<T extends DerivedEntity> extends DerivedDbTab
                 pstmtSetLatest.executeUpdate();
             }
         } catch (SQLException e) {
-            log.error("Error", e);
+            log.error("Error: table=" + table + ", " + e.getMessage(), e);
             throw new RuntimeException(e.toString(), e);
         }
         log.trace("Rollback for table {} took {} ms", table, System.currentTimeMillis() - startTime);

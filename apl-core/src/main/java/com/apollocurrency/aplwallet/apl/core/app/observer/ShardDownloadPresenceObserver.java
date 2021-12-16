@@ -90,7 +90,7 @@ public class ShardDownloadPresenceObserver {
                 log.error("Error on Shard IMPORTING # " + shardPresentData, e);
                 log.error("Node has encountered serious error and import CSV shard data. " +
                     "Somethings wrong with processing fileId =\n'{}'\n >>> FALL BACK to Genesis importing....", shardPresentData);
-            // truncate all partial data potentially imported into database
+                // truncate all partial data potentially imported into database
                 cleanUpPreviouslyImportedData();
                 // fall back to importing Genesis and starting from beginning
                 onNoShardPresent(shardPresentData);

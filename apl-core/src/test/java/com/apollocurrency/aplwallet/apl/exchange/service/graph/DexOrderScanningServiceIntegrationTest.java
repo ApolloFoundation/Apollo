@@ -55,11 +55,11 @@ class DexOrderScanningServiceIntegrationTest {
         .addBeans(
             MockBean.of(orderDao, DexOrderDao.class)
             , MockBean.of(scanPerformer, ScanPerformer.class)
-            , MockBean.of(orderScanDao, OrderScanDao.class)
-            , MockBean.of(blockchain, Blockchain.class)
-            , MockBean.of(dispatchManager, TaskDispatchManager.class)
-            , MockBean.of(candlestickDao, DexCandlestickDao.class))
-        .build();
+                , MockBean.of(orderScanDao, OrderScanDao.class)
+                , MockBean.of(blockchain, Blockchain.class)
+                , MockBean.of(dispatchManager, TaskDispatchManager.class)
+                , MockBean.of(candlestickDao, DexCandlestickDao.class))
+            .build();
 
     {
         doReturn(mock(TaskDispatcher.class)).when(dispatchManager).newScheduledDispatcher(SERVICE_NAME);

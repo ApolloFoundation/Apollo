@@ -17,10 +17,11 @@ public class TransactionTypes {
     public static final byte TYPE_UPDATE = 8;
     public static final byte TYPE_DEX = 9;
     public static final byte TYPE_CHILD_ACCOUNT = 10;
-
+    public static final byte TYPE_SMC = 11;
+    //TYPE=0
     public static final byte SUBTYPE_PAYMENT_ORDINARY_PAYMENT = 0;
     public static final byte SUBTYPE_PAYMENT_PRIVATE_PAYMENT = 1;
-
+    //TYPE=1
     public static final byte SUBTYPE_MESSAGING_ARBITRARY_MESSAGE = 0;
     public static final byte SUBTYPE_MESSAGING_ALIAS_ASSIGNMENT = 1;
     public static final byte SUBTYPE_MESSAGING_POLL_CREATION = 2;
@@ -33,7 +34,7 @@ public class TransactionTypes {
     public static final byte SUBTYPE_MESSAGING_PHASING_VOTE_CASTING = 9;
     public static final byte SUBTYPE_MESSAGING_ACCOUNT_PROPERTY = 10;
     public static final byte SUBTYPE_MESSAGING_ACCOUNT_PROPERTY_DELETE = 11;
-
+    //TYPE=2
     public static final byte SUBTYPE_COLORED_COINS_ASSET_ISSUANCE = 0;
     public static final byte SUBTYPE_COLORED_COINS_ASSET_TRANSFER = 1;
     public static final byte SUBTYPE_COLORED_COINS_ASK_ORDER_PLACEMENT = 2;
@@ -42,7 +43,7 @@ public class TransactionTypes {
     public static final byte SUBTYPE_COLORED_COINS_BID_ORDER_CANCELLATION = 5;
     public static final byte SUBTYPE_COLORED_COINS_DIVIDEND_PAYMENT = 6;
     public static final byte SUBTYPE_COLORED_COINS_ASSET_DELETE = 7;
-
+    //TYPE=3
     public static final byte SUBTYPE_DIGITAL_GOODS_LISTING = 0;
     public static final byte SUBTYPE_DIGITAL_GOODS_DELISTING = 1;
     public static final byte SUBTYPE_DIGITAL_GOODS_PRICE_CHANGE = 2;
@@ -51,31 +52,31 @@ public class TransactionTypes {
     public static final byte SUBTYPE_DIGITAL_GOODS_DELIVERY = 5;
     public static final byte SUBTYPE_DIGITAL_GOODS_FEEDBACK = 6;
     public static final byte SUBTYPE_DIGITAL_GOODS_REFUND = 7;
-
+    //TYPE=4
     public static final byte SUBTYPE_ACCOUNT_CONTROL_EFFECTIVE_BALANCE_LEASING = 0;
     public static final byte SUBTYPE_ACCOUNT_CONTROL_PHASING_ONLY = 1;
-
+    //TYPE=5
     public static final byte SUBTYPE_DATA_TAGGED_DATA_UPLOAD = 0;
     public static final byte SUBTYPE_DATA_TAGGED_DATA_EXTEND = 1;
-
+    //TYPE=6
     public static final byte SUBTYPE_UPDATE_CRITICAL = 0;
     public static final byte SUBTYPE_UPDATE_IMPORTANT = 1;
     public static final byte SUBTYPE_UPDATE_MINOR = 2;
     public static final byte SUBTYPE_UPDATE_V2 = 3;
-
+    //TYPE=7
     public static final byte SUBTYPE_DEX_ORDER = 0;
     public static final byte SUBTYPE_DEX_ORDER_CANCEL = 1;
     public static final byte SUBTYPE_DEX_CONTRACT = 2;
     public static final byte SUBTYPE_DEX_TRANSFER_MONEY = 3;
     public static final byte SUBTYPE_DEX_CLOSE_ORDER = 4;
-
+    //TYPE=8
     public static final byte SUBTYPE_SHUFFLING_CREATION = 0;
     public static final byte SUBTYPE_SHUFFLING_REGISTRATION = 1;
     public static final byte SUBTYPE_SHUFFLING_PROCESSING = 2;
     public static final byte SUBTYPE_SHUFFLING_RECIPIENTS = 3;
     public static final byte SUBTYPE_SHUFFLING_VERIFICATION = 4;
     public static final byte SUBTYPE_SHUFFLING_CANCELLATION = 5;
-
+    //TYPE=9
     public static final byte SUBTYPE_MONETARY_SYSTEM_CURRENCY_ISSUANCE = 0;
     public static final byte SUBTYPE_MONETARY_SYSTEM_RESERVE_INCREASE = 1;
     public static final byte SUBTYPE_MONETARY_SYSTEM_RESERVE_CLAIM = 2;
@@ -86,9 +87,12 @@ public class TransactionTypes {
     public static final byte SUBTYPE_MONETARY_SYSTEM_CURRENCY_MINTING = 7;
     public static final byte SUBTYPE_MONETARY_SYSTEM_CURRENCY_DELETION = 8;
     public static final byte SUBTYPE_MONETARY_SYSTEM_CURRENCY_BURNING = 9;
-
+    //TYPE=10
     public static final byte SUBTYPE_CHILD_CREATE = 0;
     public static final byte SUBTYPE_CHILD_CONVERT_TO = 1;
+    //TYPE=11
+    public static final byte SUBTYPE_SMC_PUBLISH = 0;
+    public static final byte SUBTYPE_SMC_CALL_METHOD = 1;
 
     private static final Map<Integer, TransactionTypeSpec> ALL_TYPES = new HashMap<>();
 
@@ -166,6 +170,8 @@ public class TransactionTypes {
         CHILD_ACCOUNT_CREATE(TYPE_CHILD_ACCOUNT, SUBTYPE_CHILD_CREATE, "CreateChildAccount"),
         CHILD_ACCOUNT_CONVERT_TO(TYPE_CHILD_ACCOUNT, SUBTYPE_CHILD_CONVERT_TO, "ConvertToChildAccount"),
 
+        SMC_PUBLISH(TYPE_SMC, SUBTYPE_SMC_PUBLISH, "SmcPublish"),
+        SMC_CALL_METHOD(TYPE_SMC, SUBTYPE_SMC_CALL_METHOD, "SmcCallMethod")
         ;
 
         private final byte type;
@@ -178,6 +184,7 @@ public class TransactionTypes {
             this.compatibleName = compatibleName;
             ALL_TYPES.put(subtype | type << 8, this);
         }
+
     }
 
     public static TransactionTypeSpec find(int type, int subtype) {

@@ -16,7 +16,7 @@ public class PrunableEncryptedMessageAppendixParser implements AppendixParser<Pr
         if (!Appendix.hasAppendix(PrunableEncryptedMessageAppendix.APPENDIX_NAME, jsonData)) {
             return null;
         }
-        Map<?,?> encryptedMessageJSON = (Map<?,?>) jsonData.get("encryptedMessage");
+        Map<?, ?> encryptedMessageJSON = (Map<?, ?>) jsonData.get("encryptedMessage");
         if (encryptedMessageJSON != null && encryptedMessageJSON.get("data") == null) {
             throw new RuntimeException("Unencrypted prunable message is not supported");
         }

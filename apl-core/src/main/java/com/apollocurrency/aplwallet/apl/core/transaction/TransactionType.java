@@ -34,6 +34,7 @@ import com.apollocurrency.aplwallet.apl.crypto.Convert;
 import com.apollocurrency.aplwallet.apl.util.annotation.FeeMarker;
 import com.apollocurrency.aplwallet.apl.util.annotation.TransactionFee;
 import com.apollocurrency.aplwallet.apl.util.exception.AplException;
+import com.apollocurrency.aplwallet.apl.util.rlp.RlpReader;
 import lombok.Getter;
 import lombok.extern.slf4j.Slf4j;
 import org.json.simple.JSONObject;
@@ -137,7 +138,7 @@ public abstract class TransactionType {
     public abstract TransactionTypes.TransactionTypeSpec getSpec();
 
     /**
-     * @return ledger event, perfomed by transction type, which should be defined under enum {@link LedgerEvent}
+     * @return ledger event, performed by transaction type, which should be defined under enum {@link LedgerEvent}
      */
     public abstract LedgerEvent getLedgerEvent();
 
@@ -151,12 +152,16 @@ public abstract class TransactionType {
 
     /**
      * Parse attachment for the transaction type from a serialized json object
+     *
      * @param attachmentData json object, containing attachment json serialized data
-     * @return deserialized attachmen for thi transaction type
+     * @return deserialized attachment for thi transaction type
      * @throws AplException.NotValidException when any validation error occurred during deserialization (avoid throwing it)
      */
     public abstract AbstractAttachment parseAttachment(JSONObject attachmentData) throws AplException.NotValidException;
 
+    public AbstractAttachment parseAttachment(RlpReader reader) throws AplException.NotValidException{
+        throw new AplException.NotValidException("Unsupported RLP reader for transaction=" + getSpec());
+    }
 
     /**
      * Performs transaction's validation (transaction itself and its attachment) using current blockchain state only, no state-independent validation will be done
@@ -261,6 +266,7 @@ public abstract class TransactionType {
      * @throws com.apollocurrency.aplwallet.apl.core.exception.AplTransactionExecutionException when transaction
      * supports failing during execution {@link TransactionType#canFailDuringExecution() = true}
      */
+    @TransactionFee(FeeMarker.BALANCE)
     public void apply(Transaction transaction, Account senderAccount, Account recipientAccount) {
         long amount = transaction.getAmountATM();
         long transactionId = transaction.getId();
@@ -458,7 +464,7 @@ public abstract class TransactionType {
      * @return array of 3 length, with transaction fee splitted
      */
     @Deprecated
-    @TransactionFee(FeeMarker.FEE)
+    @TransactionFee({FeeMarker.FEE, FeeMarker.BACK_FEE})
     public long[] getBackFees(Transaction transaction) {
         return Convert.EMPTY_LONG;
     }
@@ -599,6 +605,7 @@ public abstract class TransactionType {
 
         public TransactionAmounts(Transaction transaction) {
             long amountATM = transaction.getAmountATM();
+            @TransactionFee({FeeMarker.FEE})
             long feeATM = transaction.getFeeATM();
             if (transaction.referencedTransactionFullHash() != null) {
                 feeATM = Math.addExact(feeATM, blockchainConfig.getUnconfirmedPoolDepositAtm());
@@ -611,6 +618,5 @@ public abstract class TransactionType {
             return Math.addExact(amountATM, feeATM);
         }
     }
-
 
 }

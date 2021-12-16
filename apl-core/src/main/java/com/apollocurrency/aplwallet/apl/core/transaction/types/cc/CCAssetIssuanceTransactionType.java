@@ -16,6 +16,8 @@ import com.apollocurrency.aplwallet.apl.core.transaction.messages.Appendix;
 import com.apollocurrency.aplwallet.apl.core.transaction.messages.ColoredCoinsAssetIssuance;
 import com.apollocurrency.aplwallet.apl.crypto.Convert;
 import com.apollocurrency.aplwallet.apl.util.Constants;
+import com.apollocurrency.aplwallet.apl.util.annotation.FeeMarker;
+import com.apollocurrency.aplwallet.apl.util.annotation.TransactionFee;
 import com.apollocurrency.aplwallet.apl.util.exception.AplException;
 import org.json.simple.JSONObject;
 
@@ -80,6 +82,7 @@ public class CCAssetIssuanceTransactionType extends CCTransactionType {
     }
 
     @Override
+    @TransactionFee({FeeMarker.FEE, FeeMarker.BACK_FEE})
     public long[] getBackFees(Transaction transaction) {
         if (isSingletonIssuance(transaction)) {
             return Convert.EMPTY_LONG;

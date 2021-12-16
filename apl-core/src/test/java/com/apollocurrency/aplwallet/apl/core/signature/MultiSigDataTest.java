@@ -26,7 +26,7 @@ class MultiSigDataTest extends AbstractSigData {
 
     @BeforeEach
     void setUp() {
-        multiSigData = new MultiSigData(2);
+        multiSigData = new MultiSigData(2, SignatureToolFactory.selectParser(2).get());
         multiSigData.addSignature(PUBLIC_KEY1, SIGNATURE1);
         multiSigData.addSignature(PUBLIC_KEY2, SIGNATURE2);
     }
@@ -59,7 +59,7 @@ class MultiSigDataTest extends AbstractSigData {
     void getPayload() {
         //GIVEN
         byte[] payload = new byte[]{1, 2, 3, 4};
-        multiSigData = new MultiSigData(2, payload);
+        multiSigData = new MultiSigData(2, payload, SignatureToolFactory.selectParser(2).get());
         //WHEN
         byte[] rc = multiSigData.getPayload();
 

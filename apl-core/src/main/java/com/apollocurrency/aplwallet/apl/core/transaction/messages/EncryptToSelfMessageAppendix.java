@@ -15,13 +15,14 @@ import java.util.Map;
 public class EncryptToSelfMessageAppendix extends AbstractEncryptedMessageAppendix {
 
     static final String appendixName = "EncryptToSelfMessage";
+    public static final String ENCRYPT_TO_SELF_MESSAGE_FIELD = "encryptToSelfMessage";
 
     public EncryptToSelfMessageAppendix(ByteBuffer buffer) throws AplException.NotValidException {
         super(buffer);
     }
 
     public EncryptToSelfMessageAppendix(JSONObject attachmentData) {
-        super(attachmentData, (Map<?,?>) attachmentData.get("encryptToSelfMessage"));
+        super(attachmentData, (Map<?,?>) attachmentData.get(ENCRYPT_TO_SELF_MESSAGE_FIELD));
     }
 
     public EncryptToSelfMessageAppendix(EncryptedData encryptedData, boolean isText, boolean isCompressed) {
@@ -32,7 +33,7 @@ public class EncryptToSelfMessageAppendix extends AbstractEncryptedMessageAppend
         if (!Appendix.hasAppendix(appendixName, attachmentData)) {
             return null;
         }
-        if (((Map<?,?>) attachmentData.get("encryptToSelfMessage")).get("data") == null) {
+        if (((Map<?,?>) attachmentData.get(ENCRYPT_TO_SELF_MESSAGE_FIELD)).get("data") == null) {
             throw new RuntimeException("Unencrypted message to self is not supported");
         }
         return new EncryptToSelfMessageAppendix(attachmentData);
@@ -52,7 +53,12 @@ public class EncryptToSelfMessageAppendix extends AbstractEncryptedMessageAppend
     public void putMyJSON(JSONObject json) {
         JSONObject encryptToSelfMessageJSON = new JSONObject();
         super.putMyJSON(encryptToSelfMessageJSON);
-        json.put("encryptToSelfMessage", encryptToSelfMessageJSON);
+        json.put(ENCRYPT_TO_SELF_MESSAGE_FIELD, encryptToSelfMessageJSON);
+    }
+
+    @Override
+    public int getAppendixFlag() {
+        return 0x08;
     }
 
 }

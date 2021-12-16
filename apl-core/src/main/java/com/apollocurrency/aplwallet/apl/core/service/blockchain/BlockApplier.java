@@ -12,6 +12,8 @@ import com.apollocurrency.aplwallet.apl.core.entity.state.account.LedgerEvent;
 import com.apollocurrency.aplwallet.apl.core.service.state.account.AccountPublicKeyService;
 import com.apollocurrency.aplwallet.apl.core.service.state.account.AccountService;
 import com.apollocurrency.aplwallet.apl.util.Convert2;
+import com.apollocurrency.aplwallet.apl.util.annotation.FeeMarker;
+import com.apollocurrency.aplwallet.apl.util.annotation.TransactionFee;
 import lombok.extern.slf4j.Slf4j;
 
 import javax.inject.Inject;
@@ -77,8 +79,10 @@ public class BlockApplier {
         //fetch account after a possible change in previousGeneratorAccount
         Account account = accountService.createAccount(block.getGeneratorId());
         accountPublicKeyService.apply(account, block.getGeneratorPublicKey());
-        accountService.addToBalanceAndUnconfirmedBalanceATM(account, LedgerEvent.BLOCK_GENERATED, block.getId(), block.getTotalFeeATM() - totalBackFees);
-        accountService.addToForgedBalanceATM(account, block.getTotalFeeATM() - totalBackFees);
+        @TransactionFee(FeeMarker.FORGER_FEE)
+        long amountATM = block.getTotalFeeATM() - totalBackFees;
+        accountService.addToBalanceAndUnconfirmedBalanceATM(account, LedgerEvent.BLOCK_GENERATED, block.getId(), amountATM);
+        accountService.addToForgedBalanceATM(account, amountATM);
         log.debug("Transaction fee {} ATM awarded to forger {} at height {}",
             block.getTotalFeeATM() - totalBackFees,
             Convert2.rsAccount(account.getId()),

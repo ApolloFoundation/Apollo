@@ -39,10 +39,10 @@ public class UnconfirmedTransactionProcessingService {
     public UnconfirmedTxValidationResult validateBeforeProcessing(Transaction transaction) {
         int curTime = timeService.getEpochTime();
         if (transaction.getTimestamp() > curTime + Constants.MAX_TIMEDRIFT || transaction.getExpiration() < curTime) {
-            return new UnconfirmedTxValidationResult(100_100, UnconfirmedTxValidationResult.Error.NOT_CURRENTLY_VALID, "Invalid transaction timestamp");
+            return new UnconfirmedTxValidationResult(100_100, UnconfirmedTxValidationResult.Error.NOT_CURRENTLY_VALID, "Invalid transaction timestamp=" + transaction.getTimestamp() + ", current time=" + curTime);
         }
         if (transaction.getVersion() < 1) {
-            return new UnconfirmedTxValidationResult(100_105, UnconfirmedTxValidationResult.Error.NOT_VALID, "Invalid transaction version");
+            return new UnconfirmedTxValidationResult(100_105, UnconfirmedTxValidationResult.Error.NOT_VALID, "Invalid transaction version=" + transaction.getVersion());
         }
 
         if (transaction.getId() == 0L) {

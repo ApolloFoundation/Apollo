@@ -1,5 +1,5 @@
 /*
- * Copyright (c)  2018-2020. Apollo Foundation.
+ * Copyright (c)  2020-2021. Apollo Foundation.
  */
 
 package com.apollocurrency.aplwallet.apl.core.signature;
@@ -12,6 +12,7 @@ import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
 import java.util.Arrays;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Set;
@@ -26,28 +27,39 @@ import static com.apollocurrency.aplwallet.apl.core.signature.MultiSig.KeyId.KEY
  */
 @Slf4j
 class MultiSigData implements MultiSig {
-    private static final SignatureParser parser = new Parser();
-    private final byte[] payload;
+    private final SignatureParser parser;
     private final short count;
+    private final byte[] payload;
+    private final List<String> signatureParams;
     private final Map<KeyId, byte[]> signaturesMap;
     private boolean verified = false;
 
     public MultiSigData(byte[] publicKey, byte[] signature) {
-        this(1, new byte[Parser.PAYLOAD_LENGTH]);
-        Arrays.fill(payload, (byte) 0x0);
+        this(1, Parser.PAYLOAD_RESERVED, List.of(), new Parser());
         addSignature(publicKey, signature);
     }
 
-    public MultiSigData(int count) {
-        this(count, Parser.PAYLOAD_RESERVED);
+    public MultiSigData(int count, SignatureParser parser) {
+        this(count, Parser.PAYLOAD_RESERVED, List.of(), parser);
     }
 
-    public MultiSigData(int count, byte[] payload) {
+    public MultiSigData(int count, byte[] payload, SignatureParser parser) {
+        this(count, payload, List.of(), parser);
+    }
+
+    public MultiSigData(int count, List<String> signatureParams, SignatureParser parser) {
+        this(count, Parser.PAYLOAD_RESERVED, signatureParams, parser);
+    }
+
+    public MultiSigData(int count, byte[] payload, List<String> signatureParams, SignatureParser parser) {
         if (count < 1) {
             throw new IllegalArgumentException("The count is less than 1;");
         }
         this.count = (short) count;
         this.payload = payload;
+        //TODO: parse the signatureParams
+        this.signatureParams = signatureParams;
+        this.parser = Objects.requireNonNull(parser);
         this.signaturesMap = new HashMap<>();
     }
 
@@ -73,6 +85,11 @@ class MultiSigData implements MultiSig {
     @Override
     public int getSize() {
         return parser.calcDataSize(this.getThresholdParticipantCount());
+    }
+
+    @Override
+    public List<String> getParams() {
+        return signatureParams;
     }
 
     @Override
@@ -135,16 +152,12 @@ class MultiSigData implements MultiSig {
         if (this == o) return true;
         if (o == null || getClass() != o.getClass()) return false;
         MultiSigData that = (MultiSigData) o;
-        return count == that.count &&
-            Arrays.equals(payload, that.payload) &&
-            signaturesMap.equals(that.signaturesMap);
+        return count == that.count && Objects.equals(signatureParams, that.signatureParams) && Objects.equals(signaturesMap, that.signaturesMap);
     }
 
     @Override
     public int hashCode() {
-        int result = Objects.hash(count, signaturesMap);
-        result = 31 * result + Arrays.hashCode(payload);
-        return result;
+        return Objects.hash(count, signatureParams, signaturesMap);
     }
 
     public static KeyId createKey(byte[] key) {
@@ -199,7 +212,7 @@ class MultiSigData implements MultiSig {
         }
 
         /**
-         * Parse the byte array and build the multisig object
+         * Parse the byte array (V2 structure) and build the multisig object
          *
          * @param buffer input data array
          * @return the multisig object
@@ -217,7 +230,7 @@ class MultiSigData implements MultiSig {
                 byte[] payload = new byte[PAYLOAD_LENGTH];
                 buffer.get(payload);
                 short count = buffer.getShort();
-                multiSigData = new MultiSigData(count, payload);
+                multiSigData = new MultiSigData(count, List.of("payload="+Convert.toHexString(payload)), this);
 
                 for (int i = 0; i < count; i++) {
                     byte[] pkId = new byte[KEY_LENGTH];
@@ -232,7 +245,7 @@ class MultiSigData implements MultiSig {
                         " The count doesn't match the data array length.");
                 }
             } catch (BufferUnderflowException e) {
-                String message = "Can't parse signature bytes, cause: " + e.getMessage();
+                String message = "Can't parse signature bytes, cause: " + e.getClass().getSimpleName() + ":" + e.getMessage();
                 log.error(message);
                 throw new SignatureParseException(message);
             }
@@ -260,4 +273,66 @@ class MultiSigData implements MultiSig {
         }
 
     }
+
+//    static class ParserV3 extends Parser{
+//
+//        /**
+//         * Parse the byte array (V3 structure) and build the multisig object
+//         *
+//         * @param buffer input data array
+//         * @return the multisig object
+//         */
+//        @Override
+//        public Signature parse(ByteBuffer buffer) {
+//            return parse(new RlpReader(buffer.array()));
+//        }
+//
+//        /**
+//         * Parse the RLP encoded structure and build the multisig object
+//         *
+//         * @param reader the RLP encoded data reader
+//         * @return the multisig object
+//         */
+//        @Override
+//        public Signature parse(RlpReader reader) {
+//            MultiSigData multiSigData;
+//            try {
+//                List<String> signatureParams = reader.readList(RlpConverter::toString);
+//                RlpReader signaturesListReader = reader.readListReader();
+//                int count = signaturesListReader.size();
+//                multiSigData = new MultiSigData(count, signatureParams, this);
+//
+//                for (int i = 0; i < count; i++) {
+//                    RlpReader signatureReader = signaturesListReader.readListReader();
+//                    if (signatureReader.size()!=2) {
+//                        throw new SignatureParseException("Wrong format of the attached multi-signature data.");
+//                    }
+//                    byte[] pkId = signatureReader.read();
+//                    byte[] sig = signatureReader.read();
+//                    multiSigData.addSignature(pkId, sig);
+//                }
+//            } catch (Exception e) {
+//                String message = "Can't parse RLP encoded bytes of signature, cause: " + e.getClass().getName()+":"+e.getMessage();
+//                log.error(message);
+//                throw new SignatureParseException(message);
+//            }
+//            return multiSigData;
+//        }
+//
+//        @Override
+//        public byte[] bytes(Signature signature) {
+//            MultiSig multiSig = (MultiSig) signature;
+//            RlpWriteBuffer buffer = new RlpWriteBuffer();
+//            buffer.write(RlpList.ofStrings(multiSig.getParams()));
+//            RlpList.RlpListBuilder listBuilder = RlpList.builder();
+//            multiSig.signaturesMap()
+//                .forEach( (keyId, bytes) ->
+//                    listBuilder.add(RlpList.builder().add(keyId.getKey()).add(bytes).build())
+//                );
+//            buffer.write(listBuilder.build());
+//
+//            return buffer.toByteArray();
+//        }
+//
+//    }
 }

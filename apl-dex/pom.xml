@@ -5,11 +5,15 @@
   <parent>
     <artifactId>apollo-blockchain</artifactId>
     <groupId>com.apollocurrency</groupId>
-    <version>1.49.0</version>
+    <version>1.50.31</version>
   </parent>
   <modelVersion>4.0.0</modelVersion>
 
   <artifactId>apl-dex</artifactId>
+
+  <properties>
+    <web3jVersion>5.0.0</web3jVersion>
+  </properties>
 
 
   <dependencies>
@@ -17,26 +21,26 @@
     <dependency>
       <groupId>com.apollocurrency</groupId>
       <artifactId>apl-utils</artifactId>
-        <version>${project.version}</version>
+      <version>${project.version}</version>
     </dependency>
-      <dependency>
-          <groupId>com.apollocurrency</groupId>
-          <artifactId>apl-api</artifactId>
-          <version>${project.version}</version>
-      </dependency>
-      <dependency>
-          <groupId>com.apollocurrency</groupId>
-          <artifactId>apl-api2</artifactId>
-          <version>${project.version}</version>
-      </dependency>
+    <dependency>
+      <groupId>com.apollocurrency</groupId>
+      <artifactId>apl-api</artifactId>
+      <version>${project.version}</version>
+    </dependency>
+    <dependency>
+      <groupId>com.apollocurrency</groupId>
+      <artifactId>apl-api2</artifactId>
+      <version>${project.version}</version>
+    </dependency>
 
-      <dependency>
-          <groupId>com.apollocurrency</groupId>
-          <artifactId>apl-crypto</artifactId>
-          <version>${project.version}</version>
-          <exclusions>
-              <exclusion>
-                  <groupId>org.slf4j</groupId>
+    <dependency>
+      <groupId>com.apollocurrency</groupId>
+      <artifactId>apl-crypto</artifactId>
+      <version>${project.version}</version>
+      <exclusions>
+        <exclusion>
+          <groupId>org.slf4j</groupId>
           <artifactId>slf4j-log4j12</artifactId>
         </exclusion>
         <exclusion>
@@ -51,6 +55,7 @@
     <dependency>
       <groupId>org.web3j</groupId>
       <artifactId>core</artifactId>
+      <version>${web3jVersion}</version>
     </dependency>
 
     <!--    <dependency>-->
