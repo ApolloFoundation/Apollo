@@ -29,6 +29,7 @@ import org.jboss.weld.junit5.WeldInitiator;
 import org.jboss.weld.junit5.WeldSetup;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.RegisterExtension;
 
@@ -44,6 +45,7 @@ import static org.mockito.Mockito.mock;
  * @author andrew.zinchenko@gmail.com
  */
 @Slf4j
+@Tag("slow")
 @EnableWeld
 class SmcContractMappingTableTest extends DbContainerBaseTest {
 
