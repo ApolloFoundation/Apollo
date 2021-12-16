@@ -154,6 +154,22 @@ class SmcApiServiceImpl implements SmcApiService {
     }
 
     @Override
+    public Response createPublishContractTxMultisig(PublishContractReq body, SecurityContext securityContext) throws NotFoundException {
+        ResponseBuilderV2 builder = ResponseBuilderV2.startTiming();
+        Transaction transaction = validateAndCreatePublishContractTransaction(body, builder, true);
+        if (transaction == null) {
+            return builder.build();
+        }
+        TransactionArrayResp response = new TransactionArrayResp();
+
+        Result signedTxBytes = PayloadResult.createLittleEndianByteArrayResult();
+        txBContext.createSerializer(transaction.getVersion()).serialize(transaction, signedTxBytes);
+        response.setTx(Convert.toHexString(signedTxBytes.array()));
+
+        return builder.bind(response).build();
+    }
+
+    @Override
     public Response createPublishContractTx(PublishContractReq body, SecurityContext securityContext) throws NotFoundException {
         ResponseBuilderV2 builder = ResponseBuilderV2.startTiming();
         Transaction transaction = validateAndCreatePublishContractTransaction(body, builder);
@@ -292,12 +308,36 @@ class SmcApiServiceImpl implements SmcApiService {
     }
 
     private Transaction validateAndCreatePublishContractTransaction(PublishContractReq body, ResponseBuilderV2 response) {
-        Account senderAccount = getAccountByAddress(body.getSender());
-        if (senderAccount == null) {
-            response.error(ApiErrors.INCORRECT_VALUE, "sender", body.getSender());
-            return null;
+        return validateAndCreatePublishContractTransaction(body, response, false);
+    }
+
+    private Transaction validateAndCreatePublishContractTransaction(PublishContractReq body, ResponseBuilderV2 response, boolean isMultiSig) {
+        String masterSecret = null;
+        Account senderAccount;
+        long senderAccountId;
+
+        String secretPhrase = null;
+        if (StringUtils.isNotBlank(body.getSecretPhrase())) {
+            secretPhrase = elGamal.elGamalDecrypt(body.getSecretPhrase());
         }
-        long senderAccountId = senderAccount.getId();
+        if (isMultiSig) {
+            masterSecret = elGamal.elGamalDecrypt(body.getSender());
+            var senderId = AccountService.getId(Crypto.getPublicKey(Crypto.getKeySeed(secretPhrase)));
+            senderAccount = accountService.getAccount(senderId);
+            if (senderAccount == null) {
+                response.error(ApiErrors.INCORRECT_VALUE, "sender", body.getSender());
+                return null;
+            }
+            senderAccountId = senderAccount.getId();
+        } else {
+            senderAccount = getAccountByAddress(body.getSender());
+            if (senderAccount == null) {
+                response.error(ApiErrors.INCORRECT_VALUE, "sender", body.getSender());
+                return null;
+            }
+            senderAccountId = senderAccount.getId();
+        }
+
         byte[] publicKey;
         if (senderAccount.getPublicKey() == null) {
             publicKey = accountService.getPublicKeyByteArray(senderAccount.getId());
@@ -329,10 +369,6 @@ class SmcApiServiceImpl implements SmcApiService {
         var contractSource = contractToolService.createSmartSource(body.getName(), body.getSource(), DEFAULT_LANGUAGE_NAME);
         SmartSource smartSource = contractToolService.completeContractSource(contractSource);
 
-        String secretPhrase = null;
-        if (StringUtils.isNotBlank(body.getSecretPhrase())) {
-            secretPhrase = elGamal.elGamalDecrypt(body.getSecretPhrase());
-        }
         if (StringUtils.isNotBlank(body.getPublicKey())) {
             try {
                 publicKey = Convert.parseHexString(body.getPublicKey());
@@ -346,7 +382,7 @@ class SmcApiServiceImpl implements SmcApiService {
             response.error(ApiErrors.MISSING_PARAM, "secretPhrase");
             return null;
         }
-        if (isSenderWrong(senderAccountId, secretPhrase, publicKey)) {
+        if (!isMultiSig && isSenderWrong(senderAccountId, secretPhrase, publicKey)) {
             response.error(ApiErrors.BAD_CREDENTIALS, "Sender doesn't match the secret phrase");
             return null;
         }
@@ -373,7 +409,7 @@ class SmcApiServiceImpl implements SmcApiService {
             return null;
         }
 
-        CreateTransactionRequest txRequest = CreateTransactionRequest.builder()
+        var txRequestBuilder = CreateTransactionRequest.builder()
             .version(2)
             .amountATM(Convert.parseLong(valueStr))
             .senderAccount(senderAccount)
@@ -382,8 +418,14 @@ class SmcApiServiceImpl implements SmcApiService {
             .deadlineValue(String.valueOf(1440))
             .attachment(attachment)
             .broadcast(false)
-            .validate(false)
-            .build();
+            .validate(false);
+
+        if (isMultiSig) {
+            var msig = new MultiSigCredential(2, Crypto.getKeySeed(masterSecret), Crypto.getKeySeed(secretPhrase));
+            txRequestBuilder.credential(msig);
+        }
+
+        CreateTransactionRequest txRequest = txRequestBuilder.build();
 
         return transactionCreator.createTransactionThrowingException(txRequest);
     }
