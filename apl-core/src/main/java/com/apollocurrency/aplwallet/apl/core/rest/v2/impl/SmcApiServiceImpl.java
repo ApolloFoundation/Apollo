@@ -320,6 +320,7 @@ class SmcApiServiceImpl implements SmcApiService {
         if (StringUtils.isNotBlank(body.getSecretPhrase())) {
             secretPhrase = elGamal.elGamalDecrypt(body.getSecretPhrase());
         }
+
         if (isMultiSig) {
             masterSecret = elGamal.elGamalDecrypt(body.getSender());
             var senderId = AccountService.getId(Crypto.getPublicKey(Crypto.getKeySeed(secretPhrase)));
@@ -378,11 +379,13 @@ class SmcApiServiceImpl implements SmcApiService {
                 return null;
             }
         }
-        if (secretPhrase == null && publicKey == null) {
+
+        if (isMultiSig && secretPhrase == null && publicKey == null) {
             response.error(ApiErrors.MISSING_PARAM, "secretPhrase");
             return null;
         }
-        if (!isMultiSig && isSenderWrong(senderAccountId, secretPhrase, publicKey)) {
+
+        if (isMultiSig && isSenderWrong(senderAccountId, secretPhrase, publicKey)) {
             response.error(ApiErrors.BAD_CREDENTIALS, "Sender doesn't match the secret phrase");
             return null;
         }
@@ -414,7 +417,6 @@ class SmcApiServiceImpl implements SmcApiService {
             .amountATM(Convert.parseLong(valueStr))
             .senderAccount(senderAccount)
             .publicKey(publicKey)//it's the sender public key
-            .secretPhrase(secretPhrase)
             .deadlineValue(String.valueOf(1440))
             .attachment(attachment)
             .broadcast(false)
@@ -422,7 +424,9 @@ class SmcApiServiceImpl implements SmcApiService {
 
         if (isMultiSig) {
             var msig = new MultiSigCredential(2, Crypto.getKeySeed(masterSecret), Crypto.getKeySeed(secretPhrase));
-            txRequestBuilder.credential(msig);
+            txRequestBuilder
+                .secretPhrase(secretPhrase)
+                .credential(msig);
         }
 
         CreateTransactionRequest txRequest = txRequestBuilder.build();
@@ -642,13 +646,10 @@ class SmcApiServiceImpl implements SmcApiService {
 
     private Transaction validateAndCreateCallContractMethodTransaction(CallContractMethodReq body, ResponseBuilderV2 response) throws NotFoundException {
         //validate params
-        Account contractAccount = getAccountByAddress(body.getAddress());
-        if (contractAccount == null) {
+        Long contractAccountId = getIdByAddress(body.getAddress());
+        if (contractAccountId == null) {
             response.error(ApiErrors.CONTRACT_NOT_FOUND, body.getAddress());
             return null;
-        }
-        if (contractAccount.getPublicKey() == null) {
-            contractAccount.setPublicKey(accountService.getPublicKey(contractAccount.getId()));
         }
         Account senderAccount = getAccountByAddress(body.getSender());
         if (senderAccount == null) {
@@ -720,8 +721,7 @@ class SmcApiServiceImpl implements SmcApiService {
             .amountATM(Convert.parseLong(valueStr))
             .senderAccount(senderAccount)
             .publicKey(publicKey)//it's the sender public key
-            .recipientPublicKey(Convert.toHexString(contractAccount.getPublicKey().getPublicKey()))
-            .recipientId(contractAccount.getId())
+            .recipientId(contractAccountId)
             .secretPhrase(secretPhrase)
             .deadlineValue(String.valueOf(1440))
             .attachment(attachment)
@@ -734,7 +734,7 @@ class SmcApiServiceImpl implements SmcApiService {
 
         log.debug("Transaction id={} contract={} fee={}"
             , Convert.toHexString(transaction.getId())
-            , Convert.toHexString(contractAccount.getId())
+            , Convert.toHexString(contractAccountId)
             , transaction.getFeeATM());
 
         return transaction;
