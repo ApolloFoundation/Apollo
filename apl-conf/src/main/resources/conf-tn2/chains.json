@@ -22,7 +22,7 @@
       "dexReopenPendingOrdersHeight": 0,
       "dexExpiredContractWithFinishedPhasingHeightAndStep3": 0,
       "failedTransactionsAcceptanceHeight": 0,
-      "smartContractTransactionsHeight": 421250
+      "smartContractTransactionsHeight": 421500
     },
     "blockchainProperties": [
       {
