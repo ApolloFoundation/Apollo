@@ -54,7 +54,7 @@
           "frequency": 2000
         },
         "smcSettings": {
-          "masterAccountPublicKey": "dd8a4621988974e669d115b5e0d48234eed145ff2ac94ec1012805459470fe1e",
+          "masterAccountPublicKey": "f9c6cd2cebff46137f3ea611683026b94f4bd1b39abbab480478e10766b2c608",
           "fuelLimitMinValue": 10000000,
           "fuelLimitMaxValue": 30000000000,
           "fuelPriceMinValue": 10000,
