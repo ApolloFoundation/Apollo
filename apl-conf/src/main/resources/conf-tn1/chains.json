@@ -115,13 +115,6 @@
           "enabled": true,
           "frequency": 655000
         },
-        "smcSettings": {
-          "masterAccountPublicKey": "5280cdcf88a6f7293e13ea4f02d6fefc858247d59feef701e4d4977634dccf77",
-          "fuelLimitMinValue": 10000000,
-          "fuelLimitMaxValue": 30000000000,
-          "fuelPriceMinValue": 10000,
-          "fuelPriceMaxValue": 100000000
-        },
         "transactionFeeSettings": {
           "feeRates": [
             {
@@ -165,6 +158,13 @@
         "shardingSettings": {
           "enabled": true,
           "frequency": 655000
+        },
+        "smcSettings": {
+          "masterAccountPublicKey": "5280cdcf88a6f7293e13ea4f02d6fefc858247d59feef701e4d4977634dccf77",
+          "fuelLimitMinValue": 10000000,
+          "fuelLimitMaxValue": 30000000000,
+          "fuelPriceMinValue": 10000,
+          "fuelPriceMaxValue": 100000000
         },
         "transactionFeeSettings": {
           "feeRates": [
