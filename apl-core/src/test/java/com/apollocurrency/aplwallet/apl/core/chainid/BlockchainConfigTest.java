@@ -61,10 +61,10 @@ public class BlockchainConfigTest {
         "TEST",
         "Test",
         10000L, 2,
-            //"data.json",
-        BLOCKCHAIN_PROPERTIES, new FeaturesHeightRequirement(100, 100, 100, 1), Set.of(20, 21, 25, 26), Set.of("1000", "18446744073709551615"));
+        //"data.json",
+        BLOCKCHAIN_PROPERTIES, new FeaturesHeightRequirement(100, 100, 100, 1, 50), Set.of(20, 21, 25, 26), Set.of("1000", "18446744073709551615"));
 
-    BlockchainConfig blockchainConfig = new BlockchainConfig();
+    BlockchainConfig blockchainConfig = new BlockchainConfig(chain, new PropertiesHolder());
     private BlockDao blockDao = mock(BlockDao.class);
     @Inject
     BlockchainConfigUpdater blockchainConfigUpdater;
@@ -95,14 +95,36 @@ public class BlockchainConfigTest {
         assertEquals(100, blockchainConfig.getDexPendingOrdersReopeningHeight());
         assertTrue(blockchainConfig.isFailedTransactionsAcceptanceActiveAtHeight(1), "Acceptance of the failed transactions should be enabled on '1' height");
         assertFalse(blockchainConfig.isFailedTransactionsAcceptanceActiveAtHeight(0), "Acceptance of the failed transactions should be not enabled until '1' height");
+        assertEquals(50, blockchainConfig.getSmartContractTransactionsHeight().get());
+        assertTrue(blockchainConfig.isSmcTransactionsActiveAtHeight(51));
+        assertFalse(blockchainConfig.isSmcTransactionsActiveAtHeight(0));
 
         chain.setFeaturesHeightRequirement(null);
         assertNull(blockchainConfig.getDexPendingOrdersReopeningHeight());
         assertFalse(blockchainConfig.isFailedTransactionsAcceptanceActiveAtHeight(1), "Feature config is not present, failed transaction acceptance cannot be active");
+        assertTrue(blockchainConfig.getSmartContractTransactionsHeight().isEmpty());
+        assertFalse(blockchainConfig.isSmcTransactionsActiveAtHeight(1));
 
         chain.setFeaturesHeightRequirement(new FeaturesHeightRequirement());
         assertNull(blockchainConfig.getDexPendingOrdersReopeningHeight());
-        assertFalse(blockchainConfig.isFailedTransactionsAcceptanceActiveAtHeight(1), "Feature config is empty, failed transaction acceptance cannot be active");
+        assertTrue(blockchainConfig.getSmartContractTransactionsHeight().isEmpty());
+        assertFalse(blockchainConfig.isFailedTransactionsAcceptanceActiveAtHeight(1));
+    }
+
+    @Test
+    void testInitBlockchainConfigForFeatureHeightRequirementTransactionVersions() {
+        blockchainConfig.updateChain(chain);
+        chain.setFeaturesHeightRequirement(new FeaturesHeightRequirement(100, 100, 150, 1, null));
+        assertEquals(150, blockchainConfig.getTransactionV2Height().get());
+        assertTrue(blockchainConfig.isTransactionV2ActiveAtHeight(200));
+        assertFalse(blockchainConfig.isTransactionV2ActiveAtHeight(50));
+
+
+        chain.setFeaturesHeightRequirement(new FeaturesHeightRequirement(100, 100, 150, null, null));
+        assertEquals(150, blockchainConfig.getTransactionV2Height().get());
+
+        chain.setFeaturesHeightRequirement(new FeaturesHeightRequirement(100, 100, null, null, null));
+        assertFalse(blockchainConfig.getTransactionV2Height().isPresent());
     }
 
     @Test

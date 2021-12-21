@@ -203,7 +203,6 @@ public final class AplCore {
             apiServer.start();
             aplAppStatus.durableTaskUpdate(initCoreTaskID, 5.0, "API initialization done");
 
-
             transportInteractionService = CDI.current().select(TransportInteractionService.class).get();
             transportInteractionService.start();
             aplAppStatus.durableTaskUpdate(initCoreTaskID, 5.5, "Transport control service initialization done");

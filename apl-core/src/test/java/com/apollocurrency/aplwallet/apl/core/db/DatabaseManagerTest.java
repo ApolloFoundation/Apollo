@@ -35,6 +35,7 @@ import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.Comparator;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Set;
@@ -285,4 +286,34 @@ class DatabaseManagerTest extends DBContainerRootTest {
 
     }
 
+    @Test
+    void getSortedDatasources_ASC() {
+        Iterator<TransactionalDataSource> iterator = databaseManager.getAllSortedDataSourcesIterator(Comparator.naturalOrder());
+        List<TransactionalDataSource> dataSources = new ArrayList<>();
+        while (iterator.hasNext()) {
+            dataSources.add(iterator.next());
+        }
+        assertEquals(3, dataSources.size());
+        assertFalse(dataSources.get(0).getDbIdentity().isEmpty());
+        assertEquals("apl_blockchain_b5d7b6_shard_2", dataSources.get(0).getDbIdentity().get());
+        assertFalse(dataSources.get(1).getDbIdentity().isEmpty());
+        assertEquals("apl_blockchain_b5d7b6_shard_3", dataSources.get(1).getDbIdentity().get());
+        assertTrue(dataSources.get(2).getDbIdentity().isEmpty()); // main data source
+    }
+
+    @Test
+    void getSortedDatasources_DESC() {
+        Iterator<TransactionalDataSource> iterator = databaseManager.getAllSortedDataSourcesIterator(Comparator.reverseOrder());
+        List<TransactionalDataSource> dataSources = new ArrayList<>();
+        while (iterator.hasNext()) {
+            dataSources.add(iterator.next());
+        }
+        assertEquals(3, dataSources.size());
+        assertTrue(dataSources.get(0).getDbIdentity().isEmpty()); // main data source
+        assertFalse(dataSources.get(1).getDbIdentity().isEmpty());
+        assertEquals("apl_blockchain_b5d7b6_shard_3", dataSources.get(1).getDbIdentity().get());
+        assertFalse(dataSources.get(2).getDbIdentity().isEmpty());
+        assertEquals("apl_blockchain_b5d7b6_shard_2", dataSources.get(2).getDbIdentity().get());
+
+    }
 }

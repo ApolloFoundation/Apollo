@@ -203,7 +203,7 @@ public abstract class DerivedDbTable<T extends DerivedEntity> implements Derived
     @Override
     public ResultSet getRangeByDbId(Connection con, PreparedStatement pstmt,
                                     MinMaxValue minMaxValue, int limit) throws SQLException {
-        Objects.requireNonNull(con, "connnection is NULL");
+        Objects.requireNonNull(con, "connection is NULL");
         Objects.requireNonNull(pstmt, "prepared statement is NULL");
         Objects.requireNonNull(minMaxValue, "minMaxValue is NULL");
         try {

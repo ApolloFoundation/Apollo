@@ -86,7 +86,6 @@ public abstract class AbstractAppendix implements Appendix {
         putMyBytes(buffer);
     }
 
-
     @Override
     public final JSONObject getJSONObject() {
         JSONObject json = new JSONObject();

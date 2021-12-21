@@ -1,6 +1,7 @@
 package com.apollocurrency.aplwallet.apl.core.dao.blockchain;
 
 import com.apollocurrency.aplwallet.api.v2.model.TxReceipt;
+import com.apollocurrency.aplwallet.apl.core.model.Sort;
 import com.apollocurrency.aplwallet.apl.util.db.TransactionalDataSource;
 import com.apollocurrency.aplwallet.apl.core.entity.appdata.ChatInfo;
 import com.apollocurrency.aplwallet.apl.core.entity.blockchain.TransactionEntity;
@@ -50,7 +51,7 @@ public interface TransactionDao {
         long accountId, byte type, byte subtype,
         int blockTimestamp, boolean withMessage, boolean phasedOnly, boolean nonPhasedOnly,
         int from, int to, boolean executedOnly, boolean includePrivate,
-        int height, int prunableExpiration, boolean failedOnly, boolean nonFailedOnly);
+        int height, int prunableExpiration, boolean failedOnly, boolean nonFailedOnly, Sort sort);
 
     int getTransactionCountByFilter(
         TransactionalDataSource dataSource, long accountId,

@@ -15,16 +15,17 @@
  */
 
 /*
- * Copyright © 2018-2019 Apollo Foundation
+ * Copyright © 2018-2021 Apollo Foundation
  */
 
 package com.apollocurrency.aplwallet.apl.core.http.get;
 
-import com.apollocurrency.aplwallet.apl.core.model.Transaction;
 import com.apollocurrency.aplwallet.apl.core.http.APITag;
 import com.apollocurrency.aplwallet.apl.core.http.AbstractAPIRequestHandler;
 import com.apollocurrency.aplwallet.apl.core.http.HttpParameterParserUtil;
 import com.apollocurrency.aplwallet.apl.core.http.JSONData;
+import com.apollocurrency.aplwallet.apl.core.model.Sort;
+import com.apollocurrency.aplwallet.apl.core.model.Transaction;
 import com.apollocurrency.aplwallet.apl.util.exception.AplException;
 import org.json.simple.JSONArray;
 import org.json.simple.JSONObject;
@@ -43,7 +44,7 @@ public final class GetBlockchainTransactions extends AbstractAPIRequestHandler {
     public GetBlockchainTransactions() {
         super(new APITag[]{APITag.ACCOUNTS, APITag.TRANSACTIONS}, "account", "timestamp", "type", "subtype",
             "firstIndex", "lastIndex", "numberOfConfirmations", "withMessage", "phasedOnly", "nonPhasedOnly",
-            "includeExpiredPrunable", "includePhasingResult", "executedOnly", "failedOnly", "nonFailedOnly");
+            "includeExpiredPrunable", "includePhasingResult", "executedOnly", "failedOnly", "nonFailedOnly", "sort");
     }
 
     @Override
@@ -60,6 +61,12 @@ public final class GetBlockchainTransactions extends AbstractAPIRequestHandler {
         boolean executedOnly = "true".equalsIgnoreCase(req.getParameter("executedOnly"));
         boolean failedOnly = "true".equalsIgnoreCase(req.getParameter("failedOnly"));
         boolean nonFailedOnly = "true".equalsIgnoreCase(req.getParameter("nonFailedOnly"));
+        String sort = HttpParameterParserUtil.getStringParameter(req, "sort", false);
+
+        if (sort == null) {
+            sort = "DESC";
+        }
+        Sort sortObj = new Sort(sort);
 
         byte type;
         byte subtype;
@@ -82,7 +89,7 @@ public final class GetBlockchainTransactions extends AbstractAPIRequestHandler {
         JSONArray transactions = new JSONArray();
         List<Transaction> transactionList = lookupBlockchain().getTransactions(accountId, numberOfConfirmations,
             type, subtype, timestamp, withMessage, phasedOnly, nonPhasedOnly, firstIndex, lastIndex,
-            includeExpiredPrunable, executedOnly, false, failedOnly, nonFailedOnly);
+            includeExpiredPrunable, executedOnly, false, failedOnly, nonFailedOnly, sortObj);
         transactionList.forEach(tx -> transactions.add(JSONData.transaction(tx, includePhasingResult, false)));
 
         JSONObject response = new JSONObject();

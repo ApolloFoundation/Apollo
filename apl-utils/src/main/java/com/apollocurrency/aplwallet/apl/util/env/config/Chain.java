@@ -41,7 +41,7 @@ public class Chain {
     private String project;
     private long initialSupply;
     private int decimals;
-    private long oneAPL;
+    private long oneAPL;// 10^(decimals)
     private FeaturesHeightRequirement featuresHeightRequirement;
     private Set<Integer> currencyIssuanceHeights;
     private Set<String> totalAmountOverflowTxs;

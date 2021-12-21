@@ -34,6 +34,5 @@ public interface Attachment extends Appendix {
 
     TransactionTypes.TransactionTypeSpec getTransactionTypeSpec();
 
-
     void bindTransactionType(@NotNull TransactionType transactionType);
 }

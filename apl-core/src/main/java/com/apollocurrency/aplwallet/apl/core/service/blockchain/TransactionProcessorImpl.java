@@ -286,7 +286,7 @@ public class TransactionProcessorImpl implements TransactionProcessor {
                         }
                         if (memPool.isAlreadyBroadcasted(transaction)) {
                             log.debug("Received back transaction " + transaction.getStringId()
-                                + " that we broadcasted, will not forward again to peers");
+                                    + " that we broadcasted, will not forward again to peers");
                         } else {
                             sendToPeersTransactions.add(unconfirmedTransaction);
                         }

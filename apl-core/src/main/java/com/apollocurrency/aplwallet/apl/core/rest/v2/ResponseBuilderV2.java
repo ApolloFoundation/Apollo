@@ -43,12 +43,12 @@ public class ResponseBuilderV2 {
         return instance;
     }
 
-    public static ResponseBuilderV2 ok() {
+    public static ResponseBuilderV2 okResponse() {
         return new ResponseBuilderV2(NO_ERROR_STATUS);
     }
 
     public static ResponseBuilderV2 done() {
-        return ok();
+        return okResponse();
     }
 
     public static ErrorResponse createErrorResponse(ApiErrorInfo error, String errorDetails, Object... args) {
@@ -86,8 +86,13 @@ public class ResponseBuilderV2 {
         return this.build();
     }
 
+    public Response ok() {
+        status = NO_ERROR_STATUS;
+        return build();
+    }
+
     public Response build() {
-        if ( response == null) {
+        if (response == null) {
             this.response = new BaseResponse();
         }
         long elapsed = System.currentTimeMillis() - startRequestTime;

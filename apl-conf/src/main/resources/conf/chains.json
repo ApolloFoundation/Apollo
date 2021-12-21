@@ -56,7 +56,10 @@
     "decimals": 8,
     "featuresHeightRequirement": {
       "dexReopenPendingOrdersHeight": 3500000,
-      "dexExpiredContractWithFinishedPhasingHeightAndStep3": 4000000
+      "dexExpiredContractWithFinishedPhasingHeightAndStep3": 4000000,
+      "failedTransactionsAcceptanceHeight": 9649200,
+      "transactionV2Height": 9649200,
+      "smartContractTransactionsHeight": 9649200
     },
     "currencyIssuanceHeights": [7961831, 7961830, 7945553, 7945552, 7905883, 7905882,
       7882498, 7882497, 7882492, 7882491, 7882486, 7882485, 7882454, 7882453, 7882435, 7882434,
@@ -229,6 +232,56 @@
         "shardingSettings": {
           "enabled": true,
           "frequency": 750000
+        },
+        "transactionFeeSettings": {
+          "feeRates": [
+            {
+              "type": 1,
+              "subType": 1,
+              "baseFee": "1000"
+            },
+            {
+              "type": 1,
+              "subType": 6,
+              "baseFee": "5"
+            },
+            {
+              "type": 1,
+              "subType": 7,
+              "baseFee": "5"
+            },
+            {
+              "type": 1,
+              "subType": 8,
+              "baseFee": "5"
+            }
+          ]
+        }
+      },
+      {
+        "height": 9649200,
+        "maxNumberOfTransactions": 255,
+        "maxArbitraryMessageLength": 160,
+        "blockTime": 2,
+        "maxBlockTimeLimit": 5,
+        "minBlockTimeLimit": 1,
+        "maxBalance": 30000000000,
+        "consensusSettings": {
+          "adaptiveForgingSettings": {
+            "enabled": "true",
+            "adaptiveBlockTime": 10
+          }
+        },
+        "shardingSettings": {
+          "enabled": true,
+          "frequency": 750000
+        },
+        "smcSettings": {
+          "masterAccountPublicKey": "3f73873c154a7da8be66040e139336a6a7afd07f39e806f61eb2567b8bd5c949",
+          "fuelLimitMinValue": 10000000,
+          "fuelLimitMaxValue": 30000000000,
+          "fuelPriceMinValue": 10000,
+          "fuelPriceMaxValue": 100000000
         },
         "transactionFeeSettings": {
           "feeRates": [

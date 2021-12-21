@@ -63,4 +63,9 @@ public class EncryptedMessageAppendix extends AbstractEncryptedMessageAppendix {
         throw new UnsupportedOperationException("Validation for message appendix is not supported, use separate class");
     }
 
+    @Override
+    public int getAppendixFlag() {
+        return 0x02;
+    }
+
 }

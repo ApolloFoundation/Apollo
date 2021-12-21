@@ -4,6 +4,7 @@
 
 package com.apollocurrency.aplwallet.apl.core.signature;
 
+import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
@@ -14,11 +15,15 @@ import java.util.Set;
  */
 public interface MultiSig extends Signature {
 
+    default List<String> getParams() {
+        return List.of();
+    }
+
     byte[] getPayload();
 
     /**
      * @return the participant count of the multisig
-     * It's a min count of participants that needs signing the document
+     * It's a min count of participants that need to sign the document
      */
     int getThresholdParticipantCount();
 

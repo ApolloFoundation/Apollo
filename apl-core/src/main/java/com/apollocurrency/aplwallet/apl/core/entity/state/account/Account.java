@@ -114,10 +114,21 @@ public class Account extends VersionedDeletableEntity {
     }
 
     /**
+     * the number of transactions sent by the account
+     *
+     * @return the number of transactions sent by the account
+     */
+//    public BigInteger getNonce() {
+//        //TODO implement the persistent autoincremental counter without gaps
+//        return new BigInteger(1, Crypto.getSecureRandom().generateSeed(32));
+//    }
+
+    /**
      * Returns true if current account is a child account
+     *
      * @return true if current account is a child account, it means that {@code parentId != 0}
      */
-    public boolean isChild(){
+    public boolean isChild() {
         return !isParent();
     }
 

@@ -197,4 +197,9 @@ public class PrunableEncryptedMessageAppendix extends AbstractAppendix implement
         return (prunableMessage != null || encryptedData != null);
     }
 
+    @Override
+    public int getAppendixFlag() {
+        return 0x40;
+    }
+
 }
