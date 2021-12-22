@@ -3,11 +3,14 @@
  */
 package com.apollocurrency.aplwallet.apl.core.transaction.messages;
 
-import com.apollocurrency.aplwallet.apl.core.model.Transaction;
 import com.apollocurrency.aplwallet.apl.core.entity.state.account.Account;
+import com.apollocurrency.aplwallet.apl.core.model.Transaction;
 import com.apollocurrency.aplwallet.apl.core.transaction.Fee;
 import com.apollocurrency.aplwallet.apl.core.transaction.TransactionType;
+import com.apollocurrency.aplwallet.apl.util.annotation.FeeMarker;
+import com.apollocurrency.aplwallet.apl.util.annotation.TransactionFee;
 import com.apollocurrency.aplwallet.apl.util.exception.AplException;
+import lombok.EqualsAndHashCode;
 import lombok.NonNull;
 import org.json.simple.JSONObject;
 
@@ -16,6 +19,7 @@ import java.nio.ByteBuffer;
 /**
  * @author al
  */
+@EqualsAndHashCode(callSuper = true)
 public abstract class AbstractAttachment extends AbstractAppendix implements Attachment {
     private TransactionType transactionType;
 
@@ -62,6 +66,7 @@ public abstract class AbstractAttachment extends AbstractAppendix implements Att
         transactionType().apply(transaction, senderAccount, recipientAccount);
     }
 
+    @TransactionFee(FeeMarker.BASE_FEE)
     @Override
     public final Fee getBaselineFee(Transaction transaction, long oneAPL) {
         return transactionType().getBaselineFee(transaction);

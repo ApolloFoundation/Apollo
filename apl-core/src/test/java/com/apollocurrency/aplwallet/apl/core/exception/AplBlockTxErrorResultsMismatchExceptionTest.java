@@ -10,7 +10,7 @@ import org.junit.jupiter.api.Test;
 
 import java.util.List;
 
-import static org.junit.jupiter.api.Assertions.*;
+import static org.junit.jupiter.api.Assertions.assertEquals;
 
 class AplBlockTxErrorResultsMismatchExceptionTest {
 
@@ -29,6 +29,6 @@ class AplBlockTxErrorResultsMismatchExceptionTest {
             "#10 error message}," +
             " TxErrorHash{id=16909767887484625916, " +
             "errorHash=a603f3773430a7cc9f20f111a8fd3edd930bade6a4e7d4e05ebaee2a1b77172c, error=Transaction  #11 error message}]" +
-            ", block: 12239762356076828396", ex.getMessage());
+            ", block.id= 12239762356076828396, block.height=15456", ex.getMessage());
     }
 }

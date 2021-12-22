@@ -173,7 +173,7 @@ public class AccountController {
         maxAPIFetchRecords = maxAPIrecords;
         this.accountStatisticsService = accountStatisticsService;
         this.assetService = assetService;
-        this.currencyService =  currencyService;
+        this.currencyService = currencyService;
         this.accountParametersParser = accountParametersParser;
         this.KMSService = KMSService;
     }

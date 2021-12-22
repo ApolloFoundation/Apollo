@@ -35,6 +35,7 @@ public class FeeCalculator {
             Fee fee = appendage.getBaselineFee(transaction, oneAPL);
             totalFee = Math.addExact(totalFee, fee.getFee(transaction, appendage));
         }
+        //add ONE APL for the referenced transaction
         if (transaction.getReferencedTransactionFullHash() != null) {
             totalFee = Math.addExact(totalFee, blockchainConfig.getOneAPL());
         }

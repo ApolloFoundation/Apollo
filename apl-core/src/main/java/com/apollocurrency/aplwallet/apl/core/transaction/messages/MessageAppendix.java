@@ -92,6 +92,7 @@ public class MessageAppendix extends AbstractAppendix {
         json.put("messageIsText", isText);
     }
 
+
     @Override
     public Fee getBaselineFee(Transaction transaction, long oneAPL) {
         return new Fee.SizeBasedFee(0, oneAPL, 32) {
@@ -114,6 +115,11 @@ public class MessageAppendix extends AbstractAppendix {
 
     @Override
     public void apply(Transaction transaction, Account senderAccount, Account recipientAccount) {
+    }
+
+    @Override
+    public int getAppendixFlag() {
+        return 0x01;
     }
 
     public byte[] getMessage() {

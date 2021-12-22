@@ -27,14 +27,14 @@ public class TableRegistryInitializer {
     @Inject
     FullTextConfig fullTextConfig;
     @Inject
-    @Property(value = "apl.derivedTablesCount", defaultValue = "55")
+    @Property(value = "apl.derivedTablesCount", defaultValue = "60")
     int requiredTablesCount;
 
     @PostConstruct
     public void registerAllTables() {
         long count = tables.stream().count();
         if (count != requiredTablesCount) {
-            throw new IllegalStateException("Should be registered 55 derived tables, got " + count + ", list: " +
+            throw new IllegalStateException("Should be registered " + requiredTablesCount + " derived tables, got " + count + ", list: " +
                 tables.stream().map(Objects::toString).collect(Collectors.joining(",")));
         }
         tables.forEach(this::init);

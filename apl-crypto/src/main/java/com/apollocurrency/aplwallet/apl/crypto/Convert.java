@@ -32,6 +32,7 @@ import java.util.Collections;
 import java.util.Comparator;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Locale;
 import java.util.Objects;
 import java.util.Set;
 import java.util.zip.GZIPInputStream;
@@ -64,10 +65,11 @@ public final class Convert {
     private Convert() {
     } //never
 
-    public static byte[] parseHexString(String hex) {
-        if (hex == null) {
+    public static byte[] parseHexString(String hexStr) {
+        if (hexStr == null) {
             return null;
         }
+        String hex = hexStr.toLowerCase(Locale.ROOT);
         byte[] bytes = new byte[hex.length() / 2];
         for (int i = 0; i < bytes.length; i++) {
             int char1 = hex.charAt(i * 2);
@@ -85,6 +87,10 @@ public final class Convert {
     public static long getId(byte[] publicKey) {
         byte[] publicKeyHash = Crypto.sha256().digest(publicKey);
         return Convert.transactionFullHashToId(publicKeyHash);
+    }
+
+    public static String toHexString(long value) {
+        return toHexString(longToBytes(value));
     }
 
     public static String toHexString(byte[] bytes) {
@@ -123,6 +129,8 @@ public final class Convert {
             return ((Long) o);
         } else if (o instanceof String) {
             return Long.parseLong((String) o);
+        } else if (o instanceof Number) {
+            return ((Number) o).longValue();
         } else {
             throw new IllegalArgumentException("Not a long: " + o);
         }
@@ -143,9 +151,10 @@ public final class Convert {
         }
     }
 
-    public static byte[] longToBytes(long l) {
+    public static byte[] longToBytes(final long value) {
         int longSize = Long.BYTES;
         byte[] result = new byte[longSize];
+        long l = value;
         for (int i = longSize - 1; i >= 0; i--) {
             result[i] = (byte) (l & 0xFF);
             l >>= longSize;
@@ -347,6 +356,28 @@ public final class Convert {
             throw new NotValidException("Max parameter length exceeded");
         }
         byte[] bytes = new byte[numBytes];
+        buffer.get(bytes);
+        return Convert.toString(bytes);
+    }
+
+    public static void writeString(ByteBuffer buffer, String value) {
+        if(value == null || value.isEmpty()){
+            buffer.putInt(0);
+        }else {
+            byte[] data = Convert.toBytes(value);
+            buffer.putInt(data.length);
+            buffer.put(data);
+        }
+    }
+
+    public static String readString(ByteBuffer buffer) throws NotValidException {
+        int len = buffer.getInt();
+        if(len<0){
+            throw new NotValidException("The string length can't be negative.");
+        }else if (len == 0){
+            return "";
+        }
+        byte[] bytes = new byte[len];
         buffer.get(bytes);
         return Convert.toString(bytes);
     }

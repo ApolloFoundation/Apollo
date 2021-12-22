@@ -6,7 +6,7 @@
   <parent>
     <groupId>com.apollocurrency</groupId>
     <artifactId>apollo-blockchain</artifactId>
-    <version>1.48.11</version>
+    <version>1.50.32</version>
   </parent>
 
   <artifactId>apl-api</artifactId>
@@ -114,9 +114,6 @@
     <plugins>
       <plugin>
         <artifactId>maven-surefire-plugin</artifactId>
-        <configuration>
-          <argLine>-Duser.language=en</argLine>
-        </configuration>
       </plugin>
     </plugins>
   </build>

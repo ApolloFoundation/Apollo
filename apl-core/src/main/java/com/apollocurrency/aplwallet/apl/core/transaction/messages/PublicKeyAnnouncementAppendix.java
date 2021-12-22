@@ -4,8 +4,8 @@
 
 package com.apollocurrency.aplwallet.apl.core.transaction.messages;
 
-import com.apollocurrency.aplwallet.apl.core.model.Transaction;
 import com.apollocurrency.aplwallet.apl.core.entity.state.account.Account;
+import com.apollocurrency.aplwallet.apl.core.model.Transaction;
 import com.apollocurrency.aplwallet.apl.crypto.Convert;
 import org.json.simple.JSONObject;
 
@@ -71,6 +71,11 @@ public class PublicKeyAnnouncementAppendix extends AbstractAppendix {
     @Override
     public void apply(Transaction transaction, Account senderAccount, Account recipientAccount) {
         throw new UnsupportedOperationException("Apply is not supported, use separate class");
+    }
+
+    @Override
+    public int getAppendixFlag() {
+        return 0x04;
     }
 
     @Override

@@ -22,7 +22,7 @@ public class AppendixValidatorRegistry {
     }
 
     public AppendixValidatorRegistry(Collection<AppendixValidator<?>> validators) {
-        validators.iterator().forEachRemaining(e-> this.validators.put(e.forClass(), e));
+        validators.iterator().forEachRemaining(e -> this.validators.put(e.forClass(), e));
     }
 
     public <T extends Appendix> AppendixValidator<T> getValidatorFor(T t) {
@@ -30,6 +30,6 @@ public class AppendixValidatorRegistry {
     }
 
     void init(Instance<AppendixValidator<?>> appendixValidators) {
-       appendixValidators.iterator().forEachRemaining(e-> validators.put(e.forClass(), e));
+        appendixValidators.iterator().forEachRemaining(e -> validators.put(e.forClass(), e));
     }
 }

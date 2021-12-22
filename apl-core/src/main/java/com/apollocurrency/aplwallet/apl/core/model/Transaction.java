@@ -10,6 +10,7 @@ import com.apollocurrency.aplwallet.apl.core.signature.Signature;
 import com.apollocurrency.aplwallet.apl.core.transaction.TransactionType;
 import com.apollocurrency.aplwallet.apl.core.transaction.TransactionTypes;
 import com.apollocurrency.aplwallet.apl.core.transaction.messages.AbstractAppendix;
+import com.apollocurrency.aplwallet.apl.core.transaction.messages.AbstractAttachment;
 import com.apollocurrency.aplwallet.apl.core.transaction.messages.Attachment;
 import com.apollocurrency.aplwallet.apl.core.transaction.messages.EncryptToSelfMessageAppendix;
 import com.apollocurrency.aplwallet.apl.core.transaction.messages.EncryptedMessageAppendix;
@@ -58,6 +59,10 @@ public interface Transaction {
 
     void unsetBlock();
 
+    /**
+     * the transaction sequence number in the block
+     * @return the transaction sequence number in the block
+     */
     short getIndex();
 
     void setIndex(int index);
@@ -127,7 +132,9 @@ public interface Transaction {
 
     boolean ofType(TransactionTypes.TransactionTypeSpec spec);
 
-    boolean isNotOfType(TransactionTypes.TransactionTypeSpec spec);
+    default boolean isNotOfType(TransactionTypes.TransactionTypeSpec spec){
+        return !ofType(spec);
+    }
 
     /**
      * @return optional transaction error message, will be non-empty for failed transactions
@@ -182,6 +189,10 @@ public interface Transaction {
         Builder referencedTransactionFullHash(String referencedTransactionFullHash);
 
         Builder referencedTransactionFullHash(byte[] referencedTransactionFullHash);
+
+        Builder appendix(AbstractAttachment attachment);
+
+        Builder appendix(AbstractAppendix appendix);
 
         Builder appendix(MessageAppendix message);
 

@@ -2,15 +2,11 @@
 <project xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns="http://maven.apache.org/POM/4.0.0"
          xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
   <modelVersion>4.0.0</modelVersion>
-  <properties>
-    <!--    move to BOM -->
-    <mariadb-java-client.version>2.6.1</mariadb-java-client.version>
-  </properties>
 
   <parent>
     <groupId>com.apollocurrency</groupId>
     <artifactId>apollo-blockchain</artifactId>
-    <version>1.48.11</version>
+    <version>1.50.32</version>
   </parent>
   <artifactId>apl-core</artifactId>
   <name>apl-core</name>
@@ -35,31 +31,43 @@
     </dependency>
     <dependency>
       <groupId>com.apollocurrency</groupId>
-        <artifactId>apl-db-updater</artifactId>
-        <version>${project.version}</version>
+      <artifactId>apl-db-updater</artifactId>
+      <version>${project.version}</version>
     </dependency>
 
-      <dependency>
-          <groupId>com.apollocurrency</groupId>
-          <artifactId>apl-dex</artifactId>
-          <version>${project.version}</version>
-      </dependency>
+    <dependency>
+      <groupId>com.apollocurrency</groupId>
+      <artifactId>apl-dex</artifactId>
+      <version>${project.version}</version>
+    </dependency>
 
-      <dependency>
-          <groupId>com.apollocurrency</groupId>
-          <artifactId>apl-vault-wallet</artifactId>
-          <version>${project.version}</version>
-      </dependency>
+    <dependency>
+      <groupId>com.apollocurrency</groupId>
+      <artifactId>apl-smc</artifactId>
+      <version>${project.version}</version>
+    </dependency>
 
-      <!-- EXT BOM DEPENDENCIES -->
-      <dependency>
-          <groupId>ch.qos.logback</groupId>
-          <artifactId>logback-classic</artifactId>
-      </dependency>
-      <dependency>
-          <groupId>org.slf4j</groupId>
-          <artifactId>slf4j-api</artifactId>
-      </dependency>
+    <dependency>
+      <groupId>com.apollocurrency</groupId>
+      <artifactId>apl-vault-wallet</artifactId>
+      <version>${project.version}</version>
+    </dependency>
+
+    <dependency>
+      <groupId>com.apollocurrency</groupId>
+      <artifactId>smc-lib</artifactId>
+      <version>${smc-lib.version}</version>
+    </dependency>
+
+    <!-- EXT BOM DEPENDENCIES -->
+    <dependency>
+      <groupId>ch.qos.logback</groupId>
+      <artifactId>logback-classic</artifactId>
+    </dependency>
+    <dependency>
+      <groupId>org.slf4j</groupId>
+      <artifactId>slf4j-api</artifactId>
+    </dependency>
 
     <dependency>
       <groupId>com.fasterxml.jackson.datatype</groupId>
@@ -288,7 +296,7 @@
       <scope>test</scope>
     </dependency>
 
-      <dependency>
+    <dependency>
       <groupId>commons-codec</groupId>
       <artifactId>commons-codec</artifactId>
     </dependency>
@@ -348,9 +356,6 @@
     <plugins>
       <plugin>
         <artifactId>maven-surefire-plugin</artifactId>
-        <configuration>
-          <argLine>-Duser.language=en</argLine>
-        </configuration>
       </plugin>
       <plugin>
         <groupId>org.codehaus.mojo</groupId>

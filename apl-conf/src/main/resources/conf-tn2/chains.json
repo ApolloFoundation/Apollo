@@ -21,7 +21,9 @@
     "featuresHeightRequirement": {
       "dexReopenPendingOrdersHeight": 0,
       "dexExpiredContractWithFinishedPhasingHeightAndStep3": 0,
-      "failedTransactionsAcceptanceHeight": 0
+      "failedTransactionsAcceptanceHeight": 0,
+      "transactionV2Height": 421500,
+      "smartContractTransactionsHeight": 421500
     },
     "blockchainProperties": [
       {
@@ -50,7 +52,14 @@
         },
         "shardingSettings": {
           "enabled": true,
-          "frequency": 2000
+          "frequency": 10000
+        },
+        "smcSettings": {
+          "masterAccountPublicKey": "f9c6cd2cebff46137f3ea611683026b94f4bd1b39abbab480478e10766b2c608",
+          "fuelLimitMinValue": 10000000,
+          "fuelLimitMaxValue": 30000000000,
+          "fuelPriceMinValue": 10000,
+          "fuelPriceMaxValue": 100000000
         },
         "transactionFeeSettings": {
           "feeRates": [

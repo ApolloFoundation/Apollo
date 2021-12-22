@@ -10,6 +10,7 @@ import java.util.List;
 public interface KMSService {
     /**
      * Is Vault wallet exist for this account.
+     *
      * @param accountId user apl account.
      * @return true/false
      */
@@ -17,8 +18,9 @@ public interface KMSService {
 
     /**
      * Is Eth wallet exist for this eth address.
-     * @param accountId user apl account.
-     * @param passphrase passphrase to Vault wallet.
+     *
+     * @param accountId        user apl account.
+     * @param passphrase       passphrase to Vault wallet.
      * @param ethWalletAddress address of the eth account.
      * @return true/false
      */
@@ -26,7 +28,8 @@ public interface KMSService {
 
     /**
      * Get information of user wallet. (apl/eth)
-     * @param accountId user apl account.
+     *
+     * @param accountId  user apl account.
      * @param passphrase passphrase to Vault wallet.
      * @return wallet information
      */
@@ -34,7 +37,8 @@ public interface KMSService {
 
     /**
      * Get APL secret bytes.
-     * @param accountId user apl account.
+     *
+     * @param accountId  user apl account.
      * @param passphrase passphrase to Vault wallet.
      * @return byte[] apl secret (private key)
      */
@@ -42,7 +46,8 @@ public interface KMSService {
 
     /**
      * Store new wallet.
-     * @param wallet vault wallet bytes.
+     *
+     * @param wallet     vault wallet bytes.
      * @param passphrase passphrase to Vault wallet.
      * @return store status.
      */
@@ -50,7 +55,8 @@ public interface KMSService {
 
     /**
      * Get user key store as file.
-     * @param accountId user apl account.
+     *
+     * @param accountId  user apl account.
      * @param passphrase passphrase to Vault wallet.
      * @return key store file.
      */
@@ -58,7 +64,8 @@ public interface KMSService {
 
     /**
      * Get eth user key of particular eth address.
-     * @param accountId user apl account.
+     *
+     * @param accountId  user apl account.
      * @param passphrase passphrase to Vault wallet.
      * @param ethAddress eth address.
      * @return ETH key. (Credentials)
@@ -67,7 +74,8 @@ public interface KMSService {
 
     /**
      * Get a list of eth address user has.
-     * @param accountId user apl account.
+     *
+     * @param accountId  user apl account.
      * @param passphrase passphrase to Vault wallet.
      * @return list of user's ETH addresses.
      */

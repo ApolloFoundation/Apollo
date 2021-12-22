@@ -24,10 +24,10 @@ public class DbManipulator {
     private static final String DEFAULT_SCHEMA_SCRIPT_PATH = "db/schema.sql";
     private static final String DEFAULT_DATA_SCRIPT_PATH = "db/data.sql";
     private static final Logger logger = getLogger(DbManipulator.class);
+    public static final String DB_POPULATOR_STRING_TOKENIZER_DELIM = "dbPopulator.stringTokenizer.delim";
     protected DatabaseManager databaseManager;
 
     private DbPopulator populator;
-
 
     public DbManipulator(DbProperties dbProperties, PropertiesHolder propertiesHolder, String dataScriptPath, String schemaScriptPath) {
         Objects.requireNonNull(dbProperties, "dbProperties is NULL");
@@ -38,8 +38,9 @@ public class DbManipulator {
 
         dataScriptPath = StringUtils.isBlank(dataScriptPath) ? DEFAULT_DATA_SCRIPT_PATH : dataScriptPath;
         schemaScriptPath = StringUtils.isBlank(schemaScriptPath) ? DEFAULT_SCHEMA_SCRIPT_PATH : schemaScriptPath;
+        String stringTokenizerDelimiter = propertiesHolderParam.getStringProperty(DB_POPULATOR_STRING_TOKENIZER_DELIM, DbPopulator.DEFAULT_DELIMITER);
         // sometimes it can be helpful to skip test data load
-        this.populator = new DbPopulator(schemaScriptPath, dataScriptPath);
+        this.populator = new DbPopulator(schemaScriptPath, dataScriptPath, stringTokenizerDelimiter);
     }
 
     public void init() {
