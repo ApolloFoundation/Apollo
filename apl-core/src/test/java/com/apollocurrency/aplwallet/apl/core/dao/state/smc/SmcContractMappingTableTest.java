@@ -19,6 +19,7 @@ import com.apollocurrency.aplwallet.apl.core.service.state.DerivedTablesRegistry
 import com.apollocurrency.aplwallet.apl.crypto.Convert;
 import com.apollocurrency.aplwallet.apl.data.DbTestData;
 import com.apollocurrency.aplwallet.apl.extension.DbExtension;
+import com.apollocurrency.aplwallet.apl.testutil.DbManipulator;
 import com.apollocurrency.aplwallet.apl.testutil.DbUtils;
 import com.apollocurrency.aplwallet.apl.testutil.EntityProducer;
 import com.apollocurrency.aplwallet.apl.util.injectable.PropertiesHolder;
@@ -35,6 +36,8 @@ import org.junit.jupiter.api.extension.RegisterExtension;
 
 import javax.inject.Inject;
 
+import java.util.Properties;
+
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
@@ -50,7 +53,16 @@ import static org.mockito.Mockito.mock;
 class SmcContractMappingTableTest extends DbContainerBaseTest {
 
     @RegisterExtension
-    static DbExtension dbExtension = new DbExtension(mariaDBContainer, DbTestData.getInMemDbProps(), "db/smc-mapping-data.sql", "db/schema.sql");
+    static DbExtension dbExtension;
+
+    static {
+        var prop = new Properties();
+        prop.put(DbManipulator.DB_POPULATOR_STRING_TOKENIZER_DELIM, "#");
+        dbExtension = new DbExtension(mariaDBContainer, DbTestData.getInMemDbProps(),
+            new PropertiesHolder(prop),
+            "db/schema.sql",
+            "db/smc_mapping-data.sql");
+    }
 
     @Inject
     SmcContractMappingTable table;

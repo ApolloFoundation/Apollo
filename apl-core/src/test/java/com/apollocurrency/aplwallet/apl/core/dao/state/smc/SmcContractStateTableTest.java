@@ -18,6 +18,7 @@ import com.apollocurrency.aplwallet.apl.core.service.state.DerivedDbTablesRegist
 import com.apollocurrency.aplwallet.apl.core.service.state.DerivedTablesRegistry;
 import com.apollocurrency.aplwallet.apl.data.DbTestData;
 import com.apollocurrency.aplwallet.apl.extension.DbExtension;
+import com.apollocurrency.aplwallet.apl.testutil.DbManipulator;
 import com.apollocurrency.aplwallet.apl.testutil.DbUtils;
 import com.apollocurrency.aplwallet.apl.testutil.EntityProducer;
 import com.apollocurrency.aplwallet.apl.util.injectable.PropertiesHolder;
@@ -34,6 +35,8 @@ import org.junit.jupiter.api.extension.RegisterExtension;
 
 import javax.inject.Inject;
 
+import java.util.Properties;
+
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
@@ -49,12 +52,21 @@ import static org.mockito.Mockito.mock;
 class SmcContractStateTableTest extends DbContainerBaseTest {
 
     @RegisterExtension
-    static DbExtension dbExtension = new DbExtension(mariaDBContainer, DbTestData.getInMemDbProps(), "db/smc-data.sql", "db/schema.sql");
+    static DbExtension dbExtension;
+
+    static {
+        var prop = new Properties();
+        prop.put(DbManipulator.DB_POPULATOR_STRING_TOKENIZER_DELIM, "#");
+        dbExtension = new DbExtension(mariaDBContainer, DbTestData.getInMemDbProps(),
+            new PropertiesHolder(prop),
+            "db/schema.sql",
+            "db/smc-data.sql");
+    }
 
     @Inject
     SmcContractStateTable table;
 
-    long contractAddress = 7307657537262705518L;
+    long contractAddress = 832074176060907552L;
 
     private Blockchain blockchain = mock(BlockchainImpl.class);
     private BlockchainConfig blockchainConfig = mock(BlockchainConfig.class);
@@ -86,7 +98,7 @@ class SmcContractStateTableTest extends DbContainerBaseTest {
         SmcContractStateEntity entity = table.get(SmcContractStateTable.KEY_FACTORY.newKey(contractAddress));
         assertNotNull(entity);
         assertEquals(contractAddress, entity.getAddress());
-        assertEquals("{\"value\":1400000000,\"vendor\":\"APL-X5JH-TJKJ-DVGC-5T2V8\",\"customer\":\"\",\"paid\":false,\"accepted\":false}", entity.getSerializedObject());
+        assertTrue(entity.getSerializedObject().contains("\"_vault\":{\"meta\":{\"className\":\"Address\",\"args\":[\"value\"],\"create\":\"DSH.createAddress\"},\"value\":\"0x82349393da8764fd\"}"));
     }
 
     @Test

@@ -4,8 +4,6 @@
 
 package com.apollocurrency.aplwallet.apl.core.transaction.types.smc;
 
-import com.apollocurrency.aplwallet.apl.core.converter.db.smc.ContractModelToEntityConverter;
-import com.apollocurrency.aplwallet.apl.core.converter.db.smc.ContractModelToStateEntityConverter;
 import com.apollocurrency.aplwallet.apl.core.entity.state.account.Account;
 import com.apollocurrency.aplwallet.apl.core.entity.state.account.LedgerEvent;
 import com.apollocurrency.aplwallet.apl.core.entity.state.account.PublicKey;
@@ -37,7 +35,7 @@ import java.util.List;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
-import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.doNothing;
@@ -52,10 +50,6 @@ import static org.mockito.Mockito.when;
 @ExtendWith(MockitoExtension.class)
 class SmcPublishContractTransactionTypeApplyTest extends AbstractSmcTransactionTypeApplyTest {
 
-    @Inject
-    ContractModelToEntityConverter contractModelToEntityConverter;
-    @Inject
-    ContractModelToStateEntityConverter contractModelToStateEntityConverter;
     @Inject
     ContractToolService toolService;
 
@@ -93,13 +87,14 @@ class SmcPublishContractTransactionTypeApplyTest extends AbstractSmcTransactionT
         newTx.setBlock(lastBlock);
 
         doNothing().when(spyAccountService).addToBalanceATM(any(Account.class), any(LedgerEvent.class), eq(newTx.getId()), eq(-txData.getAmountATM()), eq(-(txData.getFuelLimit() * txData.getFuelPrice())));
-        doNothing().when(spyAccountService).addToBalanceAndUnconfirmedBalanceATM(any(Account.class), any(LedgerEvent.class), eq(newTx.getId()), eq(txData.getAmountATM()));
+
         long senderId = AccountService.getId(newTx.getSenderPublicKey());
         when(publicKeyDao.searchAll(senderId)).thenReturn(new PublicKey(senderId, newTx.getSenderPublicKey(), newTx.getHeight()));
 
         //WHEN
         DbUtils.inTransaction(extension, connection -> txApplier.apply(newTx));
-        AplAddress contractAddress = new AplAddress(newTx.getRecipientId());
+        AplAddress contractAddress = new AplAddress(newTx.getId());
+
         SmartContract smartContract = contractRepository.loadContract(
             contractAddress,
             new AplAddress(newTx.getSenderId()),
@@ -148,13 +143,15 @@ class SmcPublishContractTransactionTypeApplyTest extends AbstractSmcTransactionT
         newTx.setBlock(lastBlock);
 
         doNothing().when(spyAccountService).addToBalanceATM(any(Account.class), any(LedgerEvent.class), eq(newTx.getId()), eq(-txData.getAmountATM()), eq(-(txData.getFuelLimit() * txData.getFuelPrice())));
-        doNothing().when(spyAccountService).addToBalanceAndUnconfirmedBalanceATM(any(Account.class), any(LedgerEvent.class), eq(newTx.getId()), eq(txData.getAmountATM()));
         long senderId = AccountService.getId(newTx.getSenderPublicKey());
         when(publicKeyDao.searchAll(senderId)).thenReturn(new PublicKey(senderId, newTx.getSenderPublicKey(), newTx.getHeight()));
         when(blockchainConfig.isFailedTransactionsAcceptanceActiveAtHeight(lastBlock.getHeight())).thenReturn(true);
 
         //WHEN
-        assertThrows(RuntimeException.class, () -> DbUtils.inTransaction(extension, connection -> spyApplier.apply(newTx)));
+        DbUtils.inTransaction(extension, connection -> spyApplier.apply(newTx));
+        //THEN
+        assertTrue(newTx.getErrorMessage().isPresent());
+        assertTrue(newTx.getErrorMessage().get().contains("errorMessage=JSException:ReferenceError: Contract2 is not defined"));
 
     }
 
@@ -202,13 +199,12 @@ class SmcPublishContractTransactionTypeApplyTest extends AbstractSmcTransactionT
         newTx.setBlock(lastBlock);
 
         doNothing().when(spyAccountService).addToBalanceATM(any(Account.class), any(LedgerEvent.class), eq(newTx.getId()), eq(-txData1.getAmountATM()), eq(-(txData1.getFuelLimit() * txData1.getFuelPrice())));
-        doNothing().when(spyAccountService).addToBalanceAndUnconfirmedBalanceATM(any(Account.class), any(LedgerEvent.class), eq(newTx.getId()), eq(txData1.getAmountATM()));
         long senderId = AccountService.getId(newTx.getSenderPublicKey());
         when(publicKeyDao.searchAll(senderId)).thenReturn(new PublicKey(senderId, newTx.getSenderPublicKey(), newTx.getHeight()));
 
         //WHEN
         DbUtils.inTransaction(extension, connection -> txApplier.apply(newTx));
-        AplAddress contractAddress = new AplAddress(newTx.getRecipientId());
+        AplAddress contractAddress = new AplAddress(newTx.getId());
         SmartContract smartContract = contractRepository.loadContract(
             contractAddress,
             new AplAddress(newTx.getSenderId()),
@@ -223,7 +219,6 @@ class SmcPublishContractTransactionTypeApplyTest extends AbstractSmcTransactionT
         //GIVEN
         SmcTxData txData2 = SmcTxData.builder()
             .sender(senderAccount2RS)
-            .recipient(Convert.defaultRsAccount(newTx.getRecipientId()))
             .method("set")
             .params(Collections.emptyList())
             .amountATM(0L)
@@ -239,10 +234,9 @@ class SmcPublishContractTransactionTypeApplyTest extends AbstractSmcTransactionT
             .fuelPrice(BigInteger.valueOf(txData2.getFuelPrice()))
             .build();
 
-
         Account account2 = new Account(senderAccountId2, 10_000_000_00000000L, 10_000_000_00000000L, 1000000000L, 0L, 1);
 
-        Transaction newTx2 = createTransaction(txData2, attachment2, account2);
+        Transaction newTx2 = createTransaction(txData2, attachment2, account2, contractAddress.getLongId());
         assertNotNull(newTx2);
         newTx2.setBlock(lastBlock);
 
@@ -256,8 +250,8 @@ class SmcPublishContractTransactionTypeApplyTest extends AbstractSmcTransactionT
         AplAddress contractAddress2 = new AplAddress(newTx2.getRecipientId());
         SmartContract smartContract2 = contractRepository.loadContract(
             contractAddress,
-            new AplAddress(newTx2.getSenderId()),
-            new AplAddress(newTx2.getSenderId()),
+            contractAddress2,
+            contractAddress2,
             new ContractFuel(contractAddress2, attachment2.getFuelLimit(), attachment2.getFuelPrice())
         );
 
@@ -268,7 +262,6 @@ class SmcPublishContractTransactionTypeApplyTest extends AbstractSmcTransactionT
         //GIVEN
         SmcTxData txData3 = SmcTxData.builder()
             .sender(senderAccount2RS)
-            .recipient(Convert.defaultRsAccount(newTx.getRecipientId()))
             .method("read")
             .params(Collections.emptyList())
             .fuelLimit(15_000_000L)
@@ -286,7 +279,7 @@ class SmcPublishContractTransactionTypeApplyTest extends AbstractSmcTransactionT
         long senderAccountId3 = Convert.parseAccountId(txData3.getSender());
         Account account3 = new Account(senderAccountId3, 10_000_000_00000000L, 10_000_000_00000000L, 1000000000L, 0L, 1);
 
-        Transaction newTx3 = createTransaction(txData3, attachment3, account3);
+        Transaction newTx3 = createTransaction(txData3, attachment3, account3, contractAddress.getLongId());
         assertNotNull(newTx3);
         newTx3.setBlock(lastBlock);
 
@@ -297,11 +290,11 @@ class SmcPublishContractTransactionTypeApplyTest extends AbstractSmcTransactionT
 
         //WHEN
         DbUtils.inTransaction(extension, connection -> txApplier.apply(newTx3));
-        AplAddress contractAddress3 = new AplAddress(newTx3.getRecipientId());
+        AplAddress contractAddress3 = new AplAddress(newTx3.getId());
         SmartContract smartContract3 = contractRepository.loadContract(
+            contractAddress,
             contractAddress3,
-            new AplAddress(newTx3.getSenderId()),
-            new AplAddress(newTx3.getSenderId()),
+            contractAddress3,
             new ContractFuel(contractAddress3, attachment3.getFuelLimit(), attachment3.getFuelPrice())
         );
 

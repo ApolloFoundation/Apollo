@@ -250,7 +250,11 @@ abstract class AbstractSmcTransactionTypeApplyTest extends DbContainerBaseTest {
     }
 
     Transaction createTransaction(SmcTxData body, AbstractSmcAttachment attachment, Account senderAccount) {
-        CreateTransactionRequest txRequest = CreateTransactionRequest.builder()
+        return createTransaction(body, attachment, senderAccount, null);
+    }
+
+    Transaction createTransaction(SmcTxData body, AbstractSmcAttachment attachment, Account senderAccount, Long recipientId) {
+        var txReqBuilder = CreateTransactionRequest.builder()
             .version(2)
             .senderAccount(senderAccount)
             .amountATM(body.getAmountATM())
@@ -260,8 +264,11 @@ abstract class AbstractSmcTransactionTypeApplyTest extends DbContainerBaseTest {
             .attachment(attachment)
             .credential(new MultiSigCredential(1, Crypto.getKeySeed(body.getSecret())))
             .broadcast(false)
-            .validate(false)
-            .build();
+            .validate(false);
+        if (recipientId != null) {
+            txReqBuilder.recipientId(recipientId);
+        }
+        CreateTransactionRequest txRequest = txReqBuilder.build();
 
         Transaction transaction = transactionCreator.createTransactionThrowingException(txRequest);
 
