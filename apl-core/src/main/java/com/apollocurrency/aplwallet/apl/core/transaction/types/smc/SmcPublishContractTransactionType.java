@@ -34,12 +34,12 @@ import com.apollocurrency.aplwallet.apl.smc.model.AplAddress;
 import com.apollocurrency.aplwallet.apl.smc.service.SmcContractTxProcessor;
 import com.apollocurrency.aplwallet.apl.smc.service.tx.PublishContractTxProcessor;
 import com.apollocurrency.aplwallet.apl.smc.service.tx.PublishContractTxValidator;
+import com.apollocurrency.aplwallet.apl.util.StringUtils;
 import com.apollocurrency.aplwallet.apl.util.io.PayloadResult;
 import com.apollocurrency.aplwallet.apl.util.io.Result;
 import com.apollocurrency.smc.contract.SmartContract;
 import com.apollocurrency.smc.data.type.Address;
 import com.apollocurrency.smc.polyglot.PolyglotException;
-import com.google.common.base.Strings;
 import lombok.extern.slf4j.Slf4j;
 import org.json.simple.JSONObject;
 
@@ -121,19 +121,19 @@ public class SmcPublishContractTransactionType extends AbstractSmcTransactionTyp
         }
 
         SmcPublishContractAttachment attachment = (SmcPublishContractAttachment) abstractSmcAttachment;
-        if (Strings.isNullOrEmpty(attachment.getContractName())) {
+        if (StringUtils.isBlank(attachment.getContractName())) {
             throw new AplUnacceptableTransactionValidationException("Empty contract name.", transaction);
         }
-        if (Strings.isNullOrEmpty(attachment.getBaseContract())) {
+        if (StringUtils.isBlank(attachment.getBaseContract())) {
             throw new AplUnacceptableTransactionValidationException("Empty base contract.", transaction);
         }
-        if (Strings.isNullOrEmpty(attachment.getContractSource())) {
+        if (StringUtils.isBlank(attachment.getContractSource())) {
             throw new AplUnacceptableTransactionValidationException("Empty contract source.", transaction);
         }
-        if (Strings.isNullOrEmpty(attachment.getLanguageName())) {
+        if (StringUtils.isBlank(attachment.getLanguageName())) {
             throw new AplUnacceptableTransactionValidationException("Empty contract language name.", transaction);
         }
-        if (Strings.isNullOrEmpty(attachment.getLanguageVersion())) {
+        if (StringUtils.isBlank(attachment.getLanguageVersion())) {
             throw new AplUnacceptableTransactionValidationException("Empty contract language version.", transaction);
         }
         SmartContract smartContract = contractToolService.createNewContract(transaction);

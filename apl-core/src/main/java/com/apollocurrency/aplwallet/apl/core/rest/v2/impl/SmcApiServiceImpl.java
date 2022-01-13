@@ -78,7 +78,6 @@ import com.apollocurrency.smc.polyglot.language.ContractSpec;
 import com.apollocurrency.smc.polyglot.language.SmartSource;
 import com.apollocurrency.smc.polyglot.language.lib.JSLibraryProvider;
 import com.apollocurrency.smc.util.HexUtils;
-import com.google.common.base.Strings;
 import lombok.extern.slf4j.Slf4j;
 
 import javax.enterprise.context.RequestScoped;
@@ -325,19 +324,14 @@ class SmcApiServiceImpl implements SmcApiService {
             masterSecret = elGamal.elGamalDecrypt(body.getSender());
             var senderId = AccountService.getId(Crypto.getPublicKey(Crypto.getKeySeed(secretPhrase)));
             senderAccount = accountService.getAccount(senderId);
-            if (senderAccount == null) {
-                response.error(ApiErrors.INCORRECT_VALUE, "sender", body.getSender());
-                return null;
-            }
-            senderAccountId = senderAccount.getId();
         } else {
             senderAccount = getAccountByAddress(body.getSender());
-            if (senderAccount == null) {
-                response.error(ApiErrors.INCORRECT_VALUE, "sender", body.getSender());
-                return null;
-            }
-            senderAccountId = senderAccount.getId();
         }
+        if (senderAccount == null) {
+            response.error(ApiErrors.INCORRECT_VALUE, "sender", body.getSender());
+            return null;
+        }
+        senderAccountId = senderAccount.getId();
 
         byte[] publicKey;
         if (senderAccount.getPublicKey() == null) {
@@ -346,19 +340,19 @@ class SmcApiServiceImpl implements SmcApiService {
             publicKey = senderAccount.getPublicKey().getPublicKey();
         }
 
-        if (Strings.isNullOrEmpty(body.getName())) {
+        if (StringUtils.isBlank(body.getName())) {
             response.error(ApiErrors.INCORRECT_VALUE, "contract_name", body.getName());
             return null;
         }
-        if (Strings.isNullOrEmpty(body.getSource())) {
+        if (StringUtils.isBlank(body.getSource())) {
             response.error(ApiErrors.INCORRECT_VALUE, "contract_source", body.getSource());
             return null;
         }
-        if (Strings.isNullOrEmpty(body.getFuelPrice())) {
+        if (StringUtils.isBlank(body.getFuelPrice())) {
             response.error(ApiErrors.INCORRECT_VALUE, "fuel_price", body.getFuelPrice());
             return null;
         }
-        if (Strings.isNullOrEmpty(body.getFuelLimit())) {
+        if (StringUtils.isBlank(body.getFuelLimit())) {
             response.error(ApiErrors.INCORRECT_VALUE, "fuel_limit", body.getFuelLimit());
             return null;
         }
@@ -664,15 +658,15 @@ class SmcApiServiceImpl implements SmcApiService {
             publicKey = senderAccount.getPublicKey().getPublicKey();
         }
 
-        if (Strings.isNullOrEmpty(body.getName())) {
+        if (StringUtils.isBlank(body.getName())) {
             response.error(ApiErrors.INCORRECT_VALUE, "method_name", body.getName());
             return null;
         }
-        if (Strings.isNullOrEmpty(body.getFuelPrice())) {
+        if (StringUtils.isBlank(body.getFuelPrice())) {
             response.error(ApiErrors.INCORRECT_VALUE, "fuel_price", body.getFuelPrice());
             return null;
         }
-        if (Strings.isNullOrEmpty(body.getFuelLimit())) {
+        if (StringUtils.isBlank(body.getFuelLimit())) {
             response.error(ApiErrors.INCORRECT_VALUE, "fuel_limit", body.getFuelLimit());
             return null;
         }
@@ -788,7 +782,7 @@ class SmcApiServiceImpl implements SmcApiService {
         }
         var filterStr = body.getFilter();
         Term filter;
-        if (Strings.isNullOrEmpty(filterStr)) {
+        if (StringUtils.isBlank(filterStr)) {
             filter = new TrueTerm();
         } else {
             try {
@@ -800,7 +794,7 @@ class SmcApiServiceImpl implements SmcApiService {
         int[] blockBoundaries = boundaries(body.getFromBlock(), body.getToBlock());
         int[] paging = boundaries(body.getFrom(), body.getTo());
         String order;
-        if (!Strings.isNullOrEmpty(body.getOrder())) {
+        if (StringUtils.isNotBlank(body.getOrder())) {
             order = body.getOrder();
             if (!"ASC".equals(order) && !"DESC".equals(order)) {
                 order = "ASC";

@@ -29,6 +29,7 @@ import com.apollocurrency.aplwallet.apl.smc.service.SmcContractTxProcessor;
 import com.apollocurrency.aplwallet.apl.smc.service.tx.CallMethodTxProcessor;
 import com.apollocurrency.aplwallet.apl.smc.service.tx.CallMethodTxValidator;
 import com.apollocurrency.aplwallet.apl.smc.service.tx.SyntaxValidator;
+import com.apollocurrency.aplwallet.apl.util.StringUtils;
 import com.apollocurrency.smc.contract.AddressNotFoundException;
 import com.apollocurrency.smc.contract.SmartContract;
 import com.apollocurrency.smc.contract.SmartMethod;
@@ -37,7 +38,6 @@ import com.apollocurrency.smc.contract.fuel.Fuel;
 import com.apollocurrency.smc.contract.fuel.OperationPrice;
 import com.apollocurrency.smc.data.type.Address;
 import com.apollocurrency.smc.polyglot.PolyglotException;
-import com.google.common.base.Strings;
 import lombok.extern.slf4j.Slf4j;
 import org.json.simple.JSONObject;
 
@@ -138,7 +138,7 @@ public class SmcCallMethodTransactionType extends AbstractSmcTransactionType {
     public void executeStateIndependentValidation(Transaction transaction, AbstractSmcAttachment abstractSmcAttachment) {
         log.debug("SMC: doStateIndependentValidation = ... txId={}", transaction.getStringId());
         SmcCallMethodAttachment attachment = (SmcCallMethodAttachment) abstractSmcAttachment;
-        if (Strings.isNullOrEmpty(attachment.getMethodName())) {
+        if (StringUtils.isBlank(attachment.getMethodName())) {
             throw new AplUnacceptableTransactionValidationException("Empty contract method name.", transaction);
         }
         SmartMethod smartMethod = SmartMethod.builder()
