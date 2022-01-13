@@ -1,17 +1,18 @@
+/*
+ *  Copyright © 2018-2022 Apollo Foundation
+ * Command line parameters
+ *
+ * @author alukin@gmail.com
+ * @author tx_hv@ukr.net
+ */
+
 package com.apollocurrency.aplwallet.apl.exec;
 
 import picocli.CommandLine;
 import picocli.CommandLine.Command;
 import picocli.CommandLine.Option;
 
-/*
- *  Copyright © 2018-2021 Apollo Foundation
- * Command line parameters
- *
- * @author alukin@gmail.com
- * @author tx_hv@ukr.net
- */
-@Command(name = "apollo")
+@Command(name = "apollo-blockchain")
 public class CmdLineArgs {
 
     public static int DEFAULT_DEBUG_LEVEL = 2;

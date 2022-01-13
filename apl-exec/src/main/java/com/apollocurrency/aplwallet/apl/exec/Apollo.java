@@ -183,9 +183,9 @@ public class Apollo {
         try {
             CommandLine.ParseResult parseResult = pc.parseArgs(argv);
             if (args.help) {
-	    	pc.usage(System.err);
-    		System.exit(PosixExitCodes.OK.exitCode());
-    	    }
+                pc.usage(System.err);
+                System.exit(PosixExitCodes.OK.exitCode());
+            }
         } catch (RuntimeException ex) {
             System.err.println("Error parsing command line arguments.");
             System.err.println(ex.getMessage());
