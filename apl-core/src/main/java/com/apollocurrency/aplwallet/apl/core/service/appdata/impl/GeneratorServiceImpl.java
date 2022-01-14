@@ -108,7 +108,7 @@ public class GeneratorServiceImpl implements GeneratorService {
         GeneratorMemoryEntity generator = new GeneratorMemoryEntity(keySeed, publicKey, accountId);
         if (blockchain.getHeight() >= blockchainConfig.getLastKnownBlock()) {
             this.setLastBlock(blockchain.getLastBlock(), generator);
-            needToResetForgers();
+            setConditionToResetForgers();
         }
         GeneratorMemoryEntity old = generators.putIfAbsent(generator.getAccountId(), generator);
         if (old != null) {
@@ -124,7 +124,7 @@ public class GeneratorServiceImpl implements GeneratorService {
         GeneratorMemoryEntity generator = generators.remove(Convert.getId(Crypto.getPublicKey(keySeed)));
         if (generator != null) {
             log.debug(generator + ": Stop Forging command added to the queue.");
-            needToResetForgers();
+            setConditionToResetForgers();
         }
         return generator;
     }
@@ -139,13 +139,13 @@ public class GeneratorServiceImpl implements GeneratorService {
             log.debug(generator + " stopped");
         }
         log.debug("Admin: Stop Forging command added to the queue.");
-        needToResetForgers();
+        setConditionToResetForgers();
         return count;
     }
 
-    private void needToResetForgers() {
+    private void setConditionToResetForgers() {
         if (generateBlocksTask != null) {
-            generateBlocksTask.needToResetForgers();
+            generateBlocksTask.setConditionToResetForgers();
         }
     }
 

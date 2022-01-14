@@ -42,7 +42,7 @@ public class GenerateBlocksTask implements Runnable {
 
     private volatile List<GeneratorMemoryEntity> sortedForgers = null;
     private int delayTime;
-    private volatile boolean needToResetForgers = false;
+    private volatile boolean conditionToResetForgers = false;
 
     public GenerateBlocksTask(PropertiesHolder propertiesHolder,
                               GlobalSync globalSync,
@@ -77,7 +77,7 @@ public class GenerateBlocksTask implements Runnable {
             try {
                 globalSync.updateLock();
                 long forgingIterationStart = System.currentTimeMillis();
-                if (isNeedToResetForgers()) {
+                if (checkIfResetNeeded()) {
                     resetSortedForgers();
                 }
                 log.trace("Acquire generation lock");
@@ -166,14 +166,14 @@ public class GenerateBlocksTask implements Runnable {
         }
     }
 
-    public synchronized boolean needToResetForgers() {
-        var rc = needToResetForgers;
-        needToResetForgers = true;
+    public synchronized boolean setConditionToResetForgers() {
+        var rc = conditionToResetForgers;
+        conditionToResetForgers = true;
         return rc;
     }
 
-    public synchronized boolean isNeedToResetForgers() {
-        return needToResetForgers;
+    public synchronized boolean checkIfResetNeeded() {
+        return conditionToResetForgers;
     }
 
     public List<GeneratorMemoryEntity> getSortedForgers() {
@@ -182,7 +182,7 @@ public class GenerateBlocksTask implements Runnable {
 
     public synchronized void resetSortedForgers() {
         sortedForgers = null;
-        needToResetForgers = false;
+        conditionToResetForgers = false;
     }
 
     public void setDelayTime(int delayTime) {
