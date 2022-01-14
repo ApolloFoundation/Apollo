@@ -23,6 +23,8 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
+import java.util.concurrent.locks.Lock;
+import java.util.concurrent.locks.ReentrantLock;
 
 @Slf4j
 public class GenerateBlocksTask implements Runnable {
@@ -42,6 +44,8 @@ public class GenerateBlocksTask implements Runnable {
 
     private volatile List<GeneratorMemoryEntity> sortedForgers = null;
     private int delayTime;
+    final Lock lock = new ReentrantLock();
+    private volatile boolean needToResetForgers = false;
 
     public GenerateBlocksTask(PropertiesHolder propertiesHolder,
                               GlobalSync globalSync,
@@ -76,6 +80,9 @@ public class GenerateBlocksTask implements Runnable {
             try {
                 globalSync.updateLock();
                 long forgingIterationStart = System.currentTimeMillis();
+                if (isNeedToResetForgers()) {
+                    resetSortedForgers();
+                }
                 log.trace("Acquire generation lock");
                 try {
                     Block lastBlock = blockchain.getLastBlock();
@@ -162,12 +169,23 @@ public class GenerateBlocksTask implements Runnable {
         }
     }
 
+    public synchronized boolean needToResetForgers() {
+        var rc = needToResetForgers;
+        needToResetForgers = true;
+        return rc;
+    }
+
+    public synchronized boolean isNeedToResetForgers() {
+        return needToResetForgers;
+    }
+
     public List<GeneratorMemoryEntity> getSortedForgers() {
         return sortedForgers;
     }
 
-    public void resetSortedForgers() {
+    public synchronized void resetSortedForgers() {
         sortedForgers = null;
+        needToResetForgers = false;
     }
 
     public void setDelayTime(int delayTime) {
