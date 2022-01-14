@@ -23,8 +23,6 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
-import java.util.concurrent.locks.Lock;
-import java.util.concurrent.locks.ReentrantLock;
 
 @Slf4j
 public class GenerateBlocksTask implements Runnable {
@@ -44,7 +42,6 @@ public class GenerateBlocksTask implements Runnable {
 
     private volatile List<GeneratorMemoryEntity> sortedForgers = null;
     private int delayTime;
-    final Lock lock = new ReentrantLock();
     private volatile boolean needToResetForgers = false;
 
     public GenerateBlocksTask(PropertiesHolder propertiesHolder,
