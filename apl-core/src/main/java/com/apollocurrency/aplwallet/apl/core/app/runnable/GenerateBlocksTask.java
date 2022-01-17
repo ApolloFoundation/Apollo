@@ -166,7 +166,7 @@ public class GenerateBlocksTask implements Runnable {
         }
     }
 
-    public synchronized boolean setConditionToResetForgers() {
+    public synchronized boolean resetForgersAsync() {
         var rc = conditionToResetForgers;
         conditionToResetForgers = true;
         return rc;

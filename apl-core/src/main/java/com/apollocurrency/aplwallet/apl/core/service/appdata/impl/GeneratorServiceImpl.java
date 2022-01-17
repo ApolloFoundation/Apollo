@@ -123,7 +123,7 @@ public class GeneratorServiceImpl implements GeneratorService {
     public GeneratorMemoryEntity stopForging(byte[] keySeed) {
         GeneratorMemoryEntity generator = generators.remove(Convert.getId(Crypto.getPublicKey(keySeed)));
         if (generator != null) {
-            log.debug(generator + ": Stop Forging command added to the queue.");
+            log.debug("{}: Stop Forging command added to the queue.", generator);
             scheduleAsyncForgersReset();
         }
         return generator;
@@ -136,7 +136,7 @@ public class GeneratorServiceImpl implements GeneratorService {
         while (iter.hasNext()) {
             GeneratorMemoryEntity generator = iter.next();
             iter.remove();
-            log.debug(generator + " stopped");
+            log.debug("{} stopped", generator);
         }
         log.debug("Admin: Stop Forging command added to the queue.");
         scheduleAsyncForgersReset();
@@ -144,8 +144,8 @@ public class GeneratorServiceImpl implements GeneratorService {
     }
 
     private void scheduleAsyncForgersReset() {
-        if (!propertiesHolder.isLightClient() && generateBlocksTask != null) {
-            generateBlocksTask.setConditionToResetForgers();
+        if (!propertiesHolder.isLightClient()) {
+            generateBlocksTask.resetForgersAsync();
         }
     }
 
