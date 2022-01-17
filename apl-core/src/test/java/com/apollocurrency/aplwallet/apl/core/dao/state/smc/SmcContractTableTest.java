@@ -23,6 +23,7 @@ import com.apollocurrency.aplwallet.apl.core.transaction.TransactionTypeFactory;
 import com.apollocurrency.aplwallet.apl.core.transaction.messages.SmcPublishContractAttachment;
 import com.apollocurrency.aplwallet.apl.data.DbTestData;
 import com.apollocurrency.aplwallet.apl.extension.DbExtension;
+import com.apollocurrency.aplwallet.apl.testutil.DbManipulator;
 import com.apollocurrency.aplwallet.apl.testutil.DbUtils;
 import com.apollocurrency.aplwallet.apl.testutil.EntityProducer;
 import com.apollocurrency.aplwallet.apl.util.Convert2;
@@ -48,6 +49,7 @@ import java.math.BigInteger;
 import java.nio.ByteBuffer;
 import java.sql.Connection;
 import java.util.List;
+import java.util.Properties;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotEquals;
@@ -67,16 +69,22 @@ import static org.mockito.Mockito.when;
 class SmcContractTableTest extends DbContainerBaseTest {
 
     @RegisterExtension
-    static DbExtension dbExtension = new DbExtension(mariaDBContainer, DbTestData.getInMemDbProps(), "db/smc-data.sql", "db/schema.sql");
+    static DbExtension dbExtension;
 
     static {
         Convert2.init("APL", 1739068987193023818L);
+        var prop = new Properties();
+        prop.put(DbManipulator.DB_POPULATOR_STRING_TOKENIZER_DELIM, "#");
+        dbExtension = new DbExtension(mariaDBContainer, DbTestData.getInMemDbProps(),
+            new PropertiesHolder(prop),
+            "db/schema.sql",
+            "db/smc-data.sql");
     }
 
     @Inject
     SmcContractTable table;
 
-    long contractAddress = 7307657537262705518L;
+    long contractAddress = 832074176060907552L;
 
     private Blockchain blockchain = mock(BlockchainImpl.class);
     private BlockchainConfig blockchainConfig = mock(BlockchainConfig.class);
@@ -114,7 +122,7 @@ class SmcContractTableTest extends DbContainerBaseTest {
         SmcContractEntity entity = table.get(SmcContractTable.KEY_FACTORY.newKey(contractAddress));
         assertNotNull(entity);
         assertEquals(contractAddress, entity.getAddress());
-        assertEquals("Deal", entity.getContractName());
+        assertEquals("MyAPL20PersonalLockable", entity.getContractName());
     }
 
     @Test
@@ -149,7 +157,7 @@ class SmcContractTableTest extends DbContainerBaseTest {
         SmcContractEntity entity = table.get(SmcContractTable.KEY_FACTORY.newKey(contractAddress));
         assertNotNull(entity);
         assertEquals(contractAddress, entity.getAddress());
-        assertEquals("Deal", entity.getContractName());
+        assertEquals("MyAPL20PersonalLockable", entity.getContractName());
         entity.setData("Class Stub {}");
         entity.setHeight(15);
 
@@ -194,8 +202,8 @@ class SmcContractTableTest extends DbContainerBaseTest {
         assertEquals(1, result.size());
         var value = result.get(0);
         assertEquals(Convert2.rsAccount(contractAddress), value.getAddress());
-        assertEquals("Deal", value.getName());
-        assertEquals(Convert2.fromEpochTime(105502204), value.getTimestamp());//from transaction
+        assertEquals("MyAPL20PersonalLockable", value.getName());
+        assertEquals(Convert2.fromEpochTime(123723548), value.getTimestamp());
     }
 
     @Test
@@ -209,7 +217,7 @@ class SmcContractTableTest extends DbContainerBaseTest {
     }
 
     @ParameterizedTest
-    @ValueSource(strings = {"", "Deal", "De"})
+    @ValueSource(strings = {"", "MyAPL20PersonalLockable", "MyAPL"})
     @NullSource
     void getContractsByName(String contractName) throws AplException.NotValidException {
         //WHEN
@@ -220,8 +228,8 @@ class SmcContractTableTest extends DbContainerBaseTest {
         assertEquals(1, result.size());
         var value = result.get(0);
         assertEquals(Convert2.rsAccount(contractAddress), value.getAddress());
-        assertEquals("Deal", value.getName());
-        assertEquals(Convert2.fromEpochTime(105502204), value.getTimestamp());//from transaction
+        assertEquals("MyAPL20PersonalLockable", value.getName());
+        assertEquals(Convert2.fromEpochTime(123723548), value.getTimestamp());
     }
 
     @ParameterizedTest
@@ -238,15 +246,15 @@ class SmcContractTableTest extends DbContainerBaseTest {
     @Test
     void getContractsByAddress() throws AplException.NotValidException {
         //WHEN
-        List<ContractDetails> result = getMockContractDetailsList(contractAddress, null, "Deal", null, 100);
+        List<ContractDetails> result = getMockContractDetailsList(contractAddress, null, "MyAPL20PersonalLockable", null, 100);
 
         //THEN
         assertNotNull(result);
         assertEquals(1, result.size());
         var value = result.get(0);
         assertEquals(Convert2.rsAccount(contractAddress), value.getAddress());
-        assertEquals("Deal", value.getName());
-        assertEquals(Convert2.fromEpochTime(105502204), value.getTimestamp());//from transaction
+        assertEquals("MyAPL20PersonalLockable", value.getName());
+        assertEquals(Convert2.fromEpochTime(123723548), value.getTimestamp());
     }
 
     @Test
