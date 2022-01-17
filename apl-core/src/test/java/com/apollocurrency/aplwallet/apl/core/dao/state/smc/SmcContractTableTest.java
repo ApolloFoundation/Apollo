@@ -23,7 +23,6 @@ import com.apollocurrency.aplwallet.apl.core.transaction.TransactionTypeFactory;
 import com.apollocurrency.aplwallet.apl.core.transaction.messages.SmcPublishContractAttachment;
 import com.apollocurrency.aplwallet.apl.data.DbTestData;
 import com.apollocurrency.aplwallet.apl.extension.DbExtension;
-import com.apollocurrency.aplwallet.apl.testutil.DbManipulator;
 import com.apollocurrency.aplwallet.apl.testutil.DbUtils;
 import com.apollocurrency.aplwallet.apl.testutil.EntityProducer;
 import com.apollocurrency.aplwallet.apl.util.Convert2;
@@ -49,7 +48,6 @@ import java.math.BigInteger;
 import java.nio.ByteBuffer;
 import java.sql.Connection;
 import java.util.List;
-import java.util.Properties;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotEquals;
@@ -69,16 +67,12 @@ import static org.mockito.Mockito.when;
 class SmcContractTableTest extends DbContainerBaseTest {
 
     @RegisterExtension
-    static DbExtension dbExtension;
+    static DbExtension dbExtension = DbTestData.getSmcDbExtension(mariaDBContainer
+        , "db/schema.sql"
+        , "db/smc-data.sql");
 
     static {
         Convert2.init("APL", 1739068987193023818L);
-        var prop = new Properties();
-        prop.put(DbManipulator.DB_POPULATOR_STRING_TOKENIZER_DELIM, "#");
-        dbExtension = new DbExtension(mariaDBContainer, DbTestData.getInMemDbProps(),
-            new PropertiesHolder(prop),
-            "db/schema.sql",
-            "db/smc-data.sql");
     }
 
     @Inject
