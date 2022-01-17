@@ -14,26 +14,23 @@ import com.apollocurrency.aplwallet.api.v2.model.ContractDetails;
 import com.apollocurrency.aplwallet.api.v2.model.ContractEventsRequest;
 import com.apollocurrency.aplwallet.api.v2.model.ContractEventsResponse;
 import com.apollocurrency.aplwallet.api.v2.model.ContractListResponse;
-import com.apollocurrency.aplwallet.api.v2.model.ContractMethod;
 import com.apollocurrency.aplwallet.api.v2.model.ContractSpecResponse;
 import com.apollocurrency.aplwallet.api.v2.model.ContractStateResponse;
-import com.apollocurrency.aplwallet.api.v2.model.MemberSpec;
 import com.apollocurrency.aplwallet.api.v2.model.ModuleListResponse;
 import com.apollocurrency.aplwallet.api.v2.model.ModuleSourceResponse;
-import com.apollocurrency.aplwallet.api.v2.model.PropertySpec;
 import com.apollocurrency.aplwallet.api.v2.model.PublishContractReq;
 import com.apollocurrency.aplwallet.api.v2.model.ResultValueResponse;
-import com.apollocurrency.aplwallet.api.v2.model.TransactionArrayResp;
+import com.apollocurrency.aplwallet.api.v2.model.TransactionByteArrayResp;
 import com.apollocurrency.aplwallet.apl.core.chainid.BlockchainConfig;
 import com.apollocurrency.aplwallet.apl.core.config.SmcConfig;
 import com.apollocurrency.aplwallet.apl.core.entity.state.account.Account;
 import com.apollocurrency.aplwallet.apl.core.model.CreateTransactionRequest;
+import com.apollocurrency.aplwallet.apl.core.model.Sort;
 import com.apollocurrency.aplwallet.apl.core.model.Transaction;
 import com.apollocurrency.aplwallet.apl.core.rest.TransactionCreator;
 import com.apollocurrency.aplwallet.apl.core.rest.v2.ResponseBuilderV2;
 import com.apollocurrency.aplwallet.apl.core.rest.v2.converter.CallMethodResultMapper;
 import com.apollocurrency.aplwallet.apl.core.rest.v2.converter.MethodSpecMapper;
-import com.apollocurrency.aplwallet.apl.core.rest.v2.converter.SmartMethodMapper;
 import com.apollocurrency.aplwallet.apl.core.service.state.account.AccountService;
 import com.apollocurrency.aplwallet.apl.core.service.state.smc.ContractToolService;
 import com.apollocurrency.aplwallet.apl.core.service.state.smc.SmcContractRepository;
@@ -48,10 +45,8 @@ import com.apollocurrency.aplwallet.apl.crypto.Convert;
 import com.apollocurrency.aplwallet.apl.crypto.Crypto;
 import com.apollocurrency.aplwallet.apl.smc.model.AplAddress;
 import com.apollocurrency.aplwallet.apl.smc.service.SmcContractEventService;
-import com.apollocurrency.aplwallet.apl.smc.service.SmcContractTxBatchProcessor;
 import com.apollocurrency.aplwallet.apl.smc.service.SmcContractTxProcessor;
 import com.apollocurrency.aplwallet.apl.smc.service.tx.CallMethodTxValidator;
-import com.apollocurrency.aplwallet.apl.smc.service.tx.CallViewMethodTxProcessor;
 import com.apollocurrency.aplwallet.apl.smc.service.tx.PublishContractTxValidator;
 import com.apollocurrency.aplwallet.apl.util.Convert2;
 import com.apollocurrency.aplwallet.apl.util.StringUtils;
@@ -67,11 +62,9 @@ import com.apollocurrency.smc.contract.SmartContract;
 import com.apollocurrency.smc.contract.SmartMethod;
 import com.apollocurrency.smc.contract.fuel.ContractFuel;
 import com.apollocurrency.smc.contract.vm.ExecutionLog;
-import com.apollocurrency.smc.contract.vm.ResultValue;
 import com.apollocurrency.smc.data.expr.Term;
 import com.apollocurrency.smc.data.expr.TrueTerm;
 import com.apollocurrency.smc.data.expr.parser.TermParser;
-import com.apollocurrency.smc.data.type.Address;
 import com.apollocurrency.smc.polyglot.SimpleVersion;
 import com.apollocurrency.smc.polyglot.Version;
 import com.apollocurrency.smc.polyglot.language.ContractSpec;
@@ -85,11 +78,8 @@ import javax.inject.Inject;
 import javax.ws.rs.core.Response;
 import javax.ws.rs.core.SecurityContext;
 import java.math.BigInteger;
-import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
-import java.util.Map;
-import java.util.function.Function;
 import java.util.stream.Collectors;
 
 import static com.apollocurrency.smc.util.HexUtils.toHex;
@@ -112,7 +102,6 @@ class SmcApiServiceImpl implements SmcApiService {
     private final SmcBlockchainIntegratorFactory integratorFactory;
     private final SmcConfig smcConfig;
     private final int maxAPIRecords;
-    private final SmartMethodMapper methodMapper;
     private final CallMethodResultMapper methodResultMapper;
     private final MethodSpecMapper methodSpecMapper;
     private final ElGamalEncryptor elGamal;
@@ -129,7 +118,6 @@ class SmcApiServiceImpl implements SmcApiService {
                              TransactionCreator transactionCreator,
                              SmcBlockchainIntegratorFactory integratorFactory,
                              SmcConfig smcConfig,
-                             SmartMethodMapper methodMapper,
                              CallMethodResultMapper methodResultMapper,
                              MethodSpecMapper methodSpecMapper,
                              @Property(name = "apl.maxAPIRecords", defaultValue = "100") int maxAPIRecords,
@@ -144,7 +132,6 @@ class SmcApiServiceImpl implements SmcApiService {
         this.txBContext = TxBContext.newInstance(blockchainConfig.getChain());
         this.integratorFactory = integratorFactory;
         this.smcConfig = smcConfig;
-        this.methodMapper = methodMapper;
         this.methodResultMapper = methodResultMapper;
         this.methodSpecMapper = methodSpecMapper;
         this.maxAPIRecords = maxAPIRecords;
@@ -159,7 +146,7 @@ class SmcApiServiceImpl implements SmcApiService {
         if (transaction == null) {
             return builder.build();
         }
-        TransactionArrayResp response = new TransactionArrayResp();
+        TransactionByteArrayResp response = new TransactionByteArrayResp();
 
         Result signedTxBytes = PayloadResult.createLittleEndianByteArrayResult();
         txBContext.createSerializer(transaction.getVersion()).serialize(transaction, signedTxBytes);
@@ -175,7 +162,7 @@ class SmcApiServiceImpl implements SmcApiService {
         if (transaction == null) {
             return builder.build();
         }
-        TransactionArrayResp response = new TransactionArrayResp();
+        TransactionByteArrayResp response = new TransactionByteArrayResp();
 
         Result signedTxBytes = PayloadResult.createLittleEndianByteArrayResult();
         txBContext.createSerializer(transaction.getVersion()).serialize(transaction, signedTxBytes);
@@ -441,7 +428,7 @@ class SmcApiServiceImpl implements SmcApiService {
         }
         var executionLog = new ExecutionLog();
 
-        var result = processAllViewMethods(new AplAddress(contractId), body.getMembers(), executionLog);
+        var result = contractService.processAllViewMethods(new AplAddress(contractId), body.getMembers(), executionLog);
 
         if (executionLog.hasError()) {
             return builder.detailedError(ApiErrors.CONTRACT_READ_METHOD_ERROR, executionLog.toJsonString(), executionLog.getLatestCause()).build();
@@ -460,111 +447,14 @@ class SmcApiServiceImpl implements SmcApiService {
             return builder.error(ApiErrors.CONTRACT_NOT_FOUND, addressStr).build();
         }
         var address = new AplAddress(accountId);
-        var response = new ContractSpecResponse();
-        var aplContractSpec = contractRepository.loadAsrModuleSpec(address);
-        var contractSpec = aplContractSpec.getContractSpec();
-        var notViewMethods = contractSpec.getMembers().stream()
-            .filter(member -> member.getType() == ContractSpec.MemberType.FUNCTION && member.getStateMutability() != ContractSpec.StateMutability.VIEW
-                && (member.getVisibility() == ContractSpec.Visibility.PUBLIC
-                || member.getVisibility() == ContractSpec.Visibility.EXTERNAL))
-            .collect(Collectors.toList());
-        var viewMethods = contractSpec.getMembers().stream()
-            .filter(member -> member.getType() == ContractSpec.MemberType.FUNCTION && member.getStateMutability() == ContractSpec.StateMutability.VIEW
-                && (member.getVisibility() == ContractSpec.Visibility.PUBLIC
-                || member.getVisibility() == ContractSpec.Visibility.EXTERNAL))
-            .collect(Collectors.toList());
 
-        var events = contractSpec.getMembers().stream()
-            .filter(member -> member.getType() == ContractSpec.MemberType.EVENT)
-            .collect(Collectors.toList());
+        var response = contractService.loadContractSpecification(address);
 
-        List<ContractMethod> methodsToCall = new ArrayList<>();
-
-        viewMethods.forEach(member -> {
-            ContractMethod m = new ContractMethod();
-            m.setFunction(member.getName());
-            if (member.getInputs() == null || member.getInputs().isEmpty()) {
-                methodsToCall.add(m);
-            }
-        });
-
-        var executionLog = new ExecutionLog();
-        var result = processAllViewMethods(address, methodsToCall, executionLog);
-        if (executionLog.hasError()) {
-            return builder.detailedError(ApiErrors.CONTRACT_READ_METHOD_ERROR, executionLog.toJsonString(), executionLog.getLatestCause()).build();
+        if (response == null) {
+            return builder.error(ApiErrors.CONTRACT_READ_METHOD_ERROR).build();
         }
-        result.add(ResultValue.builder()
-            .method(JSLibraryProvider.CONTRACT_OVERVIEW_ITEM.getName())
-            .output(List.of(address.getHex()))
-            .build());
-
-        var resultMap = toMap(result);
-        var overviewProperties = new ArrayList<>(
-            createOverview(contractSpec, resultMap)
-        );
-        response.setOverview(overviewProperties);
-
-        response.getMembers().addAll(methodSpecMapper.convert(viewMethods));
-        matchResults(response.getMembers(), resultMap);
-        response.getMembers().addAll(methodSpecMapper.convert(notViewMethods));
-        response.getMembers().addAll(methodSpecMapper.convert(events));
-
-        response.setInheritedContracts(
-            contractService.getInheritedAsrModules(contractSpec.getType()
-                , aplContractSpec.getLanguage()
-                , aplContractSpec.getVersion())
-        );
 
         return builder.bind(response).build();
-    }
-
-    private Map<String, ResultValue> toMap(List<ResultValue> result) {
-        return result.stream().collect(Collectors.toMap(ResultValue::getMethod, Function.identity()));
-    }
-
-    private void matchResults(List<MemberSpec> methods, Map<String, ResultValue> resultMap) {
-        methods.forEach(methodSpec -> {
-            if (methodSpec.getInputs() == null || methodSpec.getInputs().isEmpty()) {
-                var res = resultMap.getOrDefault(methodSpec.getName(), ResultValue.UNDEFINED_RESULT);
-                methodSpec.setValue(res.getStringResult());
-                methodSpec.setSignature(res.getSignature());
-            }
-        });
-    }
-
-    private List<PropertySpec> createOverview(ContractSpec contractSpec, Map<String, ResultValue> resultMap) {
-        //TODO: move Overview info to ContractSpec
-        var properties = contractSpec.getOverview();
-
-        var propertySpec = new ArrayList<PropertySpec>();
-
-        properties.forEach(item -> {
-            var prop = new PropertySpec();
-            prop.setName(item.getName());
-            prop.setType(item.getType());
-            prop.setValue(resultMap.getOrDefault(item.getName(), ResultValue.UNDEFINED_RESULT).getStringResult());
-            propertySpec.add(prop);
-        });
-        return propertySpec;
-    }
-
-    private List<ResultValue> processAllViewMethods(Address contractAddress, List<ContractMethod> members, ExecutionLog executionLog) {
-        SmartContract smartContract = contractRepository.loadContract(
-            contractAddress,
-            contractAddress,
-            new ContractFuel(contractAddress, BigInteger.ZERO, BigInteger.ONE)
-        );
-        var methods = methodMapper.convert(members);
-        var context = smcConfig.asViewContext(accountService.getBlockchainHeight(),
-            smartContract,
-            integratorFactory.createReadonlyProcessor()
-        );
-
-        SmcContractTxBatchProcessor processor = new CallViewMethodTxProcessor(smartContract, methods, context);
-
-        var rc = processor.batchProcess();
-        executionLog.join(processor.getExecutionLog());
-        return rc;
     }
 
     @Override
@@ -574,7 +464,7 @@ class SmcApiServiceImpl implements SmcApiService {
         if (transaction == null) {
             return builder.build();
         }
-        TransactionArrayResp response = new TransactionArrayResp();
+        TransactionByteArrayResp response = new TransactionByteArrayResp();
         Result signedTxBytes = PayloadResult.createLittleEndianByteArrayResult();
         txBContext.createSerializer(transaction.getVersion()).serialize(transaction, signedTxBytes);
         response.setTx(Convert.toHexString(signedTxBytes.array()));
@@ -793,21 +683,18 @@ class SmcApiServiceImpl implements SmcApiService {
         }
         int[] blockBoundaries = boundaries(body.getFromBlock(), body.getToBlock());
         int[] paging = boundaries(body.getFrom(), body.getTo());
-        String order;
+        Sort order;
         if (StringUtils.isNotBlank(body.getOrder())) {
-            order = body.getOrder();
-            if (!"ASC".equals(order) && !"DESC".equals(order)) {
-                order = "ASC";
-            }
+            order = new Sort(body.getOrder());
         } else
-            order = "ASC";
+            order = Sort.asc();
 
         ContractEventsResponse response = new ContractEventsResponse();
         var rc = eventService.getEventsByFilter(contractId, eventName,
             filter,
             blockBoundaries[0], blockBoundaries[1],
             paging[0], paging[1],
-            order
+            order.toString()
         );
 
         response.setEvents(rc);

@@ -6,6 +6,10 @@ package com.apollocurrency.aplwallet.apl.core.service.state.smc;
 
 import com.apollocurrency.aplwallet.apl.core.config.SmcConfig;
 import com.apollocurrency.aplwallet.apl.core.exception.AplCoreContractViolationException;
+import com.apollocurrency.aplwallet.apl.core.rest.v2.converter.MethodSpecMapper;
+import com.apollocurrency.aplwallet.apl.core.rest.v2.converter.SmartMethodMapper;
+import com.apollocurrency.aplwallet.apl.core.service.state.account.AccountService;
+import com.apollocurrency.aplwallet.apl.core.service.state.smc.impl.SmcBlockchainIntegratorFactory;
 import com.apollocurrency.aplwallet.apl.core.service.state.smc.impl.SmcContractServiceImpl;
 import com.apollocurrency.aplwallet.apl.util.Convert2;
 import com.apollocurrency.smc.polyglot.SimpleVersion;
@@ -41,13 +45,24 @@ class SmcContractServiceTest {
     LanguageContext languageContext;
     @Mock
     LibraryProvider libraryProvider;
+    @Mock
+    SmcContractRepository contractRepository;
+    @Mock
+    SmcBlockchainIntegratorFactory integratorFactory;
+    @Mock
+    AccountService accountService;
+    @Mock
+    SmartMethodMapper methodMapper;
+    @Mock
+    MethodSpecMapper methodSpecMapper;
+
     SmcContractService contractService;
 
     @BeforeEach
     void setUp() {
         when(smcConfig.createLanguageContext()).thenReturn(languageContext);
         when(languageContext.getLibraryProvider()).thenReturn(libraryProvider);
-        contractService = new SmcContractServiceImpl(smcConfig);
+        contractService = new SmcContractServiceImpl(smcConfig, accountService, contractRepository, integratorFactory, methodMapper, methodSpecMapper);
     }
 
     @SneakyThrows
@@ -80,7 +95,6 @@ class SmcContractServiceTest {
         //WHEN
         //THEN
         assertThrows(AplCoreContractViolationException.class, () -> contractService.loadAsrModuleSpec(moduleName, "java", version));
-
     }
 
 }

@@ -4,7 +4,12 @@
 
 package com.apollocurrency.aplwallet.apl.core.service.state.smc;
 
+import com.apollocurrency.aplwallet.api.v2.model.ContractMethod;
+import com.apollocurrency.aplwallet.api.v2.model.ContractSpecResponse;
 import com.apollocurrency.aplwallet.apl.smc.model.AplContractSpec;
+import com.apollocurrency.smc.contract.vm.ExecutionLog;
+import com.apollocurrency.smc.contract.vm.ResultValue;
+import com.apollocurrency.smc.data.type.Address;
 import com.apollocurrency.smc.polyglot.Version;
 
 import java.util.List;
@@ -23,6 +28,8 @@ public interface SmcContractService {
      * @return the list of ASR module names.
      */
     List<String> getAsrModules(String language, Version version, String type);
+
+    List<ResultValue> processAllViewMethods(Address contractAddress, List<ContractMethod> members, ExecutionLog executionLog);
 
     /**
      * Returns the list of inherited ASR modules.
@@ -43,5 +50,13 @@ public interface SmcContractService {
      * @return the contract specification of the specified ASR module
      */
     AplContractSpec loadAsrModuleSpec(String asrModuleName, String language, Version version);
+
+    /**
+     * Load the contract specification of the specified contract address.
+     *
+     * @param contractAddress the given contract
+     * @return the contract specification
+     */
+    ContractSpecResponse loadContractSpecification(Address contractAddress);
 
 }
