@@ -23,9 +23,9 @@ Java 11 (JRE) is required to run the most Apollo components.
 
 ## Disclaimer.
 
-Apollo team is actively working on modularity of Apollo blockhain so build scripts and source structure is subject of changes. Apollo project consists of several modules written in different programming languages. If you are not an expert in Java and Maven, JavaScript, NodeJs, npm, yarn, C/C++ and Cmakle please use our release builds at [Apollo Releases page](https://github.com/ApolloFoundation/Apollo/releases).
+Apollo team is actively working on modularity of Apollo blockchain so build scripts and source structure is subject of changes. Apollo project consists of several modules written in different programming languages. If you are not an expert in Java and Maven, JavaScript, NodeJs, npm, yarn, C/C++ and Cmakle please use our release builds at [Apollo Releases page](https://github.com/ApolloFoundation/Apollo/releases).
 
-If you feel like an expert, please use build instructions below. But also please note that instructions may be slightly outdated, escpecially in "development" branches of the Apollo project repositroies.
+If you feel like an expert, please use build instructions below. But also please note that instructions may be slightly outdated, especially in "development" branches of the Apollo project repositories.
 
 ## Java versions
 
@@ -85,12 +85,12 @@ OS name: "linux", version: "5.9.12-200.fc33.x86_64", arch: "amd64", family: "uni
     
 ### Installation artefacts
 
-Final artefact that is ready to install and run is loacated in the ___apl-exec/target___ directory and has name like  ___apollo-blockchain-1.50.32-NoOS-NoArch.zip___.
+The final artifact that is ready to install and run located in the ___apl-exec/target___ directory and has name like  ___apollo-blockchain-1.50.33-NoOS-NoArch.zip___.
 
 Unzip it to some location and run by scripts in ___ApolloWallet/apollo-blockchain/bin___ directory.
 
 You'll probably need __Apollo-web-ui__ and __Apollo-desktop__ components to use Apollo wallet.
-Please follow instructions in [Apollo-web-ui](https://github.com/ApolloFoundation/Apollo-web-ui) and [Apollo-desktop](https://github.com/ApolloFoundation/Apollo-desktop) project epositories.
+Please follow instructions in [Apollo-web-ui](https://github.com/ApolloFoundation/Apollo-web-ui) and [Apollo-desktop](https://github.com/ApolloFoundation/Apollo-desktop) project repositories.
 
 ### IDE
 
@@ -98,7 +98,7 @@ Project is entirely on Maven v3 and could be loaded in any IDE that supports Mav
 
 ## GIT branches
 
-We follow GIT FLOW procedure in our developemnt and use following branhces:
+We follow GIT FLOW procedure in our development and use following branches:
 
 __master__ branch contains stable code of the latest release. It is also tagged for each public release. Please see "Tags" in the "barcnh" dropdown menu. Please use this branch to compile Apollo components.
 
