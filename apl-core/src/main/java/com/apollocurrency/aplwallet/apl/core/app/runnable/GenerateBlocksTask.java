@@ -1,5 +1,5 @@
 /*
- * Copyright © 2019-2020 Apollo Foundation
+ * Copyright © 2019-2022 Apollo Foundation
  */
 
 package com.apollocurrency.aplwallet.apl.core.app.runnable;
@@ -42,6 +42,7 @@ public class GenerateBlocksTask implements Runnable {
 
     private volatile List<GeneratorMemoryEntity> sortedForgers = null;
     private int delayTime;
+    private volatile boolean conditionToResetForgers = false;
 
     public GenerateBlocksTask(PropertiesHolder propertiesHolder,
                               GlobalSync globalSync,
@@ -76,6 +77,9 @@ public class GenerateBlocksTask implements Runnable {
             try {
                 globalSync.updateLock();
                 long forgingIterationStart = System.currentTimeMillis();
+                if (checkIfResetNeeded()) {
+                    resetSortedForgers();
+                }
                 log.trace("Acquire generation lock");
                 try {
                     Block lastBlock = blockchain.getLastBlock();
@@ -162,12 +166,23 @@ public class GenerateBlocksTask implements Runnable {
         }
     }
 
+    public synchronized boolean resetForgersAsync() {
+        var rc = conditionToResetForgers;
+        conditionToResetForgers = true;
+        return rc;
+    }
+
+    public synchronized boolean checkIfResetNeeded() {
+        return conditionToResetForgers;
+    }
+
     public List<GeneratorMemoryEntity> getSortedForgers() {
         return sortedForgers;
     }
 
-    public void resetSortedForgers() {
+    public synchronized void resetSortedForgers() {
         sortedForgers = null;
+        conditionToResetForgers = false;
     }
 
     public void setDelayTime(int delayTime) {
