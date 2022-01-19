@@ -37,6 +37,8 @@ import com.apollocurrency.aplwallet.apl.core.model.Transaction;
 import com.apollocurrency.aplwallet.apl.core.model.smc.SmcTxData;
 import com.apollocurrency.aplwallet.apl.core.rest.TransactionCreator;
 import com.apollocurrency.aplwallet.apl.core.rest.service.ServerInfoService;
+import com.apollocurrency.aplwallet.apl.core.rest.v2.converter.MethodSpecMapper;
+import com.apollocurrency.aplwallet.apl.core.rest.v2.converter.SmartMethodMapper;
 import com.apollocurrency.aplwallet.apl.core.service.appdata.GeneratorService;
 import com.apollocurrency.aplwallet.apl.core.service.appdata.TimeService;
 import com.apollocurrency.aplwallet.apl.core.service.appdata.impl.TimeServiceImpl;
@@ -160,7 +162,7 @@ abstract class AbstractSmcTransactionTypeApplyTest extends DbContainerBaseTest {
             TransactionValidator.class, TransactionApplier.class,
             SmcConfig.class, SmcBlockchainIntegratorFactory.class, SmcPostponedContractServiceImpl.class,
             SmcContractTable.class, SmcContractStateTable.class, SmcContractMappingTable.class, SmcContractEventTable.class, SmcContractEventLogTable.class,
-            ContractModelToEntityConverter.class, ContractModelToStateEntityConverter.class,
+            ContractModelToEntityConverter.class, ContractModelToStateEntityConverter.class, SmartMethodMapper.class, MethodSpecMapper.class,
             ContractEventLogModelToLogEntryConverter.class, ContractEventModelToEntityConverter.class,
             SmcContractRepositoryImpl.class, SmcContractServiceImpl.class, SmcContractToolServiceImpl.class, SmcContractStorageServiceImpl.class, SmcContractEventServiceImpl.class,
             SmcTxLogProcessor.class, SmcMappingRepositoryClassFactory.class, SmcContractEventManagerClassFactory.class,

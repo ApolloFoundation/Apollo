@@ -88,9 +88,16 @@ public class SmcContractServiceImpl implements SmcContractService {
     }
 
     @Override
+    public AplContractSpec loadAsrModuleSpec(Address address) {
+        var smcEntity = contractRepository.loadContract(address);
+        log.trace("Load specification for contract {} name={} type={}", address.getHex(), smcEntity.getName(), smcEntity.getBaseContract());
+        return loadAsrModuleSpec(smcEntity.getBaseContract(), smcEntity.getLanguageName(), smcEntity.getLanguageVersion());
+    }
+
+    @Override
     public ContractSpecResponse loadContractSpecification(Address contractAddress) {
         var response = new ContractSpecResponse();
-        var aplContractSpec = contractRepository.loadAsrModuleSpec(contractAddress);
+        var aplContractSpec = loadAsrModuleSpec(contractAddress);
         var contractSpec = aplContractSpec.getContractSpec();
         var notViewMethods = contractSpec.getMembers().stream()
             .filter(member -> member.getType() == ContractSpec.MemberType.FUNCTION && member.getStateMutability() != ContractSpec.StateMutability.VIEW
@@ -195,7 +202,6 @@ public class SmcContractServiceImpl implements SmcContractService {
         executionLog.join(processor.getExecutionLog());
         return rc;
     }
-
 
     @Override
     public List<String> getInheritedAsrModules(String asrModuleName, String language, Version version) {

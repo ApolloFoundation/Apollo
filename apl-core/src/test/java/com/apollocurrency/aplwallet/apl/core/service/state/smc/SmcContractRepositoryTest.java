@@ -18,21 +18,17 @@ import com.apollocurrency.aplwallet.apl.core.service.state.smc.impl.SmcContractR
 import com.apollocurrency.aplwallet.apl.core.service.state.smc.impl.SmcContractToolServiceImpl;
 import com.apollocurrency.aplwallet.apl.core.transaction.messages.SmcPublishContractAttachment;
 import com.apollocurrency.aplwallet.apl.smc.model.AplAddress;
-import com.apollocurrency.aplwallet.apl.smc.model.AplContractSpec;
 import com.apollocurrency.aplwallet.apl.util.Convert2;
-import com.apollocurrency.smc.contract.AddressNotFoundException;
 import com.apollocurrency.smc.contract.ContractSource;
 import com.apollocurrency.smc.contract.ContractStatus;
 import com.apollocurrency.smc.contract.SmartContract;
 import com.apollocurrency.smc.contract.fuel.ContractFuel;
 import com.apollocurrency.smc.contract.fuel.Fuel;
-import com.apollocurrency.smc.data.type.Address;
 import com.apollocurrency.smc.polyglot.SimpleVersion;
 import com.apollocurrency.smc.polyglot.language.LanguageContext;
 import com.apollocurrency.smc.polyglot.language.LanguageContextFactory;
 import com.apollocurrency.smc.polyglot.language.SmartSource;
 import com.apollocurrency.smc.polyglot.language.lib.Preprocessor;
-import lombok.SneakyThrows;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -43,9 +39,7 @@ import java.math.BigInteger;
 import java.util.List;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.mockito.Mockito.mock;
-import static org.mockito.Mockito.spy;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
@@ -103,8 +97,7 @@ class SmcContractRepositoryTest {
             smcContractStateTable,
             contractModelToEntityConverter,
             contractModelToStateConverter,
-            smcConfig,
-            contractService);
+            smcConfig);
         contractToolService = new SmcContractToolServiceImpl(blockchain, smcConfig);
 
         smcTxData = SmcTxData.builder()
@@ -239,41 +232,6 @@ class SmcContractRepositoryTest {
 
         //THEN
         assertEquals(smartContract, newContract);
-    }
-
-    @SneakyThrows
-    @Test
-    void loadSpecByAddress() {
-        //GIVEN
-        var address = new AplAddress(123L);
-        var module = mock(AplContractSpec.class);
-        var entity = spy(smcContractEntity);
-        when(entity.getBaseContract()).thenReturn("APL20");
-        when(smcContractTable.get(SmcContractTable.KEY_FACTORY.newKey(address.getLongId()))).thenReturn(entity);
-        when(contractService.loadAsrModuleSpec(entity.getBaseContract(),
-            entity.getLanguageName(),
-            SimpleVersion.fromString(entity.getLanguageVersion()))).thenReturn(module);
-        //WHEN
-        var rc = contractRepository.loadAsrModuleSpec(address);
-        //THEN
-        assertEquals(module, rc);
-    }
-
-    @Test
-    void loadSpecByAddressThrowException() {
-        //GIVEN
-        var address = new AplAddress(123L);
-        //WHEN
-        //THEN
-        assertThrows(AddressNotFoundException.class, () -> contractRepository.loadAsrModuleSpec(address));
-    }
-
-    static String convertToString(Address address) {
-        return Long.toUnsignedString(new AplAddress(address).getLongId());
-    }
-
-    static String convertToRS(Address address) {
-        return Convert2.rsAccount(new AplAddress(address).getLongId());
     }
 
 }

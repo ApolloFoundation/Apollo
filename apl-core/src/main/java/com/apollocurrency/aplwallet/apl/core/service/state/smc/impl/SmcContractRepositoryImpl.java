@@ -15,9 +15,7 @@ import com.apollocurrency.aplwallet.apl.core.entity.state.smc.SmcContractStateEn
 import com.apollocurrency.aplwallet.apl.core.service.blockchain.Blockchain;
 import com.apollocurrency.aplwallet.apl.core.service.state.smc.ContractQuery;
 import com.apollocurrency.aplwallet.apl.core.service.state.smc.SmcContractRepository;
-import com.apollocurrency.aplwallet.apl.core.service.state.smc.SmcContractService;
 import com.apollocurrency.aplwallet.apl.smc.model.AplAddress;
-import com.apollocurrency.aplwallet.apl.smc.model.AplContractSpec;
 import com.apollocurrency.aplwallet.apl.util.Convert2;
 import com.apollocurrency.aplwallet.apl.util.api.NumericRange;
 import com.apollocurrency.aplwallet.apl.util.cdi.Transactional;
@@ -50,17 +48,15 @@ public class SmcContractRepositoryImpl implements SmcContractRepository {
     private final ContractModelToStateEntityConverter contractModelToStateConverter;
 
     protected final SmcConfig smcConfig;
-    private final SmcContractService contractService;
 
     @Inject
-    public SmcContractRepositoryImpl(Blockchain blockchain, SmcContractTable smcContractTable, SmcContractStateTable smcContractStateTable, ContractModelToEntityConverter contractModelToEntityConverter, ContractModelToStateEntityConverter contractModelToStateConverter, SmcConfig smcConfig, SmcContractService contractService) {
+    public SmcContractRepositoryImpl(Blockchain blockchain, SmcContractTable smcContractTable, SmcContractStateTable smcContractStateTable, ContractModelToEntityConverter contractModelToEntityConverter, ContractModelToStateEntityConverter contractModelToStateConverter, SmcConfig smcConfig) {
         this.blockchain = blockchain;
         this.smcContractTable = smcContractTable;
         this.smcContractStateTable = smcContractStateTable;
         this.contractModelToEntityConverter = contractModelToEntityConverter;
         this.contractModelToStateConverter = contractModelToStateConverter;
         this.smcConfig = smcConfig;
-        this.contractService = contractService;
     }
 
     @Override
@@ -116,19 +112,6 @@ public class SmcContractRepositoryImpl implements SmcContractRepository {
         return loadContract(address, null, null, new ContractFuel(address, 0, 0));
     }
 
-    /**
-     * Load the contract specification by the given address or null if the given address doesn't correspond the smart contract
-     *
-     * @param address given contract address
-     * @return loaded smart contract specification or throw {@link com.apollocurrency.smc.contract.AddressNotFoundException}
-     */
-    @Override
-    @Transactional(readOnly = true)
-    public AplContractSpec loadAsrModuleSpec(Address address) {
-        SmcContractEntity smcEntity = loadContractEntity(address);
-        log.trace("Loaded specification for contract name={} type={}", smcEntity.getContractName(), smcEntity.getBaseContract());
-        return contractService.loadAsrModuleSpec(smcEntity.getBaseContract(), smcEntity.getLanguageName(), SimpleVersion.fromString(smcEntity.getLanguageVersion()));
-    }
 
     @Override
     @Transactional(readOnly = true)

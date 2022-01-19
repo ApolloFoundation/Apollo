@@ -96,5 +96,4 @@ class SmcContractServiceTest {
         //THEN
         assertThrows(AplCoreContractViolationException.class, () -> contractService.loadAsrModuleSpec(moduleName, "java", version));
     }
-
 }

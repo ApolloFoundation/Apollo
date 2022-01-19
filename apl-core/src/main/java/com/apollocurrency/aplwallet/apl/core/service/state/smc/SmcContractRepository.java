@@ -5,7 +5,6 @@
 package com.apollocurrency.aplwallet.apl.core.service.state.smc;
 
 import com.apollocurrency.aplwallet.api.v2.model.ContractDetails;
-import com.apollocurrency.aplwallet.apl.smc.model.AplContractSpec;
 import com.apollocurrency.smc.contract.SmartContract;
 import com.apollocurrency.smc.contract.fuel.Fuel;
 import com.apollocurrency.smc.data.type.Address;
@@ -40,14 +39,6 @@ public interface SmcContractRepository {
     SmartContract loadContract(Address address, Address originator, Fuel contractFuel);
 
     SmartContract loadContract(Address address);
-
-    /**
-     * Load the contract specification by given contract address
-     *
-     * @param address the contract address
-     * @return the contract specification by given contract address
-     */
-    AplContractSpec loadAsrModuleSpec(Address address);
 
     /**
      * Checks if contract already exists

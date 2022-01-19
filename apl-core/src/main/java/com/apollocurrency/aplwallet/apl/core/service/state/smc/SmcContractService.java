@@ -59,4 +59,12 @@ public interface SmcContractService {
      */
     ContractSpecResponse loadContractSpecification(Address contractAddress);
 
+    /**
+     * Loads the contract specification by the given address
+     * or returns null if the given address doesn't correspond the smart contract
+     *
+     * @param address given contract address
+     * @return loaded smart contract specification or throw {@link com.apollocurrency.smc.contract.AddressNotFoundException}
+     */
+    AplContractSpec loadAsrModuleSpec(Address address);
 }
