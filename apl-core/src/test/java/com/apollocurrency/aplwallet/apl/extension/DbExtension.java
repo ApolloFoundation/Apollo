@@ -1,5 +1,5 @@
 /*
- *  Copyright © 2018-2019 Apollo Foundation
+ *  Copyright © 2018-2022 Apollo Foundation
  */
 
 package com.apollocurrency.aplwallet.apl.extension;
@@ -84,6 +84,10 @@ public class DbExtension implements BeforeEachCallback, /*AfterEachCallback,*/ A
 
     public DbExtension(GenericContainer jdbcDatabaseContainer, DbProperties properties, String dataScriptPath, String schemaScriptPath) {
         this(jdbcDatabaseContainer, properties, null, schemaScriptPath, dataScriptPath);
+    }
+
+    public DbExtension(GenericContainer jdbcDatabaseContainer, DbProperties properties, String dataScriptPath) {
+        this(jdbcDatabaseContainer, properties, null, null, dataScriptPath);
     }
 
     public DbExtension(GenericContainer jdbcDatabaseContainer, Map<String, List<String>> tableWithColumns) {

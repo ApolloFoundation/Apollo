@@ -345,13 +345,6 @@
     </dependency>
   </dependencies>
 
-  <repositories>
-    <repository>
-      <id>binary-repo</id>
-      <url>https://dl.bintray.com/ethereum/maven/</url>
-    </repository>
-  </repositories>
-
   <build>
     <plugins>
       <plugin>

@@ -1,5 +1,5 @@
 /*
- *  Copyright © 2018-2019 Apollo Foundation
+ *  Copyright © 2018-2022 Apollo Foundation
  */
 
 package com.apollocurrency.aplwallet.apl.core.shard;
@@ -31,6 +31,11 @@ import com.apollocurrency.aplwallet.apl.core.dao.blockchain.BlockDaoImpl;
 import com.apollocurrency.aplwallet.apl.core.dao.blockchain.TransactionDao;
 import com.apollocurrency.aplwallet.apl.core.dao.blockchain.TransactionDaoImpl;
 import com.apollocurrency.aplwallet.apl.core.dao.prunable.PrunableMessageTable;
+import com.apollocurrency.aplwallet.apl.core.dao.state.account.AccountCurrencyTable;
+import com.apollocurrency.aplwallet.apl.core.dao.state.account.AccountTableCacheConfiguration;
+import com.apollocurrency.aplwallet.apl.core.dao.state.account.AccountTableInterface;
+import com.apollocurrency.aplwallet.apl.core.dao.state.account.AccountTableProducer;
+import com.apollocurrency.aplwallet.apl.core.dao.state.derived.MinMaxValue;
 import com.apollocurrency.aplwallet.apl.core.dao.state.dgs.DGSGoodsTable;
 import com.apollocurrency.aplwallet.apl.core.dao.state.phasing.PhasingPollTable;
 import com.apollocurrency.aplwallet.apl.core.db.DatabaseManager;
@@ -86,12 +91,14 @@ import com.apollocurrency.aplwallet.apl.testutil.DbUtils;
 import com.apollocurrency.aplwallet.apl.util.FileUtils;
 import com.apollocurrency.aplwallet.apl.util.Zip;
 import com.apollocurrency.aplwallet.apl.util.ZipImpl;
+import com.apollocurrency.aplwallet.apl.util.cache.InMemoryCacheManager;
 import com.apollocurrency.aplwallet.apl.util.cdi.transaction.JdbiHandleFactory;
 import com.apollocurrency.aplwallet.apl.util.db.TransactionalDataSource;
 import com.apollocurrency.aplwallet.apl.util.env.config.Chain;
 import com.apollocurrency.aplwallet.apl.util.env.dirprovider.ConfigDirProvider;
 import com.apollocurrency.aplwallet.apl.util.env.dirprovider.DirProvider;
 import com.apollocurrency.aplwallet.apl.util.injectable.PropertiesHolder;
+import com.apollocurrency.aplwallet.apl.util.service.TaskDispatchManager;
 import lombok.extern.slf4j.Slf4j;
 import org.jboss.weld.environment.se.Weld;
 import org.jboss.weld.junit.MockBean;
@@ -108,6 +115,7 @@ import org.junit.jupiter.api.extension.RegisterExtension;
 import javax.enterprise.inject.spi.Bean;
 import javax.inject.Inject;
 import java.io.IOException;
+import java.math.BigDecimal;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.sql.PreparedStatement;
@@ -120,6 +128,8 @@ import java.util.stream.Collectors;
 
 import static com.apollocurrency.aplwallet.apl.core.shard.MigrateState.SHARD_SCHEMA_CREATED;
 import static com.apollocurrency.aplwallet.apl.core.shard.MigrateState.SHARD_SCHEMA_FULL;
+import static com.apollocurrency.aplwallet.apl.core.shard.ShardConstants.ACCOUNT_CURRENCY_TABLE_NAME;
+import static com.apollocurrency.aplwallet.apl.core.shard.ShardConstants.ACCOUNT_TABLE_NAME;
 import static com.apollocurrency.aplwallet.apl.core.shard.ShardConstants.BLOCK_INDEX_TABLE_NAME;
 import static com.apollocurrency.aplwallet.apl.core.shard.ShardConstants.BLOCK_TABLE_NAME;
 import static com.apollocurrency.aplwallet.apl.core.shard.ShardConstants.SHARD_TABLE_NAME;
@@ -163,37 +173,58 @@ class ShardEngineTest extends DBContainerRootTest {
     */
     @RegisterExtension
     static TemporaryFolderExtension temporaryFolderExtension = new TemporaryFolderExtension();
+    @RegisterExtension
+    static DbExtension extension = new DbExtension(mariaDBContainer, DbTestData.getDbFileProperties(
+        createPath("targetDb").toAbsolutePath().toString()), "db/shard/shard-creation-data.sql");
+
     private final Path dataExportDirPath = createPath("targetDb");
     private final Bean<Path> dataExportDir = MockBean.of(dataExportDirPath.toAbsolutePath(), Path.class);
-    @RegisterExtension
-    static DbExtension extension = new DbExtension(mariaDBContainer, DbTestData.getDbFileProperties(createPath("targetDb").toAbsolutePath().toString()));
+
     private PropertiesHolder propertiesHolder = mock(PropertiesHolder.class);
     private NtpTimeConfig ntpTimeConfig = new NtpTimeConfig();
     private TimeService timeService = mock(TimeService.class);
     private TransactionTestData td = new TransactionTestData();
-
-    Weld weld = WeldInitiator.createWeld().addBeanClasses(JdbiHandleFactory.class, JdbiConfiguration.class);
-    @Inject
-    DGSGoodsTable goodsTable;
-    @Inject
-    TransactionDao transactionDao;
-    @Inject
-    PhasingPollTable phasingPollTable;
-    @Inject
-    PrunableMessageTable messageTable;
     private DirProvider dirProvider = mock(DirProvider.class);
     private Zip zip = spy(new ZipImpl());
     private CsvEscaper translator = new CsvEscaperImpl();
     private CsvExporter csvExporter = spy(new CsvExporterImpl(extension.getDatabaseManager(), dataExportDirPath, translator));
     private BlockchainConfig blockchainConfig = mock(BlockchainConfig.class);
-    Chain chain = mock(Chain.class);
+    private final PublicKeyDao publicKeyDao = mock(PublicKeyDao.class);
 
+    Chain chain = mock(Chain.class);
     {
         doReturn(chain).when(blockchainConfig).getChain();
-        doReturn(3).when(propertiesHolder).getIntProperty("apl.derivedTablesCount", 60);
+        doReturn(5).when(propertiesHolder).getIntProperty("apl.derivedTablesCount", 60);
     }
 
-    private final PublicKeyDao publicKeyDao = mock(PublicKeyDao.class);
+    Weld weld = WeldInitiator.createWeld().addBeanClasses(JdbiHandleFactory.class, JdbiConfiguration.class);
+    {
+        weld.addInterceptor(JdbiTransactionalInterceptor.class);
+        weld.addBeanClasses(BlockchainImpl.class, DaoConfig.class, ReferencedTransactionDao.class, ShardDao.class,
+            ShardRecoveryDao.class, TableRegistryInitializer.class,
+            DerivedDbTablesRegistryImpl.class, JdbiTransactionalInterceptor.class,
+            TransactionServiceImpl.class, ShardDbExplorerImpl.class,
+            TransactionEntityRowMapper.class, TransactionEntityRowMapper.class, TxReceiptRowMapper.class, PrunableTxRowMapper.class,
+            TransactionModelToEntityConverter.class, TransactionEntityToModelConverter.class,
+            TransactionBuilderFactory.class,
+            TransactionTestData.class, PropertyProducer.class, ShardRecoveryDaoJdbcImpl.class,
+            GlobalSyncImpl.class, FullTextConfigImpl.class, FullTextConfig.class,
+            DGSGoodsTable.class, PrunableMessageServiceImpl.class, PrunableMessageTable.class,
+            PhasingPollTable.class,
+            DerivedTablesRegistry.class,
+            ShardEngineImpl.class, AplAppStatus.class, BlockDaoImpl.class,
+            BlockEntityRowMapper.class, BlockEntityToModelConverter.class, BlockModelToEntityConverter.class,
+            TransactionDaoImpl.class, TrimService.class, TrimDao.class,
+            AccountTableCacheConfiguration.class, AccountTableProducer.class,
+            AccountCurrencyTable.class
+        );
+
+        // return the same dir for both CDI components //
+        dataExportDir.getQualifiers().add(new NamedLiteral("dataExportDir")); // for CsvExporter
+        doReturn(dataExportDirPath).when(dirProvider).getDataExportDir(); // for Zip
+    }
+
+
     @WeldSetup
     public WeldInitiator weldInitiator = WeldInitiator.from(weld)
         .addBeans(MockBean.of(extension.getDatabaseManager(), DatabaseManager.class))
@@ -216,7 +247,26 @@ class ShardEngineTest extends DBContainerRootTest {
         .addBeans(MockBean.of(ntpTimeConfig, NtpTimeConfig.class))
         .addBeans(MockBean.of(blockchainConfig, BlockchainConfig.class))
         .addBeans(MockBean.of(publicKeyDao, PublicKeyDao.class))
+        .addBeans(MockBean.of(mock(InMemoryCacheManager.class), InMemoryCacheManager.class))
+        .addBeans(MockBean.of(mock(TaskDispatchManager.class), TaskDispatchManager.class))
         .build();
+
+    @Inject
+    AccountCurrencyTable accountCurrencyTable;
+    @Inject
+    DGSGoodsTable goodsTable;
+    @Inject
+    TransactionDao transactionDao;
+    @Inject
+    PhasingPollTable phasingPollTable;
+    @Inject
+    PrunableMessageTable messageTable;
+    @Inject
+    AccountTableInterface accountTable;
+    @Inject
+    TableRegistryInitializer registryInitializer;
+    @Inject
+    private DerivedTablesRegistry registry;
     @Inject
     private ShardEngine shardEngine;
     @Inject
@@ -232,36 +282,9 @@ class ShardEngineTest extends DBContainerRootTest {
     @Inject
     private ShardRecoveryDaoJdbc recoveryDao;
     @Inject
-    private DerivedTablesRegistry registry;
-    @Inject
-    TableRegistryInitializer registryInitializer;
-    @Inject
     private CsvExporter cvsExporter;
     @Inject
     private TransactionEntityToModelConverter toModelConverter;
-
-    {
-        weld.addInterceptor(JdbiTransactionalInterceptor.class);
-        weld.addBeanClasses(BlockchainImpl.class, DaoConfig.class, ReferencedTransactionDao.class, ShardDao.class, ShardRecoveryDao.class, TableRegistryInitializer.class,
-            DerivedDbTablesRegistryImpl.class, JdbiTransactionalInterceptor.class,
-            TransactionServiceImpl.class, ShardDbExplorerImpl.class,
-            TransactionEntityRowMapper.class, TransactionEntityRowMapper.class, TxReceiptRowMapper.class, PrunableTxRowMapper.class,
-            TransactionModelToEntityConverter.class, TransactionEntityToModelConverter.class,
-            TransactionBuilderFactory.class,
-            TransactionTestData.class, PropertyProducer.class, ShardRecoveryDaoJdbcImpl.class,
-            GlobalSyncImpl.class, FullTextConfigImpl.class, FullTextConfig.class,
-            DGSGoodsTable.class, PrunableMessageServiceImpl.class, PrunableMessageTable.class,
-            PhasingPollTable.class,
-            DerivedTablesRegistry.class,
-            ShardEngineImpl.class, AplAppStatus.class, BlockDaoImpl.class,
-            BlockEntityRowMapper.class, BlockEntityToModelConverter.class, BlockModelToEntityConverter.class,
-            TransactionDaoImpl.class, TrimService.class, TrimDao.class
-        );
-
-        // return the same dir for both CDI components //
-        dataExportDir.getQualifiers().add(new NamedLiteral("dataExportDir")); // for CsvExporter
-        doReturn(dataExportDirPath).when(dirProvider).getDataExportDir(); // for Zip
-    }
 
     @BeforeEach
     void setUp() {
@@ -275,9 +298,6 @@ class ShardEngineTest extends DBContainerRootTest {
         ((DatabaseManagerImpl) extension.getDatabaseManager()).closeAllShardDataSources();
 
         extension.cleanAndPopulateDb();
-    }
-
-    public ShardEngineTest() throws Exception {
     }
 
     private static Path createPath(String fileName) {
@@ -527,6 +547,8 @@ class ShardEngineTest extends DBContainerRootTest {
         tableNameList.add(new TableInfo(GOODS_TABLE_NAME));
         tableNameList.add(new TableInfo(PHASING_POLL_TABLE_NAME));
         tableNameList.add(new TableInfo(PRUNABLE_MESSAGE_TABLE_NAME, true));
+        tableNameList.add(new TableInfo(ACCOUNT_TABLE_NAME));
+        tableNameList.add(new TableInfo(ACCOUNT_CURRENCY_TABLE_NAME));
         BlockTestData btd = new BlockTestData();
         Block block = mock(Block.class);
 
@@ -548,7 +570,8 @@ class ShardEngineTest extends DBContainerRootTest {
         assertEquals(4, Files.readAllLines(dataExportDirPath.resolve(tableToCsvFile(TRANSACTION_TABLE_NAME))).size());
         assertEquals(2, Files.readAllLines(dataExportDirPath.resolve(tableToCsvFile(BLOCK_TABLE_NAME))).size());
         assertEquals(12, Files.readAllLines(dataExportDirPath.resolve(tableToCsvFile(PRUNABLE_MESSAGE_TABLE_NAME))).size());
-
+        assertEquals(9, Files.readAllLines(dataExportDirPath.resolve(tableToCsvFile(ACCOUNT_TABLE_NAME))).size());
+        assertEquals(10, Files.readAllLines(dataExportDirPath.resolve(tableToCsvFile(ACCOUNT_CURRENCY_TABLE_NAME))).size());
 
         paramInfo = CommandParamInfo.builder().snapshotBlockHeight(snapshotBlockHeight)
             .excludeInfo(excludeInfo).shardId(4L).tableInfoList(tableNameList).build();
@@ -746,6 +769,8 @@ class ShardEngineTest extends DBContainerRootTest {
         verify(csvExporter, times(2)).getDataExportPath();
         verify(csvExporter, times(1)).exportDerivedTable(goodsTable, snaphotBlockHeight, batchLimit);
         verify(csvExporter, times(1)).exportDerivedTable(goodsTable, snaphotBlockHeight, batchLimit, Set.of("db_id", "latest", "deleted"));
+        verify(csvExporter, times(1)).exportDerivedTableByUniqueLongColumnPagination(goodsTable.getTableName(), new MinMaxValue(new BigDecimal("0"), new BigDecimal("0"), "db_id", 0, 0), batchLimit, Set.of("db_id", "latest", "deleted"));
+
         verifyNoMoreInteractions(csvExporter);
         ShardRecovery recovery = shardRecoveryDaoJdbc.getLatestShardRecovery(extension.getDatabaseManager().getDataSource());
         assertEquals(2, recovery.getShardRecoveryId());
@@ -773,8 +798,10 @@ class ShardEngineTest extends DBContainerRootTest {
 
         assertEquals(MigrateState.CSV_EXPORT_FINISHED, state);
         verify(csvExporter, times(2)).getDataExportPath();
+        // export one goods table (three different public methods invoced and counted by Mockito
         verify(csvExporter, times(1)).exportDerivedTable(goodsTable, snaphotBlockHeight, batchLimit);
         verify(csvExporter, times(1)).exportDerivedTable(goodsTable, snaphotBlockHeight, batchLimit, Set.of("db_id", "latest", "deleted"));
+        verify(csvExporter, times(1)).exportDerivedTableByUniqueLongColumnPagination(goodsTable.getTableName(), new MinMaxValue(new BigDecimal("0"), new BigDecimal("0"), "db_id", 0, 0), batchLimit, Set.of("db_id", "latest", "deleted"));
 
         verifyNoMoreInteractions(csvExporter);
         ShardRecovery recovery = shardRecoveryDaoJdbc.getLatestShardRecovery(extension.getDatabaseManager().getDataSource());
@@ -789,7 +816,7 @@ class ShardEngineTest extends DBContainerRootTest {
     }
 
     @Test
-    void testArchiveCsv() throws IOException, SQLException {
+    void testArchiveCsv() throws IOException {
         Files.createFile(dataExportDirPath.resolve(GOODS_TABLE_NAME + CSV_FILE_EXTENSION));
         Files.createFile(dataExportDirPath.resolve(PRUNABLE_MESSAGE_TABLE_NAME + CSV_FILE_EXTENSION));
         Files.createFile(dataExportDirPath.resolve("another-file.txt"));
