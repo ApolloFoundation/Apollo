@@ -1,8 +1,9 @@
 /*
- * Copyright © 2018-2019 Apollo Foundation
+ * Copyright © 2018-2022 Apollo Foundation
  */
 package com.apollocurrency.aplwallet.apl.core.dao.state.account;
 
+import com.apollocurrency.aplwallet.apl.core.dao.state.derived.MinMaxValue;
 import com.apollocurrency.aplwallet.apl.core.dao.state.derived.VersionedDeletableEntityDbTable;
 import com.apollocurrency.aplwallet.apl.core.dao.state.keyfactory.DbKey;
 import com.apollocurrency.aplwallet.apl.core.db.DatabaseManager;
@@ -22,7 +23,6 @@ import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Statement;
 import java.util.List;
-import java.util.Optional;
 
 import static com.apollocurrency.aplwallet.apl.core.utils.CollectionUtil.toList;
 
@@ -205,16 +205,13 @@ public class AccountTable extends VersionedDeletableEntityDbTable<Account> imple
 
     }
 
-    private Optional<Account> selectLastExisting(Connection connection, long id) throws SQLException {
-        try (PreparedStatement pstm = connection.prepareStatement("SELECT * FROM " + table + " WHERE id = ? ORDER BY db_id DESC LIMIT 1")) {
-            pstm.setLong(1, id);
-            try (ResultSet rs = pstm.executeQuery()) {
-                if (rs.next()) {
-                    return Optional.of(load(connection, rs, accountDbKeyFactory.newKey(id)));
-                } else {
-                    return Optional.empty();
-                }
-            }
-        }
+    /**
+     * Retrieve {@link MinMaxValue} for account id assuming no duplicates before the given height (trim operation executed)
+     * <p>Note: DB_ID based {@link MinMaxValue} is ignored, because sorted set of unique account ids acts the same </p>
+     * @param height blockchain height which acts as an upper bound for {@link MinMaxValue} retrieval
+     */
+    @Override
+    public MinMaxValue getMinMaxValue(int height) {
+        return super.getMinMaxValue(height, "id");
     }
 }
