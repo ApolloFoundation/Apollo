@@ -13,13 +13,13 @@ import java.util.Objects;
 /**
  * @author andrew.zinchenko@gmail.com
  */
-public final class ComplexKey implements DbKey {
+public final class ThreeValuesKey implements DbKey {
 
     private final long idA;
     private final String idB;
     private final byte[] idC;
 
-    public ComplexKey(long idA, String idB, byte[] idC) {
+    public ThreeValuesKey(long idA, String idB, byte[] idC) {
         this.idA = idA;
         this.idB = idB;
         this.idC = idC;
@@ -42,7 +42,7 @@ public final class ComplexKey implements DbKey {
     public boolean equals(Object o) {
         if (this == o) return true;
         if (o == null || getClass() != o.getClass()) return false;
-        ComplexKey that = (ComplexKey) o;
+        ThreeValuesKey that = (ThreeValuesKey) o;
         return idA == that.idA && idB.equals(that.idB) && Arrays.equals(idC, that.idC);
     }
 
@@ -56,7 +56,7 @@ public final class ComplexKey implements DbKey {
 
     @Override
     public String toString() {
-        return "ComplexKey{" + "idA=" + idA + ", idB=" + idB + ", idC=" + Convert.toHexString(idC) + '}';
+        return "ThreeValuesKey{" + "idA=" + idA + ", idB=" + idB + ", idC=" + Convert.toHexString(idC) + '}';
 
     }
 }
