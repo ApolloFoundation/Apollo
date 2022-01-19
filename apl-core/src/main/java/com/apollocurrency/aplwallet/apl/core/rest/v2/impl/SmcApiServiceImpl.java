@@ -25,13 +25,13 @@ import com.apollocurrency.aplwallet.apl.core.chainid.BlockchainConfig;
 import com.apollocurrency.aplwallet.apl.core.config.SmcConfig;
 import com.apollocurrency.aplwallet.apl.core.entity.state.account.Account;
 import com.apollocurrency.aplwallet.apl.core.model.CreateTransactionRequest;
-import com.apollocurrency.aplwallet.apl.core.model.Sort;
 import com.apollocurrency.aplwallet.apl.core.model.Transaction;
 import com.apollocurrency.aplwallet.apl.core.rest.TransactionCreator;
 import com.apollocurrency.aplwallet.apl.core.rest.v2.ResponseBuilderV2;
 import com.apollocurrency.aplwallet.apl.core.rest.v2.converter.CallMethodResultMapper;
 import com.apollocurrency.aplwallet.apl.core.rest.v2.converter.MethodSpecMapper;
 import com.apollocurrency.aplwallet.apl.core.service.state.account.AccountService;
+import com.apollocurrency.aplwallet.apl.core.service.state.smc.ContractQuery;
 import com.apollocurrency.aplwallet.apl.core.service.state.smc.ContractToolService;
 import com.apollocurrency.aplwallet.apl.core.service.state.smc.SmcContractRepository;
 import com.apollocurrency.aplwallet.apl.core.service.state.smc.SmcContractService;
@@ -50,6 +50,8 @@ import com.apollocurrency.aplwallet.apl.smc.service.tx.CallMethodTxValidator;
 import com.apollocurrency.aplwallet.apl.smc.service.tx.PublishContractTxValidator;
 import com.apollocurrency.aplwallet.apl.util.Convert2;
 import com.apollocurrency.aplwallet.apl.util.StringUtils;
+import com.apollocurrency.aplwallet.apl.util.api.NumericRange;
+import com.apollocurrency.aplwallet.apl.util.api.Sort;
 import com.apollocurrency.aplwallet.apl.util.api.parameter.FirstLastIndexBeanParam;
 import com.apollocurrency.aplwallet.apl.util.cdi.config.Property;
 import com.apollocurrency.aplwallet.apl.util.exception.ApiErrors;
@@ -631,25 +633,18 @@ class SmcApiServiceImpl implements SmcApiService {
         if (accountId == null) {
             return builder.error(ApiErrors.CONTRACTS_NOT_FOUND).build();
         }
-        var publisher = new AplAddress(accountId);
 
         FirstLastIndexBeanParam indexBeanParam = new FirstLastIndexBeanParam(firstIndex, lastIndex);
         indexBeanParam.adjustIndexes(maxAPIRecords);
 
         ContractListResponse response = new ContractListResponse();
 
-        List<ContractDetails> contracts = contractRepository.loadContractsByFilter(
-            null,
-            null,
-            publisher,
-            null,
-            null,
-            null,
-            null,
-            -1,
-            indexBeanParam.getFirstIndex(),
-            indexBeanParam.getLastIndex()
-        );
+        var query = ContractQuery.builder()
+            .owner(accountId)
+            .height(-1)
+            .paging(indexBeanParam.range())
+            .build();
+        List<ContractDetails> contracts = contractRepository.loadContractsByFilter(query);
 
         response.setContracts(contracts);
         response.setContracts(contracts);
@@ -681,36 +676,15 @@ class SmcApiServiceImpl implements SmcApiService {
                 return ResponseBuilderV2.apiError(ApiErrors.CONTRACT_EVENT_FILTER_ERROR, e.getMessage()).build();
             }
         }
-        int[] blockBoundaries = boundaries(body.getFromBlock(), body.getToBlock());
-        int[] paging = boundaries(body.getFrom(), body.getTo());
-        Sort order;
-        if (StringUtils.isNotBlank(body.getOrder())) {
-            order = new Sort(body.getOrder());
-        } else
-            order = Sort.asc();
-
+        var blockRange = new NumericRange(body.getFromBlock(), body.getToBlock());
+        var paging = new NumericRange(body.getFrom(), body.getTo());
+        var order = Sort.of(body.getOrder());
         ContractEventsResponse response = new ContractEventsResponse();
-        var rc = eventService.getEventsByFilter(contractId, eventName,
-            filter,
-            blockBoundaries[0], blockBoundaries[1],
-            paging[0], paging[1],
-            order.toString()
-        );
+        var rc = eventService.getEventsByFilter(contractId, eventName, filter, blockRange, paging, order);
 
         response.setEvents(rc);
 
         return builder.bind(response).build();
-    }
-
-    private int[] boundaries(Integer from, Integer to) {
-        int[] rc = new int[]{0, -1};
-        if (from != null) {
-            rc[0] = from;
-        }
-        if (to != null) {
-            rc[1] = to;
-        }
-        return rc;
     }
 
     @Override
@@ -720,10 +694,10 @@ class SmcApiServiceImpl implements SmcApiService {
         if (contractId == null || !contractRepository.isContractExist(new AplAddress(contractId))) {
             return builder.error(ApiErrors.CONTRACT_NOT_FOUND, addressStr).build();
         }
-        var address = new AplAddress(contractId);
+
         ContractListResponse response = new ContractListResponse();
 
-        var contracts = contractRepository.getContractDetailsByAddress(address);
+        var contracts = contractRepository.getContractDetailsByAddress(contractId);
 
         response.setContracts(contracts);
 
@@ -736,16 +710,15 @@ class SmcApiServiceImpl implements SmcApiService {
 
         FirstLastIndexBeanParam indexBeanParam = new FirstLastIndexBeanParam(firstIndex, lastIndex);
         indexBeanParam.adjustIndexes(maxAPIRecords);
-        AplAddress address = null;
-        AplAddress publisher = null;
-        AplAddress transaction = null;
+        Long address = null;
+        Long publisher = null;
+        Long transaction = null;
 
-        ContractStatus smcStatus = null;
         if (status != null) {
             try {
-                smcStatus = ContractStatus.valueOf(status);
+                ContractStatus.valueOf(status);
             } catch (IllegalArgumentException e) {
-                return ResponseBuilderV2.apiError(ApiErrors.INCORRECT_VALUE, "status", addressStr).build();
+                return ResponseBuilderV2.apiError(ApiErrors.INCORRECT_VALUE, "status", status).build();
             }
         }
 
@@ -754,39 +727,33 @@ class SmcApiServiceImpl implements SmcApiService {
             if (account == null) {
                 return builder.error(ApiErrors.CONTRACT_NOT_FOUND, addressStr).build();
             }
-            address = new AplAddress(account.getId());
-            if (!contractRepository.isContractExist(address)) {
+            if (!contractRepository.isContractExist(new AplAddress(account.getId()))) {
                 return ResponseBuilderV2.apiError(ApiErrors.CONTRACT_NOT_FOUND, addressStr).build();
             }
+            address = account.getId();
         }
 
         if (publisherStr != null) {
-            var publisherId = getIdByAddress(publisherStr);
-            if (publisherId != null) {
-                publisher = new AplAddress(publisherId);
-            }
+            publisher = getIdByAddress(publisherStr);
         }
 
         if (transactionAddr != null) {
-            var transactionId = getIdByAddress(transactionAddr);
-            if (transactionId != null) {
-                transaction = new AplAddress(transactionId);
-            }
+            transaction = getIdByAddress(transactionAddr);
         }
         ContractListResponse response = new ContractListResponse();
 
-        List<ContractDetails> contracts = contractRepository.loadContractsByFilter(
-            address,
-            transaction,
-            publisher,
-            name,
-            baseContract,
-            timestamp,
-            smcStatus,
-            -1,
-            indexBeanParam.getFirstIndex(),
-            indexBeanParam.getLastIndex()
-        );
+        var query = ContractQuery.builder()
+            .address(address)
+            .transaction(transaction)
+            .owner(publisher)
+            .name(name)
+            .baseContract(baseContract)
+            .status(status)
+            .height(-1)
+            .paging(indexBeanParam.range())
+            .build();
+
+        List<ContractDetails> contracts = contractRepository.loadContractsByFilter(query);
 
         response.setContracts(contracts);
 

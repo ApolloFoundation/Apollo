@@ -19,6 +19,7 @@
 
 package com.apollocurrency.aplwallet.apl.util.db;
 
+import com.apollocurrency.aplwallet.apl.util.api.Range;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.slf4j.Logger;
@@ -234,6 +235,10 @@ public final class DbUtils {
             to - from + 1 : 0;
     }
 
+    public static String limitsClause(Range paging) {
+        return limitsClause(paging.from().intValue(), paging.to().intValue());
+    }
+
     public static String limitsClause(int from, int to) {
         int limit = calculateLimit(from, to);
         if (limit > 0 && from > 0) {
@@ -249,6 +254,10 @@ public final class DbUtils {
         } else {
             return "";
         }
+    }
+
+    public static int setLimits(int index, PreparedStatement pstmt, Range paging) throws SQLException {
+        return setLimits(index, pstmt, paging.from().intValue(), paging.to().intValue());
     }
 
     public static int setLimits(int index, PreparedStatement pstmt, int from, int to) throws SQLException {

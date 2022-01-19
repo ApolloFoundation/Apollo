@@ -13,11 +13,13 @@ import com.apollocurrency.aplwallet.apl.core.dao.state.smc.SmcContractTable;
 import com.apollocurrency.aplwallet.apl.core.entity.state.smc.SmcContractEntity;
 import com.apollocurrency.aplwallet.apl.core.entity.state.smc.SmcContractStateEntity;
 import com.apollocurrency.aplwallet.apl.core.service.blockchain.Blockchain;
+import com.apollocurrency.aplwallet.apl.core.service.state.smc.ContractQuery;
 import com.apollocurrency.aplwallet.apl.core.service.state.smc.SmcContractRepository;
 import com.apollocurrency.aplwallet.apl.core.service.state.smc.SmcContractService;
 import com.apollocurrency.aplwallet.apl.smc.model.AplAddress;
 import com.apollocurrency.aplwallet.apl.smc.model.AplContractSpec;
 import com.apollocurrency.aplwallet.apl.util.Convert2;
+import com.apollocurrency.aplwallet.apl.util.api.NumericRange;
 import com.apollocurrency.aplwallet.apl.util.cdi.Transactional;
 import com.apollocurrency.smc.contract.AddressNotFoundException;
 import com.apollocurrency.smc.contract.ContractSource;
@@ -168,19 +170,20 @@ public class SmcContractRepositoryImpl implements SmcContractRepository {
     }
 
     @Override
-    public List<ContractDetails> loadContractsByFilter(Address address, Address transaction, Address owner, String name, String baseContract, Long timestamp, ContractStatus status, int height, int from, int to) {
-        Long contractId = address != null ? new AplAddress(address).getLongId() : null;
-        Long txId = transaction != null ? new AplAddress(transaction).getLongId() : null;
-        Long ownerId = owner != null ? new AplAddress(owner).getLongId() : null;
-        Integer blockTimestamp = timestamp == null ? null : Convert2.toEpochTime(timestamp);
-        List<ContractDetails> result = smcContractTable.getContractsByFilter(contractId, txId, ownerId, name, baseContract, blockTimestamp, status != null ? status.name() : null, height < 0 ? blockchain.getHeight() : height, from, to);
+    public List<ContractDetails> loadContractsByFilter(ContractQuery query) {
+        query.setTimestamp(query.getTimestamp() == null ? null : (long) Convert2.toEpochTime(query.getTimestamp()));
+        List<ContractDetails> result = smcContractTable.getContractsByFilter(query);
         return result;
     }
 
     @Override
-    public List<ContractDetails> getContractDetailsByAddress(Address address) {
-        var result = loadContractsByFilter(address, null, null, null, null, null, null, -1, 0, 1);
-        return result;
+    public List<ContractDetails> getContractDetailsByAddress(long address) {
+        var query = ContractQuery.builder()
+            .address(address)
+            .height(-1)
+            .paging(new NumericRange(0, 1))
+            .build();
+        return loadContractsByFilter(query);
     }
 
     public static SmartContract convert(SmcContractEntity entity, SmcContractStateEntity stateEntity, Address originator, Address caller, Fuel contractFuel) {

@@ -14,6 +14,9 @@ import com.apollocurrency.aplwallet.apl.core.service.state.smc.SmcContractReposi
 import com.apollocurrency.aplwallet.apl.smc.events.SmcEventType;
 import com.apollocurrency.aplwallet.apl.smc.model.AplContractEvent;
 import com.apollocurrency.aplwallet.apl.smc.service.SmcContractEventService;
+import com.apollocurrency.aplwallet.apl.util.api.NumericRange;
+import com.apollocurrency.aplwallet.apl.util.api.Range;
+import com.apollocurrency.aplwallet.apl.util.api.Sort;
 import com.apollocurrency.aplwallet.apl.util.cdi.Transactional;
 import com.apollocurrency.smc.blockchain.crypt.HashSumProvider;
 import com.apollocurrency.smc.contract.vm.event.EventArguments;
@@ -104,25 +107,21 @@ public class SmcContractEventServiceImpl implements SmcContractEventService {
     }
 
     @Override
-    public List<ContractEventDetails> getEventsByFilter(Long contract, String eventName, Term filter, int fromBlock, int toBlock, int from, int to, String order) {
+    public List<ContractEventDetails> getEventsByFilter(Long contract, String eventName, Term predicate, Range range, Range paging, Sort order) {
         var height = blockchain.getHeight();
-        if (fromBlock < 0) {
-            fromBlock = height;
-        }
-        if (toBlock < 0) {
-            toBlock = height;
-        }
-        log.trace("getEventsByFilter: height={} contract={} eventName={} fromBlock={} toBlock={} from={} to={} order={}"
-            , height, contract, eventName, fromBlock, toBlock, from, to, order);
-        var result = contractEventLogTable.getEventsByFilter(contract, eventName, fromBlock, toBlock, from, to, order);
+        int fromBlock = (range.from().intValue() < 0) ? height : range.from().intValue();
+        int toBlock = (range.to().intValue() < 0) ? height : range.to().intValue();
+        var blockRange = new NumericRange(fromBlock, toBlock);
+        log.trace("getEventsByFilter: height={} contract={} eventName={} blockRange={} paging={} order={}", height, contract, eventName, blockRange, paging, order);
+        var result = contractEventLogTable.getEventsByFilter(contract, eventName, blockRange, paging, order);
         log.trace("getEventsByFilter: resultSet.size={}", result.size());
         //filter result set
         var deserializer = jsonMapper.deserializer();
         var rc = result.stream().filter(event -> {
             var args = deserializer.deserialize(event.getState(), EventArguments.class);
-            return filter.test(args.getMap());
+            return predicate.test(args.getMap());
         }).collect(Collectors.toList());
-        log.trace("getEventsByFilter: apply filter={} result.size={}", filter, rc.size());
+        log.trace("getEventsByFilter: apply filter={} result.size={}", predicate, rc.size());
         return rc;
     }
 }

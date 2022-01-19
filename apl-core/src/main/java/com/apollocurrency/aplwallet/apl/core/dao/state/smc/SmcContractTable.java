@@ -7,12 +7,15 @@ package com.apollocurrency.aplwallet.apl.core.dao.state.smc;
 import com.apollocurrency.aplwallet.api.v2.model.ContractDetails;
 import com.apollocurrency.aplwallet.apl.core.converter.db.smc.SmcContractDetailsRowMapper;
 import com.apollocurrency.aplwallet.apl.core.converter.db.smc.SmcContractRowMapper;
+import com.apollocurrency.aplwallet.apl.core.dao.JdbcQueryExecutionHelper;
 import com.apollocurrency.aplwallet.apl.core.dao.state.derived.EntityDbTable;
 import com.apollocurrency.aplwallet.apl.core.dao.state.keyfactory.DbKey;
 import com.apollocurrency.aplwallet.apl.core.dao.state.keyfactory.LongKeyFactory;
 import com.apollocurrency.aplwallet.apl.core.db.DatabaseManager;
 import com.apollocurrency.aplwallet.apl.core.entity.state.smc.SmcContractEntity;
 import com.apollocurrency.aplwallet.apl.core.service.fulltext.FullTextOperationData;
+import com.apollocurrency.aplwallet.apl.core.service.state.smc.ContractQuery;
+import com.apollocurrency.aplwallet.apl.util.StringUtils;
 import com.apollocurrency.aplwallet.apl.util.db.DbUtils;
 import com.apollocurrency.aplwallet.apl.util.db.TransactionalDataSource;
 
@@ -23,7 +26,6 @@ import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Statement;
-import java.util.ArrayList;
 import java.util.List;
 
 /**
@@ -45,13 +47,12 @@ public class SmcContractTable extends EntityDbTable<SmcContractEntity> {
     private static final String TABLE_NAME = "smc_contract";
 
     private static final SmcContractRowMapper MAPPER = new SmcContractRowMapper(KEY_FACTORY);
-
-    private final SmcContractDetailsRowMapper smcContractDetailsRowMapper;
+    private final JdbcQueryExecutionHelper<ContractDetails> txQueryExecutionHelper;
 
     @Inject
     public SmcContractTable(DatabaseManager databaseManager, Event<FullTextOperationData> fullTextOperationDataEvent, SmcContractDetailsRowMapper smcContractDetailsRowMapper) {
         super(TABLE_NAME, KEY_FACTORY, false, null, databaseManager, fullTextOperationDataEvent);
-        this.smcContractDetailsRowMapper = smcContractDetailsRowMapper;
+        this.txQueryExecutionHelper = new JdbcQueryExecutionHelper<>(databaseManager.getDataSource(), (rs) -> smcContractDetailsRowMapper.map(rs, null));
     }
 
     @Override
@@ -110,10 +111,9 @@ public class SmcContractTable extends EntityDbTable<SmcContractEntity> {
         }
     }
 
-    //TODO use a special wrapping object for query filter params with default settings and statement adjustments
-    public List<ContractDetails> getContractsByFilter(Long address, Long txId, Long owner, String name, String baseContract, Integer blockTimestamp, String status, int height, int from, int to) {
-        String namePrefix = null;
-        String baseContractPrefix = null;
+    public List<ContractDetails> getContractsByFilter(ContractQuery query) {
+        String namePrefix;
+        String baseContractPrefix;
         StringBuilder sql = new StringBuilder(
             "SELECT sc.*, " +
                 "ss.status as smc_status " +
@@ -121,45 +121,48 @@ public class SmcContractTable extends EntityDbTable<SmcContractEntity> {
                 "LEFT JOIN smc_state ss on sc.address = ss.address " +
                 "WHERE sc.latest = true AND sc.height <= ? AND ss.latest = true ");
 
-        if (address != null) {
+        if (query.getAddress() != null) {
             sql.append(" AND sc.address = ? ");
         }
-        if (txId != null) {
+        if (query.getTransaction() != null) {
             sql.append(" AND sc.transaction_id = ? ");
         }
-        if (owner != null) {
+        if (query.getOwner() != null) {
             sql.append(" AND sc.owner = ? ");
         }
-        if (name != null && !name.isEmpty()) {
+        if (StringUtils.isNotBlank(query.getName())) {
             sql.append(" AND sc.name LIKE ? ");
-            namePrefix = name.replace("%", "\\%").replace("_", "\\_") + "%";
+            namePrefix = query.getName().replace("%", "\\%").replace("_", "\\_") + "%";
+        } else {
+            namePrefix = null;
         }
-        if (baseContract != null && !baseContract.isEmpty()) {
+        if (StringUtils.isNotBlank(query.getBaseContract())) {
             sql.append(" AND sc.base_contract LIKE ? ");
-            baseContractPrefix = baseContract.replace("%", "\\%").replace("_", "\\_") + "%";
+            baseContractPrefix = query.getBaseContract().replace("%", "\\%").replace("_", "\\_") + "%";
+        } else {
+            baseContractPrefix = null;
         }
-        if (blockTimestamp != null) {
+        if (query.getTimestamp() != null) {
             sql.append(" AND sc.block_timestamp >= ? ");
         }
-        if (status != null) {
+        if (query.getStatus() != null) {
             sql.append(" AND ss.status = ? ");
         }
         sql.append("ORDER BY sc.block_timestamp DESC, sc.db_id DESC ");
-        sql.append(DbUtils.limitsClause(from, to));
+        sql.append(DbUtils.limitsClause(query.getPaging()));
 
-        //TODO try to use JdbcQueryExecutionHelper
-        try (Connection con = databaseManager.getDataSource().getConnection();
-             PreparedStatement pstm = con.prepareStatement(sql.toString())) {
+        return txQueryExecutionHelper.executeListQuery(con -> {
+            PreparedStatement pstm = con.prepareStatement(sql.toString());
             int i = 0;
-            pstm.setInt(++i, height);
-            if (address != null) {
-                pstm.setLong(++i, address);
+            pstm.setInt(++i, query.getHeight());
+            if (query.getAddress() != null) {
+                pstm.setLong(++i, query.getAddress());
             }
-            if (txId != null) {
-                pstm.setLong(++i, txId);
+            if (query.getTransaction() != null) {
+                pstm.setLong(++i, query.getTransaction());
             }
-            if (owner != null) {
-                pstm.setLong(++i, owner);
+            if (query.getOwner() != null) {
+                pstm.setLong(++i, query.getOwner());
             }
             if (namePrefix != null) {
                 pstm.setString(++i, namePrefix);
@@ -167,23 +170,15 @@ public class SmcContractTable extends EntityDbTable<SmcContractEntity> {
             if (baseContractPrefix != null) {
                 pstm.setString(++i, baseContractPrefix);
             }
-            if (blockTimestamp != null) {
-                pstm.setInt(++i, blockTimestamp);
+            if (query.getTimestamp() != null) {
+                pstm.setInt(++i, query.getTimestamp().intValue());
             }
-            if (status != null) {
-                pstm.setString(++i, status);
+            if (query.getStatus() != null) {
+                pstm.setString(++i, query.getStatus());
             }
-            DbUtils.setLimits(++i, pstm, from, to);
+            DbUtils.setLimits(++i, pstm, query.getPaging());
             pstm.setFetchSize(50);
-            try (ResultSet rs = pstm.executeQuery()) {
-                List<ContractDetails> list = new ArrayList<>();
-                while (rs.next()) {
-                    list.add(smcContractDetailsRowMapper.map(rs, null));
-                }
-                return list;
-            }
-        } catch (SQLException e) {
-            throw new RuntimeException(e);
-        }
+            return pstm;
+        });
     }
 }

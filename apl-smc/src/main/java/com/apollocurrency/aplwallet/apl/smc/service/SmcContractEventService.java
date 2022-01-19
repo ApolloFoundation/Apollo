@@ -6,6 +6,8 @@ package com.apollocurrency.aplwallet.apl.smc.service;
 
 import com.apollocurrency.aplwallet.api.v2.model.ContractEventDetails;
 import com.apollocurrency.aplwallet.apl.smc.model.AplContractEvent;
+import com.apollocurrency.aplwallet.apl.util.api.Range;
+import com.apollocurrency.aplwallet.apl.util.api.Sort;
 import com.apollocurrency.smc.data.expr.Term;
 import com.apollocurrency.smc.data.type.Address;
 
@@ -38,5 +40,6 @@ public interface SmcContractEventService {
      */
     void fireCdiEvent(AplContractEvent event);
 
-    List<ContractEventDetails> getEventsByFilter(Long contract, String eventName, Term filter, int fromBlock, int toBlock, int from, int to, String order);
+    List<ContractEventDetails> getEventsByFilter(Long contract, String eventName, Term filter, Range blockRange, Range paging, Sort order);
+
 }

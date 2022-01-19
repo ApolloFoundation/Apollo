@@ -6,6 +6,7 @@ package com.apollocurrency.aplwallet.apl.core.dao.state.smc;
 import com.apollocurrency.aplwallet.api.v2.model.ContractEventDetails;
 import com.apollocurrency.aplwallet.apl.core.converter.db.smc.SmcContractEventLogDetailsRowMapper;
 import com.apollocurrency.aplwallet.apl.core.converter.db.smc.SmcContractEventLogRowMapper;
+import com.apollocurrency.aplwallet.apl.core.dao.JdbcQueryExecutionHelper;
 import com.apollocurrency.aplwallet.apl.core.dao.state.derived.DerivedDbTable;
 import com.apollocurrency.aplwallet.apl.core.dao.state.keyfactory.DbKey;
 import com.apollocurrency.aplwallet.apl.core.db.DatabaseManager;
@@ -13,6 +14,8 @@ import com.apollocurrency.aplwallet.apl.core.entity.state.smc.SmcContractEventLo
 import com.apollocurrency.aplwallet.apl.core.service.fulltext.FullTextOperationData;
 import com.apollocurrency.aplwallet.apl.util.annotation.DatabaseSpecificDml;
 import com.apollocurrency.aplwallet.apl.util.annotation.DmlMarker;
+import com.apollocurrency.aplwallet.apl.util.api.Range;
+import com.apollocurrency.aplwallet.apl.util.api.Sort;
 import com.apollocurrency.aplwallet.apl.util.db.DbUtils;
 import com.apollocurrency.aplwallet.apl.util.db.TransactionalDataSource;
 import com.apollocurrency.aplwallet.apl.util.injectable.PropertiesHolder;
@@ -45,6 +48,7 @@ public class SmcContractEventLogTable extends DerivedDbTable<SmcContractEventLog
     private static final SmcContractEventLogDetailsRowMapper detailsRowMapper = new SmcContractEventLogDetailsRowMapper();
 
     private final PropertiesHolder propertiesHolder;
+    private final JdbcQueryExecutionHelper<ContractEventDetails> txQueryExecutionHelper;
 
     /**
      * Number of blocks to keep when trimming
@@ -64,6 +68,7 @@ public class SmcContractEventLogTable extends DerivedDbTable<SmcContractEventLog
         this.propertiesHolder = propertiesHolder;
         this.batchCommitSize = propertiesHolder.BATCH_COMMIT_SIZE();
         trimKeep = propertiesHolder.getIntProperty("apl.smcEventLogTrimKeep", -1);
+        this.txQueryExecutionHelper = new JdbcQueryExecutionHelper<>(databaseManager.getDataSource(), (rs) -> detailsRowMapper.map(rs, null));
     }
 
     /**
@@ -202,7 +207,7 @@ public class SmcContractEventLogTable extends DerivedDbTable<SmcContractEventLog
         return entryList;
     }
 
-    public List<ContractEventDetails> getEventsByFilter(Long contract, String name, int heightFrom, int heightTo, int from, int to, String order) {
+    public List<ContractEventDetails> getEventsByFilter(Long contract, String name, Range blockRange, Range paging, Sort order) {
         StringBuilder sql = new StringBuilder(
             "SELECT el.*, " +
                 "e.contract, e.name, e.spec " +
@@ -214,39 +219,29 @@ public class SmcContractEventLogTable extends DerivedDbTable<SmcContractEventLog
             sql.append(" AND e.name = ? ");
         }
 
-        if (heightTo > 0) {
+        if (blockRange.to().intValue() > 0) {
             sql.append(" AND el.height <= ? ");
         }
 
         sql.append("ORDER BY el.db_id ").append(order);
-        sql.append(DbUtils.limitsClause(from, to));
+        sql.append(DbUtils.limitsClause(paging));
         log.trace("Sql.query={}", sql);
 
-        try (Connection con = databaseManager.getDataSource().getConnection();
-             PreparedStatement pstm = con.prepareStatement(sql.toString())) {
+        return txQueryExecutionHelper.executeListQuery(con -> {
+            PreparedStatement pstm = con.prepareStatement(sql.toString());
             int i = 0;
             pstm.setLong(++i, contract);
-            pstm.setInt(++i, heightFrom);
-
+            pstm.setInt(++i, blockRange.from().intValue());
             if (name != null) {
                 pstm.setString(++i, name);
             }
-
-            if (heightTo > 0) {
-                pstm.setInt(++i, heightTo);
+            if (blockRange.to().intValue() > 0) {
+                pstm.setInt(++i, blockRange.to().intValue());
             }
-            DbUtils.setLimits(++i, pstm, from, to);
+            DbUtils.setLimits(++i, pstm, paging);
             pstm.setFetchSize(50);
-            try (ResultSet rs = pstm.executeQuery()) {
-                List<ContractEventDetails> list = new ArrayList<>();
-                while (rs.next()) {
-                    list.add(detailsRowMapper.map(rs, null));
-                }
-                return list;
-            }
-        } catch (SQLException e) {
-            throw new RuntimeException(e);
-        }
+            return pstm;
+        });
     }
 
 }
