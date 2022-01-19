@@ -205,19 +205,25 @@ public class PhasingPollTable extends EntityDbTable<PhasingPoll> {
         }
     }
 
-    public List<TransactionDbInfo> getActivePhasedTransactionDbIds(int height) throws SQLException {
+    public List<TransactionDbInfo> getActivePhasedTransactionDbIdsAfterHeight(int height) throws SQLException {
         List<TransactionDbInfo> excludeInfos = new ArrayList<>();
         TransactionalDataSource dataSource = databaseManager.getDataSource();
+        int blockTimestamp = blockTimestamp(height);
+        if (blockTimestamp == 0) {
+            throw new IllegalStateException("Block with height " + height + " was not found or has unacceptable timestamp");
+        }
         try (Connection conn = dataSource.getConnection();
              PreparedStatement pstmt = conn.prepareStatement(
                  "SELECT db_id, id FROM transaction WHERE id IN " +
-                     "(SELECT id FROM phasing_poll WHERE height < ? AND id not in " +
-                     "(SELECT id FROM phasing_poll_result WHERE height <= ?))")) {
+                     "(SELECT id FROM phasing_poll WHERE height <= ? AND (finish_height > ? " +
+                     " OR finish_height = -1) AND (finish_time > ? OR finish_time = -1))")) {
             pstmt.setInt(1, height);
             pstmt.setInt(2, height);
+            pstmt.setInt(3, blockTimestamp);
             try (ResultSet rs = pstmt.executeQuery()) {
                 while (rs.next()) {
-                    excludeInfos.add(new TransactionDbInfo(rs.getLong("db_id"), rs.getLong("id")));
+                    long id = rs.getLong("id");
+                    excludeInfos.add(new TransactionDbInfo(rs.getLong("db_id"), id));
                 }
             }
         }
@@ -261,14 +267,19 @@ public class PhasingPollTable extends EntityDbTable<PhasingPoll> {
         }
     }
 
+    /**
+     * Return all finished phasings before height (exclusive, because it's required trim behavior)
+     * @param height height of the blockchain before which finished polls should be searched
+     * @return lazy db iterator of the resulting finished polls
+     */
     private DbIterator<PhasingPoll> getAllFinishedPolls(int height) {
         Connection con = null;
         try {
-            int blockTimestamp = blockTimestamp(height);
             con = databaseManager.getDataSource().getConnection();
+            int blockTimestamp = blockTimestamp(height - 1);
             String query = "SELECT * FROM phasing_poll WHERE finish_height < ? and finish_height <> -1";
             if (blockTimestamp != 0) {
-                query += " or finish_time < ? and finish_time <> -1";
+                query += " or finish_time <= ? and finish_time <> -1";
             }
             PreparedStatement pstmt = con.prepareStatement(query);
             pstmt.setInt(1, height);

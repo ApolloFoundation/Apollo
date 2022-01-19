@@ -211,7 +211,7 @@ public abstract class BasicDbTableTest<T extends DerivedEntity> extends DerivedD
             });
         expected = sortByHeightAsc(expected);
 
-        DbUtils.inTransaction(extension, (con) -> table.rollback(height));
+        DbUtils.inTransaction(getDatabaseManager(), (con) -> table.rollback(height));
         List<T> values = table.getAllByDbId(0, Integer.MAX_VALUE, Long.MAX_VALUE).getValues();
         assertEquals(expected, values);
     }
@@ -237,7 +237,7 @@ public abstract class BasicDbTableTest<T extends DerivedEntity> extends DerivedD
             expected.remove(t);
         }
         expected = sortByHeightAsc(expected);
-        DbUtils.inTransaction(extension, (con) -> table.trim(height));
+        DbUtils.inTransaction(getDatabaseManager(), (con) -> table.trim(height));
         List<T> values = table.getAllByDbId(0, Integer.MAX_VALUE, Long.MAX_VALUE).getValues();
         assertEquals(expected, values);
     }
