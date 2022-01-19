@@ -49,12 +49,14 @@ import static org.mockito.Mockito.mock;
 class SmcContractStateTableTest extends DbContainerBaseTest {
 
     @RegisterExtension
-    static DbExtension dbExtension = new DbExtension(mariaDBContainer, DbTestData.getInMemDbProps(), "db/smc-data.sql", "db/schema.sql");
+    static DbExtension dbExtension = DbTestData.getSmcDbExtension(mariaDBContainer
+        , "db/schema.sql"
+        , "db/smc-data.sql");
 
     @Inject
     SmcContractStateTable table;
 
-    long contractAddress = 7307657537262705518L;
+    long contractAddress = 832074176060907552L;
 
     private Blockchain blockchain = mock(BlockchainImpl.class);
     private BlockchainConfig blockchainConfig = mock(BlockchainConfig.class);
@@ -86,7 +88,7 @@ class SmcContractStateTableTest extends DbContainerBaseTest {
         SmcContractStateEntity entity = table.get(SmcContractStateTable.KEY_FACTORY.newKey(contractAddress));
         assertNotNull(entity);
         assertEquals(contractAddress, entity.getAddress());
-        assertEquals("{\"value\":1400000000,\"vendor\":\"APL-X5JH-TJKJ-DVGC-5T2V8\",\"customer\":\"\",\"paid\":false,\"accepted\":false}", entity.getSerializedObject());
+        assertTrue(entity.getSerializedObject().contains("\"_vault\":{\"meta\":{\"className\":\"Address\",\"args\":[\"value\"],\"create\":\"DSH.createAddress\"},\"value\":\"0x82349393da8764fd\"}"));
     }
 
     @Test
