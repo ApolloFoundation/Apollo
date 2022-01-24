@@ -4,7 +4,7 @@
 
 package com.apollocurrency.aplwallet.apl.util.api.parameter;
 
-import com.apollocurrency.aplwallet.apl.util.api.Range;
+import com.apollocurrency.aplwallet.apl.util.api.PositiveRange;
 import io.swagger.v3.oas.annotations.Parameter;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
@@ -15,14 +15,13 @@ import lombok.ToString;
 import javax.validation.constraints.PositiveOrZero;
 import javax.ws.rs.DefaultValue;
 import javax.ws.rs.QueryParam;
-import java.util.Objects;
 
 @NoArgsConstructor
 @AllArgsConstructor
 @Setter
 @Getter
 @ToString
-public class FirstLastIndexBeanParam implements Range {
+public class FirstLastIndexBeanParam {
     @Parameter(description = "A zero-based index to the first record ID to retrieve (optional).")
     @QueryParam("firstIndex")
     @DefaultValue("0")
@@ -43,35 +42,7 @@ public class FirstLastIndexBeanParam implements Range {
         this.lastIndex = tempLastIndex;
     }
 
-    @Override
-    public boolean inRange(Number value) {
-        Objects.requireNonNull(value);
-        return firstIndex <= value.intValue() && value.intValue() <= lastIndex;
-    }
-
-    @Override
-    public boolean isValid() {
-        return firstIndex <= lastIndex;
-    }
-
-    @Override
-    public void validate() {
-        if (!isValid()) {
-            throw new IllegalStateException("The first index greater then Last index.");
-        }
-    }
-
-    @Override
-    public Number from() {
-        return firstIndex;
-    }
-
-    @Override
-    public Number to() {
-        return lastIndex;
-    }
-
-    public Range range() {
-        return this;
+    public PositiveRange range() {
+        return new PositiveRange(firstIndex, lastIndex);
     }
 }

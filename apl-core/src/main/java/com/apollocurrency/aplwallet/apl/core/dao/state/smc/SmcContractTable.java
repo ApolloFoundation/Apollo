@@ -15,7 +15,6 @@ import com.apollocurrency.aplwallet.apl.core.db.DatabaseManager;
 import com.apollocurrency.aplwallet.apl.core.entity.state.smc.SmcContractEntity;
 import com.apollocurrency.aplwallet.apl.core.service.fulltext.FullTextOperationData;
 import com.apollocurrency.aplwallet.apl.core.service.state.smc.ContractQuery;
-import com.apollocurrency.aplwallet.apl.util.StringUtils;
 import com.apollocurrency.aplwallet.apl.util.db.DbUtils;
 import com.apollocurrency.aplwallet.apl.util.db.TransactionalDataSource;
 
@@ -112,71 +111,18 @@ public class SmcContractTable extends EntityDbTable<SmcContractEntity> {
     }
 
     public List<ContractDetails> getContractsByFilter(ContractQuery query) {
-        String namePrefix;
-        String baseContractPrefix;
         StringBuilder sql = new StringBuilder(
             "SELECT sc.*, " +
                 "ss.status as smc_status " +
                 "FROM smc_contract sc " +
-                "LEFT JOIN smc_state ss on sc.address = ss.address " +
-                "WHERE sc.latest = true AND sc.height <= ? AND ss.latest = true ");
-
-        if (query.getAddress() != null) {
-            sql.append(" AND sc.address = ? ");
-        }
-        if (query.getTransaction() != null) {
-            sql.append(" AND sc.transaction_id = ? ");
-        }
-        if (query.getOwner() != null) {
-            sql.append(" AND sc.owner = ? ");
-        }
-        if (StringUtils.isNotBlank(query.getName())) {
-            sql.append(" AND sc.name LIKE ? ");
-            namePrefix = query.getName().replace("%", "\\%").replace("_", "\\_") + "%";
-        } else {
-            namePrefix = null;
-        }
-        if (StringUtils.isNotBlank(query.getBaseContract())) {
-            sql.append(" AND sc.base_contract LIKE ? ");
-            baseContractPrefix = query.getBaseContract().replace("%", "\\%").replace("_", "\\_") + "%";
-        } else {
-            baseContractPrefix = null;
-        }
-        if (query.getTimestamp() != null) {
-            sql.append(" AND sc.block_timestamp >= ? ");
-        }
-        if (query.getStatus() != null) {
-            sql.append(" AND ss.status = ? ");
-        }
+                "LEFT JOIN smc_state ss on sc.address = ss.address ");
+        sql.append(query.toWhereClause("WHERE sc.latest = true AND ss.latest = true "));
         sql.append("ORDER BY sc.block_timestamp DESC, sc.db_id DESC ");
         sql.append(DbUtils.limitsClause(query.getPaging()));
 
         return txQueryExecutionHelper.executeListQuery(con -> {
             PreparedStatement pstm = con.prepareStatement(sql.toString());
-            int i = 0;
-            pstm.setInt(++i, query.getHeight());
-            if (query.getAddress() != null) {
-                pstm.setLong(++i, query.getAddress());
-            }
-            if (query.getTransaction() != null) {
-                pstm.setLong(++i, query.getTransaction());
-            }
-            if (query.getOwner() != null) {
-                pstm.setLong(++i, query.getOwner());
-            }
-            if (namePrefix != null) {
-                pstm.setString(++i, namePrefix);
-            }
-            if (baseContractPrefix != null) {
-                pstm.setString(++i, baseContractPrefix);
-            }
-            if (query.getTimestamp() != null) {
-                pstm.setInt(++i, query.getTimestamp().intValue());
-            }
-            if (query.getStatus() != null) {
-                pstm.setString(++i, query.getStatus());
-            }
-            DbUtils.setLimits(++i, pstm, query.getPaging());
+            query.setPreparedStatementParameters(pstm);
             pstm.setFetchSize(50);
             return pstm;
         });

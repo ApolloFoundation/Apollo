@@ -50,7 +50,7 @@ import com.apollocurrency.aplwallet.apl.smc.service.tx.CallMethodTxValidator;
 import com.apollocurrency.aplwallet.apl.smc.service.tx.PublishContractTxValidator;
 import com.apollocurrency.aplwallet.apl.util.Convert2;
 import com.apollocurrency.aplwallet.apl.util.StringUtils;
-import com.apollocurrency.aplwallet.apl.util.api.NumericRange;
+import com.apollocurrency.aplwallet.apl.util.api.PositiveRange;
 import com.apollocurrency.aplwallet.apl.util.api.Sort;
 import com.apollocurrency.aplwallet.apl.util.api.parameter.FirstLastIndexBeanParam;
 import com.apollocurrency.aplwallet.apl.util.cdi.config.Property;
@@ -676,8 +676,8 @@ class SmcApiServiceImpl implements SmcApiService {
                 return ResponseBuilderV2.apiError(ApiErrors.CONTRACT_EVENT_FILTER_ERROR, e.getMessage()).build();
             }
         }
-        var blockRange = new NumericRange(body.getFromBlock(), body.getToBlock());
-        var paging = new NumericRange(body.getFrom(), body.getTo());
+        var blockRange = new PositiveRange(body.getFromBlock(), body.getToBlock());
+        var paging = new PositiveRange(body.getFrom(), body.getTo());
         var order = Sort.of(body.getOrder());
         ContractEventsResponse response = new ContractEventsResponse();
         var rc = eventService.getEventsByFilter(contractId, eventName, filter, blockRange, paging, order);

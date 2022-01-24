@@ -14,7 +14,7 @@ import com.apollocurrency.aplwallet.apl.core.entity.state.smc.SmcContractEventLo
 import com.apollocurrency.aplwallet.apl.core.service.fulltext.FullTextOperationData;
 import com.apollocurrency.aplwallet.apl.util.annotation.DatabaseSpecificDml;
 import com.apollocurrency.aplwallet.apl.util.annotation.DmlMarker;
-import com.apollocurrency.aplwallet.apl.util.api.Range;
+import com.apollocurrency.aplwallet.apl.util.api.PositiveRange;
 import com.apollocurrency.aplwallet.apl.util.api.Sort;
 import com.apollocurrency.aplwallet.apl.util.db.DbUtils;
 import com.apollocurrency.aplwallet.apl.util.db.TransactionalDataSource;
@@ -207,7 +207,7 @@ public class SmcContractEventLogTable extends DerivedDbTable<SmcContractEventLog
         return entryList;
     }
 
-    public List<ContractEventDetails> getEventsByFilter(Long contract, String name, Range blockRange, Range paging, Sort order) {
+    public List<ContractEventDetails> getEventsByFilter(Long contract, String name, PositiveRange blockRange, PositiveRange paging, Sort order) {
         StringBuilder sql = new StringBuilder(
             "SELECT el.*, " +
                 "e.contract, e.name, e.spec " +
@@ -219,7 +219,7 @@ public class SmcContractEventLogTable extends DerivedDbTable<SmcContractEventLog
             sql.append(" AND e.name = ? ");
         }
 
-        if (blockRange.to().intValue() > 0) {
+        if (blockRange.to() > 0) {
             sql.append(" AND el.height <= ? ");
         }
 
@@ -231,12 +231,12 @@ public class SmcContractEventLogTable extends DerivedDbTable<SmcContractEventLog
             PreparedStatement pstm = con.prepareStatement(sql.toString());
             int i = 0;
             pstm.setLong(++i, contract);
-            pstm.setInt(++i, blockRange.from().intValue());
+            pstm.setInt(++i, blockRange.from());
             if (name != null) {
                 pstm.setString(++i, name);
             }
-            if (blockRange.to().intValue() > 0) {
-                pstm.setInt(++i, blockRange.to().intValue());
+            if (blockRange.to() > 0) {
+                pstm.setInt(++i, blockRange.to());
             }
             DbUtils.setLimits(++i, pstm, paging);
             pstm.setFetchSize(50);

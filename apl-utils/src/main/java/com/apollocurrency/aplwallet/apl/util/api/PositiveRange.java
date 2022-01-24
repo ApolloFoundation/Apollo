@@ -9,11 +9,11 @@ import java.util.Objects;
 /**
  * @author andrew.zinchenko@gmail.com
  */
-public class NumericRange implements Range {
-    private final Number from;
-    private final Number to;
+public class PositiveRange implements Range<Integer> {
+    private Integer from;
+    private Integer to;
 
-    public NumericRange(Number from, Number to) {
+    public PositiveRange(Integer from, Integer to) {
         this.from = Objects.requireNonNull(from);
         this.to = Objects.requireNonNull(to);
     }
@@ -27,32 +27,34 @@ public class NumericRange implements Range {
      * @param toStr   the max value
      * @return the Range object with minStr and maxStr boundaries
      */
-    public static NumericRange of(String fromStr, String toStr) {
-        Number min = null;
-        Number max = null;
+    public static PositiveRange of(String fromStr, String toStr) {
+        Integer min = null;
+        Integer max = null;
         if (fromStr != null) {
-            min = Long.parseLong(fromStr);
+            min = Integer.parseInt(fromStr);
         }
         if (toStr != null) {
-            max = Long.parseLong(toStr);
+            max = Integer.parseInt(toStr);
         }
         return of(min, max);
     }
 
-    public static NumericRange of(Number from, Number to) {
-        var rc = new NumericRange((from == null) ? 0 : from, (to == null) ? Long.MAX_VALUE : to);
+    public static PositiveRange of(Integer from, Integer to) {
+        var rc = new PositiveRange((from == null) ? 0 : from, (to == null) ? Integer.MAX_VALUE : to);
         rc.validate();
         return rc;
     }
 
     @Override
-    public boolean inRange(Number value) {
-        return from.longValue() <= value.longValue() && value.longValue() <= to.longValue();
+    public boolean inRange(Integer value) {
+        return from.compareTo(value) <= 0 && to.compareTo(value) >= 0;
     }
 
     @Override
     public boolean isValid() {
-        return !(from.longValue() > to.longValue());
+        var from = this.from.longValue();
+        var to = this.to.longValue();
+        return !(from >= 0 && from <= to);
     }
 
     @Override
@@ -63,12 +65,28 @@ public class NumericRange implements Range {
     }
 
     @Override
-    public Number from() {
+    public Integer from() {
         return from;
     }
 
     @Override
-    public Number to() {
+    public Integer adjustBottomBoundary(Integer undefinedValue, Integer value) {
+        if (from.equals(undefinedValue)) {
+            from = value;
+        }
+        return from;
+    }
+
+    @Override
+    public Integer to() {
+        return to;
+    }
+
+    @Override
+    public Integer adjustTopBoundary(Integer undefinedValue, Integer value) {
+        if (to.equals(undefinedValue)) {
+            to = value;
+        }
         return to;
     }
 

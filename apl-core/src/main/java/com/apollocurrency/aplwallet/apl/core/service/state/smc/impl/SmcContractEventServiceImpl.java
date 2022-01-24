@@ -14,8 +14,7 @@ import com.apollocurrency.aplwallet.apl.core.service.state.smc.SmcContractReposi
 import com.apollocurrency.aplwallet.apl.smc.events.SmcEventType;
 import com.apollocurrency.aplwallet.apl.smc.model.AplContractEvent;
 import com.apollocurrency.aplwallet.apl.smc.service.SmcContractEventService;
-import com.apollocurrency.aplwallet.apl.util.api.NumericRange;
-import com.apollocurrency.aplwallet.apl.util.api.Range;
+import com.apollocurrency.aplwallet.apl.util.api.PositiveRange;
 import com.apollocurrency.aplwallet.apl.util.api.Sort;
 import com.apollocurrency.aplwallet.apl.util.cdi.Transactional;
 import com.apollocurrency.smc.blockchain.crypt.HashSumProvider;
@@ -107,11 +106,11 @@ public class SmcContractEventServiceImpl implements SmcContractEventService {
     }
 
     @Override
-    public List<ContractEventDetails> getEventsByFilter(Long contract, String eventName, Term predicate, Range range, Range paging, Sort order) {
+    public List<ContractEventDetails> getEventsByFilter(Long contract, String eventName, Term predicate, PositiveRange range, PositiveRange paging, Sort order) {
         var height = blockchain.getHeight();
-        int fromBlock = (range.from().intValue() < 0) ? height : range.from().intValue();
-        int toBlock = (range.to().intValue() < 0) ? height : range.to().intValue();
-        var blockRange = new NumericRange(fromBlock, toBlock);
+        int fromBlock = range.adjustBottomBoundary(-1, height);
+        int toBlock = range.adjustTopBoundary(-1, height);
+        var blockRange = new PositiveRange(fromBlock, toBlock);
         log.trace("getEventsByFilter: height={} contract={} eventName={} blockRange={} paging={} order={}", height, contract, eventName, blockRange, paging, order);
         var result = contractEventLogTable.getEventsByFilter(contract, eventName, blockRange, paging, order);
         log.trace("getEventsByFilter: resultSet.size={}", result.size());

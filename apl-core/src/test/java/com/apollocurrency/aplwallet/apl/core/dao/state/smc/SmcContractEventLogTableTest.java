@@ -16,7 +16,7 @@ import com.apollocurrency.aplwallet.apl.data.TransactionTestData;
 import com.apollocurrency.aplwallet.apl.extension.DbExtension;
 import com.apollocurrency.aplwallet.apl.extension.TemporaryFolderExtension;
 import com.apollocurrency.aplwallet.apl.smc.model.AplAddress;
-import com.apollocurrency.aplwallet.apl.util.api.NumericRange;
+import com.apollocurrency.aplwallet.apl.util.api.PositiveRange;
 import com.apollocurrency.aplwallet.apl.util.api.Sort;
 import com.apollocurrency.aplwallet.apl.util.env.config.Chain;
 import com.apollocurrency.aplwallet.apl.util.injectable.PropertiesHolder;
@@ -133,7 +133,7 @@ class SmcContractEventLogTableTest extends DbContainerBaseTest {
     @ParameterizedTest
     void getEventsByFilter(String name, Integer heightFrom, Integer heightTo, Integer num) {
         var actual = table.getEventsByFilter(
-            contractId, name, new NumericRange(heightFrom, heightTo), new NumericRange(0, -1), Sort.asc()
+            contractId, name, new PositiveRange(heightFrom, heightTo), new PositiveRange(0, -1), Sort.asc()
         );
         assertEquals(num, actual.size());
     }

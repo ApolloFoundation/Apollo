@@ -127,7 +127,7 @@ public abstract class DbClause {
 
         public LikeClause(String columnName, String prefix) {
             super(" " + columnName + " LIKE ? ");
-            this.prefix = prefix.replace("%", "\\%").replace("_", "\\_") + '%';
+            this.prefix = DbUtils.escapeLikePattern(prefix);
         }
 
         @Override

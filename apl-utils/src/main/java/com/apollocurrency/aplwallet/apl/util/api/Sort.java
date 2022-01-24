@@ -7,7 +7,7 @@ package com.apollocurrency.aplwallet.apl.util.api;
 /**
  * @author Andrii Boiarskyi
  * @see
- * @since 1.0.0
+ * @since 1.50.31
  */
 public class Sort {
     public static final String ASC = "ASC";
@@ -32,7 +32,7 @@ public class Sort {
         if (ASC.equalsIgnoreCase(order) || DESC.equalsIgnoreCase(order)) {
             return new Sort(order);
         } else {
-            return asc();
+            return desc();
         }
     }
 

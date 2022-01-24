@@ -27,7 +27,7 @@ import com.apollocurrency.aplwallet.apl.extension.DbExtension;
 import com.apollocurrency.aplwallet.apl.testutil.DbUtils;
 import com.apollocurrency.aplwallet.apl.testutil.EntityProducer;
 import com.apollocurrency.aplwallet.apl.util.Convert2;
-import com.apollocurrency.aplwallet.apl.util.api.NumericRange;
+import com.apollocurrency.aplwallet.apl.util.api.PositiveRange;
 import com.apollocurrency.aplwallet.apl.util.db.TransactionalDataSource;
 import com.apollocurrency.aplwallet.apl.util.exception.AplException;
 import com.apollocurrency.aplwallet.apl.util.injectable.PropertiesHolder;
@@ -191,7 +191,7 @@ class SmcContractTableTest extends DbContainerBaseTest {
             .name(name)
             .status(status)
             .height(height)
-            .paging(new NumericRange(from, to))
+            .paging(new PositiveRange(from, to))
             .build());
     }
 

@@ -7,9 +7,9 @@ package com.apollocurrency.aplwallet.apl.util.api;
 /**
  * @author andrew.zinchenko@gmail.com
  */
-public interface Range {
+public interface Range<T extends Number> {
 
-    boolean inRange(Number value);
+    boolean inRange(T value);
 
     /**
      * Validate the boundary.
@@ -32,20 +32,36 @@ public interface Range {
      *
      * @return the left boundary of the range
      */
-    Number from();
+    T from();
 
-    default Number min() {
+    default T min() {
         return from();
     }
+
+    /**
+     * Adjust top boundary to specified value. Set top boundary to <code>value</code> if it equals to the <code>undefinedValue</code>.
+     *
+     * @param undefinedValue the marker as undefined value
+     * @param value          the value for undefined boundary
+     */
+    T adjustTopBoundary(T undefinedValue, T value);
+
+    /**
+     * Adjust bottom boundary to specified value. Set bottom boundary to <code>value</code> if it equals to the <code>undefinedValue</code>.
+     *
+     * @param undefinedValue the marker as undefined value
+     * @param value          the value for undefined boundary
+     */
+    T adjustBottomBoundary(T undefinedValue, T value);
 
     /**
      * Returns the max value - the right boundary of the range
      *
      * @return the right boundary of the range
      */
-    Number to();
+    T to();
 
-    default Number max() {
+    default T max() {
         return to();
     }
 }

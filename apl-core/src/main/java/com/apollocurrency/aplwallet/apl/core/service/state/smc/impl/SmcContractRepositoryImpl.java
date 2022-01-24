@@ -16,8 +16,7 @@ import com.apollocurrency.aplwallet.apl.core.service.blockchain.Blockchain;
 import com.apollocurrency.aplwallet.apl.core.service.state.smc.ContractQuery;
 import com.apollocurrency.aplwallet.apl.core.service.state.smc.SmcContractRepository;
 import com.apollocurrency.aplwallet.apl.smc.model.AplAddress;
-import com.apollocurrency.aplwallet.apl.util.Convert2;
-import com.apollocurrency.aplwallet.apl.util.api.NumericRange;
+import com.apollocurrency.aplwallet.apl.util.api.PositiveRange;
 import com.apollocurrency.aplwallet.apl.util.cdi.Transactional;
 import com.apollocurrency.smc.contract.AddressNotFoundException;
 import com.apollocurrency.smc.contract.ContractSource;
@@ -154,7 +153,6 @@ public class SmcContractRepositoryImpl implements SmcContractRepository {
 
     @Override
     public List<ContractDetails> loadContractsByFilter(ContractQuery query) {
-        query.setTimestamp(query.getTimestamp() == null ? null : (long) Convert2.toEpochTime(query.getTimestamp()));
         List<ContractDetails> result = smcContractTable.getContractsByFilter(query);
         return result;
     }
@@ -164,7 +162,7 @@ public class SmcContractRepositoryImpl implements SmcContractRepository {
         var query = ContractQuery.builder()
             .address(address)
             .height(-1)
-            .paging(new NumericRange(0, 1))
+            .paging(new PositiveRange(0, 1))
             .build();
         return loadContractsByFilter(query);
     }
