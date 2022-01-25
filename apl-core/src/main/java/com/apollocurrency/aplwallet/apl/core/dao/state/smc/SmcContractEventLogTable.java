@@ -219,7 +219,7 @@ public class SmcContractEventLogTable extends DerivedDbTable<SmcContractEventLog
             sql.append(" AND e.name = ? ");
         }
 
-        if (blockRange.to() > 0) {
+        if (blockRange.isTopBoundarySet()) {
             sql.append(" AND el.height <= ? ");
         }
 

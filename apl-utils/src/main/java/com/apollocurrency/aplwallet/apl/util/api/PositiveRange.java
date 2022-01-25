@@ -18,6 +18,30 @@ public class PositiveRange implements Range<Integer> {
         this.to = Objects.requireNonNull(to);
     }
 
+    public static boolean isUndefined(Integer value) {
+        return (value == null || value < 0);
+    }
+
+    /**
+     * Check if the top boundary is set
+     *
+     * @return false if the top value equals null or negative.
+     */
+    @Override
+    public boolean isTopBoundarySet() {
+        return isUndefined(to());
+    }
+
+    /**
+     * Check if the bottom boundary is set
+     *
+     * @return false if the bottom value equals null or negative.
+     */
+    @Override
+    public boolean isBottomBoundarySet() {
+        return isUndefined(from());
+    }
+
     /**
      * Returns the Range object with default values for unknown boundary.
      * The default value for min value is 0;
@@ -70,8 +94,8 @@ public class PositiveRange implements Range<Integer> {
     }
 
     @Override
-    public Integer adjustBottomBoundary(Integer undefinedValue, Integer value) {
-        if (from.equals(undefinedValue)) {
+    public Integer adjustBottomBoundary(Integer value) {
+        if (isBottomBoundarySet()) {
             from = value;
         }
         return from;
@@ -83,8 +107,8 @@ public class PositiveRange implements Range<Integer> {
     }
 
     @Override
-    public Integer adjustTopBoundary(Integer undefinedValue, Integer value) {
-        if (to.equals(undefinedValue)) {
+    public Integer adjustTopBoundary(Integer value) {
+        if (!isTopBoundarySet()) {
             to = value;
         }
         return to;

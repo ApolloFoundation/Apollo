@@ -108,8 +108,8 @@ public class SmcContractEventServiceImpl implements SmcContractEventService {
     @Override
     public List<ContractEventDetails> getEventsByFilter(Long contract, String eventName, Term predicate, PositiveRange range, PositiveRange paging, Sort order) {
         var height = blockchain.getHeight();
-        int fromBlock = range.adjustBottomBoundary(-1, height);
-        int toBlock = range.adjustTopBoundary(-1, height);
+        int fromBlock = range.adjustBottomBoundary(height);
+        int toBlock = range.adjustTopBoundary(height);
         var blockRange = new PositiveRange(fromBlock, toBlock);
         log.trace("getEventsByFilter: height={} contract={} eventName={} blockRange={} paging={} order={}", height, contract, eventName, blockRange, paging, order);
         var result = contractEventLogTable.getEventsByFilter(contract, eventName, blockRange, paging, order);

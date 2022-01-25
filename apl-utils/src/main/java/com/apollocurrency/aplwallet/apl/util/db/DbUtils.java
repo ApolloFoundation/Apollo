@@ -20,7 +20,6 @@
 package com.apollocurrency.aplwallet.apl.util.db;
 
 import com.apollocurrency.aplwallet.apl.util.api.PositiveRange;
-import com.apollocurrency.aplwallet.apl.util.api.Range;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.slf4j.Logger;
@@ -258,8 +257,8 @@ public final class DbUtils {
         }
     }
 
-    public static int setLimits(int index, PreparedStatement pstmt, Range paging) throws SQLException {
-        return setLimits(index, pstmt, paging.from().intValue(), paging.to().intValue());
+    public static int setLimits(int index, PreparedStatement pstmt, PositiveRange paging) throws SQLException {
+        return setLimits(index, pstmt, paging.from(), paging.to());
     }
 
     public static int setLimits(int index, PreparedStatement pstmt, int from, int to) throws SQLException {
