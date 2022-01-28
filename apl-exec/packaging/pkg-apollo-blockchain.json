@@ -1,7 +1,7 @@
 {
   "name": "apollo-blockchain",
   "description": "Apollo blockchain backend",
-  "version": "1.50.33",
+  "version": "1.50.35",
   "dependencies": [
     {
       "name": "OpenJDK",

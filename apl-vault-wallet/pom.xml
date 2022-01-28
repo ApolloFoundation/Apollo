@@ -7,7 +7,7 @@
     <parent>
         <groupId>com.apollocurrency</groupId>
         <artifactId>apollo-blockchain</artifactId>
-        <version>1.50.33</version>
+        <version>1.50.35</version>
     </parent>
 
     <artifactId>apl-vault-wallet</artifactId>
