@@ -17,7 +17,7 @@ import com.apollocurrency.aplwallet.apl.core.service.state.account.AccountServic
 import com.apollocurrency.aplwallet.apl.core.service.state.smc.ContractToolService;
 import com.apollocurrency.aplwallet.apl.core.service.state.smc.SmcContractRepository;
 import com.apollocurrency.aplwallet.apl.core.service.state.smc.SmcFuelValidator;
-import com.apollocurrency.aplwallet.apl.core.service.state.smc.impl.SmcBlockchainIntegratorFactory;
+import com.apollocurrency.aplwallet.apl.core.service.state.smc.impl.SmcBlockchainIntegratorFactoryCreator;
 import com.apollocurrency.aplwallet.apl.core.service.state.smc.impl.SmcPostponedContractServiceImpl;
 import com.apollocurrency.aplwallet.apl.core.transaction.Fee;
 import com.apollocurrency.aplwallet.apl.core.transaction.TransactionTypes;
@@ -60,7 +60,7 @@ public class SmcCallMethodTransactionType extends AbstractSmcTransactionType {
                                         SmcContractRepository contractService,
                                         ContractToolService contractToolService,
                                         SmcFuelValidator fuelValidator,
-                                        SmcBlockchainIntegratorFactory integratorFactory,
+                                        SmcBlockchainIntegratorFactoryCreator integratorFactory,
                                         SmcConfig smcConfig) {
         super(blockchainConfig, blockchain, accountService, contractService, contractToolService, fuelValidator, integratorFactory, smcConfig);
     }
@@ -117,7 +117,7 @@ public class SmcCallMethodTransactionType extends AbstractSmcTransactionType {
             .build();
         var context = smcConfig.asContext(blockchain.getHeight(),
             smartContract,
-            integratorFactory.createMockProcessor(transaction.getId())
+            integratorFactory.createMockProcessorFactory(transaction.getId())
         );
         //syntactical and semantic validation
         SmcContractTxProcessor processor = new CallMethodTxValidator(smartContract, smartMethod, context);
@@ -150,7 +150,7 @@ public class SmcCallMethodTransactionType extends AbstractSmcTransactionType {
         Fuel actualFuel = new ContractFuel(new AplAddress(transaction.getRecipientId()), attachment.getFuelLimit(), attachment.getFuelPrice());
         var context = smcConfig.asContext(blockchain.getHeight(),
             actualFuel,
-            integratorFactory.createMockProcessor(transaction.getId())
+            integratorFactory.createMockProcessorFactory(transaction.getId())
         );
 
         BigInteger calculatedFuel = getFuelBasedFee(context.getPrice(), transaction.getAmountATM()).calcFuel(smartMethod);
@@ -194,10 +194,10 @@ public class SmcCallMethodTransactionType extends AbstractSmcTransactionType {
             .args(attachment.getMethodParams())
             .value(BigInteger.valueOf(transaction.getAmountATM()))
             .build();
-        log.debug("Before processing: caller={} contract={} Fuel={}", smartContract.getCaller(), smartContract.getAddress(), smartContract.getFuel());
+        log.debug("Before processing: caller={} contract={} Fuel={}", smartContract.getCaller(), smartContract.address(), smartContract.getFuel());
         var context = smcConfig.asContext(blockchain.getHeight(),
             smartContract,
-            integratorFactory.createProcessor(transaction, attachment, senderAccount, recipientAccount, getLedgerEvent())
+            integratorFactory.createProcessorFactory(transaction, attachment, senderAccount, recipientAccount, getLedgerEvent())
         );
 
         executeContract(transaction, senderAccount, smartContract, new CallMethodTxProcessor(smartContract, smartMethod, context));
@@ -206,7 +206,7 @@ public class SmcCallMethodTransactionType extends AbstractSmcTransactionType {
         contractService.updateContractState(smartContract);
         log.info("Called method {} on contract={}, txId={}, fuel={}, amountATM={}, tx.sender={}",
             smartMethod.getMethodWithParams(),
-            smartContract.getAddress(), transaction.getStringId(),
+            smartContract.address(), transaction.getStringId(),
             smartContract.getFuel(), transaction.getAmountATM(), transactionSender);
         contractService.commitContractChanges(transaction);
         log.trace("Changes were committed, txId={}", transaction.getStringId());

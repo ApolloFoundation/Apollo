@@ -23,7 +23,6 @@ import com.apollocurrency.smc.contract.AddressNotFoundException;
 import com.apollocurrency.smc.contract.ContractSource;
 import com.apollocurrency.smc.contract.ContractStatus;
 import com.apollocurrency.smc.contract.SmartContract;
-import com.apollocurrency.smc.contract.fuel.ContractFuel;
 import com.apollocurrency.smc.contract.fuel.Fuel;
 import com.apollocurrency.smc.data.type.Address;
 import com.apollocurrency.smc.polyglot.SimpleVersion;
@@ -103,17 +102,6 @@ public class SmcContractRepositoryImpl implements SmcContractRepository {
         return contract;
     }
 
-    @Override
-    public SmartContract loadContract(Address address, Address originator, Fuel contractFuel) {
-        return loadContract(address, originator, originator, contractFuel);
-    }
-
-    @Override
-    public SmartContract loadContract(Address address) {
-        //originator and caller are ignored
-        return loadContract(address, null, null, new ContractFuel(address, 0, 0));
-    }
-
     /**
      * Load the contract specification by the given address or null if the given address doesn't correspond the smart contract
      *
@@ -139,7 +127,7 @@ public class SmcContractRepositoryImpl implements SmcContractRepository {
     @Override
     @Transactional
     public void updateContractState(SmartContract contract) {
-        SmcContractStateEntity smcContractStateEntity = loadContractStateEntity(contract.getAddress(), true);
+        SmcContractStateEntity smcContractStateEntity = loadContractStateEntity(contract.address(), true);
         if (smcContractStateEntity == null) {
             smcContractStateEntity = contractModelToStateConverter.convert(contract);
         }
@@ -162,7 +150,7 @@ public class SmcContractRepositoryImpl implements SmcContractRepository {
         Objects.requireNonNull(contract);
         Objects.requireNonNull(serializedObject);
 
-        SmcContractStateEntity smcContractStateEntity = loadContractStateEntity(contract.getAddress());
+        SmcContractStateEntity smcContractStateEntity = loadContractStateEntity(contract.address());
         smcContractStateEntity.setSerializedObject(serializedObject);
         smcContractStateTable.insert(smcContractStateEntity);
     }

@@ -12,18 +12,21 @@ import com.apollocurrency.aplwallet.apl.core.model.Transaction;
 import com.apollocurrency.aplwallet.apl.core.rest.service.ServerInfoService;
 import com.apollocurrency.aplwallet.apl.core.service.blockchain.Blockchain;
 import com.apollocurrency.aplwallet.apl.core.service.state.account.AccountService;
-import com.apollocurrency.aplwallet.apl.core.service.state.smc.ContractToolService;
 import com.apollocurrency.aplwallet.apl.core.service.state.smc.InMemoryAccountService;
 import com.apollocurrency.aplwallet.apl.core.service.state.smc.SmcContractRepository;
 import com.apollocurrency.aplwallet.apl.core.service.state.smc.event.SmcContractEventManagerClassFactory;
 import com.apollocurrency.aplwallet.apl.core.service.state.smc.txlog.SendMoneyRecord;
 import com.apollocurrency.aplwallet.apl.core.transaction.messages.AbstractSmcAttachment;
+import com.apollocurrency.aplwallet.apl.crypto.AplIdGenerator;
+import com.apollocurrency.aplwallet.apl.crypto.Convert;
+import com.apollocurrency.aplwallet.apl.crypto.Crypto;
 import com.apollocurrency.aplwallet.apl.smc.model.AplAddress;
 import com.apollocurrency.aplwallet.apl.smc.service.mapping.SmcMappingRepositoryClassFactory;
 import com.apollocurrency.aplwallet.apl.util.Convert2;
 import com.apollocurrency.aplwallet.apl.util.ThreadUtils;
 import com.apollocurrency.aplwallet.apl.util.api.converter.Converter;
 import com.apollocurrency.smc.blockchain.BlockchainIntegrator;
+import com.apollocurrency.smc.blockchain.BlockchainIntegratorFactory;
 import com.apollocurrency.smc.blockchain.MockIntegrator;
 import com.apollocurrency.smc.blockchain.OperationReceipt;
 import com.apollocurrency.smc.blockchain.SMCOperationProcessor;
@@ -38,6 +41,9 @@ import com.apollocurrency.smc.contract.SmartMethod;
 import com.apollocurrency.smc.contract.fuel.Fuel;
 import com.apollocurrency.smc.contract.vm.ContractEventManager;
 import com.apollocurrency.smc.contract.vm.ExecutionLog;
+import com.apollocurrency.smc.contract.vm.ExternalContractVirtualMachine;
+import com.apollocurrency.smc.contract.vm.LogDetailedReceipt;
+import com.apollocurrency.smc.contract.vm.ResultValue;
 import com.apollocurrency.smc.contract.vm.global.BlockchainInfo;
 import com.apollocurrency.smc.contract.vm.global.SMCBlock;
 import com.apollocurrency.smc.contract.vm.global.SMCTransaction;
@@ -59,68 +65,59 @@ import java.util.Set;
 
 @Slf4j
 @Singleton
-public class SmcBlockchainIntegratorFactory {
+public class SmcBlockchainIntegratorFactoryCreator {
 
     private final AccountService accountService;
     private final Blockchain blockchain;
     private final ServerInfoService serverInfoService;
     private final BlockConverter blockConverter;
-    private final SmcContractRepository contractService;
-    private final ContractToolService contractToolService;
+    private final SmcContractRepository contractRepository;
     private final SmcMappingRepositoryClassFactory smcMappingRepositoryClassFactory;
     private final SmcContractEventManagerClassFactory smcContractEventManagerClassFactory;
     private final TxLogProcessor txLogProcessor;
     private final HashSumProvider hashSumProvider;
 
     @Inject
-    public SmcBlockchainIntegratorFactory(AccountService accountService,
-                                          Blockchain blockchain,
-                                          ServerInfoService serverInfoService,
-                                          SmcContractRepository contractService,
-                                          ContractToolService contractToolService,
-                                          SmcMappingRepositoryClassFactory smcMappingRepositoryClassFactory,
-                                          SmcContractEventManagerClassFactory smcContractEventManagerClassFactory,
-                                          TxLogProcessor txLogProcessor,
-                                          HashSumProvider hashSumProvider) {
+    public SmcBlockchainIntegratorFactoryCreator(AccountService accountService,
+                                                 Blockchain blockchain,
+                                                 ServerInfoService serverInfoService,
+                                                 SmcContractRepository contractRepository,
+                                                 SmcMappingRepositoryClassFactory smcMappingRepositoryClassFactory,
+                                                 SmcContractEventManagerClassFactory smcContractEventManagerClassFactory,
+                                                 TxLogProcessor txLogProcessor,
+                                                 HashSumProvider hashSumProvider) {
         this.accountService = Objects.requireNonNull(accountService);
         this.blockchain = Objects.requireNonNull(blockchain);
         this.serverInfoService = Objects.requireNonNull(serverInfoService);
         this.blockConverter = new BlockConverter();
-        this.contractService = Objects.requireNonNull(contractService);
-        this.contractToolService = Objects.requireNonNull(contractToolService);
+        this.contractRepository = Objects.requireNonNull(contractRepository);
         this.smcMappingRepositoryClassFactory = Objects.requireNonNull(smcMappingRepositoryClassFactory);
         this.smcContractEventManagerClassFactory = Objects.requireNonNull(smcContractEventManagerClassFactory);
         this.txLogProcessor = txLogProcessor;
         this.hashSumProvider = Objects.requireNonNull(hashSumProvider);
     }
 
-    public BlockchainIntegrator createProcessor(final Transaction originator, AbstractSmcAttachment attachment, Account txSenderAccount, Account txRecipientAccount, final LedgerEvent ledgerEvent) {
-        final var integrator = createIntegrator(originator, attachment, txSenderAccount, txRecipientAccount, ledgerEvent);
-        return new SMCOperationProcessor(integrator, new ExecutionLog());
+    public BlockchainIntegratorFactory createProcessorFactory(final Transaction originator, AbstractSmcAttachment attachment, Account txSenderAccount, Account txRecipientAccount, final LedgerEvent ledgerEvent) {
+        return machine -> {
+            long originatorTransactionId = originator.getId();
+            Address txAddress = new AplAddress(originatorTransactionId);
+            var integrator = (BlockchainIntegrator) new FullIntegrator(originatorTransactionId, txSenderAccount, txRecipientAccount, ledgerEvent,
+                blockConverter.convert(originator.getBlock()),
+                new SMCTransaction(txAddress.get(), txAddress, attachment.getFuelPrice()),
+                txLogProcessor,
+                new SmcInMemoryAccountService(accountService),
+                machine);
+
+            return new SMCOperationProcessor(integrator, new ExecutionLog());
+        };
     }
 
-    public BlockchainIntegrator createMockProcessor(final long originatorTransactionId) {
-        final var transaction = new AplAddress(originatorTransactionId);
-        return new SMCOperationProcessor(new MockIntegrator(transaction, null, hashSumProvider), ExecutionLog.EMPTY_LOG);
+    public BlockchainIntegratorFactory createMockProcessorFactory(final long originatorTransactionId) {
+        return machine -> new SMCOperationProcessor(new MockIntegrator(new AplAddress(originatorTransactionId), null, hashSumProvider), ExecutionLog.EMPTY_LOG);
     }
 
-    public BlockchainIntegrator createReadonlyProcessor() {
-        final var integrator = new ReadonlyIntegrator(new SmcInMemoryAccountService(accountService));
-        return new SMCOperationProcessor(integrator, new ExecutionLog());
-    }
-
-    private BlockchainIntegrator createIntegrator(final Transaction transaction, AbstractSmcAttachment attachment, Account txSenderAccount, Account txRecipientAccount, final LedgerEvent ledgerEvent) {
-        final long originatorTransactionId = transaction.getId();
-        final ContractBlock currentBlock = blockConverter.convert(transaction.getBlock());
-        Address trAddr = new AplAddress(transaction.getId());
-        final ContractBlockchainTransaction currentTransaction = new SMCTransaction(trAddr.get(), trAddr, attachment.getFuelPrice());
-
-        return new FullIntegrator(originatorTransactionId,
-            txSenderAccount, txRecipientAccount, ledgerEvent,
-            currentBlock,
-            currentTransaction,
-            txLogProcessor,
-            new SmcInMemoryAccountService(accountService));
+    public BlockchainIntegratorFactory createReadonlyProcessorFactory() {
+        return machine -> new SMCOperationProcessor(new ReadonlyIntegrator(new SmcInMemoryAccountService(accountService)), new ExecutionLog());
     }
 
     private abstract class BaseIntegrator implements BlockchainIntegrator {
@@ -167,17 +164,6 @@ public class SmcBlockchainIntegratorFactory {
         }
 
         @Override
-        public SmartContract loadSmartContract(Address contractAddress, Address originator, Address caller, Fuel contractFuel) {
-            return contractService.loadContract(contractAddress, originator, caller, contractFuel);
-        }
-
-        @Override
-        public String getSerializedObject(Address contractAddress) {
-            var contract = contractService.loadContract(contractAddress);
-            return contract.getSerializedObject();
-        }
-
-        @Override
         public HashSumProvider getHashSumProvider() {
             return hashSumProvider;
         }
@@ -201,7 +187,17 @@ public class SmcBlockchainIntegratorFactory {
         }
 
         @Override
-        public OperationReceipt sendMessage(Address contract, Address from, Address to, SmartMethod data) {
+        public Address createContractAddress() {
+            throw new UnsupportedOperationException(READONLY_INTEGRATOR);
+        }
+
+        @Override
+        public OperationReceipt createContract(SmartContract newContract, Address originator, Address caller, Fuel contractFuel) {
+            throw new UnsupportedOperationException(READONLY_INTEGRATOR);
+        }
+
+        @Override
+        public ResultValue sendMessage(Address contract, SmartMethod method, Address originator, Address caller, Fuel fuel) {
             throw new UnsupportedOperationException(READONLY_INTEGRATOR);
         }
 
@@ -230,6 +226,7 @@ public class SmcBlockchainIntegratorFactory {
     private class FullIntegrator extends BaseIntegrator {
 
         final long originatorTransactionId;
+        long contractCount;
         final Account txSenderAccount;
         final Account txRecipientAccount;
         final LedgerEvent ledgerEvent;
@@ -239,15 +236,17 @@ public class SmcBlockchainIntegratorFactory {
         final Set<CachedMappingRepository<?>> cachedMappingRepositories;
         final TxLogProcessor txLogProcessor;
         final ContractEventManagerFactory eventManagerFactory;
+        final ExternalContractVirtualMachine machine;
 
         public FullIntegrator(long originatorTransactionId,
                               Account txSenderAccount, Account txRecipientAccount, LedgerEvent ledgerEvent,
                               ContractBlock currentBlock,
                               ContractBlockchainTransaction currentTransaction,
                               TxLogProcessor txLogProcessor,
-                              InMemoryAccountService inMemoryAccountService) {
+                              InMemoryAccountService inMemoryAccountService,
+                              ExternalContractVirtualMachine machine) {
             super(inMemoryAccountService);
-
+            this.contractCount = 1;
             this.originatorTransactionId = originatorTransactionId;
             this.txSenderAccount = txSenderAccount;
             this.txRecipientAccount = txRecipientAccount;
@@ -258,6 +257,7 @@ public class SmcBlockchainIntegratorFactory {
             this.txLog = new ArrayTxLog(new AplAddress(originatorTransactionId));
             this.cachedMappingRepositories = new HashSet<>();
             this.eventManagerFactory = smcContractEventManagerClassFactory.createEventManagerFactory(currentTransaction, blockchain.getHeight(), txLog);
+            this.machine = machine;
         }
 
         @Override
@@ -276,8 +276,40 @@ public class SmcBlockchainIntegratorFactory {
         }
 
         @Override
-        public OperationReceipt sendMessage(Address contract, Address from, Address to, SmartMethod data) {
+        public Address createContractAddress() {
+            for (int i = 0; i < Integer.MAX_VALUE; i++) {
+                var digest = Crypto.sha256();
+                digest.update(Convert.toBytes(originatorTransactionId));
+                digest.update(Convert.toBytes(contractCount++));
+                var accountId = AplIdGenerator.ACCOUNT.getIdByHash(digest.digest()).longValue();
+                var address = new AplAddress(accountId);
+                if (!contractRepository.isContractExist(address)) {
+                    return address;
+                }
+            }
+            throw new ContractException(new AplAddress(originatorTransactionId), "Can't generate the uniq contract address, nonce=" + contractCount);
+        }
+
+        @Override
+        public OperationReceipt createContract(SmartContract newContract, Address originator, Address caller, Fuel contractFuel) {
             throw new UnsupportedOperationException("Not implemented yet.");
+        }
+
+        @Override
+        public ResultValue sendMessage(Address contract, SmartMethod method, Address originator, Address caller, Fuel fuel) {
+            SmartContract externalContract;
+            log.debug("call external contract={} method={} caller={}", contract, method, caller);
+
+            externalContract = contractRepository.loadContract(contract, originator, caller, fuel);
+
+            log.trace("call external contract:  =2= enter");
+            machine.getExecutionLog().add(new LogDetailedReceipt("enter", contract, null, OperationReceipt.NO_ERROR_RECEIPT, new Object[]{}));
+            log.trace("call external contract:  =3= eval");
+            var rc = machine.invokePayableMethod(externalContract, method);
+            log.trace("call external contract:  =4= rc={}", rc);
+            machine.getExecutionLog().add(new LogDetailedReceipt("leave", externalContract.address(), null, OperationReceipt.NO_ERROR_RECEIPT, new Object[]{}));
+            log.trace("call external contract:  =5= leave");
+            return rc;
         }
 
         @Override

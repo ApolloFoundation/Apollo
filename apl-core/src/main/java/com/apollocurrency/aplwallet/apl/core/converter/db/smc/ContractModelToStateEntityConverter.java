@@ -12,7 +12,7 @@ public class ContractModelToStateEntityConverter implements Converter<SmartContr
     @Override
     public SmcContractStateEntity apply(SmartContract model) {
         return SmcContractStateEntity.builder()
-            .address(new BigInteger(model.getAddress().get()).longValueExact())
+            .address(new BigInteger(model.address().get()).longValueExact())
             .serializedObject(model.getSerializedObject())
             .status(model.getStatus().name())
             .build();

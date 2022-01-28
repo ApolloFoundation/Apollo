@@ -35,7 +35,7 @@ public class CallViewMethodTxProcessor extends AbstractSmcContractTxProcessor im
             log.debug("Smart method={}", smartMethods);
             validateStatus(ContractStatus.ACTIVE);
             //call the method and charge the fuel
-            return smcMachine.callViewMethod(getSmartContract(), smartMethods);
+            return machine.callViewMethod(getSmartContract(), smartMethods);
 
         } catch (Exception e) {
             var msg = putExceptionToLog(getExecutionLog(), e);

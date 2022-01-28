@@ -32,7 +32,7 @@ public class CallMethodTxProcessor extends AbstractSmcContractTxProcessor {
         log.debug("Smart method={}", smartMethod);
         validateStatus(ContractStatus.ACTIVE);
         //call the method and charge the fuel
-        return smcMachine.invokePayableMethod(getSmartContract(), smartMethod);
+        return machine.invokePayableMethod(getSmartContract(), smartMethod);
     }
 
 }

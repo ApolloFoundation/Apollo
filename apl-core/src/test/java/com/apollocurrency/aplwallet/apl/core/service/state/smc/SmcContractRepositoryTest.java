@@ -179,9 +179,9 @@ class SmcContractRepositoryTest {
         when(smcContractStateTable.get(SmcContractStateTable.KEY_FACTORY.newKey(smcTxData.getContractAddress().getLongId()))).thenReturn(smcContractStateEntity);
 
         //WHEN
-        SmartContract loaded = contractRepository.loadContract(smcTxData.getContractAddress(), smcTxData.getSenderAddress(), fuel);
+        SmartContract loaded = contractRepository.loadContract(smcTxData.getContractAddress(), smcTxData.getSenderAddress(), smcTxData.getSenderAddress(), fuel);
         //THEN
-        assertEquals(smartContract.getAddress(), loaded.getAddress());
+        assertEquals(smartContract.address(), loaded.address());
         assertEquals(smartContract.getCode(), loaded.getCode());
         assertEquals(smartContract, loaded);
     }
@@ -220,7 +220,7 @@ class SmcContractRepositoryTest {
         var localStateEntity = contractModelToStateConverter.convert(smartContract);
         localStateEntity.setHeight(HEIGHT); // new height value
         localStateEntity.setSerializedObject(jsonObject);
-        when(smcContractStateTable.get(SmcContractStateTable.KEY_FACTORY.newKey(((AplAddress) smartContract.getAddress()).getLongId()))).thenReturn(smcContractStateEntity);
+        when(smcContractStateTable.get(SmcContractStateTable.KEY_FACTORY.newKey(((AplAddress) smartContract.address()).getLongId()))).thenReturn(smcContractStateEntity);
         //WHEN
         contractRepository.saveSerializedContract(smartContract, jsonObject);
         //THEN

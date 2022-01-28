@@ -66,7 +66,7 @@ import com.apollocurrency.aplwallet.apl.core.service.state.smc.SmcContractReposi
 import com.apollocurrency.aplwallet.apl.core.service.state.smc.SmcContractService;
 import com.apollocurrency.aplwallet.apl.core.service.state.smc.SmcFuelValidator;
 import com.apollocurrency.aplwallet.apl.core.service.state.smc.event.SmcContractEventManagerClassFactory;
-import com.apollocurrency.aplwallet.apl.core.service.state.smc.impl.SmcBlockchainIntegratorFactory;
+import com.apollocurrency.aplwallet.apl.core.service.state.smc.impl.SmcBlockchainIntegratorFactoryCreator;
 import com.apollocurrency.aplwallet.apl.core.service.state.smc.impl.SmcContractEventServiceImpl;
 import com.apollocurrency.aplwallet.apl.core.service.state.smc.impl.SmcContractRepositoryImpl;
 import com.apollocurrency.aplwallet.apl.core.service.state.smc.impl.SmcContractServiceImpl;
@@ -149,23 +149,23 @@ abstract class AbstractSmcTransactionTypeApplyTest extends DbContainerBaseTest {
 
     @WeldSetup
     WeldInitiator weldInitiator = WeldInitiator.from(
-            GlobalSyncImpl.class, DaoConfig.class, JdbiHandleFactory.class, JdbiConfiguration.class,
-            AccountGuaranteedBalanceTable.class, PublicKeyTableProducer.class,
-            AccountServiceImpl.class, GenesisAccounts.class, BlockChainInfoServiceImpl.class, AccountPublicKeyServiceImpl.class,
-            FullTextConfigImpl.class, DerivedDbTablesRegistryImpl.class,
-            DefaultBlockValidator.class, ReferencedTransactionService.class,
-            PublicKeyAnnouncementAppendixApplier.class, AppendixApplierRegistry.class,
-            AppendixValidatorRegistry.class, NtpTime.class,
-            ReferencedTransactionDaoImpl.class, TransactionSignerImpl.class,
-            TransactionValidator.class, TransactionApplier.class,
-            SmcConfig.class, SmcBlockchainIntegratorFactory.class, SmcPostponedContractServiceImpl.class,
-            SmcContractTable.class, SmcContractStateTable.class, SmcContractMappingTable.class, SmcContractEventTable.class, SmcContractEventLogTable.class,
-            ContractModelToEntityConverter.class, ContractModelToStateEntityConverter.class,
-            ContractEventLogModelToLogEntryConverter.class, ContractEventModelToEntityConverter.class,
-            SmcContractRepositoryImpl.class, SmcContractServiceImpl.class, SmcContractToolServiceImpl.class, SmcContractStorageServiceImpl.class, SmcContractEventServiceImpl.class,
-            SmcTxLogProcessor.class, SmcMappingRepositoryClassFactory.class, SmcContractEventManagerClassFactory.class,
-            AppendixApplierRegistryInitializer.class
-        )
+                    GlobalSyncImpl.class, DaoConfig.class, JdbiHandleFactory.class, JdbiConfiguration.class,
+                    AccountGuaranteedBalanceTable.class, PublicKeyTableProducer.class,
+                    AccountServiceImpl.class, GenesisAccounts.class, BlockChainInfoServiceImpl.class, AccountPublicKeyServiceImpl.class,
+                    FullTextConfigImpl.class, DerivedDbTablesRegistryImpl.class,
+                    DefaultBlockValidator.class, ReferencedTransactionService.class,
+                    PublicKeyAnnouncementAppendixApplier.class, AppendixApplierRegistry.class,
+                    AppendixValidatorRegistry.class, NtpTime.class,
+                    ReferencedTransactionDaoImpl.class, TransactionSignerImpl.class,
+                    TransactionValidator.class, TransactionApplier.class,
+                    SmcConfig.class, SmcBlockchainIntegratorFactoryCreator.class, SmcPostponedContractServiceImpl.class,
+                    SmcContractTable.class, SmcContractStateTable.class, SmcContractMappingTable.class, SmcContractEventTable.class, SmcContractEventLogTable.class,
+                    ContractModelToEntityConverter.class, ContractModelToStateEntityConverter.class,
+                    ContractEventLogModelToLogEntryConverter.class, ContractEventModelToEntityConverter.class,
+                    SmcContractRepositoryImpl.class, SmcContractServiceImpl.class, SmcContractToolServiceImpl.class, SmcContractStorageServiceImpl.class, SmcContractEventServiceImpl.class,
+                    SmcTxLogProcessor.class, SmcMappingRepositoryClassFactory.class, SmcContractEventManagerClassFactory.class,
+                    AppendixApplierRegistryInitializer.class
+            )
         .addBeans(MockBean.of(extension.getDatabaseManager(), DatabaseManager.class))
         .addBeans(MockBean.of(mock(InMemoryCacheManager.class), InMemoryCacheManager.class))
         .addBeans(MockBean.of(mock(TaskDispatchManager.class), TaskDispatchManager.class))
@@ -202,7 +202,7 @@ abstract class AbstractSmcTransactionTypeApplyTest extends DbContainerBaseTest {
     @Inject
     ContractToolService contractToolService;
     @Inject
-    SmcBlockchainIntegratorFactory integratorFactory;
+    SmcBlockchainIntegratorFactoryCreator integratorFactory;
     @Inject
     AppendixApplierRegistry registry;
     AccountService spyAccountService;

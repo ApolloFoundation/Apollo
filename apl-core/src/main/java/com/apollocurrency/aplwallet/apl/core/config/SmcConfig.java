@@ -9,7 +9,7 @@ import com.apollocurrency.aplwallet.apl.crypto.Crypto;
 import com.apollocurrency.aplwallet.apl.smc.SmcContext;
 import com.apollocurrency.aplwallet.apl.smc.vm.PriceProvider;
 import com.apollocurrency.aplwallet.apl.smc.vm.SMCOperationPriceProvider;
-import com.apollocurrency.smc.blockchain.BlockchainIntegrator;
+import com.apollocurrency.smc.blockchain.BlockchainIntegratorFactory;
 import com.apollocurrency.smc.blockchain.crypt.Digest;
 import com.apollocurrency.smc.blockchain.crypt.DigestWrapper;
 import com.apollocurrency.smc.blockchain.crypt.HashSumProvider;
@@ -87,7 +87,7 @@ public class SmcConfig {
         return getSmcLanguageContext();
     }
 
-    public SmcContext asContext(int height, Chargeable chargeable, final BlockchainIntegrator integrator) {
+    public SmcContext asContext(int height, Chargeable chargeable, final BlockchainIntegratorFactory integrator) {
         return new AbstractContext(height, chargeable, integrator) {
             @Override
             protected ExecutionMode getExecutionMode(int height, Chargeable chargeable) {
@@ -96,7 +96,7 @@ public class SmcConfig {
         };
     }
 
-    public SmcContext asViewContext(int height, Chargeable chargeable, final BlockchainIntegrator integrator) {
+    public SmcContext asViewContext(int height, Chargeable chargeable, final BlockchainIntegratorFactory integrator) {
         return new AbstractContext(height, chargeable, integrator) {
             @Override
             protected ExecutionMode getExecutionMode(int height, Chargeable chargeable) {
@@ -113,13 +113,12 @@ public class SmcConfig {
         private final int height;
         private final Chargeable chargeable;
         @Getter
-        private final BlockchainIntegrator integrator;
+        private final BlockchainIntegratorFactory integratorFactory;
 
-        public AbstractContext(int height, Chargeable chargeable, BlockchainIntegrator integrator) {
+        public AbstractContext(int height, Chargeable chargeable, BlockchainIntegratorFactory integratorFactory) {
             this.height = height;
             this.chargeable = chargeable;
-
-            this.integrator = integrator;
+            this.integratorFactory = integratorFactory;
         }
 
         protected abstract ExecutionMode getExecutionMode(int height, Chargeable chargeable);

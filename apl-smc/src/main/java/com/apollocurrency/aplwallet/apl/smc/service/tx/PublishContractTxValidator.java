@@ -32,12 +32,12 @@ public class PublishContractTxValidator extends AbstractSmcContractTxProcessor {
     public ResultValue process() {
         validateStatus(ContractStatus.CREATED);
         var result = ResultValue.from(getSmartContract());
-        var isValid = smcMachine.validateContract(getSmartContract());
+        var isValid = machine.validateContract(getSmartContract());
         if (!isValid) {
             getExecutionLog().setErrorCode(CONTRACT_VALIDATION_ERROR.getErrorCode());
             result.setErrorCode(CONTRACT_VALIDATION_ERROR.getErrorCode());
             result.setOutput(List.of(false));
-            result.setErrorDescription(smcMachine.getExecutionLog().toJsonString());
+            result.setErrorDescription(machine.getExecutionLog().toJsonString());
         }
         return result;
     }

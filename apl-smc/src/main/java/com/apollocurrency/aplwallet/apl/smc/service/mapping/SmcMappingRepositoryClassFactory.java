@@ -41,11 +41,13 @@ public class SmcMappingRepositoryClassFactory {
     }
 
     public ContractMappingRepositoryFactory createReadonlyMappingFactory(final Address contract) {
+        //TODO Add a cache for MappingFactory objects within a blockchain transaction to speed up the contract execution
         final var persistentRepositoryFactory = createMappingFactory(contract);
         return new ReadOnlyMappingRepositoryFactory(persistentRepositoryFactory);
     }
 
     public ContractMappingRepositoryFactory createCachedMappingFactory(final Address contract, final Set<CachedMappingRepository<?>> mappingRepositories) {
+        //TODO Add a cache for MappingFactory objects within a blockchain transaction to speed up the contract execution
         final var persistentRepositoryFactory = createMappingFactory(contract);
         return new CachedMappingRepositoryFactory(persistentRepositoryFactory, mappingRepositories);
     }

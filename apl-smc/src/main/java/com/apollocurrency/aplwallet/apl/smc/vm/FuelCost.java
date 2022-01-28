@@ -32,6 +32,9 @@ class FuelCost {
     //call another contract method from the contract
     public static final MemCostFuelCalculator F_SEND_MESSAGE = new MemCostFuelCalculator(1_000_000, 1000, MemUnit.BYTE);
 
+    //call another contract method from the contract
+    public static final MemCostFuelCalculator F_CREATE_CONTRACT = new MemCostFuelCalculator(15_000_000, 1000, MemUnit.BYTE);
+
     //math functions using
     public static final ConstantFuelCalculator F_HASH_SUM = new ConstantFuelCalculator(10_000);
 

@@ -32,12 +32,12 @@ public class SyntaxValidator extends AbstractSmcContractTxProcessor {
     @Override
     public ResultValue process() {
         var result = ResultValue.UNDEFINED_RESULT;
-        var isValid = smcMachine.parse(script);
+        var isValid = machine.parse(script);
         if (!isValid) {
             getExecutionLog().setErrorCode(CONTRACT_METHOD_VALIDATION_ERROR.getErrorCode());
             result.setErrorCode(CONTRACT_METHOD_VALIDATION_ERROR.getErrorCode());
             result.setOutput(List.of(false));
-            result.setErrorDescription(smcMachine.getExecutionLog().toJsonString());
+            result.setErrorDescription(machine.getExecutionLog().toJsonString());
         }
         return result;
     }

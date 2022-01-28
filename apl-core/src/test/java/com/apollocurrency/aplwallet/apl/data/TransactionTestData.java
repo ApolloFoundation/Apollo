@@ -18,7 +18,7 @@ import com.apollocurrency.aplwallet.apl.core.service.state.currency.CurrencyServ
 import com.apollocurrency.aplwallet.apl.core.service.state.smc.ContractToolService;
 import com.apollocurrency.aplwallet.apl.core.service.state.smc.SmcContractRepository;
 import com.apollocurrency.aplwallet.apl.core.service.state.smc.SmcFuelValidator;
-import com.apollocurrency.aplwallet.apl.core.service.state.smc.impl.SmcBlockchainIntegratorFactory;
+import com.apollocurrency.aplwallet.apl.core.service.state.smc.impl.SmcBlockchainIntegratorFactoryCreator;
 import com.apollocurrency.aplwallet.apl.core.signature.SignatureToolFactory;
 import com.apollocurrency.aplwallet.apl.core.transaction.CachedTransactionTypeFactory;
 import com.apollocurrency.aplwallet.apl.core.transaction.TransactionType;
@@ -173,7 +173,7 @@ public class TransactionTestData {
         DGSService dgsService = mock(DGSService.class);
         SmcContractRepository contractService = mock(SmcContractRepository.class);
         ContractToolService contractToolService = mock(ContractToolService.class);
-        SmcBlockchainIntegratorFactory integratorFactory = mock(SmcBlockchainIntegratorFactory.class);
+        SmcBlockchainIntegratorFactoryCreator integratorFactory = mock(SmcBlockchainIntegratorFactoryCreator.class);
 
         transactionTypeFactory = new CachedTransactionTypeFactory(List.of(
             new OrdinaryPaymentTransactionType(blockchainConfig, accountService),

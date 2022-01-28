@@ -17,7 +17,7 @@ import com.apollocurrency.aplwallet.apl.core.service.state.account.AccountServic
 import com.apollocurrency.aplwallet.apl.core.service.state.smc.ContractToolService;
 import com.apollocurrency.aplwallet.apl.core.service.state.smc.SmcContractRepository;
 import com.apollocurrency.aplwallet.apl.core.service.state.smc.SmcFuelValidator;
-import com.apollocurrency.aplwallet.apl.core.service.state.smc.impl.SmcBlockchainIntegratorFactory;
+import com.apollocurrency.aplwallet.apl.core.service.state.smc.impl.SmcBlockchainIntegratorFactoryCreator;
 import com.apollocurrency.aplwallet.apl.core.service.state.smc.impl.SmcPostponedContractServiceImpl;
 import com.apollocurrency.aplwallet.apl.core.signature.Credential;
 import com.apollocurrency.aplwallet.apl.core.signature.MultiSigCredential;
@@ -65,7 +65,7 @@ public class SmcPublishContractTransactionType extends AbstractSmcTransactionTyp
                                              SmcContractRepository contractRepository,
                                              ContractToolService contractToolService,
                                              SmcFuelValidator fuelValidator,
-                                             SmcBlockchainIntegratorFactory integratorFactory,
+                                             SmcBlockchainIntegratorFactoryCreator integratorFactory,
                                              SmcConfig smcConfig) {
         super(blockchainConfig, blockchain, accountService, contractRepository, contractToolService, fuelValidator, integratorFactory, smcConfig);
         this.txBContext = TxBContext.newInstance(blockchainConfig.getChain());
@@ -139,7 +139,7 @@ public class SmcPublishContractTransactionType extends AbstractSmcTransactionTyp
         SmartContract smartContract = contractToolService.createNewContract(transaction);
         var context = smcConfig.asContext(blockchain.getHeight(),
             smartContract,
-            integratorFactory.createMockProcessor(transaction.getId())
+            integratorFactory.createMockProcessorFactory(transaction.getId())
         );
         var pcf = new SmcFuelBasedFee(context.getPrice().contractPublishing());
         BigInteger calculatedFuel = pcf.calcFuel(smartContract);
@@ -169,17 +169,17 @@ public class SmcPublishContractTransactionType extends AbstractSmcTransactionTyp
         SmcPublishContractAttachment attachment = (SmcPublishContractAttachment) transaction.getAttachment();
         var context = smcConfig.asContext(blockchain.getHeight(),
             smartContract,
-            integratorFactory.createProcessor(transaction, attachment, senderAccount, recipientAccount, getLedgerEvent())
+            integratorFactory.createProcessorFactory(transaction, attachment, senderAccount, recipientAccount, getLedgerEvent())
         );
-        log.debug("Before processing Address={} Fuel={}", smartContract.getAddress(), smartContract.getFuel());
+        log.debug("Before processing Address={} Fuel={}", smartContract.address(), smartContract.getFuel());
         var contractService = new SmcPostponedContractServiceImpl(contractRepository);
 
         executeContract(transaction, senderAccount, smartContract, new PublishContractTxProcessor(smartContract, context));
 
         //save contract and contract state
-        contractService.saveContract(smartContract);
+        contractService.saveContract(smartContract, transaction.getId(), transaction.getFullHash());
         log.info("Contract {} published init=[{}], txId={}, fuel={}, amountATM={}, owner={}",
-            smartContract.getAddress(), smartContract.getInitCode(), Long.toUnsignedString(transaction.getId()),
+            smartContract.address(), smartContract.getInitCode(), Long.toUnsignedString(transaction.getId()),
             smartContract.getFuel(), transaction.getAmountATM(), smartContract.getOwner());
         contractService.commitContractChanges(transaction);
         log.trace("Changes were committed, txId={}", transaction.getStringId());

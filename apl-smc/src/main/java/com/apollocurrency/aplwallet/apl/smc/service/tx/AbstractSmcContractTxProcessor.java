@@ -7,6 +7,7 @@ package com.apollocurrency.aplwallet.apl.smc.service.tx;
 import com.apollocurrency.aplwallet.apl.smc.SmcContext;
 import com.apollocurrency.aplwallet.apl.smc.service.SmcContractTxProcessor;
 import com.apollocurrency.smc.contract.SmartContract;
+import com.apollocurrency.smc.contract.vm.BaseContractMachine;
 import com.apollocurrency.smc.contract.vm.ContractVirtualMachine;
 import com.apollocurrency.smc.contract.vm.ExecutionLog;
 import com.apollocurrency.smc.polyglot.engine.ExecutionEnv;
@@ -23,7 +24,7 @@ import static com.apollocurrency.aplwallet.apl.util.exception.ApiErrors.CONTRACT
  */
 @Slf4j
 public abstract class AbstractSmcContractTxProcessor implements SmcContractTxProcessor {
-    protected final ContractVirtualMachine smcMachine;
+    protected final ContractVirtualMachine machine;
     private final SmartContract smartContract;
     private final SmcContext context;
     @Getter
@@ -37,7 +38,7 @@ public abstract class AbstractSmcContractTxProcessor implements SmcContractTxPro
         this.smartContract = smartContract;
         this.context = context;
         this.executionLog = new ExecutionLog();
-        this.smcMachine = new AplMachine(context, executionLog);
+        this.machine = new BaseContractMachine(context.getLanguageContext(), context.getExecutionEnv(), executionLog, context.getIntegratorFactory());
     }
 
     @Override
@@ -55,7 +56,7 @@ public abstract class AbstractSmcContractTxProcessor implements SmcContractTxPro
 
     @Override
     public void commit() {
-        context.getIntegrator().commit();
+        machine.shutdown();
     }
 
     protected String putExceptionToLog(ExecutionLog executionLog, Exception e) {

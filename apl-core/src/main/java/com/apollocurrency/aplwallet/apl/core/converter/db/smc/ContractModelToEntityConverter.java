@@ -19,7 +19,7 @@ public class ContractModelToEntityConverter implements Converter<SmartContract, 
     @Override
     public SmcContractEntity apply(SmartContract model) {
         return SmcContractEntity.builder()
-            .address(new AplAddress(model.getAddress()).getLongId())
+                .address(new AplAddress(model.address()).getLongId())
             .owner(new AplAddress(model.getOwner()).getLongId())
             .transactionId(new AplAddress(model.getTxId()).getLongId())
             .fuelPrice(model.getFuel().price().longValueExact())

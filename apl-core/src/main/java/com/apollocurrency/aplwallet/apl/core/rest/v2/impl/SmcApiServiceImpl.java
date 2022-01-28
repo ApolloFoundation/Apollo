@@ -39,7 +39,7 @@ import com.apollocurrency.aplwallet.apl.core.service.state.smc.ContractToolServi
 import com.apollocurrency.aplwallet.apl.core.service.state.smc.SmcContractRepository;
 import com.apollocurrency.aplwallet.apl.core.service.state.smc.SmcContractService;
 import com.apollocurrency.aplwallet.apl.core.service.state.smc.SmcFuelValidator;
-import com.apollocurrency.aplwallet.apl.core.service.state.smc.impl.SmcBlockchainIntegratorFactory;
+import com.apollocurrency.aplwallet.apl.core.service.state.smc.impl.SmcBlockchainIntegratorFactoryCreator;
 import com.apollocurrency.aplwallet.apl.core.signature.MultiSigCredential;
 import com.apollocurrency.aplwallet.apl.core.transaction.common.TxBContext;
 import com.apollocurrency.aplwallet.apl.core.transaction.messages.SmcCallMethodAttachment;
@@ -110,7 +110,7 @@ class SmcApiServiceImpl implements SmcApiService {
     private final SmcContractEventService eventService;
     private final TransactionCreator transactionCreator;
     private final TxBContext txBContext;
-    private final SmcBlockchainIntegratorFactory integratorFactory;
+    private final SmcBlockchainIntegratorFactoryCreator integratorFactoryCreator;
     private final SmcConfig smcConfig;
     private final int maxAPIRecords;
     private final SmartMethodMapper methodMapper;
@@ -128,7 +128,7 @@ class SmcApiServiceImpl implements SmcApiService {
                              ContractToolService contractToolService,
                              SmcContractEventService eventService,
                              TransactionCreator transactionCreator,
-                             SmcBlockchainIntegratorFactory integratorFactory,
+                             SmcBlockchainIntegratorFactoryCreator integratorFactoryCreator,
                              SmcConfig smcConfig,
                              SmartMethodMapper methodMapper,
                              CallMethodResultMapper methodResultMapper,
@@ -143,7 +143,7 @@ class SmcApiServiceImpl implements SmcApiService {
         this.eventService = eventService;
         this.transactionCreator = transactionCreator;
         this.txBContext = TxBContext.newInstance(blockchainConfig.getChain());
-        this.integratorFactory = integratorFactory;
+        this.integratorFactoryCreator = integratorFactoryCreator;
         this.smcConfig = smcConfig;
         this.methodMapper = methodMapper;
         this.methodResultMapper = methodResultMapper;
@@ -287,7 +287,7 @@ class SmcApiServiceImpl implements SmcApiService {
         SmartContract smartContract = contractToolService.createMockContract(transaction);
         var context = smcConfig.asContext(accountService.getBlockchainHeight(),
             smartContract,
-            integratorFactory.createMockProcessor(new AplAddress(smartContract.getTxId()).getLongId())
+            integratorFactoryCreator.createMockProcessorFactory(new AplAddress(smartContract.getTxId()).getLongId())
         );
         //syntactical and semantic validation
         SmcContractTxProcessor processor = new PublishContractTxValidator(smartContract, context);
@@ -558,12 +558,13 @@ class SmcApiServiceImpl implements SmcApiService {
         SmartContract smartContract = contractRepository.loadContract(
             contractAddress,
             contractAddress,
+            contractAddress,
             new ContractFuel(contractAddress, BigInteger.ZERO, BigInteger.ONE)
         );
         var methods = methodMapper.convert(members);
         var context = smcConfig.asViewContext(accountService.getBlockchainHeight(),
             smartContract,
-            integratorFactory.createReadonlyProcessor()
+            integratorFactoryCreator.createReadonlyProcessorFactory()
         );
 
         SmcContractTxBatchProcessor processor = new CallViewMethodTxProcessor(smartContract, methods, context);
@@ -605,6 +606,7 @@ class SmcApiServiceImpl implements SmcApiService {
             smartContract = contractRepository.loadContract(
                 contractAddress,
                 transactionSender,
+                transactionSender,
                 new ContractFuel(contractAddress, attachment.getFuelLimit(), attachment.getFuelPrice())
             );
         } catch (AddressNotFoundException e) {
@@ -619,7 +621,7 @@ class SmcApiServiceImpl implements SmcApiService {
 
         var context = smcConfig.asContext(accountService.getBlockchainHeight(),
             smartContract,
-            integratorFactory.createMockProcessor(transaction.getId())
+            integratorFactoryCreator.createMockProcessorFactory(transaction.getId())
         );
 
         //syntactical and semantic validation

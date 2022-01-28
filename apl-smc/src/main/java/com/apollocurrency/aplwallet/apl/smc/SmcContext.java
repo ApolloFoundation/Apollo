@@ -4,7 +4,7 @@
 
 package com.apollocurrency.aplwallet.apl.smc;
 
-import com.apollocurrency.smc.blockchain.BlockchainIntegrator;
+import com.apollocurrency.smc.blockchain.BlockchainIntegratorFactory;
 import com.apollocurrency.smc.contract.fuel.OperationPrice;
 import com.apollocurrency.smc.polyglot.engine.ExecutionEnv;
 import com.apollocurrency.smc.polyglot.language.LanguageContext;
@@ -13,7 +13,7 @@ import com.apollocurrency.smc.polyglot.language.LanguageContext;
  * @author andrew.zinchenko@gmail.com
  */
 public interface SmcContext {
-    BlockchainIntegrator getIntegrator();
+    BlockchainIntegratorFactory getIntegratorFactory();
 
     ExecutionEnv getExecutionEnv();
 

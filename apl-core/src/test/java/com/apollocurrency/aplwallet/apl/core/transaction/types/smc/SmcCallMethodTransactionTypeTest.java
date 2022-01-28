@@ -13,7 +13,7 @@ import com.apollocurrency.aplwallet.apl.core.service.state.account.AccountServic
 import com.apollocurrency.aplwallet.apl.core.service.state.smc.ContractToolService;
 import com.apollocurrency.aplwallet.apl.core.service.state.smc.SmcContractRepository;
 import com.apollocurrency.aplwallet.apl.core.service.state.smc.SmcFuelValidator;
-import com.apollocurrency.aplwallet.apl.core.service.state.smc.impl.SmcBlockchainIntegratorFactory;
+import com.apollocurrency.aplwallet.apl.core.service.state.smc.impl.SmcBlockchainIntegratorFactoryCreator;
 import com.apollocurrency.aplwallet.apl.core.transaction.messages.SmcCallMethodAttachment;
 import lombok.SneakyThrows;
 import org.json.simple.JSONObject;
@@ -55,7 +55,7 @@ class SmcCallMethodTransactionTypeTest {
     @Mock
     ContractToolService contractToolService;
     @Mock
-    SmcBlockchainIntegratorFactory integratorFactory;
+    SmcBlockchainIntegratorFactoryCreator integratorFactory;
 
     private SmcCallMethodTransactionType smcCallMethodTransactionType;
 

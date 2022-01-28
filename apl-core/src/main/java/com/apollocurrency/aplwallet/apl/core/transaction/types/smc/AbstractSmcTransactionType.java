@@ -16,7 +16,7 @@ import com.apollocurrency.aplwallet.apl.core.service.state.account.AccountServic
 import com.apollocurrency.aplwallet.apl.core.service.state.smc.ContractToolService;
 import com.apollocurrency.aplwallet.apl.core.service.state.smc.SmcContractRepository;
 import com.apollocurrency.aplwallet.apl.core.service.state.smc.SmcFuelValidator;
-import com.apollocurrency.aplwallet.apl.core.service.state.smc.impl.SmcBlockchainIntegratorFactory;
+import com.apollocurrency.aplwallet.apl.core.service.state.smc.impl.SmcBlockchainIntegratorFactoryCreator;
 import com.apollocurrency.aplwallet.apl.core.transaction.Fee;
 import com.apollocurrency.aplwallet.apl.core.transaction.TransactionType;
 import com.apollocurrency.aplwallet.apl.core.transaction.messages.AbstractSmcAttachment;
@@ -40,7 +40,7 @@ public abstract class AbstractSmcTransactionType extends TransactionType {
     protected SmcContractRepository contractRepository;
     protected ContractToolService contractToolService;
     protected final SmcFuelValidator fuelMinMaxValidator;
-    protected final SmcBlockchainIntegratorFactory integratorFactory;
+    protected final SmcBlockchainIntegratorFactoryCreator integratorFactory;
     protected final Blockchain blockchain;
     protected final SmcConfig smcConfig;
 
@@ -49,7 +49,7 @@ public abstract class AbstractSmcTransactionType extends TransactionType {
                                SmcContractRepository contractRepository,
                                ContractToolService contractToolService,
                                SmcFuelValidator fuelMinMaxValidator,
-                               SmcBlockchainIntegratorFactory integratorFactory,
+                               SmcBlockchainIntegratorFactoryCreator integratorFactory,
                                SmcConfig smcConfig) {
         super(blockchainConfig, accountService);
         this.contractRepository = contractRepository;
@@ -146,7 +146,7 @@ public abstract class AbstractSmcTransactionType extends TransactionType {
                 //cause instanceof JSRevertException or JSRequirementException or JSAssertionException or JSException
                 Fuel fuel = smartContract.getFuel();
                 message = e.getMessage();
-                log.info("{}:{} Contract={} Fuel={}", e.getClass().getSimpleName(), message, smartContract.getAddress(), fuel);
+                log.info("{}:{} Contract={} Fuel={}", e.getClass().getSimpleName(), message, smartContract.address(), fuel);
             }
             throw new AplTransactionExecutionException(message, e, transaction);
         } catch (PolyglotException e) {

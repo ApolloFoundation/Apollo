@@ -19,19 +19,19 @@ import java.util.Map;
  * @author andrew.zinchenko@gmail.com
  */
 @Slf4j
-public class SmcPostponedContractServiceImpl implements PostponedContractService {
-    private final SmcContractRepository contractRepository;
+public class SmcPostponedContractServiceImpl extends PostponedContractService implements SmcContractRepository {
+
     private final Map<Address, SmartContract> cachedContracts;
 
     public SmcPostponedContractServiceImpl(SmcContractRepository contractRepository) {
-        this.contractRepository = contractRepository;
+        super(contractRepository);
         this.cachedContracts = new HashMap<>();
     }
 
     @Override
-    public void saveContract(SmartContract contract) {
-        log.trace("Save in memory collection, contract={}", contract.getAddress().getHex());
-        cachedContracts.put(contract.getAddress(), contract);
+    public void saveContract(SmartContract contract, long transactionId, byte[] transactionHash) {
+        log.trace("Save in memory collection, contract={}", contract.address().getHex());
+        cachedContracts.put(contract.address(), contract);
     }
 
     @Override
@@ -49,9 +49,14 @@ public class SmcPostponedContractServiceImpl implements PostponedContractService
     }
 
     @Override
+    public String loadSerializedContract(Address address) {
+        throw new UnsupportedOperationException("Postponed contract service.");
+    }
+
+    @Override
     public void updateContractState(SmartContract contract) {
-        log.trace("Update in memory collection, contract={}", contract.getAddress().getHex());
-        cachedContracts.put(contract.getAddress(), contract);
+        log.trace("Update in memory collection, contract={}", contract.address().getHex());
+        cachedContracts.put(contract.address(), contract);
     }
 
     @Override

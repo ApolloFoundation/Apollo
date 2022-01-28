@@ -39,12 +39,12 @@ public class CallMethodTxValidator extends AbstractSmcContractTxProcessor {
     public ResultValue process() {
         validateStatus(ContractStatus.ACTIVE);
         var result = ResultValue.from(smartMethod);
-        var isValid = smcMachine.validateMethod(getSmartContract(), smartMethod);
+        var isValid = machine.validateMethod(getSmartContract(), smartMethod);
         if (!isValid) {
             getExecutionLog().setErrorCode(CONTRACT_METHOD_VALIDATION_ERROR.getErrorCode());
             result.setErrorCode(CONTRACT_METHOD_VALIDATION_ERROR.getErrorCode());
             result.setOutput(List.of(false));
-            result.setErrorDescription(smcMachine.getExecutionLog().toJsonString());
+            result.setErrorDescription(machine.getExecutionLog().toJsonString());
         }
         return result;
     }

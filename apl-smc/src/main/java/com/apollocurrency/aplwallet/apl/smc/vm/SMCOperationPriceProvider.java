@@ -56,6 +56,11 @@ public class SMCOperationPriceProvider implements PriceProvider {
         }
 
         @Override
+        public FuelCalculator contractCreation() {
+            return FuelCost.F_CREATE_CONTRACT;
+        }
+
+        @Override
         public FuelCalculator methodCalling(BigInteger value) {
             //the charge for contract method calling
             FuelCalculator fuelCalculator = new MemCostFuelCalculator(FuelCost.F_CALL);

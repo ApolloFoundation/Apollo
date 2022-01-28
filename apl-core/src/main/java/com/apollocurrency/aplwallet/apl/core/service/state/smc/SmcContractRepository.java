@@ -38,10 +38,6 @@ public interface SmcContractRepository {
      */
     SmartContract loadContract(Address address, Address originator, Address caller, Fuel contractFuel);
 
-    SmartContract loadContract(Address address, Address originator, Fuel contractFuel);
-
-    SmartContract loadContract(Address address);
-
     /**
      * Load the contract specification by given contract address
      *

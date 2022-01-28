@@ -29,7 +29,7 @@ public class PublishContractTxProcessor extends AbstractSmcContractTxProcessor {
         validateStatus(ContractStatus.CREATED);
         getSmartContract().setStatus(ContractStatus.PUBLISHED);
         //call smart contract constructor, charge the fuel
-        smcMachine.publishPayableContract(getSmartContract());
+        machine.publishPayableContract(getSmartContract());
         validateStatus(ContractStatus.ACTIVE);
         return ResultValue.from(getSmartContract());
     }
