@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2021. Apollo Foundation.
+ * Copyright (c) 2021-2022. Apollo Foundation.
  */
 
 package com.apollocurrency.aplwallet.apl.core.transaction.types.smc;
@@ -40,7 +40,7 @@ public abstract class AbstractSmcTransactionType extends TransactionType {
     protected SmcContractRepository contractRepository;
     protected ContractToolService contractToolService;
     protected final SmcFuelValidator fuelMinMaxValidator;
-    protected final SmcBlockchainIntegratorFactoryCreator integratorFactory;
+    protected final SmcBlockchainIntegratorFactoryCreator integratorFactoryCreator;
     protected final Blockchain blockchain;
     protected final SmcConfig smcConfig;
 
@@ -49,13 +49,13 @@ public abstract class AbstractSmcTransactionType extends TransactionType {
                                SmcContractRepository contractRepository,
                                ContractToolService contractToolService,
                                SmcFuelValidator fuelMinMaxValidator,
-                               SmcBlockchainIntegratorFactoryCreator integratorFactory,
+                               SmcBlockchainIntegratorFactoryCreator integratorFactoryCreator,
                                SmcConfig smcConfig) {
         super(blockchainConfig, accountService);
         this.contractRepository = contractRepository;
         this.contractToolService = contractToolService;
         this.fuelMinMaxValidator = fuelMinMaxValidator;
-        this.integratorFactory = integratorFactory;
+        this.integratorFactoryCreator = integratorFactoryCreator;
         this.blockchain = blockchain;
         this.smcConfig = smcConfig;
     }

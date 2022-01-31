@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2020-2021. Apollo Foundation.
+ * Copyright (c) 2020-2022. Apollo Foundation.
  */
 
 package com.apollocurrency.aplwallet.apl.core.service.state.smc;
@@ -13,11 +13,11 @@ import lombok.experimental.Delegate;
  *
  * @author andrew.zinchenko@gmail.com
  */
-public abstract class PostponedContractService implements SmcContractRepository {
+public abstract class PostponedContractRepository implements SmcContractRepository {
     @Delegate
     protected SmcContractRepository contractRepository;
 
-    public PostponedContractService(SmcContractRepository contractRepository) {
+    public PostponedContractRepository(SmcContractRepository contractRepository) {
         this.contractRepository = contractRepository;
     }
 

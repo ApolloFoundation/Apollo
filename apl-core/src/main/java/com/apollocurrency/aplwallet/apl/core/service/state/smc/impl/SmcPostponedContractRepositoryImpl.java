@@ -1,11 +1,11 @@
 /*
- * Copyright (c) 2021. Apollo Foundation.
+ * Copyright (c) 2021-2022. Apollo Foundation.
  */
 
 package com.apollocurrency.aplwallet.apl.core.service.state.smc.impl;
 
 import com.apollocurrency.aplwallet.apl.core.model.Transaction;
-import com.apollocurrency.aplwallet.apl.core.service.state.smc.PostponedContractService;
+import com.apollocurrency.aplwallet.apl.core.service.state.smc.PostponedContractRepository;
 import com.apollocurrency.aplwallet.apl.core.service.state.smc.SmcContractRepository;
 import com.apollocurrency.smc.contract.SmartContract;
 import com.apollocurrency.smc.contract.fuel.Fuel;
@@ -19,11 +19,11 @@ import java.util.Map;
  * @author andrew.zinchenko@gmail.com
  */
 @Slf4j
-public class SmcPostponedContractServiceImpl extends PostponedContractService implements SmcContractRepository {
+public class SmcPostponedContractRepositoryImpl extends PostponedContractRepository implements SmcContractRepository {
 
     private final Map<Address, SmartContract> cachedContracts;
 
-    public SmcPostponedContractServiceImpl(SmcContractRepository contractRepository) {
+    public SmcPostponedContractRepositoryImpl(SmcContractRepository contractRepository) {
         super(contractRepository);
         this.cachedContracts = new HashMap<>();
     }

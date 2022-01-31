@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2021. Apollo Foundation.
+ * Copyright (c) 2021-2022. Apollo Foundation.
  */
 
 package com.apollocurrency.aplwallet.apl.smc.service.tx;
@@ -56,6 +56,7 @@ public abstract class AbstractSmcContractTxProcessor implements SmcContractTxPro
 
     @Override
     public void commit() {
+        log.trace("SmcContractTxProcessor commits data.");
         machine.shutdown();
     }
 

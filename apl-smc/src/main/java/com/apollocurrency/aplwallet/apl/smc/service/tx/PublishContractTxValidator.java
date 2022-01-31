@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2021. Apollo Foundation.
+ * Copyright (c) 2021-2022. Apollo Foundation.
  */
 
 package com.apollocurrency.aplwallet.apl.smc.service.tx;
@@ -35,10 +35,10 @@ public class PublishContractTxValidator extends AbstractSmcContractTxProcessor {
         var isValid = machine.validateContract(getSmartContract());
         if (!isValid) {
             getExecutionLog().setErrorCode(CONTRACT_VALIDATION_ERROR.getErrorCode());
-            result.setErrorCode(CONTRACT_VALIDATION_ERROR.getErrorCode());
-            result.setOutput(List.of(false));
-            result.setErrorDescription(machine.getExecutionLog().toJsonString());
+            result.errorCode(CONTRACT_VALIDATION_ERROR.getErrorCode())
+                .output(List.of(false))
+                .errorDescription(machine.getExecutionLog().toJsonString());
         }
-        return result;
+        return result.build();
     }
 }

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2021. Apollo Foundation.
+ * Copyright (c) 2021-2022. Apollo Foundation.
  */
 
 package com.apollocurrency.aplwallet.apl.smc.service.tx;
@@ -31,7 +31,7 @@ public class PublishContractTxProcessor extends AbstractSmcContractTxProcessor {
         //call smart contract constructor, charge the fuel
         machine.publishPayableContract(getSmartContract());
         validateStatus(ContractStatus.ACTIVE);
-        return ResultValue.from(getSmartContract());
+        return ResultValue.from(getSmartContract()).build();
     }
 
 }

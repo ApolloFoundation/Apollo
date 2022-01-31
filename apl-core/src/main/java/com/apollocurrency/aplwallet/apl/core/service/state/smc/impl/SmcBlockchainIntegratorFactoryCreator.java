@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2020-2021. Apollo Foundation.
+ * Copyright (c) 2020-2022. Apollo Foundation.
  */
 
 package com.apollocurrency.aplwallet.apl.core.service.state.smc.impl;
@@ -71,7 +71,6 @@ public class SmcBlockchainIntegratorFactoryCreator {
     private final Blockchain blockchain;
     private final ServerInfoService serverInfoService;
     private final BlockConverter blockConverter;
-    private final SmcContractRepository contractRepository;
     private final SmcMappingRepositoryClassFactory smcMappingRepositoryClassFactory;
     private final SmcContractEventManagerClassFactory smcContractEventManagerClassFactory;
     private final TxLogProcessor txLogProcessor;
@@ -81,7 +80,6 @@ public class SmcBlockchainIntegratorFactoryCreator {
     public SmcBlockchainIntegratorFactoryCreator(AccountService accountService,
                                                  Blockchain blockchain,
                                                  ServerInfoService serverInfoService,
-                                                 SmcContractRepository contractRepository,
                                                  SmcMappingRepositoryClassFactory smcMappingRepositoryClassFactory,
                                                  SmcContractEventManagerClassFactory smcContractEventManagerClassFactory,
                                                  TxLogProcessor txLogProcessor,
@@ -90,14 +88,13 @@ public class SmcBlockchainIntegratorFactoryCreator {
         this.blockchain = Objects.requireNonNull(blockchain);
         this.serverInfoService = Objects.requireNonNull(serverInfoService);
         this.blockConverter = new BlockConverter();
-        this.contractRepository = Objects.requireNonNull(contractRepository);
         this.smcMappingRepositoryClassFactory = Objects.requireNonNull(smcMappingRepositoryClassFactory);
         this.smcContractEventManagerClassFactory = Objects.requireNonNull(smcContractEventManagerClassFactory);
         this.txLogProcessor = txLogProcessor;
         this.hashSumProvider = Objects.requireNonNull(hashSumProvider);
     }
 
-    public BlockchainIntegratorFactory createProcessorFactory(final Transaction originator, AbstractSmcAttachment attachment, Account txSenderAccount, Account txRecipientAccount, final LedgerEvent ledgerEvent) {
+    public BlockchainIntegratorFactory createProcessorFactory(final Transaction originator, AbstractSmcAttachment attachment, Account txSenderAccount, Account txRecipientAccount, final LedgerEvent ledgerEvent, final SmcContractRepository contractRepository) {
         return machine -> {
             long originatorTransactionId = originator.getId();
             Address txAddress = new AplAddress(originatorTransactionId);
@@ -106,7 +103,7 @@ public class SmcBlockchainIntegratorFactoryCreator {
                 new SMCTransaction(txAddress.get(), txAddress, attachment.getFuelPrice()),
                 txLogProcessor,
                 new SmcInMemoryAccountService(accountService),
-                machine);
+                machine, contractRepository);
 
             return new SMCOperationProcessor(integrator, new ExecutionLog());
         };
@@ -237,6 +234,7 @@ public class SmcBlockchainIntegratorFactoryCreator {
         final TxLogProcessor txLogProcessor;
         final ContractEventManagerFactory eventManagerFactory;
         final ExternalContractVirtualMachine machine;
+        final SmcContractRepository contractRepository;
 
         public FullIntegrator(long originatorTransactionId,
                               Account txSenderAccount, Account txRecipientAccount, LedgerEvent ledgerEvent,
@@ -244,7 +242,8 @@ public class SmcBlockchainIntegratorFactoryCreator {
                               ContractBlockchainTransaction currentTransaction,
                               TxLogProcessor txLogProcessor,
                               InMemoryAccountService inMemoryAccountService,
-                              ExternalContractVirtualMachine machine) {
+                              ExternalContractVirtualMachine machine,
+                              SmcContractRepository contractRepository) {
             super(inMemoryAccountService);
             this.contractCount = 1;
             this.originatorTransactionId = originatorTransactionId;
@@ -258,6 +257,7 @@ public class SmcBlockchainIntegratorFactoryCreator {
             this.cachedMappingRepositories = new HashSet<>();
             this.eventManagerFactory = smcContractEventManagerClassFactory.createEventManagerFactory(currentTransaction, blockchain.getHeight(), txLog);
             this.machine = machine;
+            this.contractRepository = contractRepository;
         }
 
         @Override
@@ -303,11 +303,11 @@ public class SmcBlockchainIntegratorFactoryCreator {
             externalContract = contractRepository.loadContract(contract, originator, caller, fuel);
 
             log.trace("call external contract:  =2= enter");
-            machine.getExecutionLog().add(new LogDetailedReceipt("enter", contract, null, OperationReceipt.NO_ERROR_RECEIPT, new Object[]{}));
+            machine.getExecutionLog().add(new LogDetailedReceipt("enter", contract, caller, OperationReceipt.NO_ERROR_RECEIPT, new Object[]{}));
             log.trace("call external contract:  =3= eval");
             var rc = machine.invokePayableMethod(externalContract, method);
             log.trace("call external contract:  =4= rc={}", rc);
-            machine.getExecutionLog().add(new LogDetailedReceipt("leave", externalContract.address(), null, OperationReceipt.NO_ERROR_RECEIPT, new Object[]{}));
+            machine.getExecutionLog().add(new LogDetailedReceipt("leave", externalContract.address(), caller, OperationReceipt.NO_ERROR_RECEIPT, new Object[]{}));
             log.trace("call external contract:  =5= leave");
             return rc;
         }
