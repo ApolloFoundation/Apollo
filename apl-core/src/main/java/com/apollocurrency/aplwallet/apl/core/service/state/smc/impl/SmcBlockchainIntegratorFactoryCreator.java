@@ -36,6 +36,7 @@ import com.apollocurrency.smc.blockchain.storage.CachedMappingRepository;
 import com.apollocurrency.smc.blockchain.storage.ContractMappingRepositoryFactory;
 import com.apollocurrency.smc.contract.AddressNotFoundException;
 import com.apollocurrency.smc.contract.ContractException;
+import com.apollocurrency.smc.contract.ContractStatus;
 import com.apollocurrency.smc.contract.SmartContract;
 import com.apollocurrency.smc.contract.SmartMethod;
 import com.apollocurrency.smc.contract.fuel.Fuel;
@@ -100,7 +101,7 @@ public class SmcBlockchainIntegratorFactoryCreator {
             Address txAddress = new AplAddress(originatorTransactionId);
             var integrator = (BlockchainIntegrator) new FullIntegrator(originatorTransactionId, txSenderAccount, txRecipientAccount, ledgerEvent,
                 blockConverter.convert(originator.getBlock()),
-                new SMCTransaction(txAddress.get(), txAddress, attachment.getFuelPrice()),
+                new SMCTransaction(txAddress.get(), originator.getFullHash(), txAddress, attachment.getFuelPrice()),
                 txLogProcessor,
                 new SmcInMemoryAccountService(accountService),
                 machine, contractRepository);
@@ -189,7 +190,7 @@ public class SmcBlockchainIntegratorFactoryCreator {
         }
 
         @Override
-        public OperationReceipt createContract(SmartContract newContract, Address originator, Address caller, Fuel contractFuel) {
+        public ResultValue createContract(SmartContract newContract) {
             throw new UnsupportedOperationException(READONLY_INTEGRATOR);
         }
 
@@ -291,8 +292,27 @@ public class SmcBlockchainIntegratorFactoryCreator {
         }
 
         @Override
-        public OperationReceipt createContract(SmartContract newContract, Address originator, Address caller, Fuel contractFuel) {
-            throw new UnsupportedOperationException("Not implemented yet.");
+        public ResultValue createContract(SmartContract newContract) {
+            log.trace("integrator: create external contract: =1= contract={}", newContract);
+            if (contractRepository.isContractExist(newContract.address())) {
+                throw new ContractException(newContract.address(), "Contract already exists.");
+            }
+            if (newContract.getStatus() != ContractStatus.CREATED) {
+                throw new ContractException(newContract.address(), "Invalid state exception, expected CREATED, but actually found " + newContract.getStatus().name());
+            }
+            log.trace("integrator: create external contract: =2= publish");
+            newContract.setStatus(ContractStatus.PUBLISHED);
+            //call smart contract constructor, charge the fuel
+            machine.publishPayableExternalContract(newContract);
+            log.trace("integrator: create external contract: =3= publish");
+            machine.getExecutionLog().add(new LogDetailedReceipt("create", newContract.address(), newContract.getCaller(), OperationReceipt.NO_ERROR_RECEIPT, new Object[]{newContract}));
+            if (newContract.getStatus() != ContractStatus.ACTIVE) {
+                throw new ContractException(newContract.address(), "Invalid state exception, expected ACTIVE, but actually found " + newContract.getStatus().name());
+            }
+            log.trace("integrator: create external contract: =4= save");
+            contractRepository.saveContract(newContract, originatorTransactionId, currentTransaction.fullHash());
+            log.trace("integrator: create external contract: =5= end");
+            return ResultValue.from(newContract).build();
         }
 
         @Override
