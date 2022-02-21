@@ -95,7 +95,7 @@ public class PositiveRange implements Range<Integer> {
 
     @Override
     public Integer adjustBottomBoundary(Integer value) {
-        if (isBottomBoundarySet()) {
+        if (!isBottomBoundarySet()) {
             from = value;
         }
         return from;

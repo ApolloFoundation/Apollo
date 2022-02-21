@@ -38,14 +38,6 @@ public interface Range<T extends Number> {
      */
     T from();
 
-    default T bottom() {
-        return from();
-    }
-
-    default T min() {
-        return from();
-    }
-
     /**
      * Adjust top boundary to specified value. Set top boundary to <code>value</code> if it equals to the <code>undefinedValue</code>.
      *
