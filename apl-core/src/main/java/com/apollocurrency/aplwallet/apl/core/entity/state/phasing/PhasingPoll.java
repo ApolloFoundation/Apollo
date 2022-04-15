@@ -7,13 +7,11 @@ package com.apollocurrency.aplwallet.apl.core.entity.state.phasing;
 import com.apollocurrency.aplwallet.apl.core.app.VoteWeighting;
 import com.apollocurrency.aplwallet.apl.core.entity.state.poll.AbstractPoll;
 import com.apollocurrency.aplwallet.apl.crypto.Convert;
-import lombok.ToString;
 
 import java.util.Arrays;
 import java.util.List;
 import java.util.Objects;
 
-@ToString(callSuper = true)
 public class PhasingPoll extends AbstractPoll {
 
     private final long quorum;

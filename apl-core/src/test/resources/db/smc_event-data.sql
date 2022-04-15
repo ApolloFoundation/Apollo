@@ -14,22 +14,22 @@ TRUNCATE TABLE smc_mapping;#
 TRUNCATE TABLE smc_event;#
 TRUNCATE TABLE smc_event_log;#
 
-insert into smc_state (db_id, address, object, status, height, latest)
+insert into smc_state (db_id, address, object, status, height, latest, deleted)
 values (5, 6167416064671373156,
         '{"_balances":{"meta":{"className":"UnsignedBigNumMappingRepository","args":["value"],"create":"DSH.unsignedBigNumMapping"},"value":"de672a61-7098-415d-8458-e8deb3f88e3b"},"_allowances":{"meta":{"className":"UnsignedBigNumMappingRepository","args":["value"],"create":"DSH.unsignedBigNumMapping"},"value":"930cae1d-aba2-4f11-8bc2-a0fd06841858"},"_totalSupply":{"meta":{"className":"UnsignedBigNum","args":["value"],"create":"DSH.createUnsignedBigNum"},"value":"0x5af3107a4000"},"_name":"Deal2","_symbol":"ntk","_Transfer":{"meta":{"className":"Event","args":["spec","indexedFieldsCount","anonymous"],"create":"DSH.createEventType"},"spec":"Transfer:from,to,amount","indexedFieldsCount":2,"anonymous":false},"_Approval":{"meta":{"className":"Event","args":["spec","indexedFieldsCount","anonymous"],"create":"DSH.createEventType"},"spec":"Approval:owner,spender,amount","indexedFieldsCount":2,"anonymous":false},"_cap":{"meta":{"className":"UnsignedBigNum","args":["value"],"create":"DSH.createUnsignedBigNum"},"value":"0x5af3107a4000"},"_rate":{"meta":{"className":"UnsignedBigNum","args":["value"],"create":"DSH.createUnsignedBigNum"},"value":"0x3b9aca00"},"_vault":{"meta":{"className":"Address","args":["value"],"create":"DSH.createAddress"},"value":"0x54cb3319380bdb3a"},"_totalBuy":{"meta":{"className":"UnsignedBigNum","args":["value"],"create":"DSH.createUnsignedBigNum"},"value":"0x00"},"_Buy":{"meta":{"className":"Event","args":["spec","indexedFieldsCount","anonymous"],"create":"DSH.createEventType"},"spec":"Buy:who,amount","indexedFieldsCount":1,"anonymous":false},"_freezes":{"meta":{"className":"UnsignedBigNumMappingRepository","args":["value"],"create":"DSH.unsignedBigNumMapping"},"value":"f73e63f2-b6bf-4522-8bba-f4a7aede736b"},"_Freeze":{"meta":{"className":"Event","args":["spec","indexedFieldsCount","anonymous"],"create":"DSH.createEventType"},"spec":"Freeze:address,amount","indexedFieldsCount":1,"anonymous":false},"_Unfreeze":{"meta":{"className":"Event","args":["spec","indexedFieldsCount","anonymous"],"create":"DSH.createEventType"},"spec":"Unfreeze:address,amount","indexedFieldsCount":1,"anonymous":false},"_locks":{"meta":{"className":"UnsignedBigNumMappingRepository","args":["value"],"create":"DSH.unsignedBigNumMapping"},"value":"40a0e3d9-516b-4cbb-b300-def7a799ceb6"},"_releaseTime":1.632410520167E12,"meta":{"className":"MyAPL20LOCK"}}',
-        'ACTIVE', 304, 1),
+        'ACTIVE', 304, 1, 0),
        (14, 8194546512095429093,
         '{"_balances":{"meta":{"className":"UnsignedBigNumMappingRepository","args":["value"],"create":"DSH.unsignedBigNumMapping"},"value":"63aae226-3bd1-4a46-879a-0f7ecc87f22b"},"_allowances":{"meta":{"className":"UnsignedBigNumMappingRepository","args":["value"],"create":"DSH.unsignedBigNumMapping"},"value":"a1c22622-6f41-4986-8a13-880640575e6c"},"_totalSupply":{"meta":{"className":"UnsignedBigNum","args":["value"],"create":"DSH.createUnsignedBigNum"},"value":"0x5666e940f000"},"_name":"SC TEST","_symbol":"SC TEST","_Transfer":{"meta":{"className":"Event","args":["spec","indexedFieldsCount","anonymous"],"create":"DSH.createEventType"},"spec":"Transfer:from,to,amount","indexedFieldsCount":2,"anonymous":false},"_Approval":{"meta":{"className":"Event","args":["spec","indexedFieldsCount","anonymous"],"create":"DSH.createEventType"},"spec":"Approval:owner,spender,amount","indexedFieldsCount":2,"anonymous":false},"_cap":{"meta":{"className":"UnsignedBigNum","args":["value"],"create":"DSH.createUnsignedBigNum"},"value":"0x5af3107a4000"},"_rate":{"meta":{"className":"UnsignedBigNum","args":["value"],"create":"DSH.createUnsignedBigNum"},"value":"0x3b9aca00"},"_vault":{"meta":{"className":"Address","args":["value"],"create":"DSH.createAddress"},"value":"0xd93e7865b61ad38a"},"_totalBuy":{"meta":{"className":"UnsignedBigNum","args":["value"],"create":"DSH.createUnsignedBigNum"},"value":"0x00"},"_Buy":{"meta":{"className":"Event","args":["spec","indexedFieldsCount","anonymous"],"create":"DSH.createEventType"},"spec":"Buy:who,amount","indexedFieldsCount":1,"anonymous":false},"_freezes":{"meta":{"className":"UnsignedBigNumMappingRepository","args":["value"],"create":"DSH.unsignedBigNumMapping"},"value":"0898ce8f-3763-4610-9f30-ca09caa3ef41"},"_Freeze":{"meta":{"className":"Event","args":["spec","indexedFieldsCount","anonymous"],"create":"DSH.createEventType"},"spec":"Freeze:address,amount","indexedFieldsCount":1,"anonymous":false},"_Unfreeze":{"meta":{"className":"Event","args":["spec","indexedFieldsCount","anonymous"],"create":"DSH.createEventType"},"spec":"Unfreeze:address,amount","indexedFieldsCount":1,"anonymous":false},"_locks":{"meta":{"className":"UnsignedBigNumMappingRepository","args":["value"],"create":"DSH.unsignedBigNumMapping"},"value":"249841e5-7ab3-4db2-baeb-de14105c00ab"},"_releaseTime":1.632389460413E12,"meta":{"className":"MyAPL20LOCK"}}',
-        'ACTIVE', 709, 1),
+        'ACTIVE', 709, 1, 0),
        (24, 1872215471858864549,
         '{"_balances":{"meta":{"className":"UnsignedBigNumMappingRepository","args":["value"],"create":"DSH.unsignedBigNumMapping"},"value":"82118a98-7999-4159-ba8a-680dee8d7d91"},"_allowances":{"meta":{"className":"UnsignedBigNumMappingRepository","args":["value"],"create":"DSH.unsignedBigNumMapping"},"value":"b43c68de-7fb1-4a54-9708-d0da53929256"},"_totalSupply":{"meta":{"className":"UnsignedBigNum","args":["value"],"create":"DSH.createUnsignedBigNum"},"value":"0x084595161401484a000000"},"_name":"SimpleFB_Token","_symbol":"FBT","_Transfer":{"meta":{"className":"Event","args":["spec","indexedFieldsCount","anonymous"],"create":"DSH.createEventType"},"spec":"Transfer:from,to,amount","indexedFieldsCount":2,"anonymous":false},"_Approval":{"meta":{"className":"Event","args":["spec","indexedFieldsCount","anonymous"],"create":"DSH.createEventType"},"spec":"Approval:owner,spender,amount","indexedFieldsCount":2,"anonymous":false},"_cap":{"meta":{"className":"UnsignedBigNum","args":["value"],"create":"DSH.createUnsignedBigNum"},"value":"0x084595161401484a000000"},"_rate":{"meta":{"className":"UnsignedBigNum","args":["value"],"create":"DSH.createUnsignedBigNum"},"value":"0x02540be400"},"_vault":{"meta":{"className":"Address","args":["value"],"create":"DSH.createAddress"},"value":"0x7d2825cf3a120411"},"_totalBuy":{"meta":{"className":"UnsignedBigNum","args":["value"],"create":"DSH.createUnsignedBigNum"},"value":"0x00"},"_Buy":{"meta":{"className":"Event","args":["spec","indexedFieldsCount","anonymous"],"create":"DSH.createEventType"},"spec":"Buy:who,amount","indexedFieldsCount":1,"anonymous":false},"_freezes":{"meta":{"className":"UnsignedBigNumMappingRepository","args":["value"],"create":"DSH.unsignedBigNumMapping"},"value":"bbac5919-1f81-41fc-af1c-b421cfe7cf2b"},"_Freeze":{"meta":{"className":"Event","args":["spec","indexedFieldsCount","anonymous"],"create":"DSH.createEventType"},"spec":"Freeze:address,amount","indexedFieldsCount":1,"anonymous":false},"_Unfreeze":{"meta":{"className":"Event","args":["spec","indexedFieldsCount","anonymous"],"create":"DSH.createEventType"},"spec":"Unfreeze:address,amount","indexedFieldsCount":1,"anonymous":false},"_locks":{"meta":{"className":"UnsignedBigNumMappingRepository","args":["value"],"create":"DSH.unsignedBigNumMapping"},"value":"3d8fe2f9-e147-4199-b30d-84d258204800"},"_releaseTime":1.631870400293E12,"meta":{"className":"MyAPL20LOCK"}}',
-        'ACTIVE', 8792, 0),
+        'ACTIVE', 8792, 0, 0),
        (25, 1872215471858864549,
         '{"_balances":{"meta":{"className":"UnsignedBigNumMappingRepository","args":["value"],"create":"DSH.unsignedBigNumMapping"},"value":"82118a98-7999-4159-ba8a-680dee8d7d91"},"_allowances":{"meta":{"className":"UnsignedBigNumMappingRepository","args":["value"],"create":"DSH.unsignedBigNumMapping"},"value":"b43c68de-7fb1-4a54-9708-d0da53929256"},"_totalSupply":{"meta":{"className":"UnsignedBigNum","args":["value"],"create":"DSH.createUnsignedBigNum"},"value":"0x084595161401484a000000"},"_name":"SimpleFB_Token","_symbol":"FBT","_Transfer":{"meta":{"className":"Event","args":["spec","indexedFieldsCount","anonymous"],"create":"DSH.createEventType"},"spec":"Transfer:from,to,amount","indexedFieldsCount":2,"anonymous":false},"_Approval":{"meta":{"className":"Event","args":["spec","indexedFieldsCount","anonymous"],"create":"DSH.createEventType"},"spec":"Approval:owner,spender,amount","indexedFieldsCount":2,"anonymous":false},"_cap":{"meta":{"className":"UnsignedBigNum","args":["value"],"create":"DSH.createUnsignedBigNum"},"value":"0x084595161401484a000000"},"_rate":{"meta":{"className":"UnsignedBigNum","args":["value"],"create":"DSH.createUnsignedBigNum"},"value":"0x02540be400"},"_vault":{"meta":{"className":"Address","args":["value"],"create":"DSH.createAddress"},"value":"0x7d2825cf3a120411"},"_totalBuy":{"meta":{"className":"UnsignedBigNum","args":["value"],"create":"DSH.createUnsignedBigNum"},"value":"0x00"},"_Buy":{"meta":{"className":"Event","args":["spec","indexedFieldsCount","anonymous"],"create":"DSH.createEventType"},"spec":"Buy:who,amount","indexedFieldsCount":1,"anonymous":false},"_freezes":{"meta":{"className":"UnsignedBigNumMappingRepository","args":["value"],"create":"DSH.unsignedBigNumMapping"},"value":"bbac5919-1f81-41fc-af1c-b421cfe7cf2b"},"_Freeze":{"meta":{"className":"Event","args":["spec","indexedFieldsCount","anonymous"],"create":"DSH.createEventType"},"spec":"Freeze:address,amount","indexedFieldsCount":1,"anonymous":false},"_Unfreeze":{"meta":{"className":"Event","args":["spec","indexedFieldsCount","anonymous"],"create":"DSH.createEventType"},"spec":"Unfreeze:address,amount","indexedFieldsCount":1,"anonymous":false},"_locks":{"meta":{"className":"UnsignedBigNumMappingRepository","args":["value"],"create":"DSH.unsignedBigNumMapping"},"value":"3d8fe2f9-e147-4199-b30d-84d258204800"},"_releaseTime":1.631870400293E12,"meta":{"className":"MyAPL20LOCK"}}',
-        'ACTIVE', 13085, 0),
+        'ACTIVE', 13085, 0, 0),
        (26, 1872215471858864549,
         '{"_balances":{"meta":{"className":"UnsignedBigNumMappingRepository","args":["value"],"create":"DSH.unsignedBigNumMapping"},"value":"82118a98-7999-4159-ba8a-680dee8d7d91"},"_allowances":{"meta":{"className":"UnsignedBigNumMappingRepository","args":["value"],"create":"DSH.unsignedBigNumMapping"},"value":"b43c68de-7fb1-4a54-9708-d0da53929256"},"_totalSupply":{"meta":{"className":"UnsignedBigNum","args":["value"],"create":"DSH.createUnsignedBigNum"},"value":"0x084595161401484a000000"},"_name":"SimpleFB_Token","_symbol":"FBT","_Transfer":{"meta":{"className":"Event","args":["spec","indexedFieldsCount","anonymous"],"create":"DSH.createEventType"},"spec":"Transfer:from,to,amount","indexedFieldsCount":2,"anonymous":false},"_Approval":{"meta":{"className":"Event","args":["spec","indexedFieldsCount","anonymous"],"create":"DSH.createEventType"},"spec":"Approval:owner,spender,amount","indexedFieldsCount":2,"anonymous":false},"_cap":{"meta":{"className":"UnsignedBigNum","args":["value"],"create":"DSH.createUnsignedBigNum"},"value":"0x084595161401484a000000"},"_rate":{"meta":{"className":"UnsignedBigNum","args":["value"],"create":"DSH.createUnsignedBigNum"},"value":"0x02540be400"},"_vault":{"meta":{"className":"Address","args":["value"],"create":"DSH.createAddress"},"value":"0x7d2825cf3a120411"},"_totalBuy":{"meta":{"className":"UnsignedBigNum","args":["value"],"create":"DSH.createUnsignedBigNum"},"value":"0x00"},"_Buy":{"meta":{"className":"Event","args":["spec","indexedFieldsCount","anonymous"],"create":"DSH.createEventType"},"spec":"Buy:who,amount","indexedFieldsCount":1,"anonymous":false},"_freezes":{"meta":{"className":"UnsignedBigNumMappingRepository","args":["value"],"create":"DSH.unsignedBigNumMapping"},"value":"bbac5919-1f81-41fc-af1c-b421cfe7cf2b"},"_Freeze":{"meta":{"className":"Event","args":["spec","indexedFieldsCount","anonymous"],"create":"DSH.createEventType"},"spec":"Freeze:address,amount","indexedFieldsCount":1,"anonymous":false},"_Unfreeze":{"meta":{"className":"Event","args":["spec","indexedFieldsCount","anonymous"],"create":"DSH.createEventType"},"spec":"Unfreeze:address,amount","indexedFieldsCount":1,"anonymous":false},"_locks":{"meta":{"className":"UnsignedBigNumMappingRepository","args":["value"],"create":"DSH.unsignedBigNumMapping"},"value":"3d8fe2f9-e147-4199-b30d-84d258204800"},"_releaseTime":1.631870400293E12,"meta":{"className":"MyAPL20LOCK"}}',
-        'ACTIVE', 13097, 1)
+        'ACTIVE', 13097, 1, 0)
 ;#
 insert into smc_mapping (db_id, address, entry_key, name, object, height, latest, deleted)
 values (3, 1872215471858864549, 0x957EE43200D32B1FBD89B4922AA98876F1B519F6DA60B4FE99258C147FCA0782,
@@ -196,11 +196,9 @@ VALUES (1, 8641622137343210570, 2715369145210035887, 0xBA5BDB95AD9FED090C0D01F6E
         '{"amount":{"class":"UnsignedBigNum","value":"0x3b9aca00"},"from":{"class":"Address","value":"0x42f7aa92f9586e8b"},"to":{"class":"Address","value":"0x336c19cc230e8e0f"}}',
         0, 13085)
 ;#
-insert into smc_contract (db_id, address, owner, transaction_id, transaction_full_hash, fuel_price, fuel_limit,
-                          fuel_charged, block_timestamp, data, name, base_contract, args, language, version, status,
-                          height, latest)
-VALUES (1, 1872215471858864549, 3705364957971254799, 2715369145210035887,
-        X'20E0E2FA0D1F8C0B35C5F415C406D9B6092DE3452AA65DCB780A6EE6C15DD962', 10000, 500000000, 42177663, 123723548, '
+insert into smc_contract (db_id, address, owner, transaction_id, data, name, base_contract, args, language, version,
+                          status, height, latest)
+VALUES (1, 1872215471858864549, 3705364957971254799, 2715369145210035887, '
 class Contract {
 emit(event, ...params) {
 if (isTraceEnabled()) {
@@ -598,14 +596,10 @@ constructor(){
 super(''SimpleFB_Token'',''FBT'',''10000000000000000000000000'',''10000000000000000000000000'',''10000000000'',''2021-09-17T09:20:00.293Z'',''0x7d2825cf3a120411'');
 }
 }', 'MyAPL20LOCK', 'APL20LOCK', '', 'js', '0.1.1', 'ACTIVE', 49, 1)
-;
-#
-
-insert into smc_contract (db_id, address, owner, transaction_id, transaction_full_hash, fuel_price, fuel_limit,
-                          fuel_charged, block_timestamp, data, name, base_contract, args, language, version, status,
-                          height, latest)
-VALUES (2, 6167416064671373156, 4825513073976045195, 8884117717076820141,
-        X'20E0E2FA0D1F8C0B35C5F415C406D9B6092DE3452AA65DCB780A6EE6C15DD962', 10000, 500000000, 42177663, 123723548, '
+;#
+insert into smc_contract (db_id, address, owner, transaction_id, data, name, base_contract, args, language, version,
+                          status, height, latest)
+VALUES (2, 6167416064671373156, 4825513073976045195, 8884117717076820141, '
 class Contract {
 emit(event, ...params) {
 if (isTraceEnabled()) {
@@ -1003,14 +997,10 @@ constructor(){
 super(''Deal2'',''ntk'',''100000000000000'',''100000000000000'',''1000000000'',''2021-09-23T15:22:00.167Z'',''0x54cb3319380bdb3a'');
 }
 }', 'MyAPL20LOCK', 'APL20LOCK', '', 'js', '0.1.1', 'ACTIVE', 294, 1)
-;
-#
-
-insert into smc_contract (db_id, address, owner, transaction_id, transaction_full_hash, fuel_price, fuel_limit,
-                          fuel_charged, block_timestamp, data, name, base_contract, args, language, version, status,
-                          height, latest)
-VALUES (3, 8194546512095429093, -208393164898941117, 6215280239318408678,
-        X'20E0E2FA0D1F8C0B35C5F415C406D9B6092DE3452AA65DCB780A6EE6C15DD962', 10000, 500000000, 42177663, 123723548, '
+;#
+insert into smc_contract (db_id, address, owner, transaction_id, data, name, base_contract, args, language, version,
+                          status, height, latest)
+VALUES (3, 8194546512095429093, -208393164898941117, 6215280239318408678, '
 class Contract {
 emit(event, ...params) {
 if (isTraceEnabled()) {

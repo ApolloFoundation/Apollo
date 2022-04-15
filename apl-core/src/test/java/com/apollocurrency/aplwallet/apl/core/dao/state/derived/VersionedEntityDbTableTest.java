@@ -61,7 +61,7 @@ public abstract class VersionedEntityDbTableTest<T extends VersionedDerivedEntit
         T valueToDelete = allLatest.get(2);
         int oldHeight = valueToDelete.getHeight();
         long oldDbId = valueToDelete.getDbId();
-        DbUtils.inTransaction(getDatabaseManager(), (con) -> {
+        DbUtils.inTransaction(extension, (con) -> {
             List<T> sortedByDbId = sortByHeightDesc(getAll());
             valueToDelete.setHeight(sortedByDbId.get(0).getHeight() + 200);
             valueToDelete.setDbId(sortedByDbId.get(0).getDbId() + 1);

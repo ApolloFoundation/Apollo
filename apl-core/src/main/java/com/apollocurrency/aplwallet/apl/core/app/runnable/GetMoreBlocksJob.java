@@ -16,7 +16,6 @@ import com.apollocurrency.aplwallet.apl.core.exception.AplBlockException;
 import com.apollocurrency.aplwallet.apl.core.model.Block;
 import com.apollocurrency.aplwallet.apl.core.model.BlockchainProcessorState;
 import com.apollocurrency.aplwallet.apl.core.model.PeerBlock;
-import com.apollocurrency.aplwallet.apl.core.model.Transaction;
 import com.apollocurrency.aplwallet.apl.core.peer.Peer;
 import com.apollocurrency.aplwallet.apl.core.peer.PeerNotConnectedException;
 import com.apollocurrency.aplwallet.apl.core.peer.PeerState;
@@ -576,12 +575,10 @@ public class GetMoreBlocksJob implements Runnable {
         }
 
         if (pushedForkBlocks == 0) {
-            log.debug("Didn't accept any blocks, pushing back my {} previous blocks", myPoppedOffBlocks.size());
+            log.debug("Didn't accept any blocks, pushing back my previous blocks");
             for (int i = myPoppedOffBlocks.size() - 1; i >= 0; i--) {
                 Block block = myPoppedOffBlocks.remove(i);
                 try {
-                    // reset tx fail statuses for our block to push it again
-                    block.getTransactions().forEach(Transaction::resetFail);
                     blockchainProcessor.pushBlock(block);
                 } catch (BlockchainProcessor.BlockNotAcceptedException | AplBlockException e) {
                     log.error("Popped off block no longer acceptable: " + blockSerializer.getJSONObject(block).toJSONString(), e);

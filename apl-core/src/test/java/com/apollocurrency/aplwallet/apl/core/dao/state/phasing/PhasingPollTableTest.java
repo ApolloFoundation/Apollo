@@ -1,30 +1,72 @@
 /*
- *  Copyright © 2018-2021 Apollo Foundation
+ *  Copyright © 2018-2020 Apollo Foundation
  */
 
 package com.apollocurrency.aplwallet.apl.core.dao.state.phasing;
 
 import com.apollocurrency.aplwallet.apl.core.app.VoteWeighting;
+import com.apollocurrency.aplwallet.apl.core.service.blockchain.TransactionBuilderFactory;
+import com.apollocurrency.aplwallet.apl.core.chainid.BlockchainConfig;
+import com.apollocurrency.aplwallet.apl.core.config.DaoConfig;
+import com.apollocurrency.aplwallet.apl.core.config.NtpTimeConfig;
+import com.apollocurrency.aplwallet.apl.core.converter.db.BlockEntityRowMapper;
+import com.apollocurrency.aplwallet.apl.core.converter.db.BlockEntityToModelConverter;
+import com.apollocurrency.aplwallet.apl.core.converter.db.BlockModelToEntityConverter;
+import com.apollocurrency.aplwallet.apl.core.converter.db.PrunableTxRowMapper;
 import com.apollocurrency.aplwallet.apl.core.converter.db.TransactionEntityRowMapper;
+import com.apollocurrency.aplwallet.apl.core.converter.db.TransactionEntityToModelConverter;
 import com.apollocurrency.aplwallet.apl.core.converter.db.TransactionModelToEntityConverter;
+import com.apollocurrency.aplwallet.apl.core.converter.db.TxReceiptRowMapper;
+import com.apollocurrency.aplwallet.apl.core.dao.blockchain.BlockDaoImpl;
+import com.apollocurrency.aplwallet.apl.core.dao.blockchain.TransactionDaoImpl;
 import com.apollocurrency.aplwallet.apl.core.dao.state.derived.DerivedDbTable;
 import com.apollocurrency.aplwallet.apl.core.dao.state.derived.EntityDbTableTest;
+import com.apollocurrency.aplwallet.apl.core.db.DatabaseManager;
+import com.apollocurrency.aplwallet.apl.core.config.JdbiConfiguration;
 import com.apollocurrency.aplwallet.apl.core.entity.blockchain.TransactionEntity;
+import com.apollocurrency.aplwallet.apl.core.entity.state.account.PublicKey;
 import com.apollocurrency.aplwallet.apl.core.entity.state.phasing.PhasingPoll;
 import com.apollocurrency.aplwallet.apl.core.model.TransactionDbInfo;
+import com.apollocurrency.aplwallet.apl.core.service.appdata.TimeService;
+import com.apollocurrency.aplwallet.apl.core.service.appdata.impl.TimeServiceImpl;
+import com.apollocurrency.aplwallet.apl.core.service.blockchain.Blockchain;
+import com.apollocurrency.aplwallet.apl.core.service.blockchain.BlockchainImpl;
+import com.apollocurrency.aplwallet.apl.core.service.blockchain.BlockchainProcessor;
+import com.apollocurrency.aplwallet.apl.core.service.blockchain.BlockchainProcessorImpl;
+import com.apollocurrency.aplwallet.apl.core.service.blockchain.GlobalSyncImpl;
+import com.apollocurrency.aplwallet.apl.core.service.blockchain.TransactionProcessor;
+import com.apollocurrency.aplwallet.apl.core.service.blockchain.TransactionServiceImpl;
+import com.apollocurrency.aplwallet.apl.core.service.fulltext.FullTextConfigImpl;
+import com.apollocurrency.aplwallet.apl.core.service.fulltext.FullTextSearchUpdater;
+import com.apollocurrency.aplwallet.apl.core.service.fulltext.FullTextSearchUpdaterImpl;
+import com.apollocurrency.aplwallet.apl.core.service.prunable.PrunableMessageService;
+import com.apollocurrency.aplwallet.apl.core.service.state.DerivedDbTablesRegistryImpl;
+import com.apollocurrency.aplwallet.apl.core.service.state.PhasingPollService;
+import com.apollocurrency.aplwallet.apl.core.service.state.account.PublicKeyDao;
+import com.apollocurrency.aplwallet.apl.core.shard.BlockIndexService;
+import com.apollocurrency.aplwallet.apl.core.shard.BlockIndexServiceImpl;
+import com.apollocurrency.aplwallet.apl.core.shard.ShardDbExplorerImpl;
+import com.apollocurrency.aplwallet.apl.core.transaction.TransactionTypeFactory;
+import com.apollocurrency.aplwallet.apl.core.transaction.messages.PrunableLoadingService;
 import com.apollocurrency.aplwallet.apl.core.utils.CollectionUtil;
-import com.apollocurrency.aplwallet.apl.data.DbTestData;
 import com.apollocurrency.aplwallet.apl.data.PhasingTestData;
 import com.apollocurrency.aplwallet.apl.data.TransactionTestData;
-import com.apollocurrency.aplwallet.apl.extension.DbExtension;
 import com.apollocurrency.aplwallet.apl.testutil.DbUtils;
+import com.apollocurrency.aplwallet.apl.util.cdi.transaction.JdbiHandleFactory;
+import com.apollocurrency.aplwallet.apl.util.env.config.Chain;
+import com.apollocurrency.aplwallet.apl.util.injectable.PropertiesHolder;
+import org.jboss.weld.junit.MockBean;
+import org.jboss.weld.junit5.EnableWeld;
+import org.jboss.weld.junit5.WeldInitiator;
+import org.jboss.weld.junit5.WeldSetup;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
-import org.junit.jupiter.api.extension.RegisterExtension;
+import org.junit.jupiter.api.parallel.Execution;
+import org.junit.jupiter.api.parallel.ExecutionMode;
 
-import javax.enterprise.event.Event;
+import javax.inject.Inject;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Statement;
@@ -36,22 +78,68 @@ import java.util.stream.Collectors;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNull;
-import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.mockito.ArgumentMatchers.anyLong;
+import static org.mockito.Mockito.doReturn;
 import static org.mockito.Mockito.mock;
 
 
 @Tag("slow")
+@EnableWeld
+@Execution(ExecutionMode.CONCURRENT)
 public class PhasingPollTableTest extends EntityDbTableTest<PhasingPoll> {
+    PropertiesHolder propertiesHolder = mock(PropertiesHolder.class);
+    NtpTimeConfig ntpTimeConfig = new NtpTimeConfig();
+    TimeService timeService = new TimeServiceImpl(ntpTimeConfig.time());
+    TransactionTestData ttd = new TransactionTestData();
+    BlockchainConfig blockchainConfig = mock(BlockchainConfig.class);
+    Chain chain = mock(Chain.class);
+    private TransactionModelToEntityConverter txToEntityConverter = new TransactionModelToEntityConverter();
 
-    @RegisterExtension
-    DbExtension extension = new DbExtension(mariaDBContainer, DbTestData.getDbUrlProps(), "db/phasing-poll-data.sql", "db/schema.sql");
+    {
+        doReturn(chain).when(blockchainConfig).getChain();
+    }
 
-    private final TransactionModelToEntityConverter toEntityConverter = new TransactionModelToEntityConverter();
+    private final PublicKeyDao publicKeyDao = mock(PublicKeyDao.class);
+    @WeldSetup
+    public WeldInitiator weld = WeldInitiator.from(
+        BlockchainImpl.class, DaoConfig.class,
+        GlobalSyncImpl.class,
+        PhasingPollResultTable.class,
+        PhasingPollTable.class,
+        PhasingPollVoterTable.class,
+        PhasingPollLinkedTransactionTable.class,
+        PhasingVoteTable.class,
+        TransactionBuilderFactory.class,
+        FullTextConfigImpl.class,
+        TransactionServiceImpl.class, ShardDbExplorerImpl.class,
+        TransactionEntityRowMapper.class, TxReceiptRowMapper.class, PrunableTxRowMapper.class,
+        TransactionModelToEntityConverter.class, TransactionEntityToModelConverter.class,
+        DerivedDbTablesRegistryImpl.class,
+        BlockDaoImpl.class,
+        BlockEntityRowMapper.class, BlockEntityToModelConverter.class, BlockModelToEntityConverter.class,
+        TransactionDaoImpl.class, JdbiHandleFactory.class, JdbiConfiguration.class)
+        .addBeans(MockBean.of(blockchainConfig, BlockchainConfig.class))
+        .addBeans(MockBean.of(getDatabaseManager(), DatabaseManager.class))
+        .addBeans(MockBean.of(mock(PhasingPollService.class), PhasingPollService.class))
+        .addBeans(MockBean.of(mock(TransactionProcessor.class), TransactionProcessor.class))
+        .addBeans(MockBean.of(mock(PrunableMessageService.class), PrunableMessageService.class))
+        .addBeans(MockBean.of(mock(BlockchainProcessor.class), BlockchainProcessor.class, BlockchainProcessorImpl.class))
+        .addBeans(MockBean.of(mock(BlockIndexService.class), BlockIndexService.class, BlockIndexServiceImpl.class))
+        .addBeans(MockBean.of(publicKeyDao, PublicKeyDao.class))
+        .addBeans(MockBean.of(propertiesHolder, PropertiesHolder.class))
+        .addBeans(MockBean.of(ntpTimeConfig, NtpTimeConfig.class))
+        .addBeans(MockBean.of(timeService, TimeService.class))
+        .addBeans(MockBean.of(mock(PrunableLoadingService.class), PrunableLoadingService.class))
+        .addBeans(MockBean.of(ttd.getTransactionTypeFactory(), TransactionTypeFactory.class))
+        .addBeans(MockBean.of(mock(FullTextSearchUpdater.class), FullTextSearchUpdaterImpl.class))
+        .build();
+    @Inject
+    Blockchain blockchain;
+    @Inject
     PhasingPollTable table;
 
     PhasingTestData ptd;
-    TransactionTestData ttd;
 
     public PhasingPollTableTest() {
         super(PhasingPoll.class);
@@ -60,9 +148,8 @@ public class PhasingPollTableTest extends EntityDbTableTest<PhasingPoll> {
     @BeforeEach
     @Override
     public void setUp() {
-        table = new PhasingPollTable(extension.getDatabaseManager(), new TransactionEntityRowMapper(), mock(Event.class));
         ptd = new PhasingTestData();
-        ttd = new TransactionTestData();
+        doReturn(new PublicKey(1L, new byte[32], 1)).when(publicKeyDao).searchAll(anyLong());
         super.setUp();
     }
 
@@ -73,7 +160,7 @@ public class PhasingPollTableTest extends EntityDbTableTest<PhasingPoll> {
 
     @Override
     protected List<PhasingPoll> getAll() {
-        return List.of(ptd.POLL_0, ptd.POLL_1, ptd.POLL_2, ptd.POLL_35, ptd.POLL_3, ptd.POLL_4, ptd.POLL_55, ptd.POLL_5);
+        return List.of(ptd.POLL_0, ptd.POLL_1, ptd.POLL_2, ptd.POLL_3, ptd.POLL_4, ptd.POLL_5);
     }
 
 
@@ -85,38 +172,38 @@ public class PhasingPollTableTest extends EntityDbTableTest<PhasingPoll> {
     @Test
     @Override
     public void testTrimForZeroHeight() {
-        testTrim(0, Integer.MAX_VALUE);
+        testTrim(ptd.POLL_1.getFinishHeight() + 1, Integer.MAX_VALUE);
     }
 
     @Override
     public void testTrim(int height, int blockchainHeight) {
         table.trim(height);
         List<PhasingPoll> actual = CollectionUtil.toList(table.getAll(Integer.MIN_VALUE, Integer.MAX_VALUE));
-        List<PhasingPoll> expected = sortByHeightDesc(getAll().stream().filter(p -> {
-            try {
-                return p.getFinishHeight() >= height || p.getFinishTime() > table.blockTimestamp(height - 1);
-            } catch (SQLException ex) {
-                throw new RuntimeException(ex);
-            }
-        }).collect(Collectors.toList()));
-        assertEquals(expected, actual);
-    }
-
-    @Test
-    void testTrimOnNextBlockAfterPoll4Finished() {
-        testTrim(ptd.POLL_4.getFinishHeight() + 1, ptd.POLL_5.getFinishHeight() + 1);
-
+        List<PhasingPoll> expected = sortByHeightDesc(getAll().stream().filter(p -> p.getFinishHeight() >= height).collect(Collectors.toList()));
+        Assertions.assertEquals(expected, actual);
         String condition = "transaction_id IN " + String.format("(%d,%d,%d)", ptd.POLL_0.getId(), ptd.POLL_1.getId(), ptd.POLL_2.getId());
         assertNotExistEntriesInTableForCondition("phasing_poll_voter", condition);
         assertNotExistEntriesInTableForCondition("phasing_vote", condition);
         assertNotExistEntriesInTableForCondition("phasing_poll_linked_transaction", condition);
     }
 
+    private void assertNotExistEntriesInTableForCondition(String tableName, String condition) {
+        DbUtils.inTransaction(getDatabaseManager(), (con) -> {
+            try (Statement stmt = con.createStatement()) {
+                try (ResultSet rs = stmt.executeQuery("SELECT 1 FROM " + tableName + " where  " + condition)) {
+                    Assertions.assertFalse(rs.next());
+                }
+            } catch (SQLException e) {
+                throw new RuntimeException(e.toString(), e);
+            }
+        });
+    }
+
     @Test
     void testGetFinishingTransactions() {
         List<TransactionEntity> finishingTransactions = table.getFinishingTransactions(ptd.POLL_2.getFinishHeight());
 
-        TransactionEntity expectedEntity = toEntityConverter.apply(ttd.TRANSACTION_7);
+        TransactionEntity expectedEntity = txToEntityConverter.apply(ttd.TRANSACTION_7);
         expectedEntity.setDbId(2500L);
         assertEquals(Collections.singletonList(expectedEntity), finishingTransactions);
     }
@@ -131,43 +218,30 @@ public class PhasingPollTableTest extends EntityDbTableTest<PhasingPoll> {
 
     @Test
     void testGetActivePhasingDbIds() throws SQLException {
-        List<TransactionDbInfo> transactionDbInfoList = table.getActivePhasedTransactionDbIdsAfterHeight(8000);
-        assertEquals(Arrays.asList(new TransactionDbInfo(ttd.DB_ID_8, ttd.TRANSACTION_8.getId()),
-            new TransactionDbInfo(ttd.DB_ID_7, ttd.TRANSACTION_7.getId())), transactionDbInfoList);
+        List<TransactionDbInfo> transactionDbInfoList = table.getActivePhasedTransactionDbIds(ttd.TRANSACTION_8.getHeight() + 1);
 
-        transactionDbInfoList = table.getActivePhasedTransactionDbIdsAfterHeight(15000);
-        assertEquals(Arrays.asList(new TransactionDbInfo(ttd.DB_ID_8, ttd.TRANSACTION_8.getId()), new TransactionDbInfo(3100, 7)), transactionDbInfoList);
+        assertEquals(Arrays.asList(new TransactionDbInfo(ttd.DB_ID_8, ttd.TRANSACTION_8.getId()), new TransactionDbInfo(ttd.DB_ID_7, ttd.TRANSACTION_7.getId())), transactionDbInfoList);
+    }
 
-        transactionDbInfoList = table.getActivePhasedTransactionDbIdsAfterHeight(510001);
-        assertEquals(Collections.singletonList(new TransactionDbInfo(5500, 8)), transactionDbInfoList);
+    @Test
+    void testGetActivePhasingDbIdWhenHeightIsMax() throws SQLException {
+        List<TransactionDbInfo> transactionDbInfoList = table.getActivePhasedTransactionDbIds(Integer.MAX_VALUE);
 
-
-        transactionDbInfoList = table.getActivePhasedTransactionDbIdsAfterHeight(510000);
-        assertEquals(Collections.singletonList(new TransactionDbInfo(5500, 8)), transactionDbInfoList);
-
-        transactionDbInfoList = table.getActivePhasedTransactionDbIdsAfterHeight(509999);
-        assertEquals(Collections.emptyList(), transactionDbInfoList, "tx8 was not saved yet");
+        assertEquals(Arrays.asList(new TransactionDbInfo(ttd.DB_ID_12, ttd.TRANSACTION_12.getId()), new TransactionDbInfo(ttd.DB_ID_11, ttd.TRANSACTION_11.getId()), new TransactionDbInfo(ttd.DB_ID_13, ttd.TRANSACTION_13.getId())), transactionDbInfoList);
     }
 
     @Test
     void testGetActivePhasingDbIdAllPollsFinished() throws SQLException {
-        List<TransactionDbInfo> transactionDbInfoList = table.getActivePhasedTransactionDbIdsAfterHeight(553326);
+        List<TransactionDbInfo> transactionDbInfoList = table.getActivePhasedTransactionDbIds(ptd.POLL_0.getHeight() - 1);
 
         assertEquals(Collections.emptyList(), transactionDbInfoList);
     }
 
     @Test
-    void testGetActivePhasingDbIdsWhenNoPollsAtLowHeight() throws SQLException {
-        List<TransactionDbInfo> transactionDbInfoList = table.getActivePhasedTransactionDbIdsAfterHeight(ttd.TRANSACTION_0.getHeight());
+    void testGetActivePhasingDbIdsWhenNoPollsAtHeight() throws SQLException {
+        List<TransactionDbInfo> transactionDbInfoList = table.getActivePhasedTransactionDbIds(ttd.TRANSACTION_0.getHeight());
 
         assertEquals(Collections.emptyList(), transactionDbInfoList);
-    }
-
-    @Test
-    void testGetActivePhasingDbIds_blockNotFound() throws SQLException {
-        IllegalStateException ex = assertThrows(IllegalStateException.class, () -> table.getActivePhasedTransactionDbIdsAfterHeight(8001));
-
-        assertEquals("Block with height 8001 was not found or has unacceptable timestamp", ex.getMessage());
     }
 
     @Test
@@ -202,7 +276,7 @@ public class PhasingPollTableTest extends EntityDbTableTest<PhasingPoll> {
     void testGetByHoldingId() throws SQLException {
         List<TransactionEntity> transactions = table.getHoldingPhasedTransactions(ptd.POLL_5.getVoteWeighting().getHoldingId(), VoteWeighting.VotingModel.ASSET, 0, false, 0, 100, ptd.POLL_5.getHeight());
 
-        TransactionEntity expectedEntity = toEntityConverter.apply(ttd.TRANSACTION_13);
+        TransactionEntity expectedEntity = txToEntityConverter.apply(ttd.TRANSACTION_13);
         expectedEntity.setDbId(6000);
         assertEquals(List.of(expectedEntity), transactions);
     }
@@ -245,7 +319,7 @@ public class PhasingPollTableTest extends EntityDbTableTest<PhasingPoll> {
     @Test
     void testGetAccountPhasedTransactionsWithPaginationSkipFirstAtGenesisBlockHeight() {
         List<TransactionEntity> transactions = table.getAccountPhasedTransactions(ptd.POLL_0.getAccountId(), 1, 2, 0);
-        List<TransactionEntity> expectedEntities = toEntityConverter.convert(List.of(ttd.TRANSACTION_12, ttd.TRANSACTION_11));
+        List<TransactionEntity> expectedEntities = txToEntityConverter.convert(List.of(ttd.TRANSACTION_12, ttd.TRANSACTION_11));
         expectedEntities.get(0).setDbId(5000L);
         expectedEntities.get(1).setDbId(4500L);
         assertEquals(expectedEntities, transactions);
@@ -254,7 +328,7 @@ public class PhasingPollTableTest extends EntityDbTableTest<PhasingPoll> {
     @Test
     void testGetAllAccountPhasedTransactionsWithPagination() {
         List<TransactionEntity> transactions = table.getAccountPhasedTransactions(ptd.POLL_0.getAccountId(), 0, 100, 0);
-        List<TransactionEntity> expectedEntities = toEntityConverter.convert(List.of(ttd.TRANSACTION_13, ttd.TRANSACTION_12, ttd.TRANSACTION_11));
+        List<TransactionEntity> expectedEntities = txToEntityConverter.convert(List.of(ttd.TRANSACTION_13, ttd.TRANSACTION_12, ttd.TRANSACTION_11));
         expectedEntities.get(0).setDbId(6000);
         expectedEntities.get(1).setDbId(5000);
         expectedEntities.get(2).setDbId(4500);
@@ -302,16 +376,5 @@ public class PhasingPollTableTest extends EntityDbTableTest<PhasingPoll> {
         }));
     }
 
-    private void assertNotExistEntriesInTableForCondition(String tableName, String condition) {
-        DbUtils.inTransaction(getDatabaseManager(), (con) -> {
-            try (Statement stmt = con.createStatement()) {
-                try (ResultSet rs = stmt.executeQuery("SELECT 1 FROM " + tableName + " where  " + condition)) {
-                    Assertions.assertFalse(rs.next());
-                }
-            } catch (SQLException e) {
-                throw new RuntimeException(e.toString(), e);
-            }
-        });
-    }
 
 }

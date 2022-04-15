@@ -45,7 +45,7 @@ public abstract class VersionedValuesDbTableTest<T extends VersionedDeletableEnt
     @Override
     @Test
     public void testDelete() {
-        DbUtils.inTransaction(getDatabaseManager(), (con) -> {
+        DbUtils.inTransaction(extension, (con) -> {
 
             List<T> allLatest = getAllLatest();
             Map.Entry<DbKey, List<T>> valuesToDelete = getEntryWithListOfSize(allLatest, table.getDbKeyFactory(), 3);
@@ -85,7 +85,7 @@ public abstract class VersionedValuesDbTableTest<T extends VersionedDeletableEnt
 
     @Test
     public void testDeleteForSameHeight() {
-        DbUtils.inTransaction(getDatabaseManager(), (con) -> {
+        DbUtils.inTransaction(extension, (con) -> {
 
             List<T> allLatest = getAllLatest();
             Map.Entry<DbKey, List<T>> valuesToDelete = getEntryWithListOfSize(allLatest, table.getDbKeyFactory(), 2);
@@ -110,7 +110,7 @@ public abstract class VersionedValuesDbTableTest<T extends VersionedDeletableEnt
 
     @Test
     public void testDeleteValuesAtHeightBelowLastValueToDelete() {
-        DbUtils.inTransaction(getDatabaseManager(), (con) -> {
+        DbUtils.inTransaction(extension, (con) -> {
             Map.Entry<DbKey, List<T>> valuesToDelete = getEntryWithListOfSize(getAll(), table.getDbKeyFactory(), 6);
             int deleteHeight = sortByHeightAsc(valuesToDelete.getValue()).get(0).getHeight();
             boolean deleted = table.delete(valuesToDelete.getValue().get(0), deleteHeight);
@@ -132,7 +132,7 @@ public abstract class VersionedValuesDbTableTest<T extends VersionedDeletableEnt
 
     @Test
     public void testDeleteForIncorrectDbKey() {
-        DbUtils.inTransaction(getDatabaseManager(), (con) -> {
+        DbUtils.inTransaction(extension, (con) -> {
             T valueToDelete = getAllLatest().get(0);
             valueToDelete.setDbKey(mock(DbKey.class));
             assertThrows(RuntimeException.class, () -> table.delete(valueToDelete, valueToDelete.getHeight() + 1));
@@ -157,7 +157,7 @@ public abstract class VersionedValuesDbTableTest<T extends VersionedDeletableEnt
         List<T> toInsert = sortByHeightAsc(getEntryWithListOfSize(getAllLatest(), table.getDbKeyFactory(), 3).getValue());
         List<Long> dbIds = toInsert.stream().map(T::getDbId).collect(Collectors.toList());
 
-        DbUtils.inTransaction(getDatabaseManager(), (con) -> {
+        DbUtils.inTransaction(extension, (con) -> {
             List<T> values = table.get(table.getDbKeyFactory().newKey(toInsert.get(0)));
 
             assertEquals(toInsert, values);

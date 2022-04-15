@@ -7,6 +7,7 @@ package com.apollocurrency.aplwallet.apl.core.dao.state.derived;
 import com.apollocurrency.aplwallet.apl.core.dao.state.keyfactory.DbKey;
 import com.apollocurrency.aplwallet.apl.core.entity.state.derived.DerivedEntity;
 import com.apollocurrency.aplwallet.apl.testutil.DbUtils;
+import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
@@ -54,6 +55,11 @@ public abstract class ValuesDbTableTest<T extends DerivedEntity> extends BasicDb
         assertNotNull(getEntryWithListOfSize(getAllLatest(), table.getDbKeyFactory(), 3));
     }
 
+    @AfterEach
+    void tearDown() {
+        extension.cleanAndPopulateDb();
+    }
+
     @Test
     public void testGetByDbKey() {
         Map.Entry<DbKey, List<T>> entry = getEntryWithListOfSize(getAllLatest(), table.getDbKeyFactory(), 3);
@@ -74,7 +80,7 @@ public abstract class ValuesDbTableTest<T extends DerivedEntity> extends BasicDb
     @Test
     public void testInsert() {
         List<T> toInsert = dataToInsert();
-        DbUtils.inTransaction(getDatabaseManager(), (con) -> {
+        DbUtils.inTransaction(extension, (con) -> {
             table.insert(toInsert);
         });
         //check db
@@ -93,7 +99,7 @@ public abstract class ValuesDbTableTest<T extends DerivedEntity> extends BasicDb
         T t = dataToInsert.get(0);
         t.setDbKey(INCORRECT_DB_KEY);
 
-        RuntimeException ex = assertThrows(RuntimeException.class, () -> DbUtils.inTransaction(getDatabaseManager(), (con) -> table.insert(dataToInsert)));
+        RuntimeException ex = assertThrows(RuntimeException.class, () -> DbUtils.inTransaction(extension, (con) -> table.insert(dataToInsert)));
 
         assertTrue(ex.getCause() instanceof IllegalArgumentException);
     }

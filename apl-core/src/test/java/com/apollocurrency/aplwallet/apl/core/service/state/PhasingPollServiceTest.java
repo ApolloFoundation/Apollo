@@ -7,7 +7,6 @@ package com.apollocurrency.aplwallet.apl.core.service.state;
 import com.apollocurrency.aplwallet.apl.core.app.VoteWeighting;
 import com.apollocurrency.aplwallet.apl.core.chainid.BlockchainConfig;
 import com.apollocurrency.aplwallet.apl.core.config.DaoConfig;
-import com.apollocurrency.aplwallet.apl.core.config.JdbiConfiguration;
 import com.apollocurrency.aplwallet.apl.core.config.NtpTimeConfig;
 import com.apollocurrency.aplwallet.apl.core.converter.db.BlockEntityToModelConverter;
 import com.apollocurrency.aplwallet.apl.core.converter.db.BlockModelToEntityConverter;
@@ -31,6 +30,7 @@ import com.apollocurrency.aplwallet.apl.core.dao.state.phasing.PhasingVoteTable;
 import com.apollocurrency.aplwallet.apl.core.dao.state.publickey.GenesisPublicKeyTable;
 import com.apollocurrency.aplwallet.apl.core.dao.state.publickey.PublicKeyTable;
 import com.apollocurrency.aplwallet.apl.core.db.DatabaseManager;
+import com.apollocurrency.aplwallet.apl.core.config.JdbiConfiguration;
 import com.apollocurrency.aplwallet.apl.core.entity.state.account.Account;
 import com.apollocurrency.aplwallet.apl.core.entity.state.account.PublicKey;
 import com.apollocurrency.aplwallet.apl.core.entity.state.phasing.PhasingPoll;
@@ -69,7 +69,6 @@ import com.apollocurrency.aplwallet.apl.core.transaction.messages.AppendixValida
 import com.apollocurrency.aplwallet.apl.core.transaction.messages.PrunableLoadingService;
 import com.apollocurrency.aplwallet.apl.core.utils.CollectionUtil;
 import com.apollocurrency.aplwallet.apl.data.BlockTestData;
-import com.apollocurrency.aplwallet.apl.data.DbTestData;
 import com.apollocurrency.aplwallet.apl.data.PhasingTestData;
 import com.apollocurrency.aplwallet.apl.data.TransactionTestData;
 import com.apollocurrency.aplwallet.apl.extension.DbExtension;
@@ -111,8 +110,7 @@ import static org.mockito.Mockito.mock;
 public class PhasingPollServiceTest extends DbContainerBaseTest {
 
     @RegisterExtension
-    static DbExtension extension = new DbExtension(mariaDBContainer, DbTestData.getDbUrlProps(), "db/phasing-poll-data.sql", "db/schema.sql");
-
+    static DbExtension extension = new DbExtension(mariaDBContainer);
     private PropertiesHolder propertiesHolder = mock(PropertiesHolder.class);
     private NtpTimeConfig ntpTimeConfig = new NtpTimeConfig();
     private TimeService timeService = new TimeServiceImpl(ntpTimeConfig.time());
@@ -199,7 +197,7 @@ public class PhasingPollServiceTest extends DbContainerBaseTest {
 
     @Test
     void testGetActivePhasingDbIds() {
-        List<TransactionDbInfo> transactionDbInfoList = service.getActivePhasedTransactionDbInfoAtHeight(ttd.TRANSACTION_8.getHeight());
+        List<TransactionDbInfo> transactionDbInfoList = service.getActivePhasedTransactionDbInfoAtHeight(ttd.TRANSACTION_8.getHeight() + 1);
         assertEquals(Arrays.asList(new TransactionDbInfo(ttd.DB_ID_8, ttd.TRANSACTION_8.getId()), new TransactionDbInfo(ttd.DB_ID_7, ttd.TRANSACTION_7.getId())), transactionDbInfoList);
     }
 
@@ -207,19 +205,19 @@ public class PhasingPollServiceTest extends DbContainerBaseTest {
     void testGetActivePhasingDbIdWhenHeightIsMax() {
         extension.cleanAndPopulateDb();
 
-        List<TransactionDbInfo> transactionDbInfoList = service.getActivePhasedTransactionDbInfoAtHeight(ttd.TRANSACTION_12.getHeight());
-        assertEquals(Arrays.asList(new TransactionDbInfo(3100, 7), new TransactionDbInfo(ttd.DB_ID_12, ttd.TRANSACTION_12.getId()), new TransactionDbInfo(ttd.DB_ID_11, ttd.TRANSACTION_11.getId())), transactionDbInfoList);
+        List<TransactionDbInfo> transactionDbInfoList = service.getActivePhasedTransactionDbInfoAtHeight(ttd.TRANSACTION_12.getHeight() + 1);
+        assertEquals(Arrays.asList(new TransactionDbInfo(ttd.DB_ID_12, ttd.TRANSACTION_12.getId()), new TransactionDbInfo(ttd.DB_ID_11, ttd.TRANSACTION_11.getId())), transactionDbInfoList);
     }
 
     @Test
-    void testGetActivePhasingDbIdAllNoPollsAtLowHeight() {
-        List<TransactionDbInfo> transactionDbInfoList = service.getActivePhasedTransactionDbInfoAtHeight(2998);
+    void testGetActivePhasingDbIdAllPollsFinished() {
+        List<TransactionDbInfo> transactionDbInfoList = service.getActivePhasedTransactionDbInfoAtHeight(ptd.POLL_0.getHeight() - 1);
         assertEquals(Collections.emptyList(), transactionDbInfoList);
     }
 
     @Test
-    void testGetActivePhasingDbIdsWhenNoPollsAtHighHeight() {
-        List<TransactionDbInfo> transactionDbInfoList = service.getActivePhasedTransactionDbInfoAtHeight(553326);
+    void testGetActivePhasingDbIdsWhenNoPollsAtHeight() {
+        List<TransactionDbInfo> transactionDbInfoList = service.getActivePhasedTransactionDbInfoAtHeight(ttd.TRANSACTION_0.getHeight());
         assertEquals(Collections.emptyList(), transactionDbInfoList);
     }
 
@@ -385,13 +383,11 @@ public class PhasingPollServiceTest extends DbContainerBaseTest {
         blockchain.setLastBlock(blockTestData.LAST_BLOCK);
         long votes = service.countVotes(ptd.POLL_3);
 
-        assertEquals(1, votes);
+        assertEquals(2, votes);
     }
 
     @Test
     void testCountVotesForPollWithNewSavedLinkedTransactions() throws SQLException {
-        extension.cleanAndPopulateDb();
-
         BlockTestData blockTestData = new BlockTestData();
         blockchain.setLastBlock(blockTestData.LAST_BLOCK);
         inTransaction(connection -> transactionService.saveTransactions(
@@ -399,7 +395,7 @@ public class PhasingPollServiceTest extends DbContainerBaseTest {
         );
         long votes = service.countVotes(ptd.POLL_3);
 
-        assertEquals(2, votes);
+        assertEquals(3, votes);
     }
 
     @Test

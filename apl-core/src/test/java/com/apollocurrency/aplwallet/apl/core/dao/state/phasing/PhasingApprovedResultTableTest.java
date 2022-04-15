@@ -5,36 +5,51 @@
 package com.apollocurrency.aplwallet.apl.core.dao.state.phasing;
 
 import com.apollocurrency.aplwallet.apl.core.dao.DbContainerBaseTest;
+import com.apollocurrency.aplwallet.apl.core.db.DatabaseManager;
+import com.apollocurrency.aplwallet.apl.core.config.JdbiConfiguration;
 import com.apollocurrency.aplwallet.apl.core.entity.state.phasing.PhasingApprovalResult;
-import com.apollocurrency.aplwallet.apl.data.DbTestData;
+import com.apollocurrency.aplwallet.apl.core.service.fulltext.FullTextConfigImpl;
+import com.apollocurrency.aplwallet.apl.core.service.state.DerivedDbTablesRegistryImpl;
 import com.apollocurrency.aplwallet.apl.data.PhasingApprovedResultTestData;
 import com.apollocurrency.aplwallet.apl.extension.DbExtension;
 import com.apollocurrency.aplwallet.apl.testutil.DbUtils;
+import com.apollocurrency.aplwallet.apl.util.cdi.transaction.JdbiHandleFactory;
 import lombok.extern.slf4j.Slf4j;
+import org.jboss.weld.junit.MockBean;
+import org.jboss.weld.junit5.EnableWeld;
+import org.jboss.weld.junit5.WeldInitiator;
+import org.jboss.weld.junit5.WeldSetup;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.RegisterExtension;
 
-import javax.enterprise.event.Event;
+import javax.inject.Inject;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.mockito.Mockito.mock;
 
 @Slf4j
 
 @Tag("slow")
+@EnableWeld
 class PhasingApprovedResultTableTest extends DbContainerBaseTest {
 
     @RegisterExtension
-    DbExtension extension = new DbExtension(mariaDBContainer, DbTestData.getDbUrlProps(), "db/phasing-poll-data.sql", "db/schema.sql");
+    static DbExtension extension = new DbExtension(mariaDBContainer);
 
+    @WeldSetup
+    public WeldInitiator weld = WeldInitiator.from(
+        FullTextConfigImpl.class,
+        PhasingApprovedResultTable.class,
+        DerivedDbTablesRegistryImpl.class, JdbiHandleFactory.class, JdbiConfiguration.class)
+        .addBeans(MockBean.of(extension.getDatabaseManager(), DatabaseManager.class))
+        .build();
+    @Inject
     PhasingApprovedResultTable table;
     private PhasingApprovedResultTestData data;
 
     @BeforeEach
     void setUp() {
-        table = new PhasingApprovedResultTable(extension.getDatabaseManager(), mock(Event.class));
         data = new PhasingApprovedResultTestData();
     }
 

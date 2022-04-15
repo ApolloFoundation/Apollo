@@ -1,11 +1,10 @@
 /*
- * Copyright © 2018-2022 Apollo Foundation
+ * Copyright © 2018-2019 Apollo Foundation
  */
 
 package com.apollocurrency.aplwallet.apl.core.shard.helper;
 
 import com.apollocurrency.aplwallet.apl.core.dao.state.derived.DerivedTableInterface;
-import com.apollocurrency.aplwallet.apl.core.dao.state.derived.MinMaxValue;
 import com.apollocurrency.aplwallet.apl.core.dao.state.derived.PrunableDbTable;
 
 import java.nio.file.Path;
@@ -77,8 +76,6 @@ public interface CsvExporter {
      */
     long exportDerivedTable(DerivedTableInterface derivedTableInterface, int targetHeight, int batchLimit, Set<String> excludedColumns);
 
-
-    long exportDerivedTableByUniqueLongColumnPagination(String table, MinMaxValue minMaxValue, int batchLimit, Set<String> excludedColumns);
 
     /**
      * Export derived table entries ordered by custom sort. Custom sort may include few columns. Note, that it is a slow method for export, because it uses

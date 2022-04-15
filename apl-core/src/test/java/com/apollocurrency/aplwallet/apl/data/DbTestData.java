@@ -1,25 +1,18 @@
 /*
- *  Copyright © 2018-2022 Apollo Foundation
+ *  Copyright © 2018-2019 Apollo Foundation
  */
 
 package com.apollocurrency.aplwallet.apl.data;
 
-import com.apollocurrency.aplwallet.apl.extension.DbExtension;
-import com.apollocurrency.aplwallet.apl.testutil.DbManipulator;
 import com.apollocurrency.aplwallet.apl.util.injectable.DbProperties;
-import com.apollocurrency.aplwallet.apl.util.injectable.PropertiesHolder;
-import lombok.AccessLevel;
-import lombok.NoArgsConstructor;
 import org.testcontainers.containers.GenericContainer;
 import org.testcontainers.containers.MariaDBContainer;
 
 import java.nio.file.Path;
 import java.nio.file.Paths;
-import java.util.Properties;
 import java.util.Random;
 import java.util.UUID;
 
-@NoArgsConstructor(access = AccessLevel.PRIVATE)
 public class DbTestData {
     private static final Random random = new Random();
     private static final DbProperties DB_PROPERTIES = DbProperties.builder()
@@ -72,15 +65,5 @@ public class DbTestData {
 
     public static DbProperties getDbFilePropertiesByPath(Path dbPath) {
         return DB_PROPERTIES.deepCopy();
-    }
-
-    public static DbExtension getSmcDbExtension(GenericContainer mariaDBContainer, String schemaScript, String dataScript) {
-        var prop = new Properties();
-        prop.put(DbManipulator.DB_POPULATOR_STRING_TOKENIZER_DELIM, "#");
-
-        return new DbExtension(mariaDBContainer, DbTestData.getInMemDbProps(),
-            new PropertiesHolder(prop),
-            schemaScript,
-            dataScript);
     }
 }

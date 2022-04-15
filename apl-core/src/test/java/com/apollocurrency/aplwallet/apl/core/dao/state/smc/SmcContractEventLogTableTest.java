@@ -16,6 +16,8 @@ import com.apollocurrency.aplwallet.apl.data.TransactionTestData;
 import com.apollocurrency.aplwallet.apl.extension.DbExtension;
 import com.apollocurrency.aplwallet.apl.extension.TemporaryFolderExtension;
 import com.apollocurrency.aplwallet.apl.smc.model.AplAddress;
+import com.apollocurrency.aplwallet.apl.testutil.DbManipulator;
+import com.apollocurrency.aplwallet.apl.util.Convert2;
 import com.apollocurrency.aplwallet.apl.util.env.config.Chain;
 import com.apollocurrency.aplwallet.apl.util.injectable.PropertiesHolder;
 import com.apollocurrency.smc.data.type.Address;
@@ -33,6 +35,7 @@ import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.CsvSource;
 
 import javax.inject.Inject;
+import java.util.Properties;
 
 import static com.apollocurrency.smc.util.HexUtils.parseHex;
 import static org.junit.jupiter.api.Assertions.assertArrayEquals;
@@ -52,9 +55,17 @@ class SmcContractEventLogTableTest extends DbContainerBaseTest {
     @RegisterExtension
     static TemporaryFolderExtension temporaryFolderExtension = new TemporaryFolderExtension();
     @RegisterExtension
-    static DbExtension dbExtension = dbExtension = DbTestData.getSmcDbExtension(mariaDBContainer
-        , "db/schema.sql"
-        , "db/smc_event-data.sql");
+    static DbExtension dbExtension;
+
+    static {
+        Convert2.init("APL", 1739068987193023818L);
+        var prop = new Properties();
+        prop.put(DbManipulator.DB_POPULATOR_STRING_TOKENIZER_DELIM, "#");
+        dbExtension = new DbExtension(mariaDBContainer, DbTestData.getInMemDbProps(),
+            new PropertiesHolder(prop),
+            "db/schema.sql",
+            "db/smc_event-data.sql");
+    }
 
     BlockchainConfig blockchainConfig = mock(BlockchainConfig.class);
     Chain chain = mock(Chain.class);

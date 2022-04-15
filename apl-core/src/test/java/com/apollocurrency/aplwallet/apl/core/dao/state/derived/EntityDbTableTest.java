@@ -13,6 +13,7 @@ import com.apollocurrency.aplwallet.apl.util.Filter;
 import com.apollocurrency.aplwallet.apl.util.db.DbClause;
 import com.apollocurrency.aplwallet.apl.util.db.DbIterator;
 import com.apollocurrency.aplwallet.apl.util.db.FilteringIterator;
+import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -63,6 +64,11 @@ public abstract class EntityDbTableTest<T extends DerivedEntity> extends BasicDb
         table = (EntityDbTable<T>) getDerivedDbTable();
     }
 
+    @AfterEach
+    void tearDown() {
+        extension.cleanAndPopulateDb();
+    }
+
     @Test
     public void testGetByDbKey() {
         List<T> all = getAllLatest();
@@ -84,7 +90,7 @@ public abstract class EntityDbTableTest<T extends DerivedEntity> extends BasicDb
         List<T> all = getAllLatest();
         T expected = all.get(2);
         DbKey dbKey = table.getDbKeyFactory().newKey(expected);
-        DbUtils.inTransaction(getDatabaseManager(), (con) -> {
+        DbUtils.inTransaction(extension, (con) -> {
             T actual = table.get(dbKey, true);
             assertEquals(expected, actual);
         });
@@ -97,7 +103,7 @@ public abstract class EntityDbTableTest<T extends DerivedEntity> extends BasicDb
         List<T> all = getAllLatest();
         T expected = all.get(0);
         DbKey dbKey = table.getDbKeyFactory().newKey(expected);
-        DbUtils.inTransaction(getDatabaseManager(), (con) -> {
+        DbUtils.inTransaction(extension, (con) -> {
             T actual = table.get(dbKey, false);
             assertEquals(expected, actual);
         });
@@ -400,7 +406,7 @@ public abstract class EntityDbTableTest<T extends DerivedEntity> extends BasicDb
     @Test
     public void testGetManyOnConnectionWithoutCache() {
         List<T> allExpectedData = sortByHeightDesc(getAll());
-        DbUtils.inTransaction(getDatabaseManager(), (con) -> {
+        DbUtils.inTransaction(extension, (con) -> {
                 try {
                     PreparedStatement pstm = con.prepareStatement("select * from " + table.getTableName() + " order by height desc, db_id desc");
                     List<T> all = CollectionUtil.toList(table.getManyBy(con, pstm, false));
@@ -566,7 +572,7 @@ public abstract class EntityDbTableTest<T extends DerivedEntity> extends BasicDb
     @Test
     public void testInsert() {
         T value = valueToInsert();
-        DbUtils.inTransaction(getDatabaseManager(), (con) -> {
+        DbUtils.inTransaction(extension, (con) -> {
             table.insert(value);
             assertEquals(value, table.get(table.getDbKeyFactory().newKey(value)));
         });
@@ -575,7 +581,7 @@ public abstract class EntityDbTableTest<T extends DerivedEntity> extends BasicDb
     @Test
     public void testInsertAlreadyExist() {
         T value = getAllLatest().get(1);
-        DbUtils.inTransaction(getDatabaseManager(), (con) -> {
+        DbUtils.inTransaction(extension, (con) -> {
             value.setHeight(value.getHeight() + 1);
 
             table.insert(value);

@@ -172,7 +172,6 @@ public class TransactionApplier {
         long feeATM = transaction.getFeeATM();
         Account sender = accountService.getAccount(transaction.getSenderId());
         accountService.addToBalanceATM(sender, LedgerEvent.FAILED_VALIDATION_TRANSACTION_FEE, transaction.getId(), 0, -feeATM);
-        log.info("Fee charged from failed by validation tx {}, from account {}, fee {}, height {}", transaction.getId(), sender.getId(), feeATM, transaction.getHeight());
     }
 
     @TransactionFee({FeeMarker.UNCONFIRMED_BALANCE, FeeMarker.FEE})

@@ -376,8 +376,6 @@ public class BlockchainProcessorImpl implements BlockchainProcessor {
                         log.info("Last block {} was replaced by {} at height {}", lastBlock.getStringId(), peerBlock.getStringId(), blockchain.getHeight());
                     } catch (BlockNotAcceptedException | AplBlockException e) {
                         log.info("Replacement block failed to be accepted, pushing back our last block");
-                        // reset tx fail statuses for our block to push it again
-                        lastBlock.getTransactions().forEach(Transaction::resetFail);
                         pushBlock(lastBlock);
                         transactionProcessor.processLater(peerBlock.getTransactions());
                     }

@@ -50,9 +50,7 @@ import static org.mockito.Mockito.mock;
 class SmcContractMappingTableTest extends DbContainerBaseTest {
 
     @RegisterExtension
-    static DbExtension dbExtension = DbTestData.getSmcDbExtension(mariaDBContainer
-        , "db/schema.sql"
-        , "db/smc_mapping-data.sql");
+    static DbExtension dbExtension = new DbExtension(mariaDBContainer, DbTestData.getInMemDbProps(), "db/smc-mapping-data.sql", "db/schema.sql");
 
     @Inject
     SmcContractMappingTable table;

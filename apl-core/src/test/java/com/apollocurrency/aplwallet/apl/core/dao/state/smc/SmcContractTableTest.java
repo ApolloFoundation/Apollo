@@ -67,9 +67,7 @@ import static org.mockito.Mockito.when;
 class SmcContractTableTest extends DbContainerBaseTest {
 
     @RegisterExtension
-    static DbExtension dbExtension = DbTestData.getSmcDbExtension(mariaDBContainer
-        , "db/schema.sql"
-        , "db/smc-data.sql");
+    static DbExtension dbExtension = new DbExtension(mariaDBContainer, DbTestData.getInMemDbProps(), "db/smc-data.sql", "db/schema.sql");
 
     static {
         Convert2.init("APL", 1739068987193023818L);
@@ -78,7 +76,7 @@ class SmcContractTableTest extends DbContainerBaseTest {
     @Inject
     SmcContractTable table;
 
-    long contractAddress = 832074176060907552L;
+    long contractAddress = 7307657537262705518L;
 
     private Blockchain blockchain = mock(BlockchainImpl.class);
     private BlockchainConfig blockchainConfig = mock(BlockchainConfig.class);
@@ -116,7 +114,7 @@ class SmcContractTableTest extends DbContainerBaseTest {
         SmcContractEntity entity = table.get(SmcContractTable.KEY_FACTORY.newKey(contractAddress));
         assertNotNull(entity);
         assertEquals(contractAddress, entity.getAddress());
-        assertEquals("MyAPL20PersonalLockable", entity.getContractName());
+        assertEquals("Deal", entity.getContractName());
     }
 
     @Test
@@ -151,7 +149,7 @@ class SmcContractTableTest extends DbContainerBaseTest {
         SmcContractEntity entity = table.get(SmcContractTable.KEY_FACTORY.newKey(contractAddress));
         assertNotNull(entity);
         assertEquals(contractAddress, entity.getAddress());
-        assertEquals("MyAPL20PersonalLockable", entity.getContractName());
+        assertEquals("Deal", entity.getContractName());
         entity.setData("Class Stub {}");
         entity.setHeight(15);
 
@@ -196,8 +194,8 @@ class SmcContractTableTest extends DbContainerBaseTest {
         assertEquals(1, result.size());
         var value = result.get(0);
         assertEquals(Convert2.rsAccount(contractAddress), value.getAddress());
-        assertEquals("MyAPL20PersonalLockable", value.getName());
-        assertEquals(Convert2.fromEpochTime(123723548), value.getTimestamp());
+        assertEquals("Deal", value.getName());
+        assertEquals(Convert2.fromEpochTime(105502204), value.getTimestamp());//from transaction
     }
 
     @Test
@@ -211,7 +209,7 @@ class SmcContractTableTest extends DbContainerBaseTest {
     }
 
     @ParameterizedTest
-    @ValueSource(strings = {"", "MyAPL20PersonalLockable", "MyAPL"})
+    @ValueSource(strings = {"", "Deal", "De"})
     @NullSource
     void getContractsByName(String contractName) throws AplException.NotValidException {
         //WHEN
@@ -222,8 +220,8 @@ class SmcContractTableTest extends DbContainerBaseTest {
         assertEquals(1, result.size());
         var value = result.get(0);
         assertEquals(Convert2.rsAccount(contractAddress), value.getAddress());
-        assertEquals("MyAPL20PersonalLockable", value.getName());
-        assertEquals(Convert2.fromEpochTime(123723548), value.getTimestamp());
+        assertEquals("Deal", value.getName());
+        assertEquals(Convert2.fromEpochTime(105502204), value.getTimestamp());//from transaction
     }
 
     @ParameterizedTest
@@ -240,15 +238,15 @@ class SmcContractTableTest extends DbContainerBaseTest {
     @Test
     void getContractsByAddress() throws AplException.NotValidException {
         //WHEN
-        List<ContractDetails> result = getMockContractDetailsList(contractAddress, null, "MyAPL20PersonalLockable", null, 100);
+        List<ContractDetails> result = getMockContractDetailsList(contractAddress, null, "Deal", null, 100);
 
         //THEN
         assertNotNull(result);
         assertEquals(1, result.size());
         var value = result.get(0);
         assertEquals(Convert2.rsAccount(contractAddress), value.getAddress());
-        assertEquals("MyAPL20PersonalLockable", value.getName());
-        assertEquals(Convert2.fromEpochTime(123723548), value.getTimestamp());
+        assertEquals("Deal", value.getName());
+        assertEquals(Convert2.fromEpochTime(105502204), value.getTimestamp());//from transaction
     }
 
     @Test
