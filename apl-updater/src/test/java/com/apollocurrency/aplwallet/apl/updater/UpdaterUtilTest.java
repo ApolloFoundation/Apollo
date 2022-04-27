@@ -61,7 +61,7 @@ public class UpdaterUtilTest {
 
         assertNotNull(result);
         assertEquals(result.size(), 1);
-        assertHasPair(result, "www.firstbridge.io", "www.firstbridge.io");
+        assertHasPair(result, "Andrii Boiarskyi", "Andrii Boiarskyi");
     }
 
 
@@ -107,7 +107,7 @@ public class UpdaterUtilTest {
         final X509Certificate cert = (X509Certificate) certificate;
         final sun.security.x509.X500Name subjectDN = (sun.security.x509.X500Name) cert.getSubjectDN();
         final String commonName = subjectDN.getCommonName();
-        assertEquals("www.firstbridge.io", commonName, commonName + " does not match expected " +
+        assertEquals("Andrii Boiarskyi", commonName, commonName + " does not match expected " +
             "www.firstbridge.io for loaded debug certificate");
     }
 
