@@ -40,17 +40,16 @@ public class UpdaterUtilTest {
         for (CertificatePair pair : result) {
             log.debug("pair: [{}, {}]", pair.getFirstCertificate().toString(), pair.getSecondCertificate().toString());
         }
-
         assertEquals(result.size(), 9);
-        assertHasPair(result, "Andrew Boyarsky", "Denis Demut");
-        assertHasPair(result, "Andrew Boyarsky", "George Dzhyncharadze");
-        assertHasPair(result, "Andrew Boyarsky", "Sviatoslav Golda");
+        assertHasPair(result, "Andrii Boiarskyi", "Denis Demut");
+        assertHasPair(result, "Andrii Boiarskyi", "Dzhyncharadze George");
+        assertHasPair(result, "Andrii Boiarskyi", "Oleksandr Losik");
+        assertHasPair(result, "Andrii Zinchenko", "Denis Demut");
+        assertHasPair(result, "Andrii Zinchenko", "Dzhyncharadze George");
+        assertHasPair(result, "Andrii Zinchenko", "Oleksandr Losik");
         assertHasPair(result, "Rostyslav Golda", "Denis Demut");
-        assertHasPair(result, "Rostyslav Golda", "George Dzhyncharadze");
-        assertHasPair(result, "Rostyslav Golda", "Sviatoslav Golda");
-        assertHasPair(result, "Maksim Khabenko", "Denis Demut");
-        assertHasPair(result, "Maksim Khabenko", "George Dzhyncharadze");
-        assertHasPair(result, "Maksim Khabenko", "Sviatoslav Golda");
+        assertHasPair(result, "Rostyslav Golda", "Dzhyncharadze George");
+        assertHasPair(result, "Rostyslav Golda", "Oleksandr Losik");
     }
 
     @Test
@@ -79,8 +78,8 @@ public class UpdaterUtilTest {
         assertEquals(6, result.size());
 
         // Assert that for each filename a correspondent certificate was created
-        final Set<String> names = Set.of("Denis Demut", "Andrew Boyarsky", "Rostyslav Golda", "Maksim Khabenko",
-            "George Dzhyncharadze", "Sviatoslav Golda");
+        final Set<String> names = Set.of("Denis Demut", "Andrii Boiarskyi", "Rostyslav Golda", "Andrii Zinchenko",
+            "Dzhyncharadze George", "Oleksandr Losik");
         for (Certificate certificate : result) {
             final X509Certificate cert = (X509Certificate) certificate;
             final sun.security.x509.X500Name subjectDN = (sun.security.x509.X500Name) cert.getSubjectDN();
