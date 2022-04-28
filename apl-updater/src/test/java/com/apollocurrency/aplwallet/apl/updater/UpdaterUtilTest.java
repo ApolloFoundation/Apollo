@@ -40,7 +40,7 @@ public class UpdaterUtilTest {
         for (CertificatePair pair : result) {
             log.debug("pair: [{}, {}]", pair.getFirstCertificate().toString(), pair.getSecondCertificate().toString());
         }
-        assertEquals(result.size(), 9);
+        assertEquals(result.size(), 12);
         assertHasPair(result, "Andrii Boiarskyi", "Denis Demut");
         assertHasPair(result, "Andrii Boiarskyi", "Dzhyncharadze George");
         assertHasPair(result, "Andrii Boiarskyi", "Oleksandr Losik");
@@ -50,6 +50,9 @@ public class UpdaterUtilTest {
         assertHasPair(result, "Rostyslav Golda", "Denis Demut");
         assertHasPair(result, "Rostyslav Golda", "Dzhyncharadze George");
         assertHasPair(result, "Rostyslav Golda", "Oleksandr Losik");
+        assertHasPair(result, "Maksim Khabenko", "Denis Demut");
+        assertHasPair(result, "Maksim Khabenko", "Dzhyncharadze George");
+        assertHasPair(result, "Maksim Khabenko", "Oleksandr Losik");
     }
 
     @Test
@@ -75,11 +78,11 @@ public class UpdaterUtilTest {
         Set<Certificate> result = UpdaterUtil.readCertificates("any-dir", "any-prefix", "any-suffix");
 
         assertNotNull(result);
-        assertEquals(6, result.size());
+        assertEquals(7, result.size());
 
         // Assert that for each filename a correspondent certificate was created
         final Set<String> names = Set.of("Denis Demut", "Andrii Boiarskyi", "Rostyslav Golda", "Andrii Zinchenko",
-            "Dzhyncharadze George", "Oleksandr Losik");
+            "Dzhyncharadze George", "Oleksandr Losik", "Maksim Khabenko");
         for (Certificate certificate : result) {
             final X509Certificate cert = (X509Certificate) certificate;
             final sun.security.x509.X500Name subjectDN = (sun.security.x509.X500Name) cert.getSubjectDN();

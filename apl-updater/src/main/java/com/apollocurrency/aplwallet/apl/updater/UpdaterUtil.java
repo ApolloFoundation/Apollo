@@ -54,24 +54,29 @@ public class UpdaterUtil {
                 Certificate certificate1_1 = readCertificate("certs/1_1.crt");
                 Certificate certificate1_2 = readCertificate("certs/1_2.crt");
                 Certificate certificate1_3 = readCertificate("certs/1_3.crt");
+                Certificate certificate1_4 = readCertificate("certs/1_4.crt");
                 Certificate certificate2_1 = readCertificate("certs/2_1.crt");
                 Certificate certificate2_2 = readCertificate("certs/2_2.crt");
                 Certificate certificate2_3 = readCertificate("certs/2_3.crt");
                 certificates.add(certificate1_1);
                 certificates.add(certificate1_2);
                 certificates.add(certificate1_3);
+                certificates.add(certificate1_4);
                 certificates.add(certificate2_1);
                 certificates.add(certificate2_2);
                 certificates.add(certificate2_3);
                 certificatePairs.add(new CertificatePair(certificate2_1, certificate1_1));
                 certificatePairs.add(new CertificatePair(certificate2_1, certificate1_2));
                 certificatePairs.add(new CertificatePair(certificate2_1, certificate1_3));
+                certificatePairs.add(new CertificatePair(certificate2_1, certificate1_4));
                 certificatePairs.add(new CertificatePair(certificate2_2, certificate1_1));
                 certificatePairs.add(new CertificatePair(certificate2_2, certificate1_2));
                 certificatePairs.add(new CertificatePair(certificate2_2, certificate1_3));
+                certificatePairs.add(new CertificatePair(certificate2_2, certificate1_4));
                 certificatePairs.add(new CertificatePair(certificate2_3, certificate1_1));
                 certificatePairs.add(new CertificatePair(certificate2_3, certificate1_2));
                 certificatePairs.add(new CertificatePair(certificate2_3, certificate1_3));
+                certificatePairs.add(new CertificatePair(certificate2_3, certificate1_4));
             } else {
                 // debug certificates to test local update easily without need to double decrypt url using real keys
                 Certificate certificate1_1 = readCertificate("debug-certs/1_1.crt");
