@@ -5,7 +5,6 @@
 package com.apollocurrency.aplwallet.apl.updater;
 
 import com.apollocurrency.aplwallet.apl.core.chainid.BlockchainConfig;
-import com.apollocurrency.aplwallet.apl.util.db.TransactionalDataSource;
 import com.apollocurrency.aplwallet.apl.core.model.Transaction;
 import com.apollocurrency.aplwallet.apl.core.service.state.account.AccountService;
 import com.apollocurrency.aplwallet.apl.core.transaction.TransactionType;
@@ -25,6 +24,7 @@ import com.apollocurrency.aplwallet.apl.updater.pdu.PlatformDependentUpdater;
 import com.apollocurrency.aplwallet.apl.updater.service.UpdaterService;
 import com.apollocurrency.aplwallet.apl.util.DoubleByteArrayTuple;
 import com.apollocurrency.aplwallet.apl.util.Version;
+import com.apollocurrency.aplwallet.apl.util.db.TransactionalDataSource;
 import com.apollocurrency.aplwallet.apl.util.env.Arch;
 import com.apollocurrency.aplwallet.apl.util.env.OS;
 import com.apollocurrency.aplwallet.apl.util.injectable.DbProperties;

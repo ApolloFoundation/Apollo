@@ -1,5 +1,5 @@
 /*
- * Copyright © 2018 Apollo Foundation
+ * Copyright © 2018-2022 Apollo Foundation
  */
 
 package com.apollocurrency.aplwallet.apl.updater;
@@ -49,8 +49,8 @@ public class UpdaterUtil {
 
     public static void init(boolean useDebugCerts) {
         try {
+            // using certificated from apl-updater module: apl-updater/src/main/resources
             if (!useDebugCerts) {
-
                 Certificate certificate1_1 = readCertificate("certs/1_1.crt");
                 Certificate certificate1_2 = readCertificate("certs/1_2.crt");
                 Certificate certificate1_3 = readCertificate("certs/1_3.crt");
@@ -78,6 +78,7 @@ public class UpdaterUtil {
                 certificatePairs.add(new CertificatePair(certificate2_3, certificate1_3));
                 certificatePairs.add(new CertificatePair(certificate2_3, certificate1_4));
             } else {
+                // debug certificates to test local update easily without need to double decrypt url using real keys
                 Certificate certificate1_1 = readCertificate("debug-certs/1_1.crt");
                 Certificate certificate2_1 = readCertificate("debug-certs/2_1.crt");
                 certificates.add(certificate1_1);
@@ -134,7 +135,7 @@ public class UpdaterUtil {
     }
 
     public static Set<Certificate> readCertificates(String directory, String prefix, String suffix) {
-        return readCertificates(directory, suffix, prefix);
+        return readCertificates(directory, suffix, new String[] {prefix});
     }
 
     public static Set<Certificate> readCertificates(String directory, String suffix, String... prefixes) {
