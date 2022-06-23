@@ -4,7 +4,7 @@ All notable changes to this project will be documented in this file. Dates are d
 
 ### [1.51.0](https://github.com/ApolloFoundation/Apollo/releases/tag/1.51.0)
 
-> 23 June 2022
+> 24 June 2022
 
 Significant sharding speedup and robustness upgrade, general refactoring and tests fixes
 
