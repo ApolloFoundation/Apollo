@@ -349,7 +349,7 @@ public class PhasingPollServiceImpl implements PhasingPollService {
     @Override
     public List<TransactionDbInfo> getActivePhasedTransactionDbInfoAtHeight(int height) {
         try {
-            return phasingPollTable.getActivePhasedTransactionDbIds(height);
+            return phasingPollTable.getActivePhasedTransactionDbIdsAfterHeight(height);
         } catch (SQLException e) {
             throw new RuntimeException(e.toString(), e);
         }

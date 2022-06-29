@@ -1,5 +1,5 @@
 /*
- * Copyright © 2018-2019 Apollo Foundation
+ * Copyright © 2018-2022 Apollo Foundation
  */
 
 package com.apollocurrency.aplwallet.apl.core.shard;
@@ -10,11 +10,13 @@ import com.apollocurrency.aplwallet.apl.core.dao.appdata.ShardDao;
 import com.apollocurrency.aplwallet.apl.core.dao.appdata.ShardRecoveryDao;
 import com.apollocurrency.aplwallet.apl.core.dao.appdata.ShardRecoveryDaoJdbc;
 import com.apollocurrency.aplwallet.apl.core.dao.state.derived.DerivedTableInterface;
+import com.apollocurrency.aplwallet.apl.core.dao.state.derived.MinMaxValue;
 import com.apollocurrency.aplwallet.apl.core.dao.state.derived.PrunableDbTable;
 import com.apollocurrency.aplwallet.apl.core.db.DatabaseManager;
 import com.apollocurrency.aplwallet.apl.core.entity.appdata.Shard;
 import com.apollocurrency.aplwallet.apl.core.entity.appdata.ShardRecovery;
 import com.apollocurrency.aplwallet.apl.core.entity.appdata.ShardState;
+import com.apollocurrency.aplwallet.apl.core.entity.state.derived.DerivedEntity;
 import com.apollocurrency.aplwallet.apl.core.service.appdata.TrimService;
 import com.apollocurrency.aplwallet.apl.core.service.state.DerivedTablesRegistry;
 import com.apollocurrency.aplwallet.apl.core.shard.commands.CommandParamInfo;
@@ -510,7 +512,7 @@ public class ShardEngineImpl implements ShardEngine {
     private Long exportDerivedTable(TableInfo info, CommandParamInfo paramInfo,
                                     Set<String> excludedColumns, int pruningTime,
                                     String sortColumn) {
-        DerivedTableInterface derivedTable = registry.getDerivedTable(info.getName());
+        DerivedTableInterface<? extends DerivedEntity> derivedTable = registry.getDerivedTable(info.getName());
         log.trace("Export derived: {} (isPrunable = {}) = {}", info.getName(), info.isPrunable(), derivedTable != null ? derivedTable.getName() : "NULL");
         if (derivedTable != null) {
             if (!info.isPrunable()) {
@@ -520,11 +522,9 @@ public class ShardEngineImpl implements ShardEngine {
                     return csvExporter.exportDerivedTable(derivedTable, paramInfo.getSnapshotBlockHeight(), paramInfo.getCommitBatchSize());
                 } else {
                     // some column(s) are excluded
-                    if (sortColumn != null && !sortColumn.isEmpty()) {
+                    if (StringUtils.isNotBlank(sortColumn)) {
                         // there is sorting column
-                        return csvExporter.exportDerivedTableCustomSort(
-                            derivedTable, paramInfo.getSnapshotBlockHeight(),
-                            paramInfo.getCommitBatchSize(), excludedColumns, sortColumn);
+                        return exportSorted(derivedTable, paramInfo, excludedColumns, sortColumn);
                     } else {
                         // no special sorting column, most probable DB_ID will be used by default
                         return csvExporter.exportDerivedTable(
@@ -540,6 +540,19 @@ public class ShardEngineImpl implements ShardEngine {
         } else {
             durableTaskUpdateByState(FAILED, null, null);
             throw new IllegalArgumentException("Unable to find derived table " + info.getName() + " in derived table registry");
+        }
+    }
+
+    private long exportSorted(DerivedTableInterface<? extends DerivedEntity> table, CommandParamInfo paramInfo, Set<String> excludedColumns, String sortColumn) {
+        boolean oneUniqueColumn = sortColumn.split(",").length == 1;
+        if (oneUniqueColumn) { // assume that this column is of type Long
+            MinMaxValue minMaxValue = table.getMinMaxValue(paramInfo.getSnapshotBlockHeight());
+
+            return csvExporter.exportDerivedTableByUniqueLongColumnPagination(table.getName(),
+                minMaxValue, paramInfo.getCommitBatchSize(), excludedColumns);
+        } else {
+            return csvExporter.exportDerivedTableCustomSort(table, paramInfo.getSnapshotBlockHeight(),
+                paramInfo.getCommitBatchSize(), excludedColumns, sortColumn);
         }
     }
 

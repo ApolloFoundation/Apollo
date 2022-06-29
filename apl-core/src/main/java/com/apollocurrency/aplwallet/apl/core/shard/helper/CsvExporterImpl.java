@@ -1,5 +1,5 @@
 /*
- * Copyright © 2018-2019 Apollo Foundation
+ * Copyright © 2018-2022 Apollo Foundation
  */
 
 package com.apollocurrency.aplwallet.apl.core.shard.helper;
@@ -92,7 +92,8 @@ public class CsvExporterImpl implements CsvExporter {
         return exportDerivedTableByUniqueLongColumnPagination(derivedTableInterface.getName(), derivedTableInterface.getMinMaxValue(targetHeight), batchLimit, excludedColumns);
     }
 
-    private long exportDerivedTableByUniqueLongColumnPagination(String table, MinMaxValue minMaxValue, int batchLimit, Set<String> excludedColumns) {
+    @Override
+    public long exportDerivedTableByUniqueLongColumnPagination(String table, MinMaxValue minMaxValue, int batchLimit, Set<String> excludedColumns) {
         log.trace("exportDerivedTableByUniqueLongColumnPagination: {}, minMaxValue = {}, batchLimit = {}, excludedColumns = {}",
             table, minMaxValue, batchLimit, excludedColumns);
         return exportTable(table, "WHERE  " + minMaxValue.getColumn() + " BETWEEN ? and ? and height <= ? ORDER BY " + minMaxValue.getColumn() + " LIMIT ?", minMaxValue, excludedColumns, (pstmt, minMaxColumnValue, totalProcessed) -> {
