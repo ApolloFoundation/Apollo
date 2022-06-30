@@ -117,7 +117,7 @@ public class LuceneFullTextSearchEngine implements FullTextSearchEngine {
             String query = row.getTableKey();
             Document document = new Document();
             document.add(new StringField("_QUERY", query, Field.Store.YES));
-            long now = ntpTime.getTime();
+            long now = ntpTime.currentTime();
             document.add(new TextField("_MODIFIED", DateTools.timeToString(now, DateTools.Resolution.SECOND), Field.Store.NO));
             document.add(new TextField("_TABLE", schemaTableName, Field.Store.NO));
             StringJoiner sj = new StringJoiner(" ");
