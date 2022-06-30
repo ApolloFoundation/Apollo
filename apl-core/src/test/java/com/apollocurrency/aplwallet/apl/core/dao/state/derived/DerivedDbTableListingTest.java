@@ -9,9 +9,9 @@ import com.apollocurrency.aplwallet.apl.core.chainid.BlockchainConfig;
 import com.apollocurrency.aplwallet.apl.core.chainid.HeightConfig;
 import com.apollocurrency.aplwallet.apl.core.config.DaoConfig;
 import com.apollocurrency.aplwallet.apl.core.config.JdbiConfiguration;
-import com.apollocurrency.aplwallet.apl.core.config.NtpTimeConfig;
 import com.apollocurrency.aplwallet.apl.core.config.PropertyBasedFileConfig;
 import com.apollocurrency.aplwallet.apl.core.config.PropertyProducer;
+import com.apollocurrency.aplwallet.apl.core.config.TimeConfig;
 import com.apollocurrency.aplwallet.apl.core.converter.db.BlockEntityRowMapper;
 import com.apollocurrency.aplwallet.apl.core.converter.db.BlockEntityToModelConverter;
 import com.apollocurrency.aplwallet.apl.core.converter.db.BlockModelToEntityConverter;
@@ -102,6 +102,7 @@ import com.apollocurrency.aplwallet.apl.exchange.dao.DexOrderTable;
 import com.apollocurrency.aplwallet.apl.extension.DbExtension;
 import com.apollocurrency.aplwallet.apl.testutil.EntityProducer;
 import com.apollocurrency.aplwallet.apl.util.NtpTime;
+import com.apollocurrency.aplwallet.apl.util.TimeSource;
 import com.apollocurrency.aplwallet.apl.util.cache.InMemoryCacheManager;
 import com.apollocurrency.aplwallet.apl.util.cdi.transaction.JdbiHandleFactory;
 import com.apollocurrency.aplwallet.apl.util.env.config.Chain;
@@ -176,8 +177,8 @@ class DerivedDbTableListingTest extends DbContainerBaseTest {
     @Inject
     DexOrderTable dexOrderTable;
 
-    private NtpTimeConfig ntpTimeConfig = new NtpTimeConfig();
-    private TimeService timeService = new TimeServiceImpl(ntpTimeConfig.time());
+    private TimeConfig timeConfig = new TimeConfig(true);
+    private TimeService timeService = new TimeServiceImpl(timeConfig.timeSource());
     private BlockchainConfig blockchainConfig = mockBlockchainConfig();
     private PeersService peersService = mock(PeersService.class);
     private GeneratorService generatorService = mock(GeneratorService.class);
@@ -220,8 +221,8 @@ class DerivedDbTableListingTest extends DbContainerBaseTest {
         .addBeans(MockBean.of(extension.getDatabaseManager(), DatabaseManager.class))
         .addBeans(MockBean.of(mock(PublicKeyDao.class), PublicKeyDao.class))
         .addBeans(MockBean.of(mock(TransactionProcessor.class), TransactionProcessor.class))
-        .addBeans(MockBean.of(ntpTimeConfig, NtpTimeConfig.class))
-        .addBeans(MockBean.of(ntpTimeConfig.time(), NtpTime.class))
+        .addBeans(MockBean.of(timeConfig, TimeConfig.class))
+        .addBeans(MockBean.of(timeConfig.timeSource(), NtpTime.class, TimeSource.class))
         .addBeans(MockBean.of(timeService, TimeService.class))
         .addBeans(MockBean.of(extension.getLuceneFullTextSearchEngine(), FullTextSearchEngine.class))
         .addBeans(MockBean.of(extension.getFullTextSearchService(), FullTextSearchService.class))
