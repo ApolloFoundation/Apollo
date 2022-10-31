@@ -33,7 +33,7 @@ public class GetAllTransactions extends AbstractAPIRequestHandler {
 
         byte type = HttpParameterParserUtil.getByteOrNegative(req, "type", false);
         byte subtype = HttpParameterParserUtil.getByteOrNegative(req, "subtype", false);
-        if (TransactionTypes.find(type, subtype) == TransactionTypes.TransactionTypeSpec.PRIVATE_PAYMENT) {
+        if (type >= 0 && subtype >= 0 && TransactionTypes.find(type, subtype) == TransactionTypes.TransactionTypeSpec.PRIVATE_PAYMENT) {
             return PRIVATE_TRANSACTIONS_ACCESS_DENIED;
         }
         int firstIndex = HttpParameterParserUtil.getFirstIndex(req);
