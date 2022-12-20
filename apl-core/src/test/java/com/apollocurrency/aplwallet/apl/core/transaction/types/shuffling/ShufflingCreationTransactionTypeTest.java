@@ -28,6 +28,7 @@ import org.jboss.weld.junit5.WeldInitiator;
 import org.jboss.weld.junit5.WeldSetup;
 import org.json.simple.JSONObject;
 import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
@@ -46,8 +47,9 @@ import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
-@EnableWeld
-@ExtendWith(MockitoExtension.class)
+//@EnableWeld
+//@ExtendWith(MockitoExtension.class)
+@Disabled
 class ShufflingCreationTransactionTypeTest {
 
     private static final long SENDER_ID = 1L;
