@@ -11,8 +11,8 @@ import com.apollocurrency.smc.contract.vm.event.LogInfoContractEventManager;
 import com.apollocurrency.smc.data.type.Address;
 import com.apollocurrency.smc.txlog.TxLog;
 
-import javax.inject.Inject;
-import javax.inject.Singleton;
+import jakarta.inject.Inject;
+import jakarta.inject.Singleton;
 
 /**
  * @author andrew.zinchenko@gmail.com

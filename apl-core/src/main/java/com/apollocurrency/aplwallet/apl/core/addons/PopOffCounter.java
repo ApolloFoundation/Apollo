@@ -30,8 +30,8 @@ import org.json.simple.JSONObject;
 import org.json.simple.JSONStreamAware;
 import org.slf4j.Logger;
 
-import javax.enterprise.event.Observes;
-import javax.enterprise.inject.Vetoed;
+import jakarta.enterprise.event.Observes;
+import jakarta.enterprise.inject.Vetoed;
 import javax.servlet.http.HttpServletRequest;
 import java.util.Map;
 import java.util.concurrent.atomic.AtomicInteger;

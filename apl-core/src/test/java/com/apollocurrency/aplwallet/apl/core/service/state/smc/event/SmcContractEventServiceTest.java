@@ -20,7 +20,7 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
-import javax.enterprise.event.Event;
+import jakarta.enterprise.event.Event;
 
 import static com.apollocurrency.aplwallet.apl.smc.events.SmcEventBinding.literal;
 import static org.junit.jupiter.api.Assertions.assertThrows;

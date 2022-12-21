@@ -9,7 +9,7 @@ import com.apollocurrency.aplwallet.apl.core.entity.state.account.Account;
 import com.apollocurrency.aplwallet.apl.util.Convert2;
 import com.apollocurrency.aplwallet.apl.util.api.converter.Converter;
 
-import javax.inject.Singleton;
+import jakarta.inject.Singleton;
 
 /**
  * @author andrii.zinchenko@firstbridge.io

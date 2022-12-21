@@ -9,7 +9,7 @@ import com.apollocurrency.aplwallet.apl.core.service.blockchain.MemPool;
 import io.swagger.v3.oas.annotations.Operation;
 
 import javax.annotation.security.PermitAll;
-import javax.inject.Inject;
+import jakarta.inject.Inject;
 import javax.ws.rs.GET;
 import javax.ws.rs.Path;
 import javax.ws.rs.Produces;

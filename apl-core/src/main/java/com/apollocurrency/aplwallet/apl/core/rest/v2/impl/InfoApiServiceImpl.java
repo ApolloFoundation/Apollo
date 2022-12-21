@@ -15,8 +15,8 @@ import com.apollocurrency.aplwallet.apl.core.service.state.account.AccountServic
 import com.zaxxer.hikari.HikariPoolMXBean;
 import lombok.NonNull;
 
-import javax.enterprise.context.RequestScoped;
-import javax.inject.Inject;
+import jakarta.enterprise.context.RequestScoped;
+import jakarta.inject.Inject;
 import javax.ws.rs.core.Response;
 import javax.ws.rs.core.SecurityContext;
 

@@ -27,9 +27,9 @@ import com.apollocurrency.aplwallet.apl.core.model.Block;
 import com.apollocurrency.aplwallet.apl.core.service.blockchain.Blockchain;
 import org.slf4j.Logger;
 
-import javax.enterprise.event.ObservesAsync;
-import javax.enterprise.inject.Vetoed;
-import javax.enterprise.inject.spi.CDI;
+import jakarta.enterprise.event.ObservesAsync;
+import jakarta.enterprise.inject.Vetoed;
+import jakarta.enterprise.inject.spi.CDI;
 import java.io.BufferedWriter;
 import java.io.FileOutputStream;
 import java.io.IOException;

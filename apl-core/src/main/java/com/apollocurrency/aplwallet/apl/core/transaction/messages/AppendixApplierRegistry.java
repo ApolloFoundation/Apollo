@@ -4,8 +4,8 @@
 
 package com.apollocurrency.aplwallet.apl.core.transaction.messages;
 
-import javax.enterprise.inject.Instance;
-import javax.inject.Singleton;
+import jakarta.enterprise.inject.Instance;
+import jakarta.inject.Singleton;
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.Map;

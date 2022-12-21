@@ -31,7 +31,7 @@ import org.json.simple.JSONObject;
 import org.json.simple.JSONStreamAware;
 import org.slf4j.LoggerFactory;
 
-import javax.enterprise.inject.Vetoed;
+import jakarta.enterprise.inject.Vetoed;
 import javax.servlet.http.HttpServletRequest;
 import java.util.Iterator;
 

@@ -30,7 +30,7 @@ import com.apollocurrency.aplwallet.apl.core.http.post.SetPhasingOnlyControl;
 import com.apollocurrency.aplwallet.apl.util.JSON;
 import org.json.simple.JSONStreamAware;
 
-import javax.enterprise.inject.Vetoed;
+import jakarta.enterprise.inject.Vetoed;
 import javax.servlet.http.HttpServletRequest;
 
 /**

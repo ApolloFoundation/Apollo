@@ -57,7 +57,7 @@ import com.apollocurrency.aplwallet.apl.util.io.Result;
 import org.json.simple.JSONObject;
 import org.json.simple.JSONStreamAware;
 
-import javax.enterprise.inject.spi.CDI;
+import jakarta.enterprise.inject.spi.CDI;
 import javax.servlet.http.HttpServletRequest;
 import java.util.Arrays;
 

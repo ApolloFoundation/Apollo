@@ -4,7 +4,7 @@
 
 package com.apollocurrency.aplwallet.apl.updater.export.event;
 
-import javax.enterprise.util.AnnotationLiteral;
+import jakarta.enterprise.util.AnnotationLiteral;
 
 public abstract class UpdateEventBinding extends AnnotationLiteral<UpdateEvent> implements UpdateEvent {
 }

@@ -13,7 +13,7 @@ import com.apollocurrency.aplwallet.vault.service.auth.Account2FAService;
 import lombok.Setter;
 
 import javax.annotation.Priority;
-import javax.inject.Inject;
+import jakarta.inject.Inject;
 import javax.ws.rs.Priorities;
 import javax.ws.rs.container.ContainerRequestContext;
 import javax.ws.rs.container.ContainerRequestFilter;

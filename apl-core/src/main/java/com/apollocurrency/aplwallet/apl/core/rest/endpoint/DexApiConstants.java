@@ -1,6 +1,6 @@
 package com.apollocurrency.aplwallet.apl.core.rest.endpoint;
 
-import javax.enterprise.inject.Vetoed;
+import jakarta.enterprise.inject.Vetoed;
 
 @Vetoed
 public class DexApiConstants {

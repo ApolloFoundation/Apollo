@@ -58,9 +58,9 @@ import org.json.simple.JSONStreamAware;
 import org.json.simple.JSONValue;
 import org.json.simple.parser.ParseException;
 
-import javax.annotation.PreDestroy;
-import javax.enterprise.inject.spi.CDI;
-import javax.inject.Inject;
+import jakarta.annotation.PreDestroy;
+import jakarta.enterprise.inject.spi.CDI;
+import jakarta.inject.Inject;
 import javax.servlet.ServletException;
 import java.io.IOException;
 import java.io.Reader;

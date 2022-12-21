@@ -29,8 +29,8 @@ import lombok.Setter;
 import org.hibernate.validator.constraints.URL;
 
 import javax.annotation.security.PermitAll;
-import javax.inject.Inject;
-import javax.inject.Singleton;
+import jakarta.inject.Inject;
+import jakarta.inject.Singleton;
 import javax.servlet.http.HttpServletRequest;
 import javax.validation.constraints.NotBlank;
 import javax.validation.constraints.NotNull;

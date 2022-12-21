@@ -8,7 +8,7 @@ import com.apollocurrency.aplwallet.apl.core.http.post.CreateTransactionHandler;
 import com.apollocurrency.aplwallet.apl.util.exception.AplException;
 import org.json.simple.JSONStreamAware;
 
-import javax.inject.Singleton;
+import jakarta.inject.Singleton;
 import javax.servlet.http.HttpServletRequest;
 
 @Singleton

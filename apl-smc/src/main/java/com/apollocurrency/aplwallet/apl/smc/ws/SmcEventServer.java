@@ -19,10 +19,10 @@ import com.apollocurrency.smc.data.jsonmapper.event.EventJsonMapper;
 import lombok.Getter;
 import lombok.extern.slf4j.Slf4j;
 
-import javax.annotation.PostConstruct;
-import javax.enterprise.event.ObservesAsync;
-import javax.enterprise.inject.spi.CDI;
-import javax.inject.Singleton;
+import jakarta.annotation.PostConstruct;
+import jakarta.enterprise.event.ObservesAsync;
+import jakarta.enterprise.inject.spi.CDI;
+import jakarta.inject.Singleton;
 
 /**
  * @author andrew.zinchenko@gmail.com
