@@ -51,7 +51,7 @@ import org.slf4j.Logger;
 
 import jakarta.enterprise.inject.Vetoed;
 import jakarta.enterprise.inject.spi.CDI;
-import javax.servlet.http.HttpServletRequest;
+import jakarta.servlet.http.HttpServletRequest;
 import java.util.Collections;
 import java.util.Map;
 

@@ -8,8 +8,8 @@ import com.apollocurrency.aplwallet.apl.dex.config.DexConfig;
 import lombok.Setter;
 
 import jakarta.inject.Inject;
-import javax.validation.ConstraintValidator;
-import javax.validation.ConstraintValidatorContext;
+import jakarta.validation.ConstraintValidator;
+import jakarta.validation.ConstraintValidatorContext;
 
 public class AtomicSwapTimeValidator implements ConstraintValidator<ValidAtomicSwapTime, Integer> {
     @Inject

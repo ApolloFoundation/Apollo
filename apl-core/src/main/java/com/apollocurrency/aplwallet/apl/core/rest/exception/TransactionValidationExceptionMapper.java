@@ -8,9 +8,9 @@ import com.apollocurrency.aplwallet.apl.core.exception.AplTransactionException;
 import com.apollocurrency.aplwallet.apl.util.builder.ResponseBuilder;
 import com.apollocurrency.aplwallet.apl.util.exception.ApiErrors;
 
-import javax.ws.rs.core.Response;
-import javax.ws.rs.ext.ExceptionMapper;
-import javax.ws.rs.ext.Provider;
+import jakarta.ws.rs.core.Response;
+import jakarta.ws.rs.ext.ExceptionMapper;
+import jakarta.ws.rs.ext.Provider;
 
 /**
  * Designed to catch all the transaction validation exceptions derived from the {@link com.apollocurrency.aplwallet.apl.core.exception.AplTransactionValidationException}

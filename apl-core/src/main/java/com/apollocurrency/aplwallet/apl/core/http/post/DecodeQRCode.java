@@ -39,7 +39,7 @@ import org.slf4j.Logger;
 
 import jakarta.enterprise.inject.Vetoed;
 import javax.imageio.ImageIO;
-import javax.servlet.http.HttpServletRequest;
+import jakarta.servlet.http.HttpServletRequest;
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.util.Base64;

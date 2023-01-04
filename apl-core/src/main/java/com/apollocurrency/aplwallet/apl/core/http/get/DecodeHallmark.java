@@ -27,7 +27,7 @@ import com.apollocurrency.aplwallet.apl.core.peer.Hallmark;
 import org.json.simple.JSONStreamAware;
 
 import jakarta.enterprise.inject.Vetoed;
-import javax.servlet.http.HttpServletRequest;
+import jakarta.servlet.http.HttpServletRequest;
 
 import static com.apollocurrency.aplwallet.apl.core.http.JSONResponses.INCORRECT_HALLMARK;
 import static com.apollocurrency.aplwallet.apl.core.http.JSONResponses.MISSING_HALLMARK;

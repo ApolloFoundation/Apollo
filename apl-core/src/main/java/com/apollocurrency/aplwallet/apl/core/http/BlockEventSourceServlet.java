@@ -7,7 +7,7 @@ package com.apollocurrency.aplwallet.apl.core.http;
 import org.eclipse.jetty.servlets.EventSource;
 import org.slf4j.Logger;
 
-import javax.servlet.http.HttpServletRequest;
+import jakarta.servlet.http.HttpServletRequest;
 import java.util.concurrent.ThreadPoolExecutor;
 
 import static org.slf4j.LoggerFactory.getLogger;

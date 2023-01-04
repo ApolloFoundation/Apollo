@@ -32,7 +32,7 @@ import com.apollocurrency.aplwallet.apl.util.exception.AplException;
 import org.json.simple.JSONStreamAware;
 
 import jakarta.enterprise.inject.Vetoed;
-import javax.servlet.http.HttpServletRequest;
+import jakarta.servlet.http.HttpServletRequest;
 
 import static com.apollocurrency.aplwallet.apl.core.http.JSONResponses.INCORRECT_VOTE;
 import static com.apollocurrency.aplwallet.apl.core.http.JSONResponses.POLL_FINISHED;

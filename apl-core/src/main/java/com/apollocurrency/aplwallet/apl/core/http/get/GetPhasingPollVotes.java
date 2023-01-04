@@ -36,7 +36,7 @@ import org.json.simple.JSONStreamAware;
 
 import jakarta.enterprise.inject.Vetoed;
 import jakarta.enterprise.inject.spi.CDI;
-import javax.servlet.http.HttpServletRequest;
+import jakarta.servlet.http.HttpServletRequest;
 
 @Vetoed
 public class GetPhasingPollVotes extends AbstractAPIRequestHandler {

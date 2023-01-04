@@ -10,7 +10,7 @@ import com.apollocurrency.aplwallet.apl.util.cdi.config.Property;
 import jakarta.enterprise.inject.Produces;
 import jakarta.inject.Inject;
 import jakarta.inject.Singleton;
-import javax.validation.constraints.Positive;
+import jakarta.validation.constraints.Positive;
 
 @Singleton
 public class PendingBroadcastBatchSizeCalculatorInitializer {

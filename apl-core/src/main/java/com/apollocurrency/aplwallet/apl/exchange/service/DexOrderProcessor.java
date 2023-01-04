@@ -52,7 +52,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.web3j.utils.Numeric;
 
 import jakarta.annotation.PostConstruct;
-import javax.annotation.PreDestroy;
+import jakarta.annotation.PreDestroy;
 import jakarta.enterprise.event.Observes;
 import jakarta.inject.Inject;
 import jakarta.inject.Singleton;

@@ -23,7 +23,8 @@ import org.slf4j.Logger;
 
 import jakarta.inject.Inject;
 import jakarta.inject.Singleton;
-import javax.servlet.DispatcherType;
+import jakarta.servlet.DispatcherType;
+import jakarta.servlet.Servlet;
 import java.io.IOException;
 import java.net.Inet6Address;
 import java.net.InetAddress;
@@ -100,8 +101,10 @@ public class PeerHttpServer {
             //add Weld listener
             ctxHandler.addEventListener(new Listener());
             peerServlet = new PeerServlet();
+/*
             ServletHolder peerServletHolder = new ServletHolder(peerServlet);
             ctxHandler.addServlet(peerServletHolder, "/*");
+*/
             if (propertiesHolder.getBooleanProperty("apl.enablePeerServerDoSFilter")) {
                 FilterHolder dosFilterHolder = ctxHandler.addFilter(DoSFilter.class, "/*", EnumSet.of(DispatcherType.REQUEST));
                 dosFilterHolder.setInitParameter("maxRequestsPerSec", propertiesHolder.getStringProperty("apl.peerServerDoSFilter.maxRequestsPerSec"));

@@ -71,8 +71,8 @@ import com.apollocurrency.aplwallet.apl.util.service.ElGamalEncryptor;
 import org.json.simple.JSONStreamAware;
 
 import jakarta.enterprise.inject.spi.CDI;
-import javax.servlet.http.HttpServletRequest;
-import javax.servlet.http.HttpServletResponse;
+import jakarta.servlet.http.HttpServletRequest;
+import jakarta.servlet.http.HttpServletResponse;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;

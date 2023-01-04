@@ -13,7 +13,7 @@ import com.apollocurrency.aplwallet.vault.service.KMSService;
 
 import jakarta.inject.Inject;
 import jakarta.inject.Singleton;
-import javax.servlet.http.HttpServletRequest;
+import jakarta.servlet.http.HttpServletRequest;
 
 import static com.apollocurrency.aplwallet.apl.util.exception.ApiErrors.INCORRECT_VALUE;
 import static com.apollocurrency.aplwallet.apl.util.exception.ApiErrors.MISSING_PARAM_LIST;

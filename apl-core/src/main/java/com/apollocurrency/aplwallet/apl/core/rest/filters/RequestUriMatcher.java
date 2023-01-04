@@ -4,7 +4,7 @@
 
 package com.apollocurrency.aplwallet.apl.core.rest.filters;
 
-import javax.ws.rs.core.UriInfo;
+import jakarta.ws.rs.core.UriInfo;
 
 /**
  * Strategy to match an URI

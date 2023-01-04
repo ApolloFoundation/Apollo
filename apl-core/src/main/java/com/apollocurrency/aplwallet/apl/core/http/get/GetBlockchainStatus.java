@@ -34,7 +34,7 @@ import org.json.simple.JSONObject;
 
 import jakarta.enterprise.inject.Vetoed;
 import jakarta.enterprise.inject.spi.CDI;
-import javax.servlet.http.HttpServletRequest;
+import jakarta.servlet.http.HttpServletRequest;
 
 @Deprecated
 @Vetoed

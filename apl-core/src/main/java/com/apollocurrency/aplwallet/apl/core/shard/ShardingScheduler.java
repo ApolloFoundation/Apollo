@@ -225,7 +225,7 @@ public class ShardingScheduler {
         return targetHeight;
     }
 
-    public void onBlockPushed(@Priority(javax.interceptor.Interceptor.Priority.APPLICATION) @Observes @BlockEvent(BlockEventType.BLOCK_PUSHED) Block block) {
+    public void onBlockPushed(@Priority(jakarta.interceptor.Interceptor.Priority.APPLICATION) @Observes @BlockEvent(BlockEventType.BLOCK_PUSHED) Block block) {
         int blockHeight = block.getHeight();
         long lastShardHeight = getLastShardHeight();
         int heightForSharding = blockHeight - config.getMaxRollback();

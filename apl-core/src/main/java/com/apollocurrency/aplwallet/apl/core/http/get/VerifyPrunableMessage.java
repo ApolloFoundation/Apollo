@@ -35,7 +35,7 @@ import org.json.simple.JSONStreamAware;
 
 import jakarta.enterprise.inject.Vetoed;
 import jakarta.enterprise.inject.spi.CDI;
-import javax.servlet.http.HttpServletRequest;
+import jakarta.servlet.http.HttpServletRequest;
 import java.util.Arrays;
 
 import static com.apollocurrency.aplwallet.apl.core.http.JSONResponses.EITHER_MESSAGE_ENCRYPTED_MESSAGE;

@@ -34,7 +34,7 @@ import org.json.simple.JSONStreamAware;
 
 import jakarta.enterprise.inject.Vetoed;
 import jakarta.enterprise.inject.spi.CDI;
-import javax.servlet.http.HttpServletRequest;
+import jakarta.servlet.http.HttpServletRequest;
 
 /**
  * Increase the value of currency units by paying APL

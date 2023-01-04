@@ -16,8 +16,8 @@ import com.apollocurrency.aplwallet.apl.core.service.blockchain.FailedTransactio
 
 import jakarta.inject.Inject;
 import jakarta.inject.Singleton;
-import javax.ws.rs.core.Response;
-import javax.ws.rs.core.SecurityContext;
+import jakarta.ws.rs.core.Response;
+import jakarta.ws.rs.core.SecurityContext;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;

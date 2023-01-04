@@ -40,7 +40,7 @@ import org.json.simple.JSONStreamAware;
 import org.slf4j.Logger;
 
 import jakarta.enterprise.inject.Vetoed;
-import javax.servlet.http.HttpServletRequest;
+import jakarta.servlet.http.HttpServletRequest;
 import java.util.Arrays;
 
 import static com.apollocurrency.aplwallet.apl.core.http.JSONResponses.NO_MESSAGE;

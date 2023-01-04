@@ -9,7 +9,7 @@ import com.apollocurrency.aplwallet.apl.util.exception.AplException;
 import org.json.simple.JSONStreamAware;
 
 import jakarta.inject.Singleton;
-import javax.servlet.http.HttpServletRequest;
+import jakarta.servlet.http.HttpServletRequest;
 
 @Singleton
 public class DexOrderTransactionCreator extends CreateTransactionHandler {

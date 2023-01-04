@@ -72,8 +72,8 @@ import org.slf4j.Logger;
 
 import jakarta.inject.Inject;
 import jakarta.inject.Singleton;
-import javax.servlet.MultipartConfigElement;
-import javax.servlet.ServletException;
+import jakarta.servlet.MultipartConfigElement;
+import jakarta.servlet.ServletException;
 import java.math.BigInteger;
 import java.net.InetAddress;
 import java.net.URI;
@@ -299,8 +299,8 @@ public final class API {
 
             setupGZIPHandler(apiHandler);
 
-            apiHandler.addServlet(APITestServlet.class, "/test");
-            apiHandler.addServlet(APITestServlet.class, "/test-proxy");
+            apiHandler.addServlet(APITestServlet.class.getCanonicalName(), "/test");
+            apiHandler.addServlet(APITestServlet.class.getCanonicalName(), "/test-proxy");
 
             apiHandler.addServlet(BlockEventSourceServlet.class, "/blocks").setAsyncSupported(true);
 
@@ -312,9 +312,9 @@ public final class API {
             apiHandler.addEventListener(new ApiContextListener());
             // Filter to forward requests to new API
             {
-                FilterHolder filterHolder = apiHandler.addFilter(ApiSplitFilter.class, "/*", null);
+                FilterHolder filterHolder = apiHandler.addFilter(ApiSplitFilter.class.getCanonicalName(), "/*", null);
                 filterHolder.setAsyncSupported(true);
-                filterHolder = apiHandler.addFilter(ApiProtectionFilter.class, "/*", null);
+                filterHolder = apiHandler.addFilter(ApiProtectionFilter.class.getCanonicalName(), "/*", null);
                 filterHolder.setAsyncSupported(true);
             }
             setupCORSFilter(apiHandler);
@@ -446,7 +446,7 @@ public final class API {
         );
 
         String restEasyAppClassName = RestEasyApplication.class.getName();
-        restEasyServletHolder.setInitParameter("javax.ws.rs.Application", restEasyAppClassName);
+        restEasyServletHolder.setInitParameter("jakarta.ws.rs.Application", restEasyAppClassName);
         apiHandler.addServlet(restEasyServletHolder, "/rest/*");
         // init Weld here
         apiHandler.addEventListener(new org.jboss.weld.module.web.servlet.WeldInitialListener());
@@ -472,7 +472,7 @@ public final class API {
         }
     }
 
-    private void setupSmcEventServer(ServletContextHandler apiHandler, final SmcEventSocketListener server) throws ServletException {
+    private void setupSmcEventServer(ServletContextHandler apiHandler, final SmcEventSocketListener server) throws ServletException, javax.servlet.ServletException {
         if (propertiesHolder.getBooleanProperty("apl.smc.enableEventSubscriptionServer", true)) {
             LOG.info("Smart-contract Event server is enabled");
             String path = propertiesHolder.getStringProperty("apl.smc.event.path");
