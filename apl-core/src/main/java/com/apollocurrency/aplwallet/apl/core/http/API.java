@@ -44,7 +44,6 @@ import com.apollocurrency.aplwallet.apl.util.exception.RestParameterExceptionMap
 import com.apollocurrency.aplwallet.apl.util.injectable.PropertiesHolder;
 import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
-import org.eclipse.jetty.http.pathmap.UriTemplatePathSpec;
 import org.eclipse.jetty.security.ConstraintMapping;
 import org.eclipse.jetty.security.ConstraintSecurityHandler;
 import org.eclipse.jetty.security.SecurityHandler;
@@ -63,8 +62,9 @@ import org.eclipse.jetty.servlet.ServletHolder;
 import org.eclipse.jetty.servlets.CrossOriginFilter;
 import org.eclipse.jetty.util.security.Constraint;
 import org.eclipse.jetty.util.thread.QueuedThreadPool;
-import org.eclipse.jetty.websocket.server.NativeWebSocketServletContainerInitializer;
-import org.eclipse.jetty.websocket.server.WebSocketUpgradeFilter;
+import org.eclipse.jetty.websocket.jakarta.server.config.JakartaWebSocketServletContainerInitializer;
+import org.eclipse.jetty.websocket.jakarta.server.internal.BasicServerEndpointConfig;
+import org.eclipse.jetty.websocket.servlet.WebSocketUpgradeFilter;
 import org.jboss.resteasy.plugins.server.servlet.HttpServletDispatcher;
 import org.jboss.resteasy.plugins.server.servlet.ResteasyContextParameters;
 import org.jboss.weld.environment.servlet.Listener;
@@ -73,7 +73,6 @@ import org.slf4j.Logger;
 import jakarta.inject.Inject;
 import jakarta.inject.Singleton;
 import jakarta.servlet.MultipartConfigElement;
-import jakarta.servlet.ServletException;
 import java.math.BigInteger;
 import java.net.InetAddress;
 import java.net.URI;
@@ -472,22 +471,24 @@ public final class API {
         }
     }
 
-    private void setupSmcEventServer(ServletContextHandler apiHandler, final SmcEventSocketListener server) throws ServletException, javax.servlet.ServletException {
+    private void setupSmcEventServer(ServletContextHandler apiHandler, final SmcEventSocketListener server) {
         if (propertiesHolder.getBooleanProperty("apl.smc.enableEventSubscriptionServer", true)) {
             LOG.info("Smart-contract Event server is enabled");
             String path = propertiesHolder.getStringProperty("apl.smc.event.path");
-            final UriTemplatePathSpec pathSpec = new UriTemplatePathSpec(path);
-            NativeWebSocketServletContainerInitializer.configure(apiHandler,
+            JakartaWebSocketServletContainerInitializer.configure(apiHandler,
                 (servletContext, nativeWebSocketConfiguration) -> {
                     // Configure default max size
-                    nativeWebSocketConfiguration.getPolicy().setMaxTextMessageBufferSize(65535);
-                    nativeWebSocketConfiguration.getPolicy().setIdleTimeout(10 * 60 * 1000L);//10min
+                    nativeWebSocketConfiguration.setDefaultMaxTextMessageBufferSize(65535);
+                    nativeWebSocketConfiguration.setDefaultMaxSessionIdleTimeout(10 * 60 * 1000L);//10min
                     // Add websockets
-                    nativeWebSocketConfiguration.addMapping(pathSpec, new SmcEventSocketCreator(server));
-                    LOG.info("Smart-contract Event subscription path = {}", pathSpec);
+//                    nativeWebSocketConfiguration.addMapping(pathSpec, new SmcEventSocketCreator(server));
+                    // TODO YL: NEEDS checking with WS connection
+                    nativeWebSocketConfiguration.addEndpoint(new BasicServerEndpointConfig(SmcEventSocketCreator.class, path) );
+                    LOG.info("Smart-contract Event subscription path = {}", path);
                 });
             // Add generic filter that will accept WebSocket upgrade.
-            WebSocketUpgradeFilter.configure(apiHandler);
+//            WebSocketUpgradeFilter.getFilter(apiHandler.getServletContext());
+            WebSocketUpgradeFilter.ensureFilter(apiHandler.getServletContext());
         } else {
             LOG.info("Smart-contract Event server is disabled.");
         }

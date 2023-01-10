@@ -90,6 +90,10 @@
       <groupId>com.googlecode.json-simple</groupId>
       <artifactId>json-simple</artifactId>
     </dependency>
+    <dependency>
+      <groupId>org.json</groupId>
+      <artifactId>json</artifactId>
+    </dependency>
     <!-- json-simple should be gone after new REST completion -->
 
     <!-- REST:  Need to put api here because strange things happens without it  -->
@@ -214,8 +218,8 @@
       <artifactId>jetty-servlet</artifactId>
     </dependency>
     <dependency>
-      <groupId>org.eclipse.jetty.websocket</groupId>
-      <artifactId>websocket-api</artifactId>
+      <groupId>jakarta.websocket</groupId>
+      <artifactId>jakarta.websocket-api</artifactId>
       <exclusions>
         <exclusion>
           <groupId>javax.servlet</groupId>
@@ -225,12 +229,19 @@
     </dependency>
     <dependency>
       <groupId>org.eclipse.jetty.websocket</groupId>
-      <artifactId>websocket-client</artifactId>
-      <classifier>hybrid</classifier>
+      <artifactId>websocket-jetty-server</artifactId>
     </dependency>
     <dependency>
       <groupId>org.eclipse.jetty.websocket</groupId>
-      <artifactId>websocket-server</artifactId>
+      <artifactId>websocket-jakarta-client</artifactId>
+    </dependency>
+    <dependency>
+      <groupId>org.eclipse.jetty.websocket</groupId>
+      <artifactId>websocket-jetty-client</artifactId>
+    </dependency>
+    <dependency>
+      <groupId>org.eclipse.jetty.websocket</groupId>
+      <artifactId>websocket-jakarta-server</artifactId>
     </dependency>
     <dependency>
       <groupId>org.eclipse.jetty</groupId>
@@ -407,7 +418,7 @@
         <configuration>
           <filesets>
             <fileset>
-              <directory>${pom.basedir}</directory>
+              <directory>${project.basedir}</directory>
               <includes>
                 <include>unit-test-db/test_db/**</include>
                 <include>**/*.db</include>

@@ -13,7 +13,9 @@ import com.apollocurrency.smc.contract.vm.event.EventArguments;
 import com.apollocurrency.smc.data.type.Address;
 import com.apollocurrency.smc.data.type.ContractEvent;
 import lombok.extern.slf4j.Slf4j;
-import org.eclipse.jetty.websocket.api.WebSocketException;
+import org.eclipse.jetty.websocket.api.exceptions.WebSocketException;
+
+import java.io.IOException;
 
 import static com.apollocurrency.smc.util.HexUtils.toHex;
 
@@ -114,10 +116,17 @@ public class SubscriptionManager {
                 var subscription = socket.getSubscription();
                 log.debug("Check subscription={}", subscription);
                 if (checkSubscription(subscription, contractEvent, params)) {
-                    log.debug("is matched, send response to remote={}", socket.getSocket().getRemote());
+                    log.debug("is matched, prepare send response to remote={}, subscription = {}",
+                        socket.getSocket().getRemote(), subscription);
                     response.setSubscriptionId(subscription.getSubscriptionId());
                     response.setParsedParams(params.getMap());
-                    socket.getSocket().sendWebSocket(response);
+                    try {
+                        log.debug("is matched, try send response to remote={}", socket.getSocket().getRemote());
+                        socket.getSocket().sendWebSocket(response);
+                    } catch (IOException e) {
+                        log.error("Sending Socket response error for subscription = {}", subscription, e);
+                        throw new RuntimeException(e);
+                    }
                 }
             });
         }

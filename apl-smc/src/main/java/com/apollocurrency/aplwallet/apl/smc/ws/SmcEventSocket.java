@@ -17,6 +17,7 @@ import org.eclipse.jetty.websocket.api.Session;
 import org.eclipse.jetty.websocket.api.StatusCode;
 import org.eclipse.jetty.websocket.api.WebSocketAdapter;
 
+import java.io.IOException;
 import java.util.Locale;
 import java.util.Objects;
 
@@ -38,8 +39,8 @@ public class SmcEventSocket extends WebSocketAdapter {
     private final SmcEventSocketListener listener;
 
     public SmcEventSocket(String address, SmcEventSocketListener listener) {
-        this.contract = AplAddress.valueOf(Objects.requireNonNull(address, "contractAddress"));
-        this.listener = Objects.requireNonNull(listener, "SmcEventSocketListener");
+        this.contract = AplAddress.valueOf(Objects.requireNonNull(address, "contractAddress is NULL"));
+        this.listener = Objects.requireNonNull(listener, "SmcEventSocketListener is NULL");
         log.trace("Created socket for contract address={}", contract);
     }
 
@@ -54,7 +55,6 @@ public class SmcEventSocket extends WebSocketAdapter {
         listener.onOpen(this);
     }
 
-    @SneakyThrows
     @Override
     public void onWebSocketText(String message) {
         log.debug("Received TEXT message: {}", message);
@@ -74,7 +74,16 @@ public class SmcEventSocket extends WebSocketAdapter {
                     sendWebSocketText(INVALID_REQUEST_FORMAT_RESPONSE);
                 }
             } catch (JsonProcessingException e) {
-                sendWebSocketText(INVALID_REQUEST_FORMAT_RESPONSE);
+                log.error("Error JSON processing: for {}", message);
+                try {
+                    sendWebSocketText(INVALID_REQUEST_FORMAT_RESPONSE);
+                } catch (IOException ex) {
+                    log.error("Error resending INVALID_REQUEST_FORMAT_RESPONSE: for {}", message);
+                    throw new RuntimeException(ex);
+                }
+            } catch (IOException e) {
+                log.error("Error resending a Received TEXT message: {}", message);
+                throw new RuntimeException(e);
             }
         }
     }
@@ -98,11 +107,11 @@ public class SmcEventSocket extends WebSocketAdapter {
         return contract;
     }
 
-    public void sendWebSocketText(String message) {
-        getRemote().sendStringByFuture(message);
+    public void sendWebSocketText(String message) throws IOException {
+        getRemote().sendString(message);
     }
 
-    protected static SmcEventSubscriptionRequest deserializeMessage(String json) throws JsonProcessingException {
+    protected static SmcEventSubscriptionRequest deserializeMessage(String json) {
         return MAPPER.deserializer().deserialize(json, SmcEventSubscriptionRequest.class);
     }
 
@@ -111,7 +120,7 @@ public class SmcEventSocket extends WebSocketAdapter {
         return MAPPER.serializer().serializeAsString(response);
     }
 
-    public void sendWebSocket(SmcEventResponse response) {
+    public void sendWebSocket(SmcEventResponse response) throws IOException {
         sendWebSocketText(serializeMessage(response));
     }
 

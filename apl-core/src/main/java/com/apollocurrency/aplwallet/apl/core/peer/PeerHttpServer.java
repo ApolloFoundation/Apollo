@@ -101,10 +101,8 @@ public class PeerHttpServer {
             //add Weld listener
             ctxHandler.addEventListener(new Listener());
             peerServlet = new PeerServlet();
-/*
             ServletHolder peerServletHolder = new ServletHolder(peerServlet);
             ctxHandler.addServlet(peerServletHolder, "/*");
-*/
             if (propertiesHolder.getBooleanProperty("apl.enablePeerServerDoSFilter")) {
                 FilterHolder dosFilterHolder = ctxHandler.addFilter(DoSFilter.class, "/*", EnumSet.of(DispatcherType.REQUEST));
                 dosFilterHolder.setInitParameter("maxRequestsPerSec", propertiesHolder.getStringProperty("apl.peerServerDoSFilter.maxRequestsPerSec"));
@@ -118,7 +116,7 @@ public class PeerHttpServer {
                 gzipHandler.setIncludedMethods("GET", "POST");
                 gzipHandler.setIncludedPaths("/*");
                 gzipHandler.setMinGzipSize(PeersService.MIN_COMPRESS_SIZE);
-                ctxHandler.setGzipHandler(gzipHandler);
+                ctxHandler.insertHandler(gzipHandler);
             }
             peerServer.setHandler(ctxHandler);
             List<Integer> internalPorts = new ArrayList<>();
@@ -136,7 +134,7 @@ public class PeerHttpServer {
                         externalPorts.add(port);
                     }
                 }
-                if (externalPorts.size() > 0) {
+                if (!externalPorts.isEmpty()) {
                     myExtAddress = new PeerAddress(externalPorts.get(0), upnp.getExternalAddress().getHostAddress());
                 }
             }
@@ -187,7 +185,7 @@ public class PeerHttpServer {
                 try {
                     if (peerServer != null) { // prevent NPE in offLine mode
                         peerServer.start();
-                        LOG.info("Started peer networking server at " + host + ":" + myPeerServerPort);
+                        LOG.info("Started peer networking server at {}:{}", host, myPeerServerPort);
                     } else {
                         LOG.warn("Peer networking server NOT STARTED (offLine mode?)");
                     }
