@@ -129,8 +129,8 @@ public class PeerHttpServer {
             List<Integer> internalPorts = new ArrayList<>();
             Connector[] peerConnectors = peerServer.getConnectors();
             for (Connector peerConnector : peerConnectors) {
-                if (peerConnector instanceof ServerConnector) {
-                    internalPorts.add(((ServerConnector) peerConnector).getPort());
+                if (peerConnector instanceof ServerConnector serverConnector) {
+                    internalPorts.add((serverConnector).getPort());
                 }
             }
             //if address is set in config file, we ignore UPnP
