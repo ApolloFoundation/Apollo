@@ -15,16 +15,18 @@ import org.eclipse.jetty.server.Server;
 import org.eclipse.jetty.server.ServerConnector;
 import org.eclipse.jetty.server.handler.gzip.GzipHandler;
 import org.eclipse.jetty.servlet.FilterHolder;
+import org.eclipse.jetty.servlet.ServletContainerInitializerHolder;
 import org.eclipse.jetty.servlet.ServletContextHandler;
 import org.eclipse.jetty.servlet.ServletHolder;
 import org.eclipse.jetty.servlets.DoSFilter;
+import org.eclipse.jetty.websocket.core.WebSocketComponents;
+import org.eclipse.jetty.websocket.core.server.WebSocketServerComponents;
 import org.jboss.weld.environment.servlet.Listener;
 import org.slf4j.Logger;
 
 import jakarta.inject.Inject;
 import jakarta.inject.Singleton;
 import jakarta.servlet.DispatcherType;
-import jakarta.servlet.Servlet;
 import java.io.IOException;
 import java.net.Inet6Address;
 import java.net.InetAddress;
@@ -63,6 +65,7 @@ public class PeerHttpServer {
     private PeerServlet peerServlet;
     private TaskDispatchManager taskDispatchManager;
     private List<ServerSocket> p2pPortHolders = new ArrayList<>();
+    private WebSocketComponents components;
 
     @Inject
     public PeerHttpServer(PropertiesHolder propertiesHolder, UPnP upnp, JettyConnectorCreator conCreator, TaskDispatchManager taskDispatchManager) {
@@ -97,6 +100,10 @@ public class PeerHttpServer {
             }
 
             ServletContextHandler ctxHandler = new ServletContextHandler();
+            // ensureWebSocketComponents can only be called when the server is starting.
+            ctxHandler.addServletContainerInitializer(new ServletContainerInitializerHolder((c, ctx) ->
+                components = WebSocketServerComponents.ensureWebSocketComponents(peerServer, ctxHandler.getServletContext())));
+
             ctxHandler.setContextPath("/");
             //add Weld listener
             ctxHandler.addEventListener(new Listener());
