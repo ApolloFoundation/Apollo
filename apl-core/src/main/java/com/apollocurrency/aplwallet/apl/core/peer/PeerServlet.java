@@ -48,9 +48,11 @@ import com.apollocurrency.aplwallet.apl.util.QueuedThreadPool;
 import com.apollocurrency.aplwallet.apl.util.injectable.PropertiesHolder;
 import com.apollocurrency.aplwallet.apl.util.io.CountingInputReader;
 import lombok.extern.slf4j.Slf4j;
+import org.eclipse.jetty.server.handler.ContextHandler;
 import org.eclipse.jetty.websocket.server.JettyServerUpgradeRequest;
 import org.eclipse.jetty.websocket.server.JettyServerUpgradeResponse;
 import org.eclipse.jetty.websocket.server.JettyWebSocketCreator;
+import org.eclipse.jetty.websocket.server.JettyWebSocketServerContainer;
 import org.eclipse.jetty.websocket.server.JettyWebSocketServlet;
 import org.eclipse.jetty.websocket.server.JettyWebSocketServletFactory;
 import org.json.simple.JSONObject;
@@ -87,6 +89,14 @@ public final class PeerServlet extends JettyWebSocketServlet {
     private PeersService peersService;
 
     private ExecutorService threadPool;
+    /**
+     * Outer/parent servlet context should be passed into this thread
+     */
+    private ContextHandler.Context servletContext;
+
+    public PeerServlet(ContextHandler.Context servletContext) {
+        this.servletContext = servletContext;
+    }
 
     @Override
     public void init() throws ServletException {
@@ -169,6 +179,8 @@ public final class PeerServlet extends JettyWebSocketServlet {
      */
     @Override
     public void configure(JettyWebSocketServletFactory factory) {
+        // important call to setup outer/parent servlet context
+        JettyWebSocketServerContainer.ensureContainer(this.servletContext);
         factory.setIdleTimeout(Duration.ofMillis( PeersService.webSocketIdleTimeout ));
         factory.setMaxBinaryMessageSize(PeersService.MAX_MESSAGE_SIZE);
         factory.setCreator(new PeerSocketCreator());

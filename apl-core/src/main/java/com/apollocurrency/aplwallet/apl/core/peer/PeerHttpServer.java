@@ -13,6 +13,7 @@ import com.apollocurrency.aplwallet.apl.util.task.Task;
 import org.eclipse.jetty.server.Connector;
 import org.eclipse.jetty.server.Server;
 import org.eclipse.jetty.server.ServerConnector;
+import org.eclipse.jetty.server.handler.ContextHandler;
 import org.eclipse.jetty.server.handler.gzip.GzipHandler;
 import org.eclipse.jetty.servlet.FilterHolder;
 import org.eclipse.jetty.servlet.ServletContainerInitializerHolder;
@@ -100,16 +101,20 @@ public class PeerHttpServer {
             }
 
             ServletContextHandler ctxHandler = new ServletContextHandler();
-            // ensureWebSocketComponents can only be called when the server is starting.
+            // ensure WebSocketComponents can only be called when the server is starting.
+            ContextHandler.Context servletContext = ctxHandler.getServletContext();
             ctxHandler.addServletContainerInitializer(new ServletContainerInitializerHolder((c, ctx) ->
-                components = WebSocketServerComponents.ensureWebSocketComponents(peerServer, ctxHandler.getServletContext())));
+                components = WebSocketServerComponents.ensureWebSocketComponents(peerServer, servletContext)
+            ));
 
             ctxHandler.setContextPath("/");
             //add Weld listener
             ctxHandler.addEventListener(new Listener());
-            peerServlet = new PeerServlet();
+            // Peers Servlet for peers management
+            peerServlet = new PeerServlet(servletContext); // That is important to pass parent servlet context into separate component with thread pool
             ServletHolder peerServletHolder = new ServletHolder(peerServlet);
             ctxHandler.addServlet(peerServletHolder, "/*");
+
             if (propertiesHolder.getBooleanProperty("apl.enablePeerServerDoSFilter")) {
                 FilterHolder dosFilterHolder = ctxHandler.addFilter(DoSFilter.class, "/*", EnumSet.of(DispatcherType.REQUEST));
                 dosFilterHolder.setInitParameter("maxRequestsPerSec", propertiesHolder.getStringProperty("apl.peerServerDoSFilter.maxRequestsPerSec"));
@@ -187,10 +192,11 @@ public class PeerHttpServer {
 
     public void start() {
         Task peerUPnPInitTask = Task.builder()
-            .name("PeerUPnPInit")
+            .name("PeerServerInit")
             .task(() -> {
                 try {
                     if (peerServer != null) { // prevent NPE in offLine mode
+                        LOG.info("Starting UP networking server at {}:{}", host, myPeerServerPort);
                         peerServer.start();
                         LOG.info("Started peer networking server at {}:{}", host, myPeerServerPort);
                     } else {

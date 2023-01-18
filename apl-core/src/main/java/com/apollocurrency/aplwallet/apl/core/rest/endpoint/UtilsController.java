@@ -541,8 +541,8 @@ public class UtilsController {
             dto.hash = Convert.toHexString(hashAlgorithm.hash(secretAsByteArray));
             log.debug("hashByAlgorithm result: {}", dto);
         } catch (RuntimeException e) {
-            String errorMessage = String.format("Error hashing by an algorithm = '%s', value = '%s'",
-                hashAlgorithm, secret);
+            String errorMessage = String.format("Error hashing by an algorithm = '%s', value = '%s', ex = %s",
+                hashAlgorithm, secret, e.getMessage());
             log.warn(errorMessage, e);
             return response.error(ApiErrors.INCORRECT_PARAM_VALUE, errorMessage).build();
         }
