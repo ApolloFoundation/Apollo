@@ -66,9 +66,9 @@ mvnw -v
 <pre>
 Apache Maven 3.6.2 (40f52333136460af0dc0d7232c0dc0bcf0d9e117; 2019-08-27T18:06:16+03:00)
 Maven home: /home/al/.m2/wrapper/dists/apache-maven-3.6.2-bin/795eh28tki48bv3l67maojf0ra/apache-maven-3.6.2
-Java version: 17.0.5, vendor: Red Hat, Inc., runtime: /usr/lib/jvm/java-11-openjdk-11.0.9.11-4.fc33.x86_64
+Java version: 17.0.5, vendor: GraalVM Community, runtime: /usr/lib/jvm/22.3.r17-grl
 Default locale: en_US, platform encoding: UTF-8
-OS name: "linux", version: "5.9.12-200.fc33.x86_64", arch: "amd64", family: "unix"
+OS name: "linux", version: "5.4.0-137-generic", arch: "amd64", family: "unix"
 
 </pre>
    7. If output looks similar to example, you can perform build step.
