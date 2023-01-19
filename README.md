@@ -29,7 +29,7 @@ If you feel like an expert, please use build instructions below. But also please
 
 ## Java versions
 
-We use LTS JDK version 17 in the development and in the production environments. To be exact, we use openjdk 17 builds from adoptium.net site: [Java Development Kit openjdk v.17 from adoptium.net, ](https://adoptium.net/temurin/releases/). You can download and install JDK for your platform by the link. 
+We use LTS JDK version 17 in the development and in the production environments. To be exact, we use openjdk 17 builds from github.com site: [GraalVM Community Edition Java Development Kit v.17](https://github.com/graalvm/graalvm-ce-builds/releases). You can download and install JDK for your platform by the link. 
 
 Apollo code runs well on latest JDKs but is not thouroughly tested. So you can use latest JDKs, e.g. version 19 or above on your own risk.
 
@@ -41,9 +41,9 @@ If you are developer, we'd like to recommend [SDKMan kit](https://sdkman.io/) to
    
     Output example: 
 <pre>
-openjdk version "17.0.5" 2022-10-26
-OpenJDK Runtime Environment 22.3 (build 17.0.5+8)
-OpenJDK 64-Bit Server VM 22.3 (build 17.0.5+8, mixed mode, sharing)
+openjdk version "17.0.5" 2022-10-18
+OpenJDK Runtime Environment GraalVM CE 22.3.0 (build 17.0.5+8-jvmci-22.3-b08)
+OpenJDK 64-Bit Server VM GraalVM CE 22.3.0 (build 17.0.5+8-jvmci-22.3-b08, mixed mode, sharing)
 </pre>
 
    2. If `version` matches 17.0.x version, your ___java___ was __installed successfully__ and you can __proceed with next steps_. 
