@@ -27,6 +27,7 @@ import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.media.Content;
 import io.swagger.v3.oas.annotations.media.Schema;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
+import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.fileupload.FileItemIterator;
 import org.apache.commons.fileupload.FileItemStream;
 import org.apache.commons.fileupload.FileUploadException;
@@ -53,6 +54,7 @@ import java.io.IOException;
 
 import static com.apollocurrency.aplwallet.apl.core.http.BlockEventSource.LOG;
 
+@Slf4j
 @Path("/keyStore")
 @Singleton
 public class KeyStoreController {
@@ -133,8 +135,9 @@ public class KeyStoreController {
         try {
             passPhrase = HttpParameterParserUtil.getPassphrase(request, true);
         } catch (ParameterException e) {
+            log.error("Error el-gamal passphrase", e);
             return  ResponseBuilder.apiError(ApiErrors.INCORRECT_PARAM_VALUE,
-                "passphrase is missing or incorrect, El-Gamal encryption is expected").build();
+                "passphrase is missing or incorrect, El-Gamal encryption is expected : " + e.getMessage()).build();
         }
 
         String lastFileName = null;
