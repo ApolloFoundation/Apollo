@@ -4,6 +4,7 @@
 
 package com.apollocurrency.aplwallet.apl.core.rest.endpoint;
 
+import com.apollocurrency.aplwallet.api.response.VaultWalletResponse;
 import com.apollocurrency.aplwallet.apl.core.http.HttpParameterParserUtil;
 import com.apollocurrency.aplwallet.apl.core.http.ParameterException;
 import com.apollocurrency.aplwallet.apl.core.rest.filters.Secured2FA;
@@ -128,12 +129,19 @@ public class KeyStoreController {
         }
 
         byte[] keyStore = null;
-        String passPhrase = null;
+        String passPhrase;
+        try {
+            passPhrase = HttpParameterParserUtil.getPassphrase(request, true);
+        } catch (ParameterException e) {
+            return  ResponseBuilder.apiError(ApiErrors.INCORRECT_PARAM_VALUE,
+                "passphrase is missing or incorrect, El-Gamal encryption is expected").build();
+        }
 
+        String lastFileName = null;
         try {
             ServletFileUpload upload = new ServletFileUpload();
             // Set overall request size constraint
-            upload.setSizeMax(Long.valueOf(maxKeyStoreSize));
+            upload.setSizeMax(maxKeyStoreSize);
             FileItemIterator fileIterator = upload.getItemIterator(request);
 
             while (fileIterator.hasNext()) {
@@ -146,6 +154,7 @@ public class KeyStoreController {
                     return ResponseBuilder.apiError(ApiErrors.ACCOUNT_2FA_ERROR,
                         "Failed to upload file. Unknown parameter:" + item.getFieldName()).build();
                 }
+                lastFileName = item.getName();
             }
         } catch (FileUploadException | IOException ex) {
             LOG.error(ex.getMessage(), ex);
@@ -159,7 +168,9 @@ public class KeyStoreController {
         KMSResponseStatus status = KMSService.storeWallet(keyStore, passPhrase);
 
         if (status.isOK()) {
-            return Response.status(200).build();
+            VaultWalletResponse response = new VaultWalletResponse();
+            response.setFileName(lastFileName);
+            return Response.status(Response.Status.OK).entity(response).build();
         } else {
             return ResponseBuilder.apiError(ApiErrors.ACCOUNT_2FA_ERROR, status.message).build();
         }
