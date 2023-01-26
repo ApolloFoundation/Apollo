@@ -57,6 +57,7 @@
     <maven.compiler.target>11</maven.compiler.target>
     <surefire-plugin.version>3.0.0-M5</surefire-plugin.version>
     <compile-plugin.version>3.8.1</compile-plugin.version>
+    <swagger-codegen-maven-plugin.version>3.0.36</swagger-codegen-maven-plugin.version>
     <!-- cross-platform zip distribution -->
     <zip-file-name>apollo-blockchain</zip-file-name>
     <zip-format>zip</zip-format>
@@ -182,6 +183,16 @@
           <groupId>org.apache.maven.plugins</groupId>
           <artifactId>maven-jar-plugin</artifactId>
           <version>3.1.0</version>
+        </plugin>
+        <plugin>
+          <groupId>io.swagger.codegen.v3</groupId>
+          <artifactId>swagger-codegen-maven-plugin</artifactId>
+          <version>${swagger-codegen-maven-plugin.version}</version>
+        </plugin>
+        <plugin>
+          <groupId>com.google.code.maven-replacer-plugin</groupId>
+          <artifactId>replacer</artifactId>
+          <version>1.5.3</version>
         </plugin>
         <plugin>
           <groupId>org.apache.maven.plugins</groupId>
