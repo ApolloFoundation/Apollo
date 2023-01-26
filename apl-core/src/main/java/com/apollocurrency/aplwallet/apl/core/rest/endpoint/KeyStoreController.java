@@ -52,8 +52,6 @@ import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
 import java.io.IOException;
 
-import static com.apollocurrency.aplwallet.apl.core.http.BlockEventSource.LOG;
-
 @Slf4j
 @Path("/keyStore")
 @Singleton
@@ -131,16 +129,7 @@ public class KeyStoreController {
         }
 
         byte[] keyStore = null;
-        String passPhrase;
-        try {
-            passPhrase = HttpParameterParserUtil.getPassphrase(request, true);
-        } catch (ParameterException e) {
-            log.error("Error el-gamal passphrase", e);
-            return  ResponseBuilder.apiError(ApiErrors.INCORRECT_PARAM_VALUE,
-                "passphrase is missing or incorrect, El-Gamal encryption is expected : " + e.getMessage()).build();
-        }
-
-        String lastFileName = null;
+        String passPhrase = null;
         try {
             ServletFileUpload upload = new ServletFileUpload();
             // Set overall request size constraint
@@ -149,19 +138,20 @@ public class KeyStoreController {
 
             while (fileIterator.hasNext()) {
                 FileItemStream item = fileIterator.next();
-                if ("keyStore".equals(item.getFieldName())) {
+                if ("keyStore".equalsIgnoreCase(item.getFieldName())) {
                     keyStore = IOUtils.toByteArray(item.openStream());
-                } else if ("passPhrase".equals(item.getFieldName())) {
-                    passPhrase = IOUtils.toString(item.openStream());
+                } else if ("passphrase".equalsIgnoreCase(item.getFieldName())) {
+                    String passPhraseEncrypted = IOUtils.toString(item.openStream());
+                    // decrypt from el-gamal
+                    passPhrase = HttpParameterParserUtil.getPassphrase(passPhraseEncrypted, true);
                 } else {
                     return ResponseBuilder.apiError(ApiErrors.ACCOUNT_2FA_ERROR,
                         "Failed to upload file. Unknown parameter:" + item.getFieldName()).build();
                 }
-                lastFileName = item.getName();
             }
-        } catch (FileUploadException | IOException ex) {
-            LOG.error(ex.getMessage(), ex);
-            return ResponseBuilder.apiError(ApiErrors.ACCOUNT_2FA_ERROR, "Failed to upload file.").build();
+        } catch (FileUploadException | IOException | ParameterException ex) {
+            log.error("Import keyStore error, upload failed: {}", ex.getMessage());
+            return ResponseBuilder.apiError(ApiErrors.ACCOUNT_2FA_ERROR, "Failed to upload file." + ex).build();
         }
 
         if (passPhrase == null || keyStore == null || keyStore.length == 0) {
@@ -172,7 +162,6 @@ public class KeyStoreController {
 
         if (status.isOK()) {
             VaultWalletResponse response = new VaultWalletResponse();
-            response.setFileName(lastFileName);
             return Response.status(Response.Status.OK).entity(response).build();
         } else {
             return ResponseBuilder.apiError(ApiErrors.ACCOUNT_2FA_ERROR, status.message).build();
