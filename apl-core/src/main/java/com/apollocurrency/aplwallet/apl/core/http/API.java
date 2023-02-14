@@ -95,7 +95,6 @@ import static org.slf4j.LoggerFactory.getLogger;
 @Slf4j
 public final class API {
 
-    private static final Logger LOG = getLogger(API.class);
     private static final String[] DISABLED_HTTP_METHODS = {"TRACE", "OPTIONS", "HEAD"};
     public static final String DEFAULT_WEBUI_DIR = "apollo-web-ui";
     public static final String INDEX_HTML = "index.html";
@@ -156,7 +155,7 @@ public final class API {
                     try {
                         nets.add(new NetworkAddress(host));
                     } catch (UnknownHostException e) {
-                        LOG.error("Unknown network " + host, e);
+                        log.error("Unknown network " + host, e);
                         throw new RuntimeException(e.toString(), e);
                     }
                 } else {
@@ -183,7 +182,7 @@ public final class API {
             welcomePageUri = new URI(enableSSL ? "https" : "http", null, localhost, enableSSL ? sslPort : port, "/", null, null);
             serverRootUri = new URI(enableSSL ? "https" : "http", null, localhost, enableSSL ? sslPort : port, "", null, null);
         } catch (URISyntaxException e) {
-            LOG.info("Cannot resolve browser URI", e);
+            log.info("Cannot resolve browser URI", e);
         }
         openAPIPort = !propertiesHolder.isLightClient() && "0.0.0.0".equals(host) && allowedBotHosts == null && (!enableSSL || port != sslPort) ? port : 0;
         openAPISSLPort = !propertiesHolder.isLightClient() && "0.0.0.0".equals(host) && allowedBotHosts == null && enableSSL ? sslPort : 0;
@@ -193,15 +192,17 @@ public final class API {
     private static boolean isWebUIHere(Path webUiPath) {
         boolean res = false;
         if (Files.exists(webUiPath)
-            && Files.isDirectory(webUiPath)
+            && (Files.isDirectory(webUiPath) || Files.isSymbolicLink(webUiPath))
             && Files.exists(webUiPath.resolve(INDEX_HTML))) {
-            log.debug("Web UI index.html found in: {}.", webUiPath.toString());
+            log.debug("Web UI index.html found in: {}.", webUiPath);
             res = true;
         }
+        log.debug("is WebUI found ? = '{}' by path = '{}'", res, webUiPath);
         return res;
     }
 
     public static String findWebUiDir() {
+        log.debug("LookUp webUIDir...");
         final Path binDir = DirProvider.getBinDir();
         boolean useHtmlStub = true;
         final String webUIlocation = propertiesHolder.getStringProperty("apl.apiResourceBase", DEFAULT_WEBUI_DIR);
@@ -237,6 +238,7 @@ public final class API {
                 log.error("Cannot find dir with index.html: {}. Gonna proceed without any html-stub.", webUiPath);
             }
         }
+        log.debug("LookUp webUIDir = {}", webUiPath);
         return webUiPath.toString();
     }
 
@@ -253,7 +255,7 @@ public final class API {
             }
         } catch (UnknownHostException e) {
             // can't resolve, disallow
-            LOG.info("Unknown remote host " + remoteHost);
+            log.info("Unknown remote host " + remoteHost);
         }
         return false;
     }
@@ -264,6 +266,7 @@ public final class API {
 
     @SneakyThrows
     public void start() {
+        log.debug("API start, serverEnabled? = '{}'...", enableAPIServer);
         if (enableAPIServer) {
             final QueuedThreadPool threadPool = getQueuedThreadPool();
             apiServer = new Server(threadPool);
@@ -272,7 +275,7 @@ public final class API {
             //
             if (!enableSSL || port != sslPort) {
                 jettyConnectorCreator.addHttpConnector(host, port, apiServer, apiServerIdleTimeout);
-                LOG.info("API server using HTTP port " + port);
+                log.info("API server using HTTP port " + port);
             }
             //
             // Create the HTTPS connector
@@ -348,9 +351,9 @@ public final class API {
             try {
                 apiServer.start();
 
-                LOG.info("Started API server at {}:{} {}", host, port, (enableSSL && port != sslPort ? ", " + host + ":" + sslPort : ""));
+                log.info("Started API server at {}:{} {}", host, port, (enableSSL && port != sslPort ? ", " + host + ":" + sslPort : ""));
             } catch (Exception e) {
-                LOG.error("Failed to start API server", e);
+                log.error("Failed to start API server", e);
                 throw new RuntimeException(e.toString(), e);
             }
         } else {
@@ -358,7 +361,7 @@ public final class API {
             openAPIPort = 0;
             openAPISSLPort = 0;
             isOpenAPI = false;
-            LOG.info("API server not enabled");
+            log.info("API server not enabled");
         }
 
     }
@@ -390,7 +393,9 @@ public final class API {
 
     private void setupDefaultServlet(ServletContextHandler apiHandler) {
         String apiResourceBase = findWebUiDir();
-        if (apiResourceBase != null && !apiResourceBase.isEmpty()) {
+        boolean resourceBaseEmpty = apiResourceBase.isEmpty();
+        if (!resourceBaseEmpty) {
+            log.debug("Apollo-WebUI dir is found ! Ok !");
             ServletHolder defaultServletHolder = new ServletHolder(new DefaultServlet());
             defaultServletHolder.setInitParameter("dirAllowed", "false");
             defaultServletHolder.setInitParameter("resourceBase", apiResourceBase);
@@ -401,6 +406,8 @@ public final class API {
             apiHandler.addServlet(defaultServletHolder, "/*");
             String[] wellcome = {propertiesHolder.getStringProperty("apl.apiWelcomeFile")};
             apiHandler.setWelcomeFiles(wellcome);
+        } else {
+            log.debug("Apollo-WebUI dir is NOT found ! '{}'", resourceBaseEmpty);
         }
     }
 
@@ -457,7 +464,7 @@ public final class API {
         // Set the path to our static (Swagger UI) resources
         URL su = API.class.getResource("/swaggerui");
         if (su != null) {
-            LOG.info("Swagger UI html/js resources base path= {}", su.toURI());
+            log.info("Swagger UI html/js resources base path= {}", su.toURI());
             String resourceBasePath = su.toExternalForm();
             ContextHandler contextHandler = new ContextHandler("/swagger");
             ResourceHandler swFileHandler = new ResourceHandler();
@@ -467,13 +474,13 @@ public final class API {
             contextHandler.setHandler(swFileHandler);
             apiHandlers.addHandler(contextHandler);
         } else {
-            LOG.warn("Swagger html/js resources not found, swagger UI is off.");
+            log.warn("Swagger html/js resources not found, swagger UI is off.");
         }
     }
 
     private void setupSmcEventServer(ServletContextHandler apiHandler, final SmcEventSocketListener server) {
         if (propertiesHolder.getBooleanProperty("apl.smc.enableEventSubscriptionServer", true)) {
-            LOG.info("Smart-contract Event server is enabled");
+            log.info("Smart-contract Event server is enabled");
             String path = propertiesHolder.getStringProperty("apl.smc.event.path");
             JakartaWebSocketServletContainerInitializer.configure(apiHandler,
                 (servletContext, nativeWebSocketConfiguration) -> {
@@ -484,13 +491,13 @@ public final class API {
 //                    nativeWebSocketConfiguration.addMapping(pathSpec, new SmcEventSocketCreator(server));
                     // TODO YL: NEEDS checking with WS connection
                     nativeWebSocketConfiguration.addEndpoint(new BasicServerEndpointConfig(SmcEventSocketCreator.class, path) );
-                    LOG.info("Smart-contract Event subscription path = {}", path);
+                    log.info("Smart-contract Event subscription path = {}", path);
                 });
             // Add generic filter that will accept WebSocket upgrade.
 //            WebSocketUpgradeFilter.getFilter(apiHandler.getServletContext());
             WebSocketUpgradeFilter.ensureFilter(apiHandler.getServletContext());
         } else {
-            LOG.info("Smart-contract Event server is disabled.");
+            log.info("Smart-contract Event server is disabled.");
         }
     }
 
@@ -519,7 +526,7 @@ public final class API {
                     upnp.deletePort(extPort);
                 }
             } catch (Exception e) {
-                LOG.info("Failed to stop API server", e);
+                log.info("Failed to stop API server", e);
             }
         }
     }
