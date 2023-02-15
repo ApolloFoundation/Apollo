@@ -192,7 +192,7 @@ public final class API {
     private static boolean isWebUIHere(Path webUiPath) {
         boolean res = false;
         if (Files.exists(webUiPath)
-            && (Files.isDirectory(webUiPath) || Files.isSymbolicLink(webUiPath))
+            && Files.isDirectory(webUiPath)
             && Files.exists(webUiPath.resolve(INDEX_HTML))) {
             log.debug("Web UI index.html found in: {}.", webUiPath);
             res = true;
