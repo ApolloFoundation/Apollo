@@ -101,7 +101,7 @@ JAVA_VER="$(jdk_version)"
 
 echo -n "${ECHO_PREFIX} Using java at path: ${JAVA_BASE}; Version is: ${JAVA_VER};"
 
-if [ "$JAVA_VER" -ge 11 ]; then
+if [ "$JAVA_VER" -ge 17 ]; then
   echo " Java is OK."
 else
     echo
