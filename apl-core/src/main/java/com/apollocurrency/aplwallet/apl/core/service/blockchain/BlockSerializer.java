@@ -11,8 +11,8 @@ import lombok.NonNull;
 import org.json.simple.JSONArray;
 import org.json.simple.JSONObject;
 
-import javax.inject.Inject;
-import javax.inject.Singleton;
+import jakarta.inject.Inject;
+import jakarta.inject.Singleton;
 
 @Singleton
 public class BlockSerializer {

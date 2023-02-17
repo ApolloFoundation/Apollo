@@ -10,8 +10,8 @@ import com.apollocurrency.aplwallet.apl.core.service.state.currency.MonetaryCurr
 import com.apollocurrency.aplwallet.apl.core.transaction.messages.MonetarySystemCurrencyMinting;
 import com.apollocurrency.aplwallet.apl.crypto.HashFunction;
 
-import javax.enterprise.inject.spi.CDI;
-import javax.inject.Singleton;
+import jakarta.enterprise.inject.spi.CDI;
+import jakarta.inject.Singleton;
 import java.math.BigInteger;
 import java.util.Arrays;
 

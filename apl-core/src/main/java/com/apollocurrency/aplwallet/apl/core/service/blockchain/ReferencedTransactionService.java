@@ -10,8 +10,8 @@ import com.apollocurrency.aplwallet.apl.core.dao.appdata.ReferencedTransactionDa
 import com.apollocurrency.aplwallet.apl.core.model.Transaction;
 import com.apollocurrency.aplwallet.apl.crypto.Convert;
 
-import javax.inject.Inject;
-import javax.inject.Singleton;
+import jakarta.inject.Inject;
+import jakarta.inject.Singleton;
 import java.util.List;
 import java.util.Optional;
 

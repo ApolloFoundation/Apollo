@@ -10,8 +10,8 @@ import com.apollocurrency.aplwallet.apl.core.shard.helper.csv.ValueParser;
 import com.apollocurrency.aplwallet.apl.util.StringUtils;
 import lombok.extern.slf4j.Slf4j;
 
-import javax.inject.Inject;
-import javax.inject.Singleton;
+import jakarta.inject.Inject;
+import jakarta.inject.Singleton;
 import java.util.Base64;
 
 import static com.apollocurrency.aplwallet.apl.core.shard.helper.csv.CsvEscaper.BYTE_ARRAY_PREFIX;

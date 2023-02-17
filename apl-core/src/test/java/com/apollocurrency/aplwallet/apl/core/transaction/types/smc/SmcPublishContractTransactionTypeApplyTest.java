@@ -28,7 +28,7 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.junit.jupiter.MockitoExtension;
 
-import javax.inject.Inject;
+import jakarta.inject.Inject;
 import java.math.BigInteger;
 import java.util.Collections;
 import java.util.List;

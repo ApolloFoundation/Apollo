@@ -5,7 +5,7 @@ import com.apollocurrency.aplwallet.apl.smc.model.AplAddress;
 import com.apollocurrency.aplwallet.apl.smc.model.AplContractEvent;
 import com.apollocurrency.aplwallet.apl.util.api.converter.Converter;
 
-import javax.inject.Singleton;
+import jakarta.inject.Singleton;
 
 @Singleton
 public class ContractEventModelToEntityConverter implements Converter<AplContractEvent, SmcContractEventEntity> {

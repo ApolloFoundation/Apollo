@@ -10,6 +10,7 @@ import org.eclipse.jetty.websocket.client.WebSocketClient;
 
 import java.io.IOException;
 import java.net.URI;
+import java.time.Duration;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
@@ -42,9 +43,9 @@ public class PeerWebSocketClient extends PeerWebSocket {
 
     private static void init() throws Exception {
         client = new WebSocketClient();
-        client.getPolicy().setIdleTimeout(PeersService.webSocketIdleTimeout);
+        client.setIdleTimeout(Duration.ofMillis(PeersService.webSocketIdleTimeout));
         client.setConnectTimeout(PeersService.connectTimeout);
-        client.getPolicy().setMaxBinaryMessageSize(PeersService.MAX_MESSAGE_SIZE);
+        client.setMaxBinaryMessageSize(PeersService.MAX_MESSAGE_SIZE);
         client.setStopAtShutdown(true);
         client.start();
     }
@@ -83,7 +84,6 @@ public class PeerWebSocketClient extends PeerWebSocket {
         //synchronizing here
         startMonitor.enter();
         try {
-
             Future<Session> conn = client.connect(this, uri);
             session = conn.get(PeersService.connectTimeout + 100, TimeUnit.MILLISECONDS);
             connected = session.isOpen();
@@ -107,15 +107,11 @@ public class PeerWebSocketClient extends PeerWebSocket {
 
     @Override
     public void close() {
-        try {
-            super.close();
-            if (isClientConnected()) {
-                session.disconnect();
-                session.close();
-                session = null;
-            }
-        } catch (IOException ex) {
-            log.warn("Can not close websocket");
+        super.close();
+        if (isClientConnected()) {
+            session.disconnect();
+            session.close();
+            session = null;
         }
     }
 

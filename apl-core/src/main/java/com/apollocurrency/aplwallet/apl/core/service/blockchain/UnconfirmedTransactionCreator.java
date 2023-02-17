@@ -13,8 +13,8 @@ import com.apollocurrency.aplwallet.apl.util.io.Result;
 import com.apollocurrency.aplwallet.apl.core.service.appdata.TimeService;
 import com.apollocurrency.aplwallet.apl.core.transaction.common.TxBContext;
 
-import javax.inject.Inject;
-import javax.inject.Singleton;
+import jakarta.inject.Inject;
+import jakarta.inject.Singleton;
 
 @Singleton
 public class UnconfirmedTransactionCreator {

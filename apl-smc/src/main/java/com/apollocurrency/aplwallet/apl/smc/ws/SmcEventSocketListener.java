@@ -6,6 +6,8 @@ package com.apollocurrency.aplwallet.apl.smc.ws;
 
 import com.apollocurrency.aplwallet.apl.smc.ws.dto.SmcEventSubscriptionRequest;
 
+import java.io.IOException;
+
 /**
  * @author andrew.zinchenko@gmail.com
  */
@@ -14,5 +16,5 @@ public interface SmcEventSocketListener {
 
     void onOpen(SmcEventSocket socket);
 
-    void onMessage(SmcEventSocket socket, SmcEventSubscriptionRequest message);
+    void onMessage(SmcEventSocket socket, SmcEventSubscriptionRequest message) throws IOException;
 }

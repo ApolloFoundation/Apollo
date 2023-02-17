@@ -3,8 +3,8 @@
  */
 package com.apollocurrency.aplwallet.apl.core.app;
 
-import javax.enterprise.inject.spi.CDI;
-import javax.inject.Singleton;
+import jakarta.enterprise.inject.spi.CDI;
+import jakarta.inject.Singleton;
 import java.util.List;
 import java.util.Map;
 

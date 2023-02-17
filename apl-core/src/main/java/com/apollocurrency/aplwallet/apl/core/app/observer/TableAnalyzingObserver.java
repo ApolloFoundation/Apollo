@@ -12,9 +12,9 @@ import com.apollocurrency.aplwallet.apl.core.service.blockchain.BlockchainProces
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import javax.enterprise.event.ObservesAsync;
-import javax.enterprise.inject.spi.CDI;
-import javax.inject.Inject;
+import jakarta.enterprise.event.ObservesAsync;
+import jakarta.enterprise.inject.spi.CDI;
+import jakarta.inject.Inject;
 
 public class TableAnalyzingObserver {
 

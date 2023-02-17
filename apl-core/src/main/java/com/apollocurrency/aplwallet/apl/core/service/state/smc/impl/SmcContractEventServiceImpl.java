@@ -23,9 +23,9 @@ import com.apollocurrency.smc.data.jsonmapper.event.EventJsonMapper;
 import com.apollocurrency.smc.data.type.Address;
 import lombok.extern.slf4j.Slf4j;
 
-import javax.enterprise.event.Event;
-import javax.inject.Inject;
-import javax.inject.Singleton;
+import jakarta.enterprise.event.Event;
+import jakarta.inject.Inject;
+import jakarta.inject.Singleton;
 import java.util.List;
 import java.util.stream.Collectors;
 

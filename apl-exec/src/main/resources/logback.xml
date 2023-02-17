@@ -89,7 +89,7 @@
   <!--Uncomment next line to enable trim duration logging-->
   <!--<logger name="com.apollocurrency.aplwallet.apl.db.VersionedDeletableEntityDbTable" level="trace"/>-->
   <logger name="org.eclipse.jetty" level="off" additivity="false"/>
-  <logger name="javax.servlet.level" level="off" additivity="false"/>
+  <logger name="jakarta.servlet.level" level="off" additivity="false"/>
   <logger name="com.apollocurrency.aplwallet.apl.core.http.APIProxyServlet" level="info"/>
   <logger name="org.testcontainers" level="DEBUG"/>
   <logger name="com.github.dockerjava" level="DEBUG"/>

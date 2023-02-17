@@ -35,8 +35,8 @@ import com.apollocurrency.aplwallet.apl.util.io.PayloadResult;
 import com.apollocurrency.aplwallet.apl.util.io.Result;
 import lombok.extern.slf4j.Slf4j;
 
-import javax.inject.Inject;
-import javax.inject.Singleton;
+import jakarta.inject.Inject;
+import jakarta.inject.Singleton;
 import java.util.Optional;
 
 @Slf4j

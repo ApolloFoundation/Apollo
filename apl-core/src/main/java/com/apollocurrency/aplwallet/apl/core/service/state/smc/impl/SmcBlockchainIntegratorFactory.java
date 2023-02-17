@@ -50,8 +50,8 @@ import com.apollocurrency.smc.txlog.TxLog;
 import com.apollocurrency.smc.txlog.TxLogProcessor;
 import lombok.extern.slf4j.Slf4j;
 
-import javax.inject.Inject;
-import javax.inject.Singleton;
+import jakarta.inject.Inject;
+import jakarta.inject.Singleton;
 import java.math.BigInteger;
 import java.util.HashSet;
 import java.util.Objects;

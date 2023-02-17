@@ -9,7 +9,7 @@ import com.apollocurrency.aplwallet.apl.core.entity.blockchain.BlockEntity;
 import com.apollocurrency.aplwallet.apl.core.model.BlockImpl;
 import com.apollocurrency.aplwallet.apl.util.api.converter.Converter;
 
-import javax.inject.Singleton;
+import jakarta.inject.Singleton;
 
 /**
  * @author andrew.zinchenko@gmail.com

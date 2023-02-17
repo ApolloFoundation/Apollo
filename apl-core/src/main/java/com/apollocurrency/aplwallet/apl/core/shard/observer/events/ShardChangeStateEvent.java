@@ -6,7 +6,7 @@ package com.apollocurrency.aplwallet.apl.core.shard.observer.events;
 
 import com.apollocurrency.aplwallet.apl.core.shard.MigrateState;
 
-import javax.inject.Qualifier;
+import jakarta.inject.Qualifier;
 import java.lang.annotation.Retention;
 import java.lang.annotation.Target;
 

@@ -25,7 +25,7 @@ import org.junit.jupiter.api.Test;
 import org.mockito.Mock;
 import org.mockito.Mockito;
 
-import javax.ws.rs.core.MediaType;
+import jakarta.ws.rs.core.MediaType;
 import java.io.IOException;
 import java.net.URISyntaxException;
 import java.sql.Connection;

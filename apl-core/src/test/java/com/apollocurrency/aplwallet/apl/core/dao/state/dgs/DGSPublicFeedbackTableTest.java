@@ -16,7 +16,7 @@ import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.RegisterExtension;
 
-import javax.enterprise.event.Event;
+import jakarta.enterprise.event.Event;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.stream.Collectors;

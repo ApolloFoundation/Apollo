@@ -18,6 +18,7 @@ import java.io.EOFException;
 import java.io.IOException;
 import java.lang.ref.SoftReference;
 import java.net.ProtocolException;
+import java.net.SocketAddress;
 import java.nio.ByteBuffer;
 import java.nio.charset.StandardCharsets;
 import java.util.concurrent.TimeUnit;
@@ -66,8 +67,8 @@ public class PeerWebSocket extends WebSocketAdapter {
             if (s != null) {
                 RemoteEndpoint r = s.getRemote();
                 if (r != null) {
-                    String addr = r.getInetSocketAddress().getAddress().getHostAddress();
-                    which = addr + ":" + r.getInetSocketAddress().getPort();
+                    SocketAddress addr = r.getRemoteAddress();
+                    which = addr + ", batch? = " + r.getBatchMode();
                 }
             }
         }
@@ -232,7 +233,7 @@ public class PeerWebSocket extends WebSocketAdapter {
             s.close(1001, "Disconnect"); //RFC 6455, Section 7.4.1
             try {
                 s.disconnect();
-            } catch (IOException ex) {
+            } catch (Exception ex) {
                 log.debug("Exception on session disconnect to {}", which(), ex);
             }
         }

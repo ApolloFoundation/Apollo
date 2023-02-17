@@ -11,9 +11,9 @@ import com.apollocurrency.aplwallet.apl.util.injectable.ChainsConfigHolder;
 import com.apollocurrency.aplwallet.apl.util.injectable.DbProperties;
 import com.apollocurrency.aplwallet.apl.util.injectable.PropertiesHolder;
 
-import javax.enterprise.inject.Produces;
-import javax.inject.Inject;
-import javax.inject.Singleton;
+import jakarta.enterprise.inject.Produces;
+import jakarta.inject.Inject;
+import jakarta.inject.Singleton;
 import java.util.UUID;
 
 

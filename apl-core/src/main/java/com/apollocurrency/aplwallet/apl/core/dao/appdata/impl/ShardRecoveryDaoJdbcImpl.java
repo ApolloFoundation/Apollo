@@ -9,7 +9,7 @@ import com.apollocurrency.aplwallet.apl.core.dao.appdata.ShardRecoveryDaoJdbc;
 import com.apollocurrency.aplwallet.apl.core.entity.appdata.ShardRecovery;
 import org.slf4j.Logger;
 
-import javax.inject.Singleton;
+import jakarta.inject.Singleton;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;

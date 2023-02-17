@@ -10,7 +10,7 @@ import com.apollocurrency.aplwallet.apl.util.env.config.FeaturesHeightRequiremen
 import com.apollocurrency.aplwallet.apl.util.injectable.PropertiesHolder;
 import lombok.extern.slf4j.Slf4j;
 
-import javax.enterprise.inject.Vetoed;
+import jakarta.enterprise.inject.Vetoed;
 import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.List;

@@ -28,7 +28,7 @@ import com.apollocurrency.aplwallet.apl.core.http.JSONData;
 import com.apollocurrency.aplwallet.apl.core.http.ParameterException;
 import org.json.simple.JSONStreamAware;
 
-import javax.servlet.http.HttpServletRequest;
+import jakarta.servlet.http.HttpServletRequest;
 
 public final class GetAlias extends AbstractAPIRequestHandler {
 

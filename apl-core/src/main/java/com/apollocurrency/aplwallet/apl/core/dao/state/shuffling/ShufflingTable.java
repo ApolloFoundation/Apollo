@@ -17,8 +17,8 @@ import com.apollocurrency.aplwallet.apl.core.utils.CollectionUtil;
 import com.apollocurrency.aplwallet.apl.util.ThreadUtils;
 import lombok.extern.slf4j.Slf4j;
 
-import javax.enterprise.event.Event;
-import javax.enterprise.inject.Vetoed;
+import jakarta.enterprise.event.Event;
+import jakarta.enterprise.inject.Vetoed;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;

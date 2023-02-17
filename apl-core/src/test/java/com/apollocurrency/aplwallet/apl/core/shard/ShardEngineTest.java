@@ -113,8 +113,8 @@ import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.RegisterExtension;
 
-import javax.enterprise.inject.spi.Bean;
-import javax.inject.Inject;
+import jakarta.enterprise.inject.spi.Bean;
+import jakarta.inject.Inject;
 import java.io.IOException;
 import java.math.BigDecimal;
 import java.nio.file.Files;

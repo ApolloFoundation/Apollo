@@ -105,6 +105,6 @@ if [ "$JAVA_VER" -ge 17 ]; then
   echo " Java is OK."
 else
     echo
-    echo "${ECHO_PREFIX} WARNING! Java 11 or later is required. Application could not run properly!"
+    echo "${ECHO_PREFIX} WARNING! Java 17 or later is required. Application could not run properly!"
     JAVA_CMD="echo 'ERROR!!! No suitable JRE found!'"
 fi

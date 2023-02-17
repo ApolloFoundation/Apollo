@@ -12,7 +12,7 @@ import com.apollocurrency.aplwallet.apl.dex.eth.utils.EthUtil;
 import com.apollocurrency.aplwallet.apl.exchange.dao.DexOrderKeyFactory;
 import org.jdbi.v3.core.statement.StatementContext;
 
-import javax.inject.Singleton;
+import jakarta.inject.Singleton;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 

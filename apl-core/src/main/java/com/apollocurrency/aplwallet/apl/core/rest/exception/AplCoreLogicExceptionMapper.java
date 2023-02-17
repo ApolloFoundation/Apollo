@@ -8,9 +8,9 @@ import com.apollocurrency.aplwallet.apl.core.exception.AplCoreLogicException;
 import com.apollocurrency.aplwallet.apl.util.builder.ResponseBuilder;
 import com.apollocurrency.aplwallet.apl.util.exception.ApiErrors;
 
-import javax.ws.rs.core.Response;
-import javax.ws.rs.ext.ExceptionMapper;
-import javax.ws.rs.ext.Provider;
+import jakarta.ws.rs.core.Response;
+import jakarta.ws.rs.ext.ExceptionMapper;
+import jakarta.ws.rs.ext.Provider;
 
 /**
  * Default rest API handler for all apl core exceptions, which are not handled by other more specific handlers

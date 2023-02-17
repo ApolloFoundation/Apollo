@@ -16,7 +16,7 @@ There are other components that are parts of Apollo:
 
 ## Requirements
 
-Java 11 (JRE) is required to run the most Apollo components.
+Java 17 (JRE) is required to run the most Apollo components.
 
 
 # Build instruction 
@@ -29,11 +29,11 @@ If you feel like an expert, please use build instructions below. But also please
 
 ## Java versions
 
-We use LTS JDK version 11 in the development and and in the production environments. To be exact, we use vanilla openjdk builds from AdoptOpenJDK site: [Java Development Kit openjdk v.11 from AdopOpenJDK, ](https://adoptopenjdk.net/). You can download and install JDK for your platform by the link. 
+We use LTS JDK version 17 in the development and in the production environments. To be exact, we use openjdk 17 builds from github.com site: [GraalVM Community Edition Java Development Kit v.17](https://github.com/graalvm/graalvm-ce-builds/releases). You can download and install JDK for your platform by the link. 
 
-Apollo code runs well on latest JDKs but is not thouroughly tested. So you can use latest JDKs, e.g. version 15 on your own risk.
+Apollo code runs well on latest JDKs but is not thouroughly tested. So you can use latest JDKs, e.g. version 19 or above on your own risk.
 
-If you are dveloper, we'd like to recommend [SDKMan kit](https://sdkman.io/) to manage installed Java platforms.  
+If you are developer, we'd like to recommend [SDKMan kit](https://sdkman.io/) to manage installed Java platforms.  
 
 ## Preparation steps ##
 
@@ -41,12 +41,12 @@ If you are dveloper, we'd like to recommend [SDKMan kit](https://sdkman.io/) to 
    
     Output example: 
 <pre>
-openjdk version "11.0.9.1" 2020-11-04
-OpenJDK Runtime Environment 18.9 (build 11.0.9.1+1)
-OpenJDK 64-Bit Server VM 18.9 (build 11.0.9.1+1, mixed mode, sharing)
+openjdk version "17.0.5" 2022-10-18
+OpenJDK Runtime Environment GraalVM CE 22.3.0 (build 17.0.5+8-jvmci-22.3-b08)
+OpenJDK 64-Bit Server VM GraalVM CE 22.3.0 (build 17.0.5+8-jvmci-22.3-b08, mixed mode, sharing)
 </pre>
 
-   2. If `version` matches 11.0.x version, your ___java___ was __installed successfully__ and you can __proceed with next steps_. 
+   2. If `version` matches 17.0.x version, your ___java___ was __installed successfully__ and you can __proceed with next steps_. 
 
    3. Clone this repository	
 
@@ -66,9 +66,9 @@ mvnw -v
 <pre>
 Apache Maven 3.6.2 (40f52333136460af0dc0d7232c0dc0bcf0d9e117; 2019-08-27T18:06:16+03:00)
 Maven home: /home/al/.m2/wrapper/dists/apache-maven-3.6.2-bin/795eh28tki48bv3l67maojf0ra/apache-maven-3.6.2
-Java version: 11.0.9.1, vendor: Red Hat, Inc., runtime: /usr/lib/jvm/java-11-openjdk-11.0.9.11-4.fc33.x86_64
+Java version: 17.0.5, vendor: GraalVM Community, runtime: /usr/lib/jvm/22.3.r17-grl
 Default locale: en_US, platform encoding: UTF-8
-OS name: "linux", version: "5.9.12-200.fc33.x86_64", arch: "amd64", family: "unix"
+OS name: "linux", version: "5.4.0-137-generic", arch: "amd64", family: "unix"
 
 </pre>
    7. If output looks similar to example, you can perform build step.
@@ -85,7 +85,7 @@ OS name: "linux", version: "5.9.12-200.fc33.x86_64", arch: "amd64", family: "uni
     
 ### Installation artefacts
 
-The final artifact that is ready to install and run located in the ___apl-exec/target___ directory and has name like  ___apollo-blockchain-1.51.1-NoOS-NoArch.zip___.
+The final artifact that is ready to install and run located in the ___apl-exec/target___ directory and has name like  ___apollo-blockchain-2.0.1-NoOS-NoArch.zip___.
 
 Unzip it to some location and run by scripts in ___ApolloWallet/apollo-blockchain/bin___ directory.
 

@@ -16,7 +16,7 @@ import com.apollocurrency.aplwallet.apl.crypto.AplIdGenerator;
 import com.apollocurrency.aplwallet.apl.util.Constants;
 import org.slf4j.Logger;
 
-import javax.inject.Inject;
+import jakarta.inject.Inject;
 import java.math.BigInteger;
 import java.security.MessageDigest;
 import java.util.Arrays;

@@ -22,7 +22,7 @@ package com.apollocurrency.aplwallet.apl.core.dao.state.derived;
 
 import static com.apollocurrency.aplwallet.apl.core.service.fulltext.FullTextConfig.DEFAULT_SCHEMA;
 
-import javax.enterprise.event.Event;
+import jakarta.enterprise.event.Event;
 
 import com.apollocurrency.aplwallet.apl.core.dao.state.keyfactory.DbKey;
 import com.apollocurrency.aplwallet.apl.core.db.DatabaseManager;

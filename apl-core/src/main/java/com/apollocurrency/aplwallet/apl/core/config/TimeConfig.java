@@ -5,11 +5,11 @@ import com.apollocurrency.aplwallet.apl.util.TimeSource;
 import com.apollocurrency.aplwallet.apl.util.cdi.config.Property;
 import lombok.extern.slf4j.Slf4j;
 
-import javax.annotation.PreDestroy;
-import javax.enterprise.inject.Produces;
-import javax.enterprise.inject.Vetoed;
-import javax.inject.Inject;
-import javax.inject.Singleton;
+import jakarta.annotation.PreDestroy;
+import jakarta.enterprise.inject.Produces;
+import jakarta.enterprise.inject.Vetoed;
+import jakarta.inject.Inject;
+import jakarta.inject.Singleton;
 
 @Slf4j
 @Singleton

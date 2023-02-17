@@ -9,8 +9,8 @@ import com.apollocurrency.aplwallet.apl.util.cdi.config.Property;
 import lombok.Getter;
 import lombok.ToString;
 
-import javax.inject.Inject;
-import javax.inject.Singleton;
+import jakarta.inject.Inject;
+import jakarta.inject.Singleton;
 import java.util.Optional;
 import java.util.UUID;
 

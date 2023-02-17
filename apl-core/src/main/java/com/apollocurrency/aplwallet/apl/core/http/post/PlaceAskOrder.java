@@ -29,8 +29,8 @@ import com.apollocurrency.aplwallet.apl.core.transaction.messages.CCAskOrderPlac
 import com.apollocurrency.aplwallet.apl.util.exception.AplException;
 import org.json.simple.JSONStreamAware;
 
-import javax.enterprise.inject.Vetoed;
-import javax.servlet.http.HttpServletRequest;
+import jakarta.enterprise.inject.Vetoed;
+import jakarta.servlet.http.HttpServletRequest;
 
 @Vetoed
 public final class PlaceAskOrder extends CreateTransactionHandler {

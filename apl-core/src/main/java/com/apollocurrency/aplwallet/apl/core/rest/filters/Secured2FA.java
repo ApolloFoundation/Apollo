@@ -4,7 +4,7 @@
 
 package com.apollocurrency.aplwallet.apl.core.rest.filters;
 
-import javax.ws.rs.NameBinding;
+import jakarta.ws.rs.NameBinding;
 import java.lang.annotation.ElementType;
 import java.lang.annotation.Retention;
 import java.lang.annotation.RetentionPolicy;

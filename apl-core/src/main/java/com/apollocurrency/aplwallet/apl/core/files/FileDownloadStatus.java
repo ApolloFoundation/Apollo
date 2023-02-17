@@ -8,7 +8,7 @@ import com.apollocurrency.aplwallet.apl.core.files.statcheck.FileDownloadDecisio
 import com.apollocurrency.aplwallet.apl.core.files.statcheck.PeerFileHashSum;
 import lombok.Getter;
 
-import javax.enterprise.inject.Vetoed;
+import jakarta.enterprise.inject.Vetoed;
 import java.util.Set;
 import java.util.concurrent.atomic.AtomicInteger;
 

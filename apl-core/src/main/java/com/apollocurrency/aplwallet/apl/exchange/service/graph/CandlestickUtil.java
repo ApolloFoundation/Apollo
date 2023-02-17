@@ -5,7 +5,7 @@ import com.apollocurrency.aplwallet.apl.dex.core.model.DexCandlestick;
 import com.apollocurrency.aplwallet.apl.dex.eth.utils.EthUtil;
 import com.apollocurrency.aplwallet.apl.util.Convert2;
 
-import javax.enterprise.inject.Vetoed;
+import jakarta.enterprise.inject.Vetoed;
 import java.math.BigDecimal;
 import java.util.List;
 import java.util.Map;
