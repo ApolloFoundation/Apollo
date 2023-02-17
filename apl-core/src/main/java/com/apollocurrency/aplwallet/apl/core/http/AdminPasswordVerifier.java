@@ -11,11 +11,11 @@ import com.apollocurrency.aplwallet.apl.util.injectable.PropertiesHolder;
 import lombok.Getter;
 import lombok.extern.slf4j.Slf4j;
 
-import javax.enterprise.inject.Vetoed;
-import javax.inject.Inject;
-import javax.inject.Singleton;
-import javax.servlet.http.HttpServletRequest;
-import javax.ws.rs.core.Response;
+import jakarta.enterprise.inject.Vetoed;
+import jakarta.inject.Inject;
+import jakarta.inject.Singleton;
+import jakarta.servlet.http.HttpServletRequest;
+import jakarta.ws.rs.core.Response;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;

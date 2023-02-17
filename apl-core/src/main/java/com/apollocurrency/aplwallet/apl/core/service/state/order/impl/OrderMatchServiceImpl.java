@@ -22,8 +22,8 @@ import com.apollocurrency.aplwallet.apl.core.transaction.messages.CCBidOrderPlac
 import com.apollocurrency.aplwallet.apl.util.ThreadUtils;
 import lombok.extern.slf4j.Slf4j;
 
-import javax.inject.Inject;
-import javax.inject.Singleton;
+import jakarta.inject.Inject;
+import jakarta.inject.Singleton;
 
 /**
  * @author silaev-firstbridge on 4/8/2020

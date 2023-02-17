@@ -8,9 +8,9 @@ import com.apollocurrency.aplwallet.apl.util.env.config.ResourceLocator;
 import com.apollocurrency.aplwallet.apl.util.env.config.UserResourceLocator;
 import com.apollocurrency.aplwallet.apl.util.env.dirprovider.ConfigDirProvider;
 
-import javax.enterprise.inject.Produces;
-import javax.inject.Inject;
-import javax.inject.Singleton;
+import jakarta.enterprise.inject.Produces;
+import jakarta.inject.Inject;
+import jakarta.inject.Singleton;
 
 /**
  * Produces singleton CDI-managed instance of the {@link UserResourceLocator}

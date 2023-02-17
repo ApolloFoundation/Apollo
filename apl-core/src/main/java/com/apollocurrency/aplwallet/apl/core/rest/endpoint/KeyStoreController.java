@@ -26,6 +26,8 @@ import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.media.Content;
 import io.swagger.v3.oas.annotations.media.Schema;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
+import jakarta.servlet.ServletException;
+import jakarta.servlet.http.Part;
 import org.apache.commons.fileupload.FileItemIterator;
 import org.apache.commons.fileupload.FileItemStream;
 import org.apache.commons.fileupload.FileUploadException;
@@ -36,19 +38,22 @@ import org.web3j.crypto.CipherException;
 import org.web3j.crypto.Wallet;
 import org.web3j.crypto.WalletFile;
 
-import javax.annotation.security.PermitAll;
-import javax.inject.Inject;
-import javax.inject.Singleton;
-import javax.servlet.http.HttpServletRequest;
-import javax.ws.rs.Consumes;
-import javax.ws.rs.DefaultValue;
-import javax.ws.rs.POST;
-import javax.ws.rs.Path;
-import javax.ws.rs.Produces;
-import javax.ws.rs.core.Context;
-import javax.ws.rs.core.MediaType;
-import javax.ws.rs.core.Response;
+import jakarta.annotation.security.PermitAll;
+import jakarta.inject.Inject;
+import jakarta.inject.Singleton;
+import jakarta.servlet.http.HttpServletRequest;
+import jakarta.ws.rs.Consumes;
+import jakarta.ws.rs.DefaultValue;
+import jakarta.ws.rs.POST;
+import jakarta.ws.rs.Path;
+import jakarta.ws.rs.Produces;
+import jakarta.ws.rs.core.Context;
+import jakarta.ws.rs.core.MediaType;
+import jakarta.ws.rs.core.Response;
+
+import java.io.File;
 import java.io.IOException;
+import java.util.Iterator;
 
 import static com.apollocurrency.aplwallet.apl.core.http.BlockEventSource.LOG;
 
@@ -121,9 +126,10 @@ public class KeyStoreController {
         }
     )
     @PermitAll
-    public Response importKeyStore(@Context HttpServletRequest request) {
+    public Response importKeyStore(@Context HttpServletRequest request) throws IOException, ServletException {
         // Check that we have a file upload request
-        if (!ServletFileUpload.isMultipartContent(request)) {
+//        if (!ServletFileUpload.isMultipartContent(request)) {
+        if (request.getParts() == null) {
             return Response.status(Response.Status.BAD_REQUEST).build();
         }
 
@@ -134,20 +140,24 @@ public class KeyStoreController {
             ServletFileUpload upload = new ServletFileUpload();
             // Set overall request size constraint
             upload.setSizeMax(Long.valueOf(maxKeyStoreSize));
-            FileItemIterator fileIterator = upload.getItemIterator(request);
+//            FileItemIterator fileIterator = upload.getItemIterator(request);
+            Iterator<Part> fileIterator = request.getParts().iterator();
 
             while (fileIterator.hasNext()) {
-                FileItemStream item = fileIterator.next();
-                if ("keyStore".equals(item.getFieldName())) {
-                    keyStore = IOUtils.toByteArray(item.openStream());
-                } else if ("passPhrase".equals(item.getFieldName())) {
-                    passPhrase = IOUtils.toString(item.openStream());
+//                FileItemStream item = fileIterator.next();
+                Part item = fileIterator.next();
+                String fileName = getFileName(item);
+//                item.write(uploadPath + File.separator + fileName);
+                if ("keyStore".equals(fileName)) {
+                    keyStore = IOUtils.toByteArray(item.getInputStream());
+                } else if ("passPhrase".equals(fileName)) {
+                    passPhrase = IOUtils.toString(item.getInputStream());
                 } else {
                     return ResponseBuilder.apiError(ApiErrors.ACCOUNT_2FA_ERROR,
-                        "Failed to upload file. Unknown parameter:" + item.getFieldName()).build();
+                        "Failed to upload file. Unknown parameter:" + fileName).build();
                 }
             }
-        } catch (FileUploadException | IOException ex) {
+        } catch (/*FileUploadException | */IOException ex) {
             LOG.error(ex.getMessage(), ex);
             return ResponseBuilder.apiError(ApiErrors.ACCOUNT_2FA_ERROR, "Failed to upload file.").build();
         }
@@ -163,6 +173,14 @@ public class KeyStoreController {
         } else {
             return ResponseBuilder.apiError(ApiErrors.ACCOUNT_2FA_ERROR, status.message).build();
         }
+    }
+
+    private String getFileName(Part part) {
+        for (String content : part.getHeader("content-disposition").split(";")) {
+            if (content.trim().startsWith("filename"))
+                return content.substring(content.indexOf("=") + 2, content.length() - 1);
+        }
+        throw new IllegalArgumentException("MultiPart doesn't have a fileName");
     }
 
 

@@ -24,8 +24,7 @@ CREATE TABLE IF NOT EXISTS `smc_contract`
     `latest`                tinyint(1)                              NOT NULL DEFAULT 1,
     UNIQUE KEY `db_id` (`db_id`),
     UNIQUE KEY `smc_contract_address_height_idx` (`address`)
-) ENGINE = ROCKSDB
-  DEFAULT CHARSET = utf8mb4
+) DEFAULT CHARSET = utf8mb4
   COLLATE = utf8mb4_unicode_ci;
 
 CREATE TABLE IF NOT EXISTS `smc_state`
@@ -39,8 +38,7 @@ CREATE TABLE IF NOT EXISTS `smc_state`
     UNIQUE KEY `db_id` (`db_id`),
     UNIQUE KEY `smc_state_address_height_idx` (`address`, `height`),
     KEY `smc_state_height_address_idx` (`height`, `address`)
-) ENGINE = ROCKSDB
-  DEFAULT CHARSET = utf8mb4
+) DEFAULT CHARSET = utf8mb4
   COLLATE = utf8mb4_unicode_ci;
 
 CREATE TABLE IF NOT EXISTS `smc_mapping`
@@ -56,8 +54,7 @@ CREATE TABLE IF NOT EXISTS `smc_mapping`
     UNIQUE KEY `db_id` (`db_id`),
     UNIQUE KEY `smc_mapping_address_name_key_height_idx` (`address`, `name`, `entry_key`, `height`),
     KEY `smc_mapping_height_idx` (`height`)
-) ENGINE = ROCKSDB
-  DEFAULT CHARSET = utf8mb4
+) DEFAULT CHARSET = utf8mb4
   COLLATE = utf8mb4_unicode_ci;
 
 CREATE TABLE IF NOT EXISTS `smc_event`
@@ -76,8 +73,7 @@ CREATE TABLE IF NOT EXISTS `smc_event`
     KEY `smc_event_contract_signature_height_idx` (`contract`, `signature`, `height`),
     KEY `smc_event_id_height_idx` (`id`, `height`),
     KEY `smc_event_height_idx` (`height`)
-) ENGINE = ROCKSDB
-  DEFAULT CHARSET = utf8mb4
+) DEFAULT CHARSET = utf8mb4
   COLLATE = utf8mb4_unicode_ci;
 
 CREATE TABLE IF NOT EXISTS `smc_event_log`
@@ -92,6 +88,5 @@ CREATE TABLE IF NOT EXISTS `smc_event_log`
     UNIQUE KEY `db_id` (`db_id`),
     KEY `smc_event_log_id_height_idx` (`event_id`, `db_id`, `height`),
     KEY `smc_event_log_height_idx` (`height`)
-) ENGINE = ROCKSDB
-  DEFAULT CHARSET = utf8mb4
+) DEFAULT CHARSET = utf8mb4
   COLLATE = utf8mb4_unicode_ci;

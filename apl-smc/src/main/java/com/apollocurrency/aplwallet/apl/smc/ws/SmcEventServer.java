@@ -19,10 +19,12 @@ import com.apollocurrency.smc.data.jsonmapper.event.EventJsonMapper;
 import lombok.Getter;
 import lombok.extern.slf4j.Slf4j;
 
-import javax.annotation.PostConstruct;
-import javax.enterprise.event.ObservesAsync;
-import javax.enterprise.inject.spi.CDI;
-import javax.inject.Singleton;
+import jakarta.annotation.PostConstruct;
+import jakarta.enterprise.event.ObservesAsync;
+import jakarta.enterprise.inject.spi.CDI;
+import jakarta.inject.Singleton;
+
+import java.io.IOException;
 
 /**
  * @author andrew.zinchenko@gmail.com
@@ -64,7 +66,7 @@ public class SmcEventServer implements SmcEventSocketListener {
     }
 
     @Override
-    public void onMessage(SmcEventSocket socket, SmcEventSubscriptionRequest request) {
+    public void onMessage(SmcEventSocket socket, SmcEventSubscriptionRequest request) throws IOException {
         SmcEventResponse response = process(socket, request);
         socket.sendWebSocket(response);
         if (request.getOperation() == SmcEventSubscriptionRequest.Operation.SUBSCRIBE_TEST) {
@@ -121,7 +123,7 @@ public class SmcEventServer implements SmcEventSocketListener {
         subscriptionManager.fire(event, args);
     }
 
-    private void sendMockEvent(SmcEventSocket socket, SmcEventSubscriptionRequest request) {
+    private void sendMockEvent(SmcEventSocket socket, SmcEventSubscriptionRequest request) throws IOException {
         var event = request.getEvents().get(0);
         socket.sendWebSocket(SmcEventMessage.builder()
             .subscriptionId(event.getSubscriptionId())

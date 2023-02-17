@@ -19,7 +19,7 @@ import com.apollocurrency.aplwallet.apl.util.injectable.PropertiesHolder;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
-import javax.enterprise.event.Event;
+import jakarta.enterprise.event.Event;
 import java.util.Collections;
 import java.util.List;
 

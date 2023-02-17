@@ -4,9 +4,9 @@ import com.apollocurrency.aplwallet.apl.core.service.appdata.PropertyStorageServ
 import com.apollocurrency.aplwallet.apl.util.env.dirprovider.ConfigDirProvider;
 import lombok.extern.slf4j.Slf4j;
 
-import javax.annotation.PostConstruct;
-import javax.inject.Inject;
-import javax.inject.Singleton;
+import jakarta.annotation.PostConstruct;
+import jakarta.inject.Inject;
+import jakarta.inject.Singleton;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileOutputStream;

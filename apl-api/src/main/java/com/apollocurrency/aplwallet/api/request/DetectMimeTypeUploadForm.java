@@ -8,7 +8,7 @@ import io.swagger.v3.oas.annotations.media.Schema;
 import lombok.NoArgsConstructor;
 import org.jboss.resteasy.annotations.providers.multipart.PartType;
 
-import javax.ws.rs.FormParam;
+import jakarta.ws.rs.FormParam;
 
 /**
  * Form data submitted to detect mime-type for file or 'data' field content

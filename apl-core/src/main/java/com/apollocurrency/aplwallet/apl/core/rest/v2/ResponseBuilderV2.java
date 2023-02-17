@@ -9,7 +9,7 @@ import com.apollocurrency.aplwallet.api.v2.model.ErrorResponse;
 import com.apollocurrency.aplwallet.apl.util.exception.ApiErrorInfo;
 import com.apollocurrency.aplwallet.apl.util.exception.Messages;
 
-import javax.ws.rs.core.Response;
+import jakarta.ws.rs.core.Response;
 
 /**
  * @author andrii.zinchenko@firstbridge.io

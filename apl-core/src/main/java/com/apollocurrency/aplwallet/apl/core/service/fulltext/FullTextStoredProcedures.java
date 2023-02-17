@@ -7,7 +7,7 @@ package com.apollocurrency.aplwallet.apl.core.service.fulltext;
 import com.apollocurrency.aplwallet.apl.core.dao.state.derived.EntityDbTable;
 import com.apollocurrency.aplwallet.apl.util.db.DbClause;
 
-import javax.enterprise.inject.spi.CDI;
+import jakarta.enterprise.inject.spi.CDI;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 

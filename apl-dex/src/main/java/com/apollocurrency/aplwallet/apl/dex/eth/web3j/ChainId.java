@@ -12,9 +12,9 @@ import org.web3j.protocol.core.methods.response.NetVersion;
 import org.web3j.protocol.exceptions.ClientConnectionException;
 import org.web3j.tx.ChainIdLong;
 
-import javax.annotation.PostConstruct;
-import javax.inject.Inject;
-import javax.inject.Singleton;
+import jakarta.annotation.PostConstruct;
+import jakarta.inject.Inject;
+import jakarta.inject.Singleton;
 import java.io.IOException;
 
 @Singleton

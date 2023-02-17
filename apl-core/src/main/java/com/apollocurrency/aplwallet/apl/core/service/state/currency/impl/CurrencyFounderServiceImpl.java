@@ -4,8 +4,8 @@
 
 package com.apollocurrency.aplwallet.apl.core.service.state.currency.impl;
 
-import javax.inject.Inject;
-import javax.inject.Singleton;
+import jakarta.inject.Inject;
+import jakarta.inject.Singleton;
 
 import java.util.ArrayList;
 import java.util.List;

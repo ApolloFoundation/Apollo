@@ -10,7 +10,7 @@ import com.apollocurrency.aplwallet.api.v2.model.PropertySpec;
 import com.apollocurrency.aplwallet.apl.util.api.converter.Converter;
 import com.apollocurrency.smc.polyglot.language.ContractSpec;
 
-import javax.inject.Singleton;
+import jakarta.inject.Singleton;
 import java.util.Locale;
 
 /**

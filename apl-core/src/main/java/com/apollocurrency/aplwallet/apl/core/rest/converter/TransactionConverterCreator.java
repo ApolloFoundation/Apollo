@@ -6,8 +6,8 @@ package com.apollocurrency.aplwallet.apl.core.rest.converter;
 
 import com.apollocurrency.aplwallet.apl.core.service.blockchain.Blockchain;
 
-import javax.inject.Inject;
-import javax.inject.Singleton;
+import jakarta.inject.Inject;
+import jakarta.inject.Singleton;
 
 /**
  * Creates instances of the {@link TransactionConverter} using supplied config

@@ -24,8 +24,8 @@ import org.junit.jupiter.api.extension.RegisterExtension;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
-import javax.enterprise.event.Event;
-import javax.enterprise.util.AnnotationLiteral;
+import jakarta.enterprise.event.Event;
+import jakarta.enterprise.util.AnnotationLiteral;
 import java.util.List;
 import java.util.Map;
 

@@ -14,7 +14,7 @@ import com.apollocurrency.aplwallet.apl.core.service.blockchain.UnconfirmedTrans
 import com.apollocurrency.aplwallet.apl.util.Convert2;
 import lombok.extern.slf4j.Slf4j;
 
-import javax.enterprise.inject.spi.CDI;
+import jakarta.enterprise.inject.spi.CDI;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;

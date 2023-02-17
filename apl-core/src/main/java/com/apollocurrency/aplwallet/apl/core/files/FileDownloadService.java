@@ -6,10 +6,10 @@ package com.apollocurrency.aplwallet.apl.core.files;
 import com.apollocurrency.aplwallet.api.p2p.FileDownloadInfo;
 import lombok.extern.slf4j.Slf4j;
 
-import javax.enterprise.event.Event;
-import javax.enterprise.inject.Instance;
-import javax.enterprise.util.AnnotationLiteral;
-import javax.inject.Inject;
+import jakarta.enterprise.event.Event;
+import jakarta.enterprise.inject.Instance;
+import jakarta.enterprise.util.AnnotationLiteral;
+import jakarta.inject.Inject;
 import java.io.File;
 import java.util.HashMap;
 import java.util.Map;

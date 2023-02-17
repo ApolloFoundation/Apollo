@@ -22,7 +22,7 @@ import com.apollocurrency.aplwallet.apl.util.exception.AplException;
 import lombok.extern.slf4j.Slf4j;
 import org.json.simple.JSONObject;
 
-import javax.inject.Inject;
+import jakarta.inject.Inject;
 import java.nio.ByteBuffer;
 import java.util.List;
 import java.util.Map;

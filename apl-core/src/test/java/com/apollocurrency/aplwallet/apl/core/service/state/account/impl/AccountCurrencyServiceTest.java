@@ -20,7 +20,7 @@ import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
-import javax.enterprise.event.Event;
+import jakarta.enterprise.event.Event;
 
 import static com.apollocurrency.aplwallet.apl.core.app.observer.events.AccountEventBinding.literal;
 import static org.junit.jupiter.api.Assertions.assertEquals;

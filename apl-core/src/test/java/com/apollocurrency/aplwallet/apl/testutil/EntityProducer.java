@@ -21,8 +21,8 @@ import com.apollocurrency.aplwallet.apl.util.Version;
 import org.json.simple.JSONObject;
 import org.json.simple.JSONStreamAware;
 
-import javax.enterprise.inject.Produces;
-import javax.inject.Named;
+import jakarta.enterprise.inject.Produces;
+import jakarta.inject.Named;
 import java.util.Set;
 import java.util.UUID;
 

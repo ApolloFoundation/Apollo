@@ -17,8 +17,8 @@ import com.apollocurrency.aplwallet.apl.core.service.state.qualifier.AskOrderSer
 import com.apollocurrency.aplwallet.apl.core.transaction.messages.CCAskOrderPlacementAttachment;
 import lombok.extern.slf4j.Slf4j;
 
-import javax.inject.Inject;
-import javax.inject.Singleton;
+import jakarta.inject.Inject;
+import jakarta.inject.Singleton;
 import java.util.stream.Stream;
 
 @Slf4j

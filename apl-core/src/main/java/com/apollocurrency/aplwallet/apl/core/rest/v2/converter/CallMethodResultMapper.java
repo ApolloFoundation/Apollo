@@ -8,7 +8,7 @@ import com.apollocurrency.aplwallet.api.v2.model.CallMethodResult;
 import com.apollocurrency.aplwallet.apl.util.api.converter.Converter;
 import com.apollocurrency.smc.contract.vm.ResultValue;
 
-import javax.inject.Singleton;
+import jakarta.inject.Singleton;
 import java.util.stream.Collectors;
 
 /**

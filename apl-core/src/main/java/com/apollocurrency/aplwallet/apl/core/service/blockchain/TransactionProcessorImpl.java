@@ -50,10 +50,10 @@ import lombok.extern.slf4j.Slf4j;
 import org.json.simple.JSONArray;
 import org.json.simple.JSONObject;
 
-import javax.enterprise.event.Event;
-import javax.enterprise.event.Observes;
-import javax.inject.Inject;
-import javax.inject.Singleton;
+import jakarta.enterprise.event.Event;
+import jakarta.enterprise.event.Observes;
+import jakarta.inject.Inject;
+import jakarta.inject.Singleton;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
@@ -76,7 +76,7 @@ public class TransactionProcessorImpl implements TransactionProcessor {
     private final Blockchain blockchain;
     private final TimeService timeService;
     private final GlobalSync globalSync;
-    private final javax.enterprise.event.Event<List<Transaction>> txsEvent;
+    private final jakarta.enterprise.event.Event<List<Transaction>> txsEvent;
     private final PeersService peers;
     private final MemPool memPool;
     private final DatabaseManager databaseManager;
