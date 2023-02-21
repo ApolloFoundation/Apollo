@@ -4,6 +4,7 @@
 
 package com.apollocurrency.aplwallet.apl.core.rest.endpoint;
 
+import com.apollocurrency.aplwallet.api.response.VaultWalletResponse;
 import com.apollocurrency.aplwallet.apl.core.http.HttpParameterParserUtil;
 import com.apollocurrency.aplwallet.apl.core.http.ParameterException;
 import com.apollocurrency.aplwallet.apl.core.rest.filters.Secured2FA;
@@ -28,9 +29,7 @@ import io.swagger.v3.oas.annotations.media.Schema;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.http.Part;
-import org.apache.commons.fileupload.FileItemIterator;
-import org.apache.commons.fileupload.FileItemStream;
-import org.apache.commons.fileupload.FileUploadException;
+import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.fileupload.servlet.ServletFileUpload;
 import org.apache.commons.io.IOUtils;
 import org.jboss.resteasy.annotations.jaxrs.FormParam;
@@ -51,12 +50,10 @@ import jakarta.ws.rs.core.Context;
 import jakarta.ws.rs.core.MediaType;
 import jakarta.ws.rs.core.Response;
 
-import java.io.File;
 import java.io.IOException;
 import java.util.Iterator;
 
-import static com.apollocurrency.aplwallet.apl.core.http.BlockEventSource.LOG;
-
+@Slf4j
 @Path("/keyStore")
 @Singleton
 public class KeyStoreController {
@@ -75,7 +72,7 @@ public class KeyStoreController {
         this.maxKeyStoreSize = maxKeyStoreSize;
     }
 
-    // Dont't delete. For RESTEASY.
+    // Don't delete. For RESTEASY.
     public KeyStoreController() {
     }
 
@@ -128,38 +125,35 @@ public class KeyStoreController {
     @PermitAll
     public Response importKeyStore(@Context HttpServletRequest request) throws IOException, ServletException {
         // Check that we have a file upload request
-//        if (!ServletFileUpload.isMultipartContent(request)) {
         if (request.getParts() == null) {
             return Response.status(Response.Status.BAD_REQUEST).build();
         }
 
         byte[] keyStore = null;
         String passPhrase = null;
-
         try {
             ServletFileUpload upload = new ServletFileUpload();
             // Set overall request size constraint
-            upload.setSizeMax(Long.valueOf(maxKeyStoreSize));
-//            FileItemIterator fileIterator = upload.getItemIterator(request);
+            upload.setSizeMax(maxKeyStoreSize);
             Iterator<Part> fileIterator = request.getParts().iterator();
 
             while (fileIterator.hasNext()) {
-//                FileItemStream item = fileIterator.next();
                 Part item = fileIterator.next();
                 String fileName = getFileName(item);
-//                item.write(uploadPath + File.separator + fileName);
-                if ("keyStore".equals(fileName)) {
+                if ("keyStore".equalsIgnoreCase(fileName)) {
                     keyStore = IOUtils.toByteArray(item.getInputStream());
-                } else if ("passPhrase".equals(fileName)) {
-                    passPhrase = IOUtils.toString(item.getInputStream());
+                } else if ("passphrase".equalsIgnoreCase(fileName)) {
+                    String passPhraseEncrypted = IOUtils.toString(item.getInputStream());
+                    // decrypt from el-gamal
+                    passPhrase = HttpParameterParserUtil.getPassphrase(passPhraseEncrypted, true);
                 } else {
                     return ResponseBuilder.apiError(ApiErrors.ACCOUNT_2FA_ERROR,
                         "Failed to upload file. Unknown parameter:" + fileName).build();
                 }
             }
-        } catch (/*FileUploadException | */IOException ex) {
-            LOG.error(ex.getMessage(), ex);
-            return ResponseBuilder.apiError(ApiErrors.ACCOUNT_2FA_ERROR, "Failed to upload file.").build();
+        } catch (IOException | ParameterException ex) {
+            log.error("Import keyStore error, upload failed: {}", ex.getMessage());
+            return ResponseBuilder.apiError(ApiErrors.ACCOUNT_2FA_ERROR, "Failed to upload file." + ex).build();
         }
 
         if (passPhrase == null || keyStore == null || keyStore.length == 0) {
@@ -169,7 +163,8 @@ public class KeyStoreController {
         KMSResponseStatus status = KMSService.storeWallet(keyStore, passPhrase);
 
         if (status.isOK()) {
-            return Response.status(200).build();
+            VaultWalletResponse response = new VaultWalletResponse();
+            return Response.status(Response.Status.OK).entity(response).build();
         } else {
             return ResponseBuilder.apiError(ApiErrors.ACCOUNT_2FA_ERROR, status.message).build();
         }
