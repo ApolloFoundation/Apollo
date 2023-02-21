@@ -32,7 +32,7 @@ import org.junit.jupiter.api.extension.RegisterExtension;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.CsvSource;
 
-import javax.inject.Inject;
+import jakarta.inject.Inject;
 
 import static com.apollocurrency.smc.util.HexUtils.parseHex;
 import static org.junit.jupiter.api.Assertions.assertArrayEquals;

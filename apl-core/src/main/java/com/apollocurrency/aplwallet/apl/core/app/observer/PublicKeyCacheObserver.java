@@ -11,9 +11,9 @@ import com.apollocurrency.aplwallet.apl.util.cache.InMemoryCacheManager;
 import com.google.common.cache.Cache;
 import lombok.extern.slf4j.Slf4j;
 
-import javax.enterprise.event.Observes;
-import javax.inject.Inject;
-import javax.inject.Singleton;
+import jakarta.enterprise.event.Observes;
+import jakarta.inject.Inject;
+import jakarta.inject.Singleton;
 
 @Slf4j
 @Singleton

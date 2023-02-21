@@ -15,8 +15,10 @@ import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.Getter;
 import lombok.extern.slf4j.Slf4j;
+import org.eclipse.jetty.client.HttpClient;
 import org.eclipse.jetty.util.thread.QueuedThreadPool;
 import org.eclipse.jetty.websocket.api.Session;
+import org.eclipse.jetty.websocket.api.WriteCallback;
 import org.eclipse.jetty.websocket.api.annotations.OnWebSocketClose;
 import org.eclipse.jetty.websocket.api.annotations.OnWebSocketConnect;
 import org.eclipse.jetty.websocket.api.annotations.OnWebSocketMessage;
@@ -27,15 +29,13 @@ import org.eclipse.jetty.websocket.client.WebSocketClient;
 import java.io.IOException;
 import java.io.Serializable;
 import java.net.URI;
+import java.time.Duration;
 import java.util.Random;
 import java.util.concurrent.CountDownLatch;
-import java.util.concurrent.ExecutionException;
-import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
-import java.util.concurrent.TimeoutException;
 
 @Slf4j
-@WebSocket(maxTextMessageSize = 64 * 1024, maxIdleTime = Integer.MAX_VALUE)
+@WebSocket(maxTextMessageSize = 64 * 1024, idleTimeout = Integer.MAX_VALUE)
 public class TransportInteractionWebSocket {
     public static final int CONNECTION_WAIT_MS = 300;
     private static Random rand = new Random();
@@ -86,16 +86,17 @@ public class TransportInteractionWebSocket {
 
     private WebSocketClient getWebSocketClient(PropertiesHolder propertiesHolder) {
 
-        final WebSocketClient socketClient = new WebSocketClient();
-        socketClient.setMaxIdleTimeout(Long.MAX_VALUE);
+        HttpClient httpClient = new HttpClient();
 
         if (propertiesHolder.getBooleanProperty("apl.limitHardwareResources", false)) {
             final QueuedThreadPool threadPool = new QueuedThreadPool();
             threadPool.setMaxThreads(propertiesHolder.getIntProperty("apl.wsMaxThreadPoolSize"));
             threadPool.setMinThreads(propertiesHolder.getIntProperty("apl.wsMinThreadPoolSize"));
-            threadPool.setName(socketClient.getHttpClient().getName());
-            socketClient.setExecutor(threadPool);
+            threadPool.setName(httpClient.getName());
+            httpClient.setExecutor(threadPool);
         }
+        WebSocketClient socketClient = new WebSocketClient(httpClient);
+        socketClient.setIdleTimeout(Duration.ofMillis(Long.MAX_VALUE));
 
         return socketClient;
     }
@@ -150,7 +151,9 @@ public class TransportInteractionWebSocket {
     @OnWebSocketClose
     public void onClose(int statusCode, String reason) {
         log.debug("TransportInteractionWebSocket: onClose, code: {}, reason: {} ", statusCode, reason);
-        this.session = null;
+        if (this.session != null) {
+            this.session.close();
+        }
     }
 
     /**
@@ -227,15 +230,18 @@ public class TransportInteractionWebSocket {
      * @param message
      */
     public void sendMessage(String message) {
-        try {
-            Future<Void> fut;
-            fut = session.getRemote().sendStringByFuture(message);
-            fut.get(2, TimeUnit.SECONDS);
+        session.getRemote().sendString(message, new WriteCallback() {
+            @Override
+            public void writeFailed(Throwable x) {
+                log.error("Sending string '{}' has failed = {}", message, x.getMessage());
+                WriteCallback.super.writeFailed(x);
+            }
 
-        } catch (InterruptedException | ExecutionException | TimeoutException ex) {
-            log.error("sendMessage Exception: {}", ex.getMessage().toString());
-        }
-
+            @Override
+            public void writeSuccess() {
+                WriteCallback.super.writeSuccess();
+            }
+        });
     }
 
     /**
@@ -243,7 +249,7 @@ public class TransportInteractionWebSocket {
      */
 
     public boolean isOpen() {
-        return this.session != null;
+        return this.session != null && this.session.isOpen();
     }
 
     /**
@@ -274,8 +280,6 @@ public class TransportInteractionWebSocket {
             sendMessage(stopRequestString);
         } catch (JsonProcessingException ex) {
             log.error("TransportInteractionWebSocket: Error while creating Getting Status request: {}", ex.getMessage().toString());
-        } catch (IOException ex) {
-            log.error("getting status error: {} ", ex.getMessage().toString());
         }
 
     }
@@ -301,8 +305,6 @@ public class TransportInteractionWebSocket {
             sendMessage(startRequestString);
         } catch (JsonProcessingException ex) {
             log.error("TransportInteractionWebSocket: JSON Error while creating STARTREQUEST : {}", ex.getMessage().toString());
-        } catch (IOException ex) {
-            log.error("TransportInteractionWebSocket: IO Error while creating STARTREQUEST : {}", ex.getMessage().toString());
         }
 
     }
@@ -320,8 +322,13 @@ public class TransportInteractionWebSocket {
             sendMessage(stopRequestString);
         } catch (JsonProcessingException ex) {
             log.error("TransportInteractionWebSocket: JSON Error while creating STOPREQUEST: {}", ex.getMessage().toString());
-        } catch (IOException ex) {
-            log.error("TransportInteractionWebSocket: IO Error while creating STOPREQUEST: {}", ex.getMessage().toString());
+        }
+        if (this.client != null) {
+            try {
+                this.client.stop();
+            } catch (Exception e) {
+                log.error("Error stopping Transport WebSocket client", e);
+            }
         }
         cleanupComParams();
         secureTransportStatus = SecureTransportStatus.DISCONNECTED;

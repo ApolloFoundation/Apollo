@@ -6,8 +6,8 @@ package com.apollocurrency.aplwallet.apl.core.rest.validation;
 
 import com.apollocurrency.aplwallet.apl.util.api.converter.PlatformSpecs;
 
-import javax.validation.ConstraintValidator;
-import javax.validation.ConstraintValidatorContext;
+import jakarta.validation.ConstraintValidator;
+import jakarta.validation.ConstraintValidatorContext;
 
 public class PlatformSpecsValidator implements ConstraintValidator<ValidPlatformSpecs, PlatformSpecs> {
 

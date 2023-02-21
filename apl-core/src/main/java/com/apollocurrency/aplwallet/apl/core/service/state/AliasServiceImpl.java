@@ -16,8 +16,8 @@ import com.apollocurrency.aplwallet.apl.core.transaction.messages.MessagingAlias
 import com.apollocurrency.aplwallet.apl.core.transaction.messages.MessagingAliasSell;
 import com.apollocurrency.aplwallet.apl.core.utils.CollectionUtil;
 
-import javax.inject.Inject;
-import javax.inject.Singleton;
+import jakarta.inject.Inject;
+import jakarta.inject.Singleton;
 import java.util.List;
 import java.util.Objects;
 

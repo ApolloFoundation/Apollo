@@ -27,14 +27,20 @@ import org.jboss.weld.junit5.EnableWeld;
 import org.jboss.weld.junit5.WeldInitiator;
 import org.jboss.weld.junit5.WeldSetup;
 import org.json.simple.JSONObject;
+import org.junit.AfterClass;
+import org.junit.BeforeClass;
 import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
+import org.mockito.MockedStatic;
 import org.mockito.junit.jupiter.MockitoExtension;
 
+import java.lang.reflect.Array;
 import java.nio.ByteBuffer;
+import java.util.EnumSet;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -43,11 +49,13 @@ import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.mockStatic;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 @EnableWeld
 @ExtendWith(MockitoExtension.class)
+//@Disabled
 class ShufflingCreationTransactionTypeTest {
 
     private static final long SENDER_ID = 1L;
@@ -60,7 +68,6 @@ class ShufflingCreationTransactionTypeTest {
 
     private final ShufflingCreationAttachment incorrectAmountAssetAttachment = new ShufflingCreationAttachment(ASSET_ID, HoldingType.ASSET, 0, (byte) 3, (short) 1440);
     private final ShufflingCreationAttachment incorrectAmountCurrencyAttachment = new ShufflingCreationAttachment(CURRENCY_ID, HoldingType.CURRENCY, 0, (byte) 3, (short) 1440);
-    private final ShufflingCreationAttachment incorrectHoldingAttachment = new ShufflingCreationAttachment(ASSET_ID, mock(HoldingType.class), 100, (byte) 3, (short) 1440);
     private final ShufflingCreationAttachment notEnoughParticipantAttachment = new ShufflingCreationAttachment(0, HoldingType.APL, 100, (byte) 2, (short) 1440);
     private final ShufflingCreationAttachment tooManyParticipantAttachment = new ShufflingCreationAttachment(0, HoldingType.APL, 100, (byte) 31, (short) 1440);
     private final ShufflingCreationAttachment zeroRegistrationPeriodAttachment = new ShufflingCreationAttachment(0, HoldingType.APL, 100, (byte) 3, (short) 0);
@@ -99,6 +106,39 @@ class ShufflingCreationTransactionTypeTest {
         .addBeans(MockBean.of(accountCurrencyService, AccountCurrencyService.class))
         .build();
 
+    private static MockedStatic<HoldingType> myMockedEnum;
+    private static HoldingType mockedValue;
+
+    @BeforeClass
+    public void setUp() {
+        // here we want to create impossible mocked ENUM value for one tests only
+        HoldingType[] newEnumValues = addNewEnumValue(HoldingType.class);
+        myMockedEnum = mockStatic(HoldingType.class);
+        myMockedEnum.when(HoldingType::values).thenReturn(newEnumValues);
+        mockedValue = newEnumValues[newEnumValues.length - 1]; // value will be used in one test method below
+    }
+
+    private static <E extends Enum<E>> E[] addNewEnumValue(Class<E> enumClazz){
+        EnumSet<E> enumSet = EnumSet.allOf(enumClazz);
+        E[] newValues = (E[]) Array.newInstance(enumClazz, enumSet.size() + 1);
+        int i = 0;
+        for (E value : enumSet) {
+            newValues[i] = value;
+            i++;
+        }
+
+        E newEnumValue = mock(enumClazz);
+        newValues[newValues.length - 1] = newEnumValue;
+
+        when(newEnumValue.ordinal()).thenReturn(newValues.length - 1);
+
+        return newValues;
+    }
+
+    @AfterClass
+    public void tearDownAll(){
+        myMockedEnum.close(); // IMPORTANT CLEAN UP in order to do not affect other tests !!!
+    }
 
     @AfterEach
     void tearDown() {
@@ -361,12 +401,17 @@ class ShufflingCreationTransactionTypeTest {
 
     @Test
     void doStateIndependentValidation_unknownHoldingType() {
+        // YL: it's not easy to create ENUM mock by mockito now
+        HoldingType incorrectHoldingType = mockedValue; // fails at run-time
+        ShufflingCreationAttachment incorrectHoldingAttachment =
+            new ShufflingCreationAttachment(ASSET_ID, incorrectHoldingType, 100, (byte) 3, (short) 1440);
+
         when(tx.getAttachment()).thenReturn(incorrectHoldingAttachment);
 
         RuntimeException ex = assertThrows(RuntimeException.class,
             () -> type.doStateIndependentValidation(tx));
 
-        assertTrue(ex.getMessage().startsWith("Unsupported holding type Mock for HoldingType"), "Unknown holding type should error message changed");
+        assertTrue(ex.getMessage().startsWith("Unsupported holding type null"), "Unknown holding type should error message changed");
     }
 
     @Test

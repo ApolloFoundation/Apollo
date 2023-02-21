@@ -20,13 +20,13 @@ import lombok.Data;
 import lombok.NoArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 
-import javax.annotation.PreDestroy;
-import javax.annotation.Priority;
-import javax.enterprise.event.Event;
-import javax.enterprise.event.Observes;
-import javax.enterprise.util.AnnotationLiteral;
-import javax.inject.Inject;
-import javax.inject.Singleton;
+import jakarta.annotation.PreDestroy;
+import jakarta.annotation.Priority;
+import jakarta.enterprise.event.Event;
+import jakarta.enterprise.event.Observes;
+import jakarta.enterprise.util.AnnotationLiteral;
+import jakarta.inject.Inject;
+import jakarta.inject.Singleton;
 import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.List;
@@ -225,7 +225,7 @@ public class ShardingScheduler {
         return targetHeight;
     }
 
-    public void onBlockPushed(@Priority(javax.interceptor.Interceptor.Priority.APPLICATION) @Observes @BlockEvent(BlockEventType.BLOCK_PUSHED) Block block) {
+    public void onBlockPushed(@Priority(jakarta.interceptor.Interceptor.Priority.APPLICATION) @Observes @BlockEvent(BlockEventType.BLOCK_PUSHED) Block block) {
         int blockHeight = block.getHeight();
         long lastShardHeight = getLastShardHeight();
         int heightForSharding = blockHeight - config.getMaxRollback();

@@ -19,9 +19,9 @@ import com.apollocurrency.aplwallet.apl.util.db.TransactionalDataSource;
 import lombok.SneakyThrows;
 import org.slf4j.Logger;
 
-import javax.inject.Inject;
-import javax.inject.Named;
-import javax.inject.Singleton;
+import jakarta.inject.Inject;
+import jakarta.inject.Named;
+import jakarta.inject.Singleton;
 import java.io.ByteArrayInputStream;
 import java.io.File;
 import java.io.IOException;

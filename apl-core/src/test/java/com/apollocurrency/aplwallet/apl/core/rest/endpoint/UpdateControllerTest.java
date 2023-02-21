@@ -34,6 +34,7 @@ import com.apollocurrency.aplwallet.apl.util.io.PayloadResult;
 import com.apollocurrency.aplwallet.apl.util.service.ElGamalEncryptor;
 import com.apollocurrency.aplwallet.vault.model.ApolloFbWallet;
 import com.apollocurrency.aplwallet.vault.service.KMSService;
+import lombok.SneakyThrows;
 import org.jboss.resteasy.mock.MockHttpResponse;
 import org.junit.jupiter.api.AfterAll;
 import org.junit.jupiter.api.BeforeEach;
@@ -44,7 +45,7 @@ import org.mockito.junit.jupiter.MockitoExtension;
 import org.skyscreamer.jsonassert.JSONAssert;
 import org.skyscreamer.jsonassert.JSONCompareMode;
 
-import javax.servlet.http.HttpServletRequest;
+import jakarta.servlet.http.HttpServletRequest;
 import java.io.UnsupportedEncodingException;
 import java.net.URISyntaxException;
 import java.util.List;
@@ -116,8 +117,9 @@ class UpdateControllerTest extends AbstractEndpointTest {
         Convert2.init("APL", 0);
     }
 
+    @SneakyThrows
     @Test
-    void testSendUpdateSuccessful() throws URISyntaxException, UnsupportedEncodingException, AplException.ValidationException {
+    void testSendUpdateSuccessful() {
         long ONE_APL = 100000000l;
         when(blockchainConfig.getOneAPL()).thenReturn(ONE_APL);
         when(elGamal.elGamalDecrypt(SECRET)).thenReturn(SECRET);
@@ -144,8 +146,9 @@ class UpdateControllerTest extends AbstractEndpointTest {
         verify(processor).broadcast(any(Transaction.class));
     }
 
+    @SneakyThrows
     @Test
-    void testSendUpdateSuccessful_usingVault() throws URISyntaxException, UnsupportedEncodingException, AplException.ValidationException {
+    void testSendUpdateSuccessful_usingVault() {
         long ONE_APL = 100000000l;
         when(blockchainConfig.getOneAPL()).thenReturn(ONE_APL);
         when(elGamal.elGamalDecrypt(SECRET)).thenReturn(SECRET);
@@ -177,8 +180,9 @@ class UpdateControllerTest extends AbstractEndpointTest {
         verify(processor).broadcast(any(Transaction.class));
     }
 
+    @SneakyThrows
     @Test
-    void testSendUpdate_missingSecretPhrase() throws URISyntaxException, UnsupportedEncodingException, AplException.ValidationException {
+    void testSendUpdate_missingSecretPhrase() {
         Account sender = new Account(ACCOUNT_ID_WITH_SECRET, 10000 * blockchainConfig.getOneAPL(), 10000 * blockchainConfig.getOneAPL(), 0, 0, CURRENT_HEIGHT);
         sender.setPublicKey(new PublicKey(sender.getId(), null, 0));
 
@@ -191,8 +195,9 @@ class UpdateControllerTest extends AbstractEndpointTest {
         verify(processor, never()).broadcast(any(Transaction.class));
     }
 
+    @SneakyThrows
     @Test
-    void testSendUpdate_missingAccount() throws URISyntaxException, UnsupportedEncodingException, AplException.ValidationException {
+    void testSendUpdate_missingAccount() {
         when(elGamal.elGamalDecrypt(SECRET)).thenReturn(SECRET);
         doAnswer(invocation -> {
             String argument = invocation.getArgument(0);

@@ -6,7 +6,7 @@ package com.apollocurrency.aplwallet.apl.core.shard.helper.csv;
 
 import org.apache.commons.lang3.StringUtils;
 
-import javax.inject.Singleton;
+import jakarta.inject.Singleton;
 import java.util.Base64;
 import java.util.HashMap;
 import java.util.Map;

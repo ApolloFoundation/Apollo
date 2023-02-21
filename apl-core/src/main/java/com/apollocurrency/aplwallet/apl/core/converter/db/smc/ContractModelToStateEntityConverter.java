@@ -4,7 +4,7 @@ import com.apollocurrency.aplwallet.apl.core.entity.state.smc.SmcContractStateEn
 import com.apollocurrency.aplwallet.apl.util.api.converter.Converter;
 import com.apollocurrency.smc.contract.SmartContract;
 
-import javax.inject.Singleton;
+import jakarta.inject.Singleton;
 import java.math.BigInteger;
 
 @Singleton

@@ -19,7 +19,7 @@ import lombok.Getter;
 import lombok.Setter;
 import org.json.simple.JSONObject;
 
-import javax.enterprise.inject.Vetoed;
+import jakarta.enterprise.inject.Vetoed;
 import java.util.Map;
 
 /**

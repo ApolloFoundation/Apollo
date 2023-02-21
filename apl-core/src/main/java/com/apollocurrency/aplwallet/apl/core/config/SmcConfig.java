@@ -27,8 +27,8 @@ import com.apollocurrency.smc.polyglot.security.DenyGlobalObjectsPolicy;
 import com.apollocurrency.smc.polyglot.security.ExplicitHostAccessPolicy;
 import lombok.Getter;
 
-import javax.enterprise.inject.Produces;
-import javax.inject.Singleton;
+import jakarta.enterprise.inject.Produces;
+import jakarta.inject.Singleton;
 
 /**
  * @author andrew.zinchenko@gmail.com

@@ -38,8 +38,8 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
-import javax.enterprise.event.Event;
-import javax.enterprise.util.AnnotationLiteral;
+import jakarta.enterprise.event.Event;
+import jakarta.enterprise.util.AnnotationLiteral;
 import java.util.List;
 
 import static com.apollocurrency.aplwallet.apl.data.BlockTestData.BLOCK_5_HEIGHT;
@@ -103,7 +103,7 @@ class TransactionProcessorTest {
     private TransactionProcessor processor;
     TransactionTestData td;
     @Mock
-    private javax.enterprise.event.Event<List<Transaction>> listEvent;
+    private jakarta.enterprise.event.Event<List<Transaction>> listEvent;
 
     @BeforeAll
     static void beforeAll() {

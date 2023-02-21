@@ -6,8 +6,8 @@ package com.apollocurrency.aplwallet.apl.core.rest.validation;
 
 import org.hibernate.validator.internal.engine.constraintvalidation.ConstraintValidatorFactoryImpl;
 
-import javax.validation.ConstraintValidator;
-import javax.validation.ConstraintValidatorFactory;
+import jakarta.validation.ConstraintValidator;
+import jakarta.validation.ConstraintValidatorFactory;
 import java.util.Map;
 
 public class CustomValidatorFactory implements ConstraintValidatorFactory {

@@ -5,7 +5,7 @@
 package com.apollocurrency.aplwallet.apl.smc.ws;
 
 import com.apollocurrency.smc.data.type.Address;
-import org.eclipse.jetty.websocket.api.WebSocketException;
+import org.eclipse.jetty.websocket.api.exceptions.WebSocketException;
 
 /**
  * @author andrew.zinchenko@gmail.com
