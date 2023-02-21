@@ -30,9 +30,6 @@ import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.http.Part;
 import lombok.extern.slf4j.Slf4j;
-import org.apache.commons.fileupload.FileItemIterator;
-import org.apache.commons.fileupload.FileItemStream;
-import org.apache.commons.fileupload.FileUploadException;
 import org.apache.commons.fileupload.servlet.ServletFileUpload;
 import org.apache.commons.io.IOUtils;
 import org.jboss.resteasy.annotations.jaxrs.FormParam;
@@ -53,7 +50,6 @@ import jakarta.ws.rs.core.Context;
 import jakarta.ws.rs.core.MediaType;
 import jakarta.ws.rs.core.Response;
 
-import java.io.File;
 import java.io.IOException;
 import java.util.Iterator;
 
@@ -76,7 +72,7 @@ public class KeyStoreController {
         this.maxKeyStoreSize = maxKeyStoreSize;
     }
 
-    // Dont't delete. For RESTEASY.
+    // Don't delete. For RESTEASY.
     public KeyStoreController() {
     }
 
@@ -129,7 +125,6 @@ public class KeyStoreController {
     @PermitAll
     public Response importKeyStore(@Context HttpServletRequest request) throws IOException, ServletException {
         // Check that we have a file upload request
-//        if (!ServletFileUpload.isMultipartContent(request)) {
         if (request.getParts() == null) {
             return Response.status(Response.Status.BAD_REQUEST).build();
         }
@@ -140,14 +135,11 @@ public class KeyStoreController {
             ServletFileUpload upload = new ServletFileUpload();
             // Set overall request size constraint
             upload.setSizeMax(maxKeyStoreSize);
-//            FileItemIterator fileIterator = upload.getItemIterator(request);
             Iterator<Part> fileIterator = request.getParts().iterator();
 
             while (fileIterator.hasNext()) {
-//                FileItemStream item = fileIterator.next();
                 Part item = fileIterator.next();
                 String fileName = getFileName(item);
-//                item.write(uploadPath + File.separator + fileName);
                 if ("keyStore".equalsIgnoreCase(fileName)) {
                     keyStore = IOUtils.toByteArray(item.getInputStream());
                 } else if ("passphrase".equalsIgnoreCase(fileName)) {
@@ -159,7 +151,7 @@ public class KeyStoreController {
                         "Failed to upload file. Unknown parameter:" + fileName).build();
                 }
             }
-        } catch (/*FileUploadException | */IOException | ParameterException ex) {
+        } catch (IOException | ParameterException ex) {
             log.error("Import keyStore error, upload failed: {}", ex.getMessage());
             return ResponseBuilder.apiError(ApiErrors.ACCOUNT_2FA_ERROR, "Failed to upload file." + ex).build();
         }
