@@ -31,9 +31,42 @@ If you feel like an expert, please use build instructions below. But also please
 
 We use LTS JDK version 17 in the development and in the production environments. To be exact, we use openjdk 17 builds from github.com site: [GraalVM Community Edition Java Development Kit v.17](https://github.com/graalvm/graalvm-ce-builds/releases). You can download and install JDK for your platform by the link. 
 
-Apollo code runs well on latest JDKs but is not thouroughly tested. So you can use latest JDKs, e.g. version 19 or above on your own risk.
+Apollo code runs well on latest JDKs but is not thoroughly tested. So you can use the latest JDKs, e.g. version 19 or above on your own risk.
 
-If you are developer, we'd like to recommend [SDKMan kit](https://sdkman.io/) to manage installed Java platforms.  
+If you are developer, we'd like to recommend [SDKMan kit](https://sdkman.io/) to manage installed Java platforms.
+
+
+### GraalVM additional component 'Graal.js engine' for SmartContracts
+When you have GraalVM already installed locally you have to install additional Graal.js component using JDK command in order to run smart contracts on local Apollo node.
+
+Run GraalVM JDK command below to see what is installed locally.
+
+    $ gu list
+
+Probably you'll see a list like that. We see only 'GraalVM Core' component is installed with JDK. 
+
+ComponentId | Version | Component name| Stability | Origin
+|:---|:---:|:---|:---:|:---:|
+graalvm | 22.3.0 | GraalVM Core | Supported ||
+
+
+    $ gu available
+
+'Available' command gives the list of available, additional components for downloading and installing.
+
+If you are missing 'Graal.js' component (most probably) you have to install it by next command.
+
+    $ gu install js
+
+When check the installed component list again.
+
+    $ gu list
+
+ComponentId | Version | Component name| Stability | Origin
+|:---|:---:|:---|:---:|:---:|
+graalvm | 22.3.0 | GraalVM Core | Supported ||
+js | 22.3.0 | Graal.js | Supported | github.com
+
 
 ## Preparation steps ##
 
