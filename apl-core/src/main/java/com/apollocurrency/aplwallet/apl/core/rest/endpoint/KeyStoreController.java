@@ -61,10 +61,6 @@ import java.util.Iterator;
 @Slf4j
 @Path("/keyStore")
 @Singleton
-/*@MultipartConfig(location="./tmp",
-    fileSizeThreshold=64 * 1024, // 64 KB,
-    maxFileSize=1024*1024*5,       // 5 MB
-    maxRequestSize=1024*1024*10)   // 10 MB*/
 public class KeyStoreController {
     private static MultipartConfigElement MULTI_PART_CONFIG;
     private UserKeyStoreConverter userKeyStoreConverter = new UserKeyStoreConverter();
