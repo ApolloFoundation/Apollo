@@ -160,7 +160,7 @@ public class KeyStoreController {
     public Response importKeyStore(@Context HttpServletRequest request) {
         String contentType = request.getContentType();
         if (contentType != null && contentType.startsWith("multipart/")) {
-            // we must do assign that attribute to prevent 'IllegalStateException: No multipart config for servlet' error
+            // we must assign that attribute to prevent 'IllegalStateException: No multipart config for servlet' error
             request.setAttribute(Request.__MULTIPART_CONFIG_ELEMENT, MULTI_PART_CONFIG);
             // Check that we have a file upload request
             Collection<Part> parts = null;
