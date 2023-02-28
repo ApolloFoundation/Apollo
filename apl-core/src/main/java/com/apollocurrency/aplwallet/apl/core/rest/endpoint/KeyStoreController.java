@@ -75,27 +75,25 @@ public class KeyStoreController {
         this.KMSService = KMSService;
         this.secureStorageService = secureStorageService;
         this.maxKeyStoreSize = maxKeyStoreSize;
-        ensureTempUploadDirOnInit();
     }
 
-    private static void ensureTempUploadDirOnInit() {
-        if (MULTI_PART_CONFIG == null) {
-            String tempDir = System.getProperty("java.io.tmpdir");
-            if (tempDir.isEmpty()) {
-                String error = "No TMP dir is assigned!";
-                log.error(error);
-                throw new RuntimeException(error);
-            }
-            java.nio.file.Path multipartTmpDir = Paths.get(tempDir);
-            try {
-                ensureDirExists(multipartTmpDir);
-            } catch (IOException e) {
-                String error = "Can't ensure TMP dir!";
-                log.error(error);
-                throw new RuntimeException(e);
-            }
-            MULTI_PART_CONFIG = new MultipartConfigElement(tempDir);
+    static {
+        // check and ensure TMP dir for 'vault wallet key file upload'
+        String tempDir = System.getProperty("java.io.tmpdir");
+        if (tempDir == null || tempDir.isEmpty()) {
+            String error = "No TMP dir is assigned!";
+            log.error(error);
+            throw new RuntimeException(error);
         }
+        java.nio.file.Path multipartTmpDir = Paths.get(tempDir);
+        try {
+            ensureDirExists(multipartTmpDir);
+        } catch (IOException e) {
+            String error = "Can't ensure TMP dir!";
+            log.error(error);
+            throw new RuntimeException(e);
+        }
+        MULTI_PART_CONFIG = new MultipartConfigElement(tempDir);
     }
 
     // Don't delete. For RESTEASY.
