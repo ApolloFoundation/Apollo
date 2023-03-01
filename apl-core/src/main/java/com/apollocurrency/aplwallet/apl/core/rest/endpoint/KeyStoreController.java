@@ -27,11 +27,13 @@ import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.media.Content;
 import io.swagger.v3.oas.annotations.media.Schema;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
+import jakarta.servlet.MultipartConfigElement;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.http.Part;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.fileupload.servlet.ServletFileUpload;
 import org.apache.commons.io.IOUtils;
+import org.eclipse.jetty.server.Request;
 import org.jboss.resteasy.annotations.jaxrs.FormParam;
 import org.web3j.crypto.CipherException;
 import org.web3j.crypto.Wallet;
@@ -51,13 +53,16 @@ import jakarta.ws.rs.core.MediaType;
 import jakarta.ws.rs.core.Response;
 
 import java.io.IOException;
+import java.nio.file.Files;
+import java.nio.file.Paths;
+import java.util.Collection;
 import java.util.Iterator;
 
 @Slf4j
 @Path("/keyStore")
 @Singleton
 public class KeyStoreController {
-
+    private static MultipartConfigElement MULTI_PART_CONFIG;
     private UserKeyStoreConverter userKeyStoreConverter = new UserKeyStoreConverter();
 
     private KMSService KMSService;
@@ -72,8 +77,35 @@ public class KeyStoreController {
         this.maxKeyStoreSize = maxKeyStoreSize;
     }
 
+    static {
+        // check and ensure TMP dir for 'vault wallet key file upload'
+        String tempDir = System.getProperty("java.io.tmpdir");
+        if (tempDir == null || tempDir.isEmpty()) {
+            String error = "No TMP dir is assigned!";
+            log.error(error);
+            throw new RuntimeException(error);
+        }
+        java.nio.file.Path multipartTmpDir = Paths.get(tempDir);
+        try {
+            ensureDirExists(multipartTmpDir);
+        } catch (IOException e) {
+            String error = "Can't ensure TMP dir!";
+            log.error(error);
+            throw new RuntimeException(e);
+        }
+        MULTI_PART_CONFIG = new MultipartConfigElement(tempDir);
+    }
+
     // Don't delete. For RESTEASY.
     public KeyStoreController() {
+    }
+
+    private static  java.nio.file.Path ensureDirExists( java.nio.file.Path path) throws IOException {
+        java.nio.file.Path dir = path.toAbsolutePath();
+        if (!Files.exists(dir)) {
+            Files.createDirectories(dir);
+        }
+        return dir;
     }
 
     @POST
@@ -123,59 +155,85 @@ public class KeyStoreController {
         }
     )
     @PermitAll
-    public Response importKeyStore(@Context HttpServletRequest request) throws IOException, ServletException {
-        // Check that we have a file upload request
-        if (request.getParts() == null) {
-            return Response.status(Response.Status.BAD_REQUEST).build();
-        }
-
-        byte[] keyStore = null;
-        String passPhrase = null;
-        try {
-            ServletFileUpload upload = new ServletFileUpload();
-            // Set overall request size constraint
-            upload.setSizeMax(maxKeyStoreSize);
-            Iterator<Part> fileIterator = request.getParts().iterator();
-
-            while (fileIterator.hasNext()) {
-                Part item = fileIterator.next();
-                String fileName = getFileName(item);
-                if ("keyStore".equalsIgnoreCase(fileName)) {
-                    keyStore = IOUtils.toByteArray(item.getInputStream());
-                } else if ("passphrase".equalsIgnoreCase(fileName)) {
-                    String passPhraseEncrypted = IOUtils.toString(item.getInputStream());
-                    // decrypt from el-gamal
-                    passPhrase = HttpParameterParserUtil.getPassphrase(passPhraseEncrypted, true);
-                } else {
-                    return ResponseBuilder.apiError(ApiErrors.ACCOUNT_2FA_ERROR,
-                        "Failed to upload file. Unknown parameter:" + fileName).build();
-                }
+    public Response importKeyStore(@Context HttpServletRequest request) {
+        String contentType = request.getContentType();
+        if (contentType != null && contentType.startsWith("multipart/")) {
+            // we must assign that attribute to prevent 'IllegalStateException: No multipart config for servlet' error
+            request.setAttribute(Request.__MULTIPART_CONFIG_ELEMENT, MULTI_PART_CONFIG);
+            // Check that we have a file upload request
+            Collection<Part> parts = null;
+            try {
+                parts = request.getParts();
+            } catch (IOException | ServletException | IllegalStateException e) {
+                log.error("Getting upload parts error...", e);
+                return ResponseBuilder.apiError(ApiErrors.CUSTOM_ERROR_MESSAGE, "Multipart content/form was not sent ?").build();
             }
-        } catch (IOException | ParameterException ex) {
-            log.error("Import keyStore error, upload failed: {}", ex.getMessage());
-            return ResponseBuilder.apiError(ApiErrors.ACCOUNT_2FA_ERROR, "Failed to upload file." + ex).build();
-        }
+            if (parts == null) {
+                return Response.status(Response.Status.BAD_REQUEST).build();
+            }
 
-        if (passPhrase == null || keyStore == null || keyStore.length == 0) {
-            return ResponseBuilder.apiError(ApiErrors.ACCOUNT_2FA_ERROR, "Parameter 'passPhrase' or 'keyStore' is null").build();
-        }
+            byte[] keyStore = null;
+            String passPhrase = null;
+            try {
+                ServletFileUpload upload = new ServletFileUpload();
+                // Set overall request size constraint
+                upload.setSizeMax(maxKeyStoreSize);
+                Iterator<Part> fileIterator = parts.iterator();
 
-        KMSResponseStatus status = KMSService.storeWallet(keyStore, passPhrase);
+                while (fileIterator.hasNext()) {
+                    Part uploadedContentPart = fileIterator.next();
+                    String foundContentPart = extractFieldValueFromContent(uploadedContentPart, "passphrase", "keyStore", "filename");
+                    if ("keyStore".equalsIgnoreCase(foundContentPart)) {
+                        keyStore = IOUtils.toByteArray(uploadedContentPart.getInputStream());
+                    } else if ("passphrase".equalsIgnoreCase(foundContentPart)) {
+                        String passPhraseEncrypted = IOUtils.toString(uploadedContentPart.getInputStream());
+                        // decrypt from el-gamal
+                        passPhrase = HttpParameterParserUtil.getPassphrase(passPhraseEncrypted, true);
+                    } else if ("filename".equalsIgnoreCase(foundContentPart)) {
+                        log.debug("Vault Wallet named '{}' is being imported...", foundContentPart);
+                    } else {
+                        return ResponseBuilder.apiError(ApiErrors.ACCOUNT_2FA_ERROR,
+                            "Failed to upload file. Unknown parameter:" + foundContentPart).build();
+                    }
+                }
+            } catch (IOException | ParameterException ex) {
+                log.error("Import keyStore error, upload failed: {}", ex.getMessage());
+                return ResponseBuilder.apiError(ApiErrors.ACCOUNT_2FA_ERROR, "Failed to upload file." + ex).build();
+            }
 
-        if (status.isOK()) {
-            VaultWalletResponse response = new VaultWalletResponse();
-            return Response.status(Response.Status.OK).entity(response).build();
-        } else {
-            return ResponseBuilder.apiError(ApiErrors.ACCOUNT_2FA_ERROR, status.message).build();
+            if (passPhrase == null || keyStore == null || keyStore.length == 0) {
+                return ResponseBuilder.apiError(ApiErrors.ACCOUNT_2FA_ERROR, "Parameter 'passPhrase' or 'keyStore' is null").build();
+            }
+
+            KMSResponseStatus status = KMSService.storeWallet(keyStore, passPhrase);
+
+            if (status.isOK()) {
+                VaultWalletResponse response = new VaultWalletResponse();
+                return Response.status(Response.Status.OK).entity(response).build();
+            } else {
+                return ResponseBuilder.apiError(ApiErrors.ACCOUNT_2FA_ERROR, status.message).build();
+            }
         }
+        // incorrect upload API usage
+        return ResponseBuilder.apiError(ApiErrors.CUSTOM_ERROR_MESSAGE, "Error, No Multipart content/form was sent in request?").build();
     }
 
-    private String getFileName(Part part) {
-        for (String content : part.getHeader("content-disposition").split(";")) {
-            if (content.trim().startsWith("filename"))
-                return content.substring(content.indexOf("=") + 2, content.length() - 1);
+    private String extractFieldValueFromContent(Part partSource, String... fieldCheckArray) {
+        String partHeader = partSource.getHeader("Content-Disposition"); // contains 'name=value' data
+        String[] splitForm = partHeader.split(";");
+        log.trace("getFile / partSource :\n{}\n{}", partHeader, splitForm);
+        for (String content : splitForm) {
+            for (String contentToFind : fieldCheckArray) {
+                log.trace("getFile / partSource-content = {}, contentToFound = {}", content, contentToFind);
+                // try to extract using 'content value'
+                if (content.trim().toLowerCase().contains(contentToFind.toLowerCase()))
+                    return content.substring(content.indexOf("=") + 2, content.length() - 1);
+                // try to extract using 'content key'
+                if (content.trim().toLowerCase().startsWith(contentToFind.toLowerCase()))
+                    return content.substring(content.indexOf("=") + 2, content.length() - 1);
+            }
         }
-        throw new IllegalArgumentException("MultiPart doesn't have a fileName");
+        return null;
     }
 
 
