@@ -52,7 +52,7 @@
         },
         "shardingSettings": {
           "enabled": true,
-          "frequency": 10000
+          "frequency": 250000
         },
         "smcSettings": {
           "masterAccountPublicKey": "f9c6cd2cebff46137f3ea611683026b94f4bd1b39abbab480478e10766b2c608",
@@ -87,7 +87,7 @@
         }
       },
       {
-        "height": 201000,
+        "height": 1250000,
         "maxNumberOfTransactions": 255,
         "maxArbitraryMessageLength": 160,
         "maxNumberOfChildAccounts": 10,
@@ -103,7 +103,7 @@
         },
         "shardingSettings": {
           "enabled": true,
-          "frequency": 200
+          "frequency": 50000
         },
         "smcSettings": {
           "masterAccountPublicKey": "f9c6cd2cebff46137f3ea611683026b94f4bd1b39abbab480478e10766b2c608",
