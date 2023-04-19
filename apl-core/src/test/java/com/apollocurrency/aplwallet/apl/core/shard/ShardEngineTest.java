@@ -89,6 +89,7 @@ import com.apollocurrency.aplwallet.apl.extension.DbExtension;
 import com.apollocurrency.aplwallet.apl.extension.TemporaryFolderExtension;
 import com.apollocurrency.aplwallet.apl.testutil.DbPopulator;
 import com.apollocurrency.aplwallet.apl.testutil.DbUtils;
+import com.apollocurrency.aplwallet.apl.util.Convert2;
 import com.apollocurrency.aplwallet.apl.util.FileUtils;
 import com.apollocurrency.aplwallet.apl.util.Zip;
 import com.apollocurrency.aplwallet.apl.util.ZipImpl;
@@ -221,7 +222,6 @@ class ShardEngineTest extends DBContainerRootTest {
         );
 
         // return the same dir for both CDI components //
-        dataExportDir.getQualifiers().add(new NamedLiteral("dataExportDir")); // for CsvExporter
         doReturn(dataExportDirPath).when(dirProvider).getDataExportDir(); // for Zip
     }
 
@@ -238,21 +238,18 @@ class ShardEngineTest extends DBContainerRootTest {
         .addBeans(MockBean.of(td.getTransactionTypeFactory(), TransactionTypeFactory.class))
         .addBeans(MockBean.of(zip, Zip.class))
         .addBeans(dataExportDir)
-        .addBeans(MockBean.of(timeService, TimeService.class))
         .addBeans(MockBean.of(mock(AccountPublicKeyService.class), AccountPublicKeyService.class, AccountPublicKeyServiceImpl.class))
         .addBeans(MockBean.of(mock(BlockIndexService.class), BlockIndexService.class, BlockIndexServiceImpl.class))
         .addBeans(MockBean.of(translator, CsvEscaperImpl.class))
-//            .addBeans(MockBean.of(baseDbProperties, DbProperties.class)) // YL  DO NOT REMOVE THAT PLEASE, it can be used for manual testing
         .addBeans(MockBean.of(mock(AliasService.class), AliasService.class))
         .addBeans(MockBean.of(propertiesHolder, PropertiesHolder.class))
-        .addBeans(MockBean.of(timeService, TimeConfig.class))
+        .addBeans(MockBean.of(config, TimeConfig.class))
         .addBeans(MockBean.of(timeService, TimeService.class))
         .addBeans(MockBean.of(blockchainConfig, BlockchainConfig.class))
         .addBeans(MockBean.of(publicKeyDao, PublicKeyDao.class))
         .addBeans(MockBean.of(mock(InMemoryCacheManager.class), InMemoryCacheManager.class))
         .addBeans(MockBean.of(mock(TaskDispatchManager.class), TaskDispatchManager.class))
         .build();
-
     @Inject
     AccountCurrencyTable accountCurrencyTable;
     @Inject
@@ -291,6 +288,7 @@ class ShardEngineTest extends DBContainerRootTest {
     @BeforeEach
     void setUp() {
         shardEngine.prepare();
+        Convert2.init("APL", 0);
     }
 
     @AfterEach

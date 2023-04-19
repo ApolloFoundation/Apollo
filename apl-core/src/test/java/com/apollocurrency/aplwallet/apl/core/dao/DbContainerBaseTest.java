@@ -6,6 +6,8 @@ import org.testcontainers.containers.MariaDBContainer;
 import org.testcontainers.containers.output.Slf4jLogConsumer;
 import org.testcontainers.junit.jupiter.Container;
 
+import static com.apollocurrency.aplwallet.apl.core.dao.MariaDBConfigs.DOCKER_IMAGE_NAME_VERSION;
+
 /**
  * An attempt to reuse existing container for multiple tests.
  */
@@ -16,7 +18,7 @@ public abstract class DbContainerBaseTest {
     public static final GenericContainer mariaDBContainer;
 
     static {
-        mariaDBContainer = new MariaDBContainer("mariadb:10.5")
+        mariaDBContainer = new MariaDBContainer(DOCKER_IMAGE_NAME_VERSION)
             .withDatabaseName("testdb")
             .withUsername("testuser")
             .withPassword("testpass")

@@ -4,8 +4,10 @@
 
 package com.apollocurrency.aplwallet.apl.core.shard.hash;
 
+import com.apollocurrency.aplwallet.apl.core.config.TimeConfig;
 import com.apollocurrency.aplwallet.apl.core.model.Block;
 import com.apollocurrency.aplwallet.apl.core.model.BlockImpl;
+import com.apollocurrency.aplwallet.apl.core.service.appdata.TimeService;
 import com.apollocurrency.aplwallet.apl.core.service.blockchain.TransactionBuilderFactory;
 import com.apollocurrency.aplwallet.apl.core.chainid.BlockchainConfig;
 import com.apollocurrency.aplwallet.apl.core.chainid.HeightConfig;
@@ -86,6 +88,8 @@ public class ShardHashCalculatorImplTest extends DbContainerBaseTest {
     @RegisterExtension
     static DbExtension dbExtension = new DbExtension(mariaDBContainer);
     BlockchainConfig blockchainConfig = mock(BlockchainConfig.class);
+    TimeConfig config = new TimeConfig(false);
+    TimeService timeService = new TimeServiceImpl(config.timeSource());
     Chain chain = mock(Chain.class);
     PropertiesHolder propertiesHolder = mock(PropertiesHolder.class);
     HeightConfig heightConfig = mock(HeightConfig.class);
@@ -101,7 +105,7 @@ public class ShardHashCalculatorImplTest extends DbContainerBaseTest {
     WeldInitiator weldInitiator = WeldInitiator.from(BlockchainImpl.class, ShardHashCalculatorImpl.class,
         BlockImpl.class, BlockDaoImpl.class,
         BlockEntityRowMapper.class, BlockEntityToModelConverter.class, BlockModelToEntityConverter.class,
-        DerivedDbTablesRegistryImpl.class, TimeServiceImpl.class, GlobalSyncImpl.class, TransactionDaoImpl.class,
+        DerivedDbTablesRegistryImpl.class, GlobalSyncImpl.class, TransactionDaoImpl.class,
         DaoConfig.class,
         TransactionServiceImpl.class, ShardDbExplorerImpl.class,
         TransactionEntityRowMapper.class, TransactionEntityRowMapper.class, TxReceiptRowMapper.class, PrunableTxRowMapper.class,
@@ -122,6 +126,8 @@ public class ShardHashCalculatorImplTest extends DbContainerBaseTest {
         .addBeans(MockBean.of(mock(PrunableLoadingService.class), PrunableLoadingService.class))
         .addBeans(MockBean.of(ttd.getTransactionTypeFactory(), TransactionTypeFactory.class))
         .addBeans(MockBean.of(publicKeyDao, PublicKeyDao.class))
+        .addBeans(MockBean.of(config, TimeConfig.class))
+        .addBeans(MockBean.of(timeService, TimeService.class))
         .build();
 
     @Inject

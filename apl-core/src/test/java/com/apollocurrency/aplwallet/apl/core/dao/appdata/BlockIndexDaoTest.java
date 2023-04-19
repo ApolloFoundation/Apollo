@@ -78,7 +78,7 @@ public class BlockIndexDaoTest extends DbContainerBaseTest {
         TransactionDaoImpl.class, JdbiHandleFactory.class, JdbiConfiguration.class)
         .addBeans(MockBean.of(dbExtension.getDatabaseManager(), DatabaseManager.class))
         .addBeans(MockBean.of(propertiesHolder, PropertiesHolder.class))
-        .addBeans(MockBean.of(timeService, TimeConfig.class))
+        .addBeans(MockBean.of(config, TimeConfig.class))
         .addBeans(MockBean.of(timeService, TimeService.class))
         .addBeans(MockBean.of(mock(PrunableLoadingService.class), PrunableLoadingService.class))
         .addBeans(MockBean.of(td.getTransactionTypeFactory(), TransactionTypeFactory.class))

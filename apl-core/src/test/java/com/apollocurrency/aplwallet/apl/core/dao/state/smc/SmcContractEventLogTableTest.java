@@ -30,15 +30,19 @@ import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.RegisterExtension;
 import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.Arguments;
 import org.junit.jupiter.params.provider.CsvSource;
 
 import jakarta.inject.Inject;
+
+import java.util.stream.Stream;
 
 import static com.apollocurrency.smc.util.HexUtils.parseHex;
 import static org.junit.jupiter.api.Assertions.assertArrayEquals;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.params.provider.Arguments.arguments;
 import static org.mockito.Mockito.doReturn;
 import static org.mockito.Mockito.mock;
 
@@ -122,11 +126,11 @@ class SmcContractEventLogTableTest extends DbContainerBaseTest {
         assertEquals(4, actual.size());
     }
 
-    @CsvSource(delimiterString = ":", value = {
-        "Buy:0:-1:4",
-        "Transfer:0:-1:10",
-        "Transfer:100:-1:9",
-        "Transfer:100:10000:8"
+    @CsvSource(value = {
+        "Buy,0,-1,4",
+        "Transfer,0,-1,10",
+        "Transfer,100,-1,9",
+        "Transfer,100,10000,8"
     })
     @ParameterizedTest
     void getEventsByFilter(String name, Integer heightFrom, Integer heightTo, Integer num) {

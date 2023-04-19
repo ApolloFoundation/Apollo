@@ -75,6 +75,7 @@ import com.apollocurrency.aplwallet.apl.core.shard.commands.ZipArchiveCommand;
 import com.apollocurrency.aplwallet.apl.core.shard.hash.ShardHashCalculatorImpl;
 import com.apollocurrency.aplwallet.apl.core.shard.helper.CsvExporter;
 import com.apollocurrency.aplwallet.apl.core.shard.helper.CsvExporterImpl;
+import com.apollocurrency.aplwallet.apl.core.shard.helper.csv.CsvEscaper;
 import com.apollocurrency.aplwallet.apl.core.shard.helper.csv.CsvEscaperImpl;
 import com.apollocurrency.aplwallet.apl.core.shard.model.ExcludeInfo;
 import com.apollocurrency.aplwallet.apl.core.shard.model.PrevBlockData;
@@ -152,7 +153,11 @@ class ShardMigrationExecutorTest extends DBContainerRootTest {
     Chain chain = mock(Chain.class);
     private static HeightConfig heightConfig = mock(HeightConfig.class);
     private final Path dataExportDirPath = createPath("targetDb");
-    private final Bean<Path> dataExportDir = MockBean.of(dataExportDirPath.toAbsolutePath(), Path.class);
+    private final Bean<Path> dataExportDir = MockBean.<Path> builder()
+        .beanClass(Path.class)
+        .addQualifier(new NamedLiteral("dataExportDir"))
+        .creating(dataExportDirPath.toAbsolutePath())
+        .build();
     @RegisterExtension
     static DbExtension extension = new DbExtension(mariaDBContainer);
 
@@ -160,11 +165,13 @@ class ShardMigrationExecutorTest extends DBContainerRootTest {
     private TaskDispatchManager taskDispatchManager = mock(TaskDispatchManager.class);
     private DirProvider dirProvider = mock(DirProvider.class);
 
-    private Zip zip = new UtilComponentConfig().zip();   TimeConfig config = new TimeConfig(false);
+    private Zip zip = new UtilComponentConfig().zip();
+    TimeConfig config = new TimeConfig(false);
     TimeService timeService = new TimeServiceImpl(config.timeSource());
     private GeneratorService generatorService = mock(GeneratorService.class);
     private TransactionTestData td = new TransactionTestData();
-
+    CsvEscaper csvEscaper = new CsvEscaperImpl();
+    CsvExporter csvExporter = new CsvExporterImpl(extension.getDatabaseManager(), dataExportDirPath, csvEscaper);
     @WeldSetup
     WeldInitiator weld = WeldInitiator.from(
         BlockchainImpl.class, DaoConfig.class, ReferencedTransactionDao.class,
@@ -183,11 +190,11 @@ class ShardMigrationExecutorTest extends DBContainerRootTest {
         PhasingPollTable.class,
         FullTextConfigImpl.class,
         DerivedTablesRegistry.class,
-        ShardEngineImpl.class, CsvExporterImpl.class, AplAppStatus.class,
+        ShardEngineImpl.class, AplAppStatus.class,
         BlockDaoImpl.class,
         BlockEntityRowMapper.class, BlockEntityToModelConverter.class, BlockModelToEntityConverter.class,
         TransactionDaoImpl.class, ShardMigrationExecutor.class,
-        CsvEscaperImpl.class, JdbiHandleFactory.class, JdbiConfiguration.class)
+        JdbiHandleFactory.class, JdbiConfiguration.class)
         .addBeans(MockBean.of(blockchainConfig, BlockchainConfig.class))
         .addBeans(MockBean.of(extension.getDatabaseManager(), DatabaseManager.class))
         .addBeans(MockBean.of(mock(TransactionProcessor.class), TransactionProcessor.class))
@@ -204,13 +211,15 @@ class ShardMigrationExecutorTest extends DBContainerRootTest {
         .addBeans(MockBean.of(mock(PrunableMessageService.class), PrunableMessageService.class, PrunableMessageServiceImpl.class))
         .addBeans(MockBean.of(mock(BlockIndexService.class), BlockIndexService.class, BlockIndexServiceImpl.class))
         .addBeans(MockBean.of(mock(AliasService.class), AliasService.class))
-        .addBeans(MockBean.of(timeService, TimeConfig.class))
+        .addBeans(MockBean.of(config, TimeConfig.class))
         .addBeans(MockBean.of(timeService, TimeService.class))
         .addBeans(MockBean.of(zip, Zip.class))
         .addBeans(MockBean.of(generatorService, GeneratorService.class))
         .addBeans(MockBean.of(mock(PrunableLoadingService.class), PrunableLoadingService.class))
         .addBeans(MockBean.of(td.getTransactionTypeFactory(), TransactionTypeFactory.class))
         .addBeans(MockBean.of(mock(PublicKeyDao.class), PublicKeyDao.class))
+        .addBeans(MockBean.of(csvEscaper, CsvEscaper.class))
+        .addBeans(MockBean.of(csvExporter, CsvExporter.class))
         .build();
     @Inject
     private ShardEngine shardEngine;
@@ -243,7 +252,6 @@ class ShardMigrationExecutorTest extends DBContainerRootTest {
 
     {
         // return the same dir for both CDI components
-        dataExportDir.getQualifiers().add(new NamedLiteral("dataExportDir")); // for CsvExporter
         doReturn(dataExportDirPath).when(dirProvider).getDataExportDir(); // for Zip
         doReturn(chain).when(blockchainConfig).getChain();
     }
@@ -270,7 +278,7 @@ class ShardMigrationExecutorTest extends DBContainerRootTest {
     }
 
     @Test
-    void executeAllOperations() throws IOException {
+    void executeAllOperations() {
         doReturn(temporaryFolderExtension.newFolder("backup").toPath()).when(dirProvider).getDbDir();
 
         int snapshotBlockHeight = 8000;

@@ -4,6 +4,8 @@
 
 package com.apollocurrency.aplwallet.apl.core.service.state;
 
+import com.apollocurrency.aplwallet.apl.core.config.TimeConfig;
+import com.apollocurrency.aplwallet.apl.core.service.appdata.TimeService;
 import com.apollocurrency.aplwallet.apl.core.service.blockchain.TransactionBuilderFactory;
 import com.apollocurrency.aplwallet.apl.core.model.TransactionImpl;
 import com.apollocurrency.aplwallet.apl.core.chainid.BlockchainConfig;
@@ -77,6 +79,8 @@ public class ReferencedTransactionServiceTest extends DbContainerBaseTest {
     static TemporaryFolderExtension temporaryFolderExtension = new TemporaryFolderExtension();
     @RegisterExtension
     static DbExtension extension = new DbExtension(mariaDBContainer, DbTestData.getDbFileProperties(createPath("targetDb").toAbsolutePath().toString()));
+    TimeConfig config = new TimeConfig(false);
+    TimeService timeService = new TimeServiceImpl(config.timeSource());
     BlockchainConfig blockchainConfig = Mockito.mock(BlockchainConfig.class);
     Chain chain = mock(Chain.class);
 
@@ -99,7 +103,7 @@ public class ReferencedTransactionServiceTest extends DbContainerBaseTest {
         FullTextConfigImpl.class,
         GlobalSyncImpl.class,
         DerivedDbTablesRegistryImpl.class,
-        TimeServiceImpl.class, BlockDaoImpl.class,
+        BlockDaoImpl.class,
         BlockEntityRowMapper.class, BlockEntityToModelConverter.class, BlockModelToEntityConverter.class,
         TransactionDaoImpl.class, ReferencedTransactionService.class, JdbiHandleFactory.class, JdbiConfiguration.class)
         .addBeans(MockBean.of(extension.getDatabaseManager(), DatabaseManager.class))
@@ -113,8 +117,10 @@ public class ReferencedTransactionServiceTest extends DbContainerBaseTest {
         .addBeans(MockBean.of(mock(PrunableLoadingService.class), PrunableLoadingService.class))
         .addBeans(MockBean.of(td.getTransactionTypeFactory(), TransactionTypeFactory.class))
         .addBeans(MockBean.of(mock(PublicKeyDao.class), PublicKeyDao.class))
+        .addBeans(MockBean.of(config, TimeConfig.class))
+        .addBeans(MockBean.of(timeService, TimeService.class))
         .build();
-    HeightConfig config = Mockito.mock(HeightConfig.class);
+    HeightConfig heightConfig = Mockito.mock(HeightConfig.class);
     @Inject
     ReferencedTransactionService service;
 
@@ -129,13 +135,13 @@ public class ReferencedTransactionServiceTest extends DbContainerBaseTest {
 
     @BeforeEach
     void setUp() {
-        doReturn(config).when(blockchainConfig).getCurrentConfig();
+        doReturn(heightConfig).when(blockchainConfig).getCurrentConfig();
     }
 
     @Test
     void testHasAllReferencedTransaction() {
         TransactionTestData td = new TransactionTestData();
-        doReturn(1000).when(config).getReferencedTransactionHeightSpan();
+        doReturn(1000).when(heightConfig).getReferencedTransactionHeightSpan();
         boolean hasAll = service.hasAllReferencedTransactions(td.TRANSACTION_0, 1000);
 
         assertTrue(hasAll);
@@ -144,7 +150,7 @@ public class ReferencedTransactionServiceTest extends DbContainerBaseTest {
     @Test
     void testHasNotAllReferencedTransactionsWhenHeightIsNotEnough() {
         TransactionTestData td = new TransactionTestData();
-        doReturn(1000).when(config).getReferencedTransactionHeightSpan();
+        doReturn(1000).when(heightConfig).getReferencedTransactionHeightSpan();
         boolean hasAll = service.hasAllReferencedTransactions(td.TRANSACTION_5, td.TRANSACTION_5.getHeight());
 
         assertFalse(hasAll);
@@ -153,7 +159,7 @@ public class ReferencedTransactionServiceTest extends DbContainerBaseTest {
     @Test
     void testHasNotAllReferencedTransactionsWhenTransactionHeightIsLessThanHeightOfReferencedTransactions() {
         TransactionTestData td = new TransactionTestData();
-        doReturn(20_000).when(config).getReferencedTransactionHeightSpan();
+        doReturn(20_000).when(heightConfig).getReferencedTransactionHeightSpan();
         boolean hasAll = service.hasAllReferencedTransactions(td.TRANSACTION_11, td.TRANSACTION_11.getHeight());
 
         assertFalse(hasAll);
@@ -161,7 +167,7 @@ public class ReferencedTransactionServiceTest extends DbContainerBaseTest {
 
     @Test
     void testHasNotAllReferencedTransactionWhenMaximumNumberOfReferencedTransactionsReached() {
-        doReturn(20_000).when(config).getReferencedTransactionHeightSpan();
+        doReturn(20_000).when(heightConfig).getReferencedTransactionHeightSpan();
         TransactionTestData td = new TransactionTestData();
         boolean hasAll = service.hasAllReferencedTransactions(td.TRANSACTION_9, td.TRANSACTION_9.getHeight());
 
