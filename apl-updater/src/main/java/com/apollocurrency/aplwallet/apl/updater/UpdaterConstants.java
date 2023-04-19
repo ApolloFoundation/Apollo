@@ -24,8 +24,8 @@ public class UpdaterConstants {
     public static final String FIRST_DECRYPTION_CERTIFICATE_PREFIX = "1_";
     public static final String SECOND_DECRYPTION_CERTIFICATE_PREFIX = "2_";
     public static final String CERTIFICATE_SUFFIX = ".crt";
-    public static final String INTERMEDIATE_CERTIFICATE_NAME = "intermediate" + CERTIFICATE_SUFFIX;
-    public static final String CA_CERTIFICATE_NAME = "rootCA" + CERTIFICATE_SUFFIX;
+    public static final String INTERMEDIATE_CERTIFICATE_NAME = "CAintermediate" + CERTIFICATE_SUFFIX;
+    public static final String CA_CERTIFICATE_NAME = "CAroot" + CERTIFICATE_SUFFIX;
     public static final String CA_CERTIFICATE_URL =
         "https://raw.githubusercontent.com/ApolloFoundation/Apollo/master/apl-updater/src/main/resources/certs/"
         + CA_CERTIFICATE_NAME;
