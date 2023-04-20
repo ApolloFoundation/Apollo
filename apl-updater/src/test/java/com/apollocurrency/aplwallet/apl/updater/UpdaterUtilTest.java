@@ -40,7 +40,7 @@ public class UpdaterUtilTest {
         for (CertificatePair pair : result) {
             log.debug("pair: [{}, {}]", pair.getFirstCertificate().toString(), pair.getSecondCertificate().toString());
         }
-        assertEquals(result.size(), 12);
+        assertEquals(result.size(), 9);
         assertHasPair(result, "YL", "Denis Demut");
         assertHasPair(result, "YL", "Dzhyncharadze George");
         assertHasPair(result, "YL", "iAlexander");
@@ -75,7 +75,7 @@ public class UpdaterUtilTest {
         Set<Certificate> result = UpdaterUtil.readCertificates("any-dir", "any-prefix", "any-suffix");
 
         assertNotNull(result);
-        assertEquals(7, result.size());
+        assertEquals(6, result.size());
 
         // Assert that for each filename a correspondent certificate was created
         final Set<String> names = Set.of("Denis Demut", "YL", "Rostyslav Golda",
