@@ -8,6 +8,7 @@ import org.flywaydb.core.api.output.MigrateResult;
 @Slf4j
 public class AplDBUpdater implements DBUpdater {
 
+    @Override
     public void update(MigrationParams params) {
         Flyway flyway =
             Flyway.configure()
