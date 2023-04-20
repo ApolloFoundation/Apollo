@@ -78,8 +78,8 @@ public class UpdaterUtilTest {
         assertEquals(7, result.size());
 
         // Assert that for each filename a correspondent certificate was created
-        final Set<String> names = Set.of("Denis Demut", "Andrii Boiarskyi", "Rostyslav Golda", "Andrii Zinchenko",
-            "Dzhyncharadze George", "Oleksandr Losik", "Maksim Khabenko");
+        final Set<String> names = Set.of("Denis Demut", "YL", "Rostyslav Golda",
+            "Dzhyncharadze George", "iAlexander", "Maksim Khabenko");
         for (Certificate certificate : result) {
             final X509Certificate cert = (X509Certificate) certificate;
             final sun.security.x509.X500Name subjectDN = (sun.security.x509.X500Name) cert.getSubjectDN();
