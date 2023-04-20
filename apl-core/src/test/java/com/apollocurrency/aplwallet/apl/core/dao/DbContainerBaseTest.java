@@ -27,9 +27,12 @@ public abstract class DbContainerBaseTest {
             .withNetwork(null)
             .withLabel("com.apollocurrency.aplwallet.apl", "testcontainer")
             .withLogConsumer(new Slf4jLogConsumer(log))
-            .withCommand(MariaDBConfigs.getEnvs());
+            .withCommand(MariaDBConfigs.getEnvs())
+        ;
 
         mariaDBContainer.start();
+
         Runtime.getRuntime().addShutdownHook(new Thread(mariaDBContainer::stop));
     }
+
 }

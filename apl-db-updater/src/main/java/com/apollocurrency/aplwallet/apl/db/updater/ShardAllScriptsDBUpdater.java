@@ -13,10 +13,11 @@ public class ShardAllScriptsDBUpdater implements DBUpdater {
         Flyway flyway =
             Flyway.configure()
                 .dataSource(migrationParams.getDbUrl(), migrationParams.getUser(), migrationParams.getPassword())
-                .locations("classpath:db/migration/" + migrationParams.getDbType() +"/shard")
+                .locations("classpath:db/migration/" + migrationParams.getDbType().toLowerCase() + "/shard")
                 .load();
 
         MigrateResult migrateResult = flyway.migrate();
+
         log.info("ShardAddConstrainsDBUpdater: flyway version: {},", migrateResult.flywayVersion);
         for (MigrateOutput migration : migrateResult.migrations) {
             log.info("Migration version: {}, path: {}", migration.version, migration.filepath);
