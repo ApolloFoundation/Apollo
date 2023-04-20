@@ -41,18 +41,15 @@ public class UpdaterUtilTest {
             log.debug("pair: [{}, {}]", pair.getFirstCertificate().toString(), pair.getSecondCertificate().toString());
         }
         assertEquals(result.size(), 12);
-        assertHasPair(result, "Andrii Boiarskyi", "Denis Demut");
-        assertHasPair(result, "Andrii Boiarskyi", "Dzhyncharadze George");
-        assertHasPair(result, "Andrii Boiarskyi", "Oleksandr Losik");
-        assertHasPair(result, "Andrii Zinchenko", "Denis Demut");
-        assertHasPair(result, "Andrii Zinchenko", "Dzhyncharadze George");
-        assertHasPair(result, "Andrii Zinchenko", "Oleksandr Losik");
+        assertHasPair(result, "YL", "Denis Demut");
+        assertHasPair(result, "YL", "Dzhyncharadze George");
+        assertHasPair(result, "YL", "iAlexander");
         assertHasPair(result, "Rostyslav Golda", "Denis Demut");
         assertHasPair(result, "Rostyslav Golda", "Dzhyncharadze George");
-        assertHasPair(result, "Rostyslav Golda", "Oleksandr Losik");
+        assertHasPair(result, "Rostyslav Golda", "iAlexander");
         assertHasPair(result, "Maksim Khabenko", "Denis Demut");
         assertHasPair(result, "Maksim Khabenko", "Dzhyncharadze George");
-        assertHasPair(result, "Maksim Khabenko", "Oleksandr Losik");
+        assertHasPair(result, "Maksim Khabenko", "iAlexander");
     }
 
     @Test
