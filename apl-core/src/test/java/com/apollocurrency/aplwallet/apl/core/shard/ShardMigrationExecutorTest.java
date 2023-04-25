@@ -99,6 +99,7 @@ import com.apollocurrency.aplwallet.apl.util.service.TaskDispatchManager;
 import lombok.extern.slf4j.Slf4j;
 import org.jboss.weld.junit.MockBean;
 import org.jboss.weld.junit5.EnableWeld;
+import org.jboss.weld.junit5.ExplicitParamInjection;
 import org.jboss.weld.junit5.WeldInitiator;
 import org.jboss.weld.junit5.WeldSetup;
 import org.jboss.weld.literal.NamedLiteral;
@@ -108,6 +109,7 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.RegisterExtension;
+import org.junit.jupiter.api.io.TempDir;
 import org.mockito.Mockito;
 
 import jakarta.enterprise.inject.spi.Bean;
@@ -143,6 +145,7 @@ import static org.mockito.Mockito.mock;
 @Slf4j
 @Tag("slow")
 @EnableWeld
+@ExplicitParamInjection
 class ShardMigrationExecutorTest extends DbContainerRootUserTest {
     private static final String SHA_512 = "SHA-512";
 
@@ -152,7 +155,7 @@ class ShardMigrationExecutorTest extends DbContainerRootUserTest {
     private static BlockchainConfig blockchainConfig = mock(BlockchainConfig.class);
     Chain chain = mock(Chain.class);
     private static HeightConfig heightConfig = mock(HeightConfig.class);
-    private final Path dataExportDirPath = createPath("targetDb");
+    private final Path dataExportDirPath = createTempPath();
     private final Bean<Path> dataExportDir = MockBean.<Path> builder()
         .beanClass(Path.class)
         .addQualifier(new NamedLiteral("dataExportDir"))
@@ -278,8 +281,9 @@ class ShardMigrationExecutorTest extends DbContainerRootUserTest {
     }
 
     @Test
-    void executeAllOperations() {
-        doReturn(temporaryFolderExtension.newFolder("backup").toPath()).when(dirProvider).getDbDir();
+    void executeAllOperations(@TempDir Path tempPath) {
+//        doReturn(tempPath.resolve("backup").toAbsolutePath()).when(dirProvider).getDbDir();
+        doReturn(tempPath).when(dirProvider).getDbDir();
 
         int snapshotBlockHeight = 8000;
 
@@ -432,9 +436,9 @@ class ShardMigrationExecutorTest extends DbContainerRootUserTest {
 
     }
 
-    private Path createPath(String fileName) {
+    private Path createTempPath() {
         try {
-            return temporaryFolderExtension.newFolder().toPath().resolve(fileName);
+            return temporaryFolderExtension.newFolder().toPath();
         } catch (IOException e) {
             throw new RuntimeException(e.toString(), e);
         }
