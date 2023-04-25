@@ -419,6 +419,7 @@ public class ShardEngineImpl implements ShardEngine {
         durableTaskUpdateByState(state, 17.0, "CSV exporting...");
         try {
             int pruningTime = trimDerivedTables(paramInfo.getSnapshotBlockHeight() + 1);
+            log.debug("exportCsv by pruningTime = {} at height = {}", pruningTime, paramInfo.getSnapshotBlockHeight() + 1);
             if (StringUtils.isBlank(recovery.getProcessedObject())) {
                 try (Stream<Path> files = Files.list(csvExporter.getDataExportPath())) {
                     files

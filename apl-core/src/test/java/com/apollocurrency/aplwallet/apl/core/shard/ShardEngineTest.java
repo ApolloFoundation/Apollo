@@ -180,7 +180,11 @@ class ShardEngineTest extends DbContainerRootUserTest {
         createPath("targetDb").toAbsolutePath().toString()), "db/shard/shard-creation-data.sql");
 
     private final Path dataExportDirPath = createPath("targetDb");
-    private final Bean<Path> dataExportDir = MockBean.of(dataExportDirPath.toAbsolutePath(), Path.class);
+    private final Bean<Path> dataExportDir = MockBean.<Path> builder()
+        .beanClass(Path.class)
+        .addQualifier(new NamedLiteral("dataExportDir"))
+        .creating(dataExportDirPath.toAbsolutePath())
+        .build();
 
     private PropertiesHolder propertiesHolder = mock(PropertiesHolder.class);
     TimeConfig config = new TimeConfig(false);
