@@ -31,3 +31,5 @@ default-storage-engine = rocksdb
 # Import all .cnf files from configuration directory
 !includedir /etc/mysql/conf.d/
 !includedir /etc/mysql/mariadb.conf.d/
+
+log_warnings = 1
