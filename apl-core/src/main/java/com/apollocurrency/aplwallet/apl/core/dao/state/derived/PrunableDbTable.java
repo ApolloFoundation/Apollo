@@ -81,6 +81,8 @@ public abstract class PrunableDbTable<T extends DerivedEntity> extends EntityDbT
         String selectMinSql = String.format("SELECT IFNULL(min(DB_ID), 0) as min_id, " +
             "IFNULL(max(DB_ID), 0) as max_id, IFNULL(count(*), 0) as count, max(height) as max_height from %s where HEIGHT <= ? and transaction_timestamp >= ?", table);
         TransactionalDataSource dataSource = databaseManager.getDataSource();
+        log.trace("MIN/MAX select, height: {} - minPrunLT: {} = {}",
+            height, blockchainConfig.getMinPrunableLifetime(), currentTime - blockchainConfig.getMinPrunableLifetime());
         try (Connection con = dataSource.getConnection();
              PreparedStatement pstmt = con.prepareStatement(selectMinSql)) {
             pstmt.setInt(1, height);
