@@ -30,7 +30,6 @@ import org.json.simple.JSONObject;
 import org.junit.AfterClass;
 import org.junit.BeforeClass;
 import org.junit.jupiter.api.AfterEach;
-import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
@@ -55,7 +54,6 @@ import static org.mockito.Mockito.when;
 
 @EnableWeld
 @ExtendWith(MockitoExtension.class)
-//@Disabled
 class ShufflingCreationTransactionTypeTest {
 
     private static final long SENDER_ID = 1L;
