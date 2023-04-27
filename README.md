@@ -85,7 +85,7 @@ OS name: "linux", version: "5.9.12-200.fc33.x86_64", arch: "amd64", family: "uni
     
 ### Installation artefacts
 
-The final artifact that is ready to install and run located in the ___apl-exec/target___ directory and has name like  ___apollo-blockchain-1.51.2-NoOS-NoArch.zip___.
+The final artifact that is ready to install and run located in the ___apl-exec/target___ directory and has name like  ___apollo-blockchain-1.51.3-NoOS-NoArch.zip___.
 
 Unzip it to some location and run by scripts in ___ApolloWallet/apollo-blockchain/bin___ directory.
 
