@@ -1,4 +1,7 @@
 TRUNCATE TABLE transaction;
+-- Clean txs metadata to not interfere with real transactions in this script from previosly launched tests
+TRUNCATE TABLE transaction_shard_index;
+TRUNCATE TABLE block_index;
 TRUNCATE TABLE block;
 TRUNCATE TABLE phasing_poll;
 TRUNCATE TABLE phasing_poll_result;

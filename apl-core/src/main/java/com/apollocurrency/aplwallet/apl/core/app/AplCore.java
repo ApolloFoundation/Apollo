@@ -288,7 +288,7 @@ public final class AplCore {
             aplAppStatus.durableTaskUpdate(initCoreTaskID, 100.0, message);
             log.info("Copyright © 2013-2016 The NXT Core Developers.");
             log.info("Copyright © 2016-2017 Jelurida IP B.V..");
-            log.info("Copyright © 2017-2021 Apollo Foundation.");
+            log.info("Copyright © 2017-2022 Apollo Foundation.");
             log.info("See LICENSE.txt for more information");
             if (API.getWelcomePageUri() != null) {
                 log.info("Client UI is at " + API.getWelcomePageUri());
@@ -306,8 +306,6 @@ public final class AplCore {
             }
             aplAppStatus.durableTaskFinished(initCoreTaskID, true, "AplCore init failed (DB)");
             log.error("Database initialization failed ", e);
-            //TODO: move DB operations to proper place
-            // AplCoreRuntime.getInstance().getRuntimeMode().recoverDb();
         } catch (Exception e) {
             aplAppStatus.durableTaskFinished(initCoreTaskID, true, "AplCore init failed");
             log.error(e.getMessage(), e);
