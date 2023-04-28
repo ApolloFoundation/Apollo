@@ -45,7 +45,7 @@
     <module>apl-db-updater</module>
     <module>apl-dex</module>
     <module>apl-vault-wallet</module>
-      <module>apl-smc</module>
+    <module>apl-smc</module>
   </modules>
 
   <properties>
@@ -221,6 +221,15 @@
         <groupId>org.apache.maven.plugins</groupId>
         <artifactId>maven-compiler-plugin</artifactId>
         <configuration>
+<!--          Add sun.security.x509 module to compiler to allow successful UpdaterUtilTest running -->
+          <compilerArgs>
+            <arg>
+              --add-exports
+            </arg>
+            <arg>
+              java.base/sun.security.x509=ALL-UNNAMED
+            </arg>
+          </compilerArgs>
           <showDeprecation>false</showDeprecation>
         </configuration>
       </plugin>
