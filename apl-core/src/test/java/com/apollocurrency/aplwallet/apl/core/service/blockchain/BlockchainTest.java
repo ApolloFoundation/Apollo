@@ -795,9 +795,6 @@ class BlockchainTest extends DbContainerRootUserTest {
         assertTrue(hasTransaction);
     }
 
-
-    // COMMENTED OUT tests because they still creates Weld container and do not shutdown it!!!
-//    @Disabled // doesn't work, but creates additional Weld container which it not shutdown later
     @Test
     void testHasTransactionByFullHashBytesWhenHeightOfTransactionIsGreaterThanRequestedHeight() {
         boolean hasTransaction = blockchain.hasTransactionByFullHash(txd.TRANSACTION_7.getFullHash(), 0);
