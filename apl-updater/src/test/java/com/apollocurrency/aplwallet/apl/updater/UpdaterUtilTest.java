@@ -19,7 +19,11 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.junit.jupiter.api.Assertions.fail;
 import static org.slf4j.LoggerFactory.getLogger;
 
-
+/**
+ * in case RUN TIME ERROR (e.g. in IDE)
+ * add VM parameter below to this test
+ * --add-opens=java.base/sun.security.x509=ALL-UNNAMED
+ */
 public class UpdaterUtilTest {
     private static final Logger log = getLogger(UpdaterUtilTest.class);
 
