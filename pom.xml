@@ -163,9 +163,21 @@
           <artifactId>maven-compiler-plugin</artifactId>
           <version>${compile-plugin.version}</version>
           <configuration>
-            <source>${java.version}</source>
-            <target>${java.version}</target>
+            <source>${maven.compiler.source}</source>
+            <target>${maven.compiler.target}</target>
             <forceJavacCompilerUse>true</forceJavacCompilerUse>
+<!--          Add sun.security.x509 module to compiler to allow successful UpdaterUtilTest running -->
+            <compilerArgs>
+              <arg>--add-exports</arg>
+              <arg>--add-opens</arg>
+              <arg>java.base/sun.security.x509=ALL-UNNAMED</arg>
+              <arg>java.base/sun.security.pkcs=ALL-UNNAMED</arg>
+              <arg>java.base/sun.security.provider=ALL-UNNAMED</arg>
+              <arg>java.base/sun.security.util=ALL-UNNAMED</arg>
+              <arg>java.base/jdk.internal.misc=ALL-UNNAMED</arg>
+              <arg>security.util=ALL-UNNAMED</arg>
+            </compilerArgs>
+            <showDeprecation>false</showDeprecation>
           </configuration>
         </plugin>
         <!-- Maven Assembly Plugin -->
