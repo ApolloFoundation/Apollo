@@ -10,7 +10,6 @@ import com.apollocurrency.aplwallet.apl.core.app.runnable.ProcessTxsToBroadcastW
 import com.apollocurrency.aplwallet.apl.core.app.runnable.ProcessUnconfirmedTransactionsQueueTask;
 import com.apollocurrency.aplwallet.apl.core.app.runnable.RebroadcastTransactionsThread;
 import com.apollocurrency.aplwallet.apl.core.app.runnable.RemoveUnconfirmedTransactionsThread;
-import com.apollocurrency.aplwallet.apl.core.blockchain.TransactionBuilderFactory;
 import com.apollocurrency.aplwallet.apl.core.chainid.BlockchainConfig;
 import com.apollocurrency.aplwallet.apl.core.peer.PeersService;
 import com.apollocurrency.aplwallet.apl.core.db.DatabaseManager;
@@ -22,8 +21,8 @@ import com.apollocurrency.aplwallet.apl.util.service.TaskDispatchManager;
 import com.apollocurrency.aplwallet.apl.util.task.Task;
 import com.apollocurrency.aplwallet.apl.util.task.TaskDispatcher;
 
-import javax.inject.Inject;
-import javax.inject.Singleton;
+import jakarta.inject.Inject;
+import jakarta.inject.Singleton;
 
 @Singleton
 public class TransactionProcessingTaskScheduler {

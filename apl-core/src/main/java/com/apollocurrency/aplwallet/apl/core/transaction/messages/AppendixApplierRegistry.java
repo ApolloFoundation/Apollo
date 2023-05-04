@@ -4,8 +4,8 @@
 
 package com.apollocurrency.aplwallet.apl.core.transaction.messages;
 
-import javax.enterprise.inject.Instance;
-import javax.inject.Singleton;
+import jakarta.enterprise.inject.Instance;
+import jakarta.inject.Singleton;
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.Map;
@@ -14,14 +14,15 @@ import java.util.Map;
 public class AppendixApplierRegistry {
     private final Map<Class<?>, AppendixApplier<?>> appliers = new HashMap<>();
 
-    public AppendixApplierRegistry() {}
-
+    public AppendixApplierRegistry() {
+    }
 
     void init(Instance<AppendixApplier<?>> instances) {
-        instances.iterator().forEachRemaining(e-> appliers.put(e.forClass(), e));
+        instances.iterator().forEachRemaining(e -> appliers.put(e.forClass(), e));
     }
+
     public AppendixApplierRegistry(Collection<AppendixApplier<?>> appliers) {
-        appliers.iterator().forEachRemaining(e-> this.appliers.put(e.forClass(), e));
+        appliers.iterator().forEachRemaining(e -> this.appliers.put(e.forClass(), e));
     }
 
     public <T extends Appendix> AppendixApplier<T> getFor(T t) {

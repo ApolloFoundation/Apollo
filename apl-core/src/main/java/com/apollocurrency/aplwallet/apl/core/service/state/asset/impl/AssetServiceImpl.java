@@ -4,14 +4,14 @@
 
 package com.apollocurrency.aplwallet.apl.core.service.state.asset.impl;
 
-import com.apollocurrency.aplwallet.apl.core.blockchain.Transaction;
+import com.apollocurrency.aplwallet.apl.core.app.observer.events.TrimEvent;
+import com.apollocurrency.aplwallet.apl.core.model.Transaction;
 import com.apollocurrency.aplwallet.apl.core.converter.rest.IteratorToStreamConverter;
 import com.apollocurrency.aplwallet.apl.core.dao.state.asset.AssetTable;
 import com.apollocurrency.aplwallet.apl.core.dao.state.keyfactory.DbKey;
 import com.apollocurrency.aplwallet.apl.core.entity.state.asset.Asset;
 import com.apollocurrency.aplwallet.apl.core.service.fulltext.FullTextOperationData;
 import com.apollocurrency.aplwallet.apl.core.service.fulltext.FullTextSearchService;
-import com.apollocurrency.aplwallet.apl.core.service.fulltext.FullTextSearchUpdater;
 import com.apollocurrency.aplwallet.apl.core.service.state.BlockChainInfoService;
 import com.apollocurrency.aplwallet.apl.core.service.state.asset.AssetDeleteService;
 import com.apollocurrency.aplwallet.apl.core.service.state.asset.AssetService;
@@ -24,8 +24,10 @@ import com.apollocurrency.aplwallet.apl.util.db.DbUtils;
 import com.apollocurrency.aplwallet.apl.util.db.TransactionalDataSource;
 import lombok.extern.slf4j.Slf4j;
 
-import javax.inject.Inject;
-import javax.inject.Singleton;
+import jakarta.enterprise.event.Event;
+import jakarta.enterprise.util.AnnotationLiteral;
+import jakarta.inject.Inject;
+import jakarta.inject.Singleton;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
@@ -44,21 +46,21 @@ public class AssetServiceImpl implements AssetService {
     private final BlockChainInfoService blockChainInfoService;
     private final AssetDeleteService assetDeleteService;
     private IteratorToStreamConverter<Asset> assetIteratorToStreamConverter;
-    private final FullTextSearchUpdater fullTextSearchUpdater;
+    private final Event<FullTextOperationData> fullTextOperationDataEvent;
     private final FullTextSearchService fullTextSearchService;
 
     @Inject
     public AssetServiceImpl(AssetTable assetTable,
                             BlockChainInfoService blockChainInfoService,
                             AssetDeleteService assetDeleteService,
-                            FullTextSearchUpdater fullTextSearchUpdater,
+                            Event<FullTextOperationData> fullTextOperationDataEvent,
                             FullTextSearchService fullTextSearchService
     ) {
         this.assetTable = assetTable;
         this.blockChainInfoService = blockChainInfoService;
         this.assetDeleteService = assetDeleteService;
         this.assetIteratorToStreamConverter = new IteratorToStreamConverter<>();
-        this.fullTextSearchUpdater = fullTextSearchUpdater;
+        this.fullTextOperationDataEvent = fullTextOperationDataEvent;
         this.fullTextSearchService = fullTextSearchService;
     }
 
@@ -69,7 +71,7 @@ public class AssetServiceImpl implements AssetService {
                             BlockChainInfoService blockChainInfoService,
                             AssetDeleteService assetDeleteService,
                             IteratorToStreamConverter<Asset> assetIteratorToStreamConverter, // for unit tests mostly
-                            FullTextSearchUpdater fullTextSearchUpdater,
+                            Event<FullTextOperationData> fullTextOperationDataEvent,
                             FullTextSearchService fullTextSearchService
     ) {
         this.assetTable = assetTable;
@@ -80,7 +82,7 @@ public class AssetServiceImpl implements AssetService {
         } else {
             this.assetIteratorToStreamConverter = new IteratorToStreamConverter<>();
         }
-        this.fullTextSearchUpdater = fullTextSearchUpdater;
+        this.fullTextOperationDataEvent = fullTextOperationDataEvent;
         this.fullTextSearchService = fullTextSearchService;
     }
 
@@ -182,7 +184,7 @@ public class AssetServiceImpl implements AssetService {
         int index = 0;
         try (ResultSet rs = fullTextSearchService.search("public", assetTable.getTableName(), luceneQuery, Integer.MAX_VALUE, 0)) {
             while (rs.next()) {
-                Long DB_ID = rs.getLong(5);
+                Long DB_ID = rs.getLong("keys");
                 if (index == 0) {
                     inRange.append(DB_ID);
                 } else {
@@ -245,7 +247,7 @@ public class AssetServiceImpl implements AssetService {
         operationData.addColumnData(asset.getName()).addColumnData(asset.getDescription());
         // send data into Lucene index component
         log.trace("Put lucene index update data = {}", operationData);
-        fullTextSearchUpdater.putFullTextOperationData(operationData);
+        this.fullTextOperationDataEvent.select(new AnnotationLiteral<TrimEvent>() {}).fire(operationData);
     }
 
 }

@@ -7,15 +7,15 @@ package com.apollocurrency.aplwallet.apl.core.dao.state.asset;
 import com.apollocurrency.aplwallet.apl.core.dao.state.derived.EntityDbTable;
 import com.apollocurrency.aplwallet.apl.core.dao.state.keyfactory.DbKey;
 import com.apollocurrency.aplwallet.apl.core.dao.state.keyfactory.LongKeyFactory;
+import com.apollocurrency.aplwallet.apl.core.service.fulltext.FullTextOperationData;
 import com.apollocurrency.aplwallet.apl.util.db.DbClause;
 import com.apollocurrency.aplwallet.apl.util.db.DbIterator;
 import com.apollocurrency.aplwallet.apl.core.entity.state.asset.AssetDividend;
 import com.apollocurrency.aplwallet.apl.core.db.DatabaseManager;
-import com.apollocurrency.aplwallet.apl.core.shard.observer.DeleteOnTrimData;
 
-import javax.enterprise.event.Event;
-import javax.inject.Inject;
-import javax.inject.Singleton;
+import jakarta.enterprise.event.Event;
+import jakarta.inject.Inject;
+import jakarta.inject.Singleton;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
@@ -40,9 +40,9 @@ public final class AssetDividendTable extends EntityDbTable<AssetDividend> {
 
     @Inject
     public AssetDividendTable(DatabaseManager databaseManager,
-                              Event<DeleteOnTrimData> deleteOnTrimDataEvent) {
+                              Event<FullTextOperationData> fullTextOperationDataEvent) {
         super("asset_dividend", dividendDbKeyFactory, false, null,
-                databaseManager, deleteOnTrimDataEvent);
+                databaseManager, fullTextOperationDataEvent);
     }
 
     @Override

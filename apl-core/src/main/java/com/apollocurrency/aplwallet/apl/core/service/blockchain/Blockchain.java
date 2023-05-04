@@ -20,9 +20,10 @@
 
 package com.apollocurrency.aplwallet.apl.core.service.blockchain;
 
-import com.apollocurrency.aplwallet.apl.core.blockchain.Block;
-import com.apollocurrency.aplwallet.apl.core.blockchain.EcBlockData;
-import com.apollocurrency.aplwallet.apl.core.blockchain.Transaction;
+import com.apollocurrency.aplwallet.apl.core.model.Block;
+import com.apollocurrency.aplwallet.apl.core.model.EcBlockData;
+import com.apollocurrency.aplwallet.apl.core.model.Sort;
+import com.apollocurrency.aplwallet.apl.core.model.Transaction;
 import com.apollocurrency.aplwallet.apl.core.model.TransactionDbInfo;
 import com.apollocurrency.aplwallet.apl.core.transaction.PrunableTransaction;
 import com.apollocurrency.aplwallet.apl.util.db.TransactionalDataSource;
@@ -85,6 +86,8 @@ public interface Blockchain {
     Block findLastBlock();
 
     void saveBlock(Block block);
+
+    void updateTransaction(Transaction transaction);
 
     void commit(Block block);
 
@@ -157,7 +160,8 @@ public interface Blockchain {
 
     List<Transaction> getTransactions(long accountId, int numberOfConfirmations, byte type, byte subtype,
                                       int blockTimestamp, boolean withMessage, boolean phasedOnly, boolean nonPhasedOnly,
-                                      int from, int to, boolean includeExpiredPrunable, boolean executedOnly, boolean includePrivate);
+                                      int from, int to, boolean includeExpiredPrunable, boolean executedOnly,
+                                      boolean includePrivate, boolean failedOnly, boolean nonFailedOnly, Sort sort);
 
     List<Transaction> getBlockTransactions(long blockId);
 
@@ -184,4 +188,6 @@ public interface Blockchain {
     List<Transaction> loadPrunables(List<Transaction> transactions);
 
     List<Block> getBlocksAfter(int height, int limit);
+
+    List<Transaction> getTransactionsByIds(Set<Long> ids);
 }

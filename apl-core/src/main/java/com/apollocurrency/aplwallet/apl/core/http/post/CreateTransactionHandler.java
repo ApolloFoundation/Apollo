@@ -20,24 +20,22 @@
 
 package com.apollocurrency.aplwallet.apl.core.http.post;
 
-import com.apollocurrency.aplwallet.apl.core.blockchain.EcBlockData;
-import com.apollocurrency.aplwallet.apl.core.blockchain.Transaction;
-import com.apollocurrency.aplwallet.apl.core.blockchain.TransactionSignerImpl;
 import com.apollocurrency.aplwallet.apl.core.entity.state.account.Account;
 import com.apollocurrency.aplwallet.apl.core.http.APITag;
 import com.apollocurrency.aplwallet.apl.core.http.AbstractAPIRequestHandler;
 import com.apollocurrency.aplwallet.apl.core.http.JSONData;
 import com.apollocurrency.aplwallet.apl.core.http.ParameterException;
-import com.apollocurrency.aplwallet.apl.util.io.PayloadResult;
-import com.apollocurrency.aplwallet.apl.util.io.Result;
 import com.apollocurrency.aplwallet.apl.core.model.CreateTransactionRequest;
+import com.apollocurrency.aplwallet.apl.core.model.EcBlockData;
+import com.apollocurrency.aplwallet.apl.core.model.Transaction;
 import com.apollocurrency.aplwallet.apl.core.rest.TransactionCreator;
 import com.apollocurrency.aplwallet.apl.core.rest.converter.HttpRequestToCreateTransactionRequestConverter;
 import com.apollocurrency.aplwallet.apl.core.service.appdata.TimeService;
 import com.apollocurrency.aplwallet.apl.core.service.blockchain.Blockchain;
+import com.apollocurrency.aplwallet.apl.core.service.blockchain.TransactionBuilderFactory;
+import com.apollocurrency.aplwallet.apl.core.service.blockchain.TransactionSigner;
+import com.apollocurrency.aplwallet.apl.core.service.blockchain.TransactionSignerImpl;
 import com.apollocurrency.aplwallet.apl.core.transaction.FeeCalculator;
-import com.apollocurrency.aplwallet.apl.core.blockchain.TransactionBuilderFactory;
-import com.apollocurrency.aplwallet.apl.core.blockchain.TransactionSigner;
 import com.apollocurrency.aplwallet.apl.core.transaction.TransactionType;
 import com.apollocurrency.aplwallet.apl.core.transaction.TransactionTypeFactory;
 import com.apollocurrency.aplwallet.apl.core.transaction.TransactionValidator;
@@ -54,14 +52,15 @@ import com.apollocurrency.aplwallet.apl.util.annotation.FeeMarker;
 import com.apollocurrency.aplwallet.apl.util.annotation.TransactionFee;
 import com.apollocurrency.aplwallet.apl.util.exception.AplException;
 import com.apollocurrency.aplwallet.apl.util.injectable.PropertiesHolder;
+import com.apollocurrency.aplwallet.apl.util.io.PayloadResult;
+import com.apollocurrency.aplwallet.apl.util.io.Result;
 import org.json.simple.JSONObject;
 import org.json.simple.JSONStreamAware;
 
-import javax.enterprise.inject.spi.CDI;
-import javax.servlet.http.HttpServletRequest;
+import jakarta.enterprise.inject.spi.CDI;
+import jakarta.servlet.http.HttpServletRequest;
 import java.util.Arrays;
 
-import static com.apollocurrency.aplwallet.apl.core.http.JSONResponses.FEATURE_NOT_AVAILABLE;
 import static com.apollocurrency.aplwallet.apl.core.http.JSONResponses.INCORRECT_DEADLINE;
 import static com.apollocurrency.aplwallet.apl.core.http.JSONResponses.INCORRECT_EC_BLOCK;
 import static com.apollocurrency.aplwallet.apl.core.http.JSONResponses.MISSING_DEADLINE;
@@ -145,10 +144,7 @@ public abstract class CreateTransactionHandler extends AbstractAPIRequestHandler
         txBContext.createSerializer(transaction.getVersion()).serialize(transaction, signedTxBytes);
 
         response.put("transactionJSON", transactionJSON);
-        try {
-            response.put("unsignedTransactionBytes", Convert.toHexString(unsignedTxBytes.array()));
-        } catch (AplException.NotYetEncryptedException ignore) {
-        }
+        response.put("unsignedTransactionBytes", Convert.toHexString(unsignedTxBytes.array()));
         if (createTransactionRequest.getKeySeed() != null) {
             response.put("transaction", transaction.getStringId());
             response.put("fullHash", transactionJSON.get("fullHash"));
@@ -165,7 +161,7 @@ public abstract class CreateTransactionHandler extends AbstractAPIRequestHandler
     }
 
     //TODO: Adjust this method body for using #TransactionCreator.createTransactionThrowingException(...) and remove duplicated code
-    public Transaction createTransactionAndBroadcastIfRequired(CreateTransactionRequest txRequest) throws AplException.ValidationException, ParameterException {
+    public Transaction createTransactionAndBroadcastIfRequired(CreateTransactionRequest txRequest) throws AplException.ValidationException {
         EncryptedMessageAppendix encryptedMessage = null;
         PrunableEncryptedMessageAppendix prunableEncryptedMessage = null;
         TransactionType type = transactionTypeFactory.findTransactionTypeBySpec(txRequest.getAttachment().getTransactionTypeSpec());
@@ -216,63 +212,55 @@ public abstract class CreateTransactionHandler extends AbstractAPIRequestHandler
         // shouldn't try to get publicKey from senderAccount as it may have not been set yet
         int timestamp = timeService.getEpochTime();
         Transaction transaction;
-        try {
-            Transaction.Builder builder = txBuilder.newUnsignedTransactionBuilder((byte) TransactionVersionValidator.DEFAULT_VERSION,
-                txRequest.getPublicKey(),
-                txRequest.getAmountATM(), txRequest.getFeeATM(),
-                deadline, txRequest.getAttachment(), timestamp)
-                .referencedTransactionFullHash(txRequest.getReferencedTransactionFullHash());
-            if (type.canHaveRecipient()) {
-                builder.recipientId(txRequest.getRecipientId());
-            }
-            builder.appendix(encryptedMessage);
-            builder.appendix(message);
-            builder.appendix(publicKeyAnnouncement);
-            builder.appendix(txRequest.getEncryptToSelfMessage());
-            builder.appendix(txRequest.getPhasing());
-            builder.appendix(prunablePlainMessage);
-            builder.appendix(prunableEncryptedMessage);
-            if (txRequest.getEcBlockId() != 0) {
-                builder.ecBlockId(txRequest.getEcBlockId());
-                builder.ecBlockHeight(txRequest.getEcBlockHeight());
-            } else {
-                EcBlockData ecBlock = blockchain.getECBlock(timestamp);
-                builder.ecBlockData(ecBlock);
-            }
-
-            //build transaction
-            transaction = builder.build();
-
-            if (txRequest.getFeeATM() <= 0 || (propertiesHolder.correctInvalidFees() && txRequest.getKeySeed() == null)) {
-                int effectiveHeight = blockchain.getHeight();
-                @TransactionFee(FeeMarker.CALCULATOR)
-                long minFee = feeCalculator.getMinimumFeeATM(transaction, effectiveHeight);
-                txRequest.setFeeATM(Math.max(minFee, txRequest.getFeeATM()));
-                transaction.setFeeATM(txRequest.getFeeATM());
-            }
-
-            try {
-                if (Math.addExact(txRequest.getAmountATM(), transaction.getFeeATM()) > txRequest.getSenderAccount().getUnconfirmedBalanceATM()) {
-                    throw new AplException.NotValidException(NOT_ENOUGH_APL);
-                }
-            } catch (ArithmeticException e) {
-                throw new AplException.NotValidException(NOT_ENOUGH_APL);
-            }
-            if (txRequest.getKeySeed() != null) {
-                signerService.sign(transaction, txRequest.getKeySeed());
-            }
-
-            if (txRequest.isBroadcast() && transaction.getSignature() != null) {
-                lookupTransactionProcessor().broadcast(transaction);
-            } else if (txRequest.isValidate()) {
-                validator.validateFully(transaction);
-            }
-        } catch (AplException.NotYetEnabledException e) {
-            throw new AplException.NotValidException(FEATURE_NOT_AVAILABLE);
-        } catch (AplException.InsufficientBalanceException e) {
-            throw e;
+        Transaction.Builder builder = txBuilder.newUnsignedTransactionBuilder((byte) TransactionVersionValidator.DEFAULT_VERSION,
+            txRequest.getPublicKey(),
+            txRequest.getAmountATM(), txRequest.getFeeATM(),
+            deadline, txRequest.getAttachment(), timestamp)
+            .referencedTransactionFullHash(txRequest.getReferencedTransactionFullHash());
+        if (type.canHaveRecipient()) {
+            builder.recipientId(txRequest.getRecipientId());
+        }
+        builder.appendix(encryptedMessage);
+        builder.appendix(message);
+        builder.appendix(publicKeyAnnouncement);
+        builder.appendix(txRequest.getEncryptToSelfMessage());
+        builder.appendix(txRequest.getPhasing());
+        builder.appendix(prunablePlainMessage);
+        builder.appendix(prunableEncryptedMessage);
+        if (txRequest.getEcBlockId() != 0) {
+            builder.ecBlockId(txRequest.getEcBlockId());
+            builder.ecBlockHeight(txRequest.getEcBlockHeight());
+        } else {
+            EcBlockData ecBlock = blockchain.getECBlock(timestamp);
+            builder.ecBlockData(ecBlock);
         }
 
+        //build transaction
+        transaction = builder.build();
+
+        if (txRequest.getFeeATM() <= 0 || (propertiesHolder.correctInvalidFees() && txRequest.getKeySeed() == null)) {
+            int effectiveHeight = blockchain.getHeight();
+            @TransactionFee(FeeMarker.CALCULATOR)
+            long minFee = feeCalculator.getMinimumFeeATM(transaction, effectiveHeight);
+            txRequest.setFeeATM(Math.max(minFee, txRequest.getFeeATM()));
+            transaction.setFeeATM(txRequest.getFeeATM());
+        }
+
+        try {
+            if (Math.addExact(txRequest.getAmountATM(), transaction.getFeeATM()) > txRequest.getSenderAccount().getUnconfirmedBalanceATM()) {
+                throw new AplException.NotValidException(NOT_ENOUGH_APL);
+            }
+        } catch (ArithmeticException e) {
+            throw new AplException.NotValidException(NOT_ENOUGH_APL);
+        }
+        if (txRequest.getKeySeed() != null) {
+            signerService.sign(transaction, txRequest.getKeySeed());
+        }
+        if (txRequest.isBroadcast() && transaction.getSignature() != null) {
+            lookupTransactionProcessor().broadcast(transaction);
+        } else if (txRequest.isValidate()) {
+            validator.validateFully(transaction);
+        }
         return transaction;
     }
 

@@ -15,7 +15,7 @@ import com.apollocurrency.aplwallet.apl.core.utils.CollectionUtil;
 import com.apollocurrency.aplwallet.apl.util.db.DbClause;
 import com.apollocurrency.aplwallet.apl.util.db.DbIterator;
 
-import javax.enterprise.inject.Vetoed;
+import jakarta.enterprise.inject.Vetoed;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;

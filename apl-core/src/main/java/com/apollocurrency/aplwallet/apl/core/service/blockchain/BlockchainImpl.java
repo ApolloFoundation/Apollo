@@ -20,9 +20,6 @@
 
 package com.apollocurrency.aplwallet.apl.core.service.blockchain;
 
-import com.apollocurrency.aplwallet.apl.core.blockchain.Block;
-import com.apollocurrency.aplwallet.apl.core.blockchain.EcBlockData;
-import com.apollocurrency.aplwallet.apl.core.blockchain.Transaction;
 import com.apollocurrency.aplwallet.apl.core.converter.db.BlockEntityToModelConverter;
 import com.apollocurrency.aplwallet.apl.core.converter.db.BlockModelToEntityConverter;
 import com.apollocurrency.aplwallet.apl.core.dao.appdata.ShardDao;
@@ -35,6 +32,10 @@ import com.apollocurrency.aplwallet.apl.core.entity.appdata.Shard;
 import com.apollocurrency.aplwallet.apl.core.entity.appdata.TransactionIndex;
 import com.apollocurrency.aplwallet.apl.core.entity.blockchain.BlockEntity;
 import com.apollocurrency.aplwallet.apl.core.entity.state.account.PublicKey;
+import com.apollocurrency.aplwallet.apl.core.model.Block;
+import com.apollocurrency.aplwallet.apl.core.model.EcBlockData;
+import com.apollocurrency.aplwallet.apl.core.model.Sort;
+import com.apollocurrency.aplwallet.apl.core.model.Transaction;
 import com.apollocurrency.aplwallet.apl.core.model.TransactionDbInfo;
 import com.apollocurrency.aplwallet.apl.core.service.appdata.TimeService;
 import com.apollocurrency.aplwallet.apl.core.service.state.account.PublicKeyDao;
@@ -48,13 +49,14 @@ import com.apollocurrency.aplwallet.apl.util.cdi.Transactional;
 import com.apollocurrency.aplwallet.apl.util.db.TransactionalDataSource;
 import lombok.extern.slf4j.Slf4j;
 
-import javax.inject.Inject;
-import javax.inject.Singleton;
+import jakarta.inject.Inject;
+import jakarta.inject.Singleton;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.Iterator;
 import java.util.List;
+import java.util.Objects;
 import java.util.Set;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.stream.Collectors;
@@ -343,7 +345,11 @@ public class BlockchainImpl implements Blockchain {
         }
     }
 
-//    @Override
+    @Override
+    public void updateTransaction(Transaction transaction) {
+        transactionService.updateTransaction(transaction);
+    }
+    //    @Override
 //    public List<Transaction> getOrLoadTransactions(Block parentBlock) {
 //        if (parentBlock.getTransactions() == null || parentBlock.getTransactions().size() == 0) {
 //            List<Transaction> blockTransactions = this.getBlockTransactions(parentBlock.getId());
@@ -476,18 +482,9 @@ public class BlockchainImpl implements Blockchain {
         }
         List<Block> result;
         if (entityList.isEmpty()) {
-            result = Collections.EMPTY_LIST;
+            result = Collections.emptyList();
         } else {
             result = loadBlockDataFromEntities(entityList);//load the generator public key
-            for (Block block : result) {
-                List<Transaction> blockTransactions = block.getTransactions();
-                if (log.isTraceEnabled()) {
-                    log.trace("Block id={} height={} Loaded {} transaction.",
-                        block.getId(),
-                        block.getHeight(),
-                        blockTransactions != null ? blockTransactions.size() : 0);
-                }
-            }
         }
         if (log.isTraceEnabled()) {
             log.trace("getBlocksAfter time {}", System.currentTimeMillis() - time);
@@ -700,11 +697,12 @@ public class BlockchainImpl implements Blockchain {
     @Override
     public List<Transaction> getTransactions(long accountId, int numberOfConfirmations, byte type, byte subtype,
                                              int blockTimestamp, boolean withMessage, boolean phasedOnly, boolean nonPhasedOnly,
-                                             int from, int to, boolean includeExpiredPrunable, boolean executedOnly, boolean includePrivate) {
+                                             int from, int to, boolean includeExpiredPrunable, boolean executedOnly,
+                                             boolean includePrivate, boolean failedOnly, boolean nonFailedOnly, Sort sort) {
 
         return transactionService.getTransactionsCrossShardingByAccount(accountId, getHeight(), numberOfConfirmations, type, subtype,
             blockTimestamp, withMessage, phasedOnly, nonPhasedOnly,
-            from, to, includeExpiredPrunable, executedOnly, includePrivate);
+            from, to, includeExpiredPrunable, executedOnly, includePrivate, failedOnly, nonFailedOnly, sort);
     }
 
     @Transactional(readOnly = true)
@@ -795,6 +793,15 @@ public class BlockchainImpl implements Blockchain {
     @Override
     public List<Block> getBlocksAfter(int height, int limit) {
         return loadBlockDataFromEntities(blockDao.getBlocksAfter(height, limit));
+    }
+
+    @Override
+    public List<Transaction> getTransactionsByIds(Set<Long> ids) {
+        return ids.stream()
+            .map(e-> transactionService.findTransactionCrossSharding(e, Integer.MAX_VALUE))
+            .map(this::loadPrunable)
+            .filter(Objects::nonNull)
+            .collect(Collectors.toList());
     }
 
 }

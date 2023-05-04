@@ -1,3 +1,7 @@
+/*
+ *  Copyright © 2018-2021 Apollo Foundation
+ */
+
 package com.apollocurrency.aplwallet.api.dto;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonInclude;
@@ -14,5 +18,5 @@ import java.util.List;
 @JsonIgnoreProperties(ignoreUnknown = true)
 public class DexCurrencyDTO extends BaseDTO{
     private String currency;
-    private List<EthWalletKeyDTO> wallets;
+    private List<WalletDTO> wallets;
 }

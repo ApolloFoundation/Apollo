@@ -5,6 +5,7 @@
 package com.apollocurrency.aplwallet.apl.core.rest.converter;
 
 import com.apollocurrency.aplwallet.apl.core.entity.state.account.Account;
+import com.apollocurrency.aplwallet.apl.core.http.HttpParameterParserUtil;
 import com.apollocurrency.aplwallet.apl.core.http.ParameterException;
 import com.apollocurrency.aplwallet.apl.core.model.CreateTransactionRequest;
 import com.apollocurrency.aplwallet.apl.core.transaction.messages.OrdinaryPaymentAttachment;
@@ -13,10 +14,11 @@ import org.jboss.weld.junit.MockBean;
 import org.jboss.weld.junit5.EnableWeld;
 import org.jboss.weld.junit5.WeldInitiator;
 import org.jboss.weld.junit5.WeldSetup;
+import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
-import javax.servlet.http.HttpServletRequest;
+import jakarta.servlet.http.HttpServletRequest;
 
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertTrue;
@@ -40,6 +42,11 @@ class HttpRequestToCreateTransactionRequestConverterTest {
     void setUp() {
         doAnswer(e -> e.getArgument(0)).when(elGamalEncryptor).elGamalDecrypt(anyString());
         doReturn("secret").when(request).getParameter("secretPhrase");
+    }
+
+    @AfterEach
+    void tearDown() {
+        HttpParameterParserUtil.resetCDIComponents();
     }
 
     @Test

@@ -1,5 +1,5 @@
 /*
- * Copyright (c)  2018-2019. Apollo Foundation.
+ * Copyright (c)  2018-2021. Apollo Foundation.
  */
 
 package com.apollocurrency.aplwallet.apl.core.dao.state.publickey;
@@ -10,7 +10,7 @@ import com.apollocurrency.aplwallet.apl.core.dao.state.derived.EntityDbTableInte
 import com.apollocurrency.aplwallet.apl.core.dao.state.keyfactory.DbKey;
 import com.apollocurrency.aplwallet.apl.core.entity.state.account.PublicKey;
 import com.apollocurrency.aplwallet.apl.core.db.DatabaseManager;
-import com.apollocurrency.aplwallet.apl.core.shard.observer.DeleteOnTrimData;
+import com.apollocurrency.aplwallet.apl.core.service.fulltext.FullTextOperationData;
 import com.apollocurrency.aplwallet.apl.util.cache.InMemoryCacheManager;
 import com.apollocurrency.aplwallet.apl.util.injectable.PropertiesHolder;
 import com.apollocurrency.aplwallet.apl.util.service.TaskDispatchManager;
@@ -20,12 +20,12 @@ import com.google.common.cache.Cache;
 import lombok.Getter;
 import lombok.extern.slf4j.Slf4j;
 
-import javax.annotation.PostConstruct;
-import javax.enterprise.event.Event;
-import javax.enterprise.inject.Produces;
-import javax.inject.Inject;
-import javax.inject.Named;
-import javax.inject.Singleton;
+import jakarta.annotation.PostConstruct;
+import jakarta.enterprise.event.Event;
+import jakarta.enterprise.inject.Produces;
+import jakarta.inject.Inject;
+import jakarta.inject.Named;
+import jakarta.inject.Singleton;
 import java.util.Objects;
 
 import static com.apollocurrency.aplwallet.apl.util.Constants.HEALTH_CHECK_INTERVAL;
@@ -46,11 +46,11 @@ public class PublicKeyTableProducer {
                                   InMemoryCacheManager cacheManager,
                                   TaskDispatchManager taskManager,
                                   DatabaseManager databaseManager,
-                                  Event<DeleteOnTrimData> deleteOnTrimDataEvent) {
+                                  Event<FullTextOperationData> fullTextOperationDataEvent) {
         this.cacheManager = Objects.requireNonNull(cacheManager, "Cache manager is NULL");
         Objects.requireNonNull(databaseManager);
-        this.publicKeyTable = new PublicKeyTable(databaseManager, deleteOnTrimDataEvent);
-        this.genesisPublicKeyTable = new GenesisPublicKeyTable(databaseManager, deleteOnTrimDataEvent);
+        this.publicKeyTable = new PublicKeyTable(databaseManager, fullTextOperationDataEvent);
+        this.genesisPublicKeyTable = new GenesisPublicKeyTable(databaseManager, fullTextOperationDataEvent);
         this.taskManager = taskManager;
         this.cacheEnabled = propertiesHolder.getBooleanProperty("apl.enablePublicKeyCache");
     }

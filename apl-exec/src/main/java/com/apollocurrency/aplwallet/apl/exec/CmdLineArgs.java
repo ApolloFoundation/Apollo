@@ -8,7 +8,6 @@
 
 package com.apollocurrency.aplwallet.apl.exec;
 
-import picocli.CommandLine;
 import picocli.CommandLine.Command;
 import picocli.CommandLine.Option;
 
@@ -26,7 +25,7 @@ public class CmdLineArgs {
     @Option(names = {"--service-mode", "-s"}, help = true, description = "Run in service mode with current system user")
     public boolean serviceMode;
     @Option(names = {"--ignore-resources"}, description = "Ignore resources bundled with application jar. Default is false")
-    public boolean ingnoreResources = false;
+    public boolean ignoreResources = false;
     @Option(names = {"--config-dir", "-c"}, description = "Load all configuration and resources from specified path. System resources not ignored, standard config search is ignored.")
     public String configDir = "";
     @Option(names = {"--log-dir", "-l"}, description = "Save log files to from specified directory.")
@@ -64,7 +63,7 @@ public class CmdLineArgs {
     public boolean disableWeldConcurrentDeployment = false;
 
     public boolean isResourceIgnored() {
-        return ingnoreResources;
+        return ignoreResources;
     }
 
     public int getNetIdx() {

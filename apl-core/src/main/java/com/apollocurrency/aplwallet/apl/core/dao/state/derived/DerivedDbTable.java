@@ -15,14 +15,20 @@
  */
 
 /*
- * Copyright © 2018-2019 Apollo Foundation
+ * Copyright © 2018-2021 Apollo Foundation
  */
 
 package com.apollocurrency.aplwallet.apl.core.dao.state.derived;
 
+import static com.apollocurrency.aplwallet.apl.core.service.fulltext.FullTextConfig.DEFAULT_SCHEMA;
+
+import jakarta.enterprise.event.Event;
+
 import com.apollocurrency.aplwallet.apl.core.dao.state.keyfactory.DbKey;
 import com.apollocurrency.aplwallet.apl.core.db.DatabaseManager;
 import com.apollocurrency.aplwallet.apl.core.entity.state.derived.DerivedEntity;
+import com.apollocurrency.aplwallet.apl.core.service.fulltext.FullTextOperationData;
+import com.apollocurrency.aplwallet.apl.util.StringUtils;
 import com.apollocurrency.aplwallet.apl.util.StringValidator;
 import com.apollocurrency.aplwallet.apl.util.annotation.DatabaseSpecificDml;
 import com.apollocurrency.aplwallet.apl.util.annotation.DmlMarker;
@@ -47,13 +53,16 @@ public abstract class DerivedDbTable<T extends DerivedEntity> implements Derived
     protected final DatabaseManager databaseManager;
     @Getter
     private final String fullTextSearchColumns;
+    private FtsEventSender ftsEventSender;
 
     protected DerivedDbTable(String table,
                              DatabaseManager databaseManager,
+                             Event<FullTextOperationData> fullTextOperationDataEvent,
                              String fullTextSearchColumns) {
         StringValidator.requireNonBlank(table, "Table name");
         this.table = table;
         this.databaseManager = Objects.requireNonNull(databaseManager, "databaseManager is NULL");
+        this.ftsEventSender = new FtsEventSender(fullTextOperationDataEvent);
         this.fullTextSearchColumns = fullTextSearchColumns;
     }
 
@@ -71,16 +80,60 @@ public abstract class DerivedDbTable<T extends DerivedEntity> implements Derived
         if (!dataSource.isInTransaction()) {
             throw new IllegalStateException("Not in transaction");
         }
-        int rc;
+        int deletedRecordsCount = 0; // count for selected db_ids (only Searchable tables)
+        int deletedResult = 0; // count for deleted db_ids (any table)
         try (Connection con = dataSource.getConnection();
-             PreparedStatement pstmtDelete = con.prepareStatement("DELETE FROM " + table + " WHERE height > ?")) {
-            pstmtDelete.setInt(1, height);
-            rc = pstmtDelete.executeUpdate();
+             // delete records and return their 'db_id' values
+             PreparedStatement pstmtDelete = con.prepareStatement("DELETE FROM " + table + " WHERE height > ?");
+             PreparedStatement pstmtSelectDeletedIds = con.prepareStatement("SELECT DB_ID FROM " + table + " WHERE height > ?")) {
+
+            pstmtSelectDeletedIds.setInt(1, height); // set height to select DB_IDs to be deleted
+            pstmtDelete.setInt(1, height); // set height to delete records
+
+            // select deleted DB_IDs and fire FTS events for searchable tables to remove data from FTS
+            deletedRecordsCount = selectSearchableRecordsSendFtsEvent(deletedRecordsCount, pstmtSelectDeletedIds);
+            // deleting actual records for entity
+            deletedResult = pstmtDelete.executeUpdate();
+            if (this.isSearchable()) {
+                assert deletedResult == deletedRecordsCount; // check in debug mode only
+            }
+            log.trace("Deleted '{}' at height = {}, deletedCount = {}, deletedResult = {}",
+                this.table, height, deletedRecordsCount, deletedResult);
+
         } catch (SQLException e) {
             throw new RuntimeException(e.toString(), e);
         }
-        return rc;
+        return deletedRecordsCount;
     }
+
+    /**
+     * Select DB_IDs, check if 'searchable' and fire data into FTS to delete
+     * @param deletedRecordsCount number of deleted records
+     * @param pstmtSelectDeletedIds sql for selecting DB_ID records to deleted by previous sql
+     * @return affected number
+     * @throws SQLException error
+     */
+    protected int selectSearchableRecordsSendFtsEvent(
+        Integer deletedRecordsCount,
+        PreparedStatement pstmtSelectDeletedIds) throws SQLException {
+        // process only 'searchable'
+        if (this.isSearchable()) {
+            // do select DB_IDs first and sent FTS events
+            try (ResultSet deletedIds = pstmtSelectDeletedIds.executeQuery())  {
+                // operation data for current table
+                FullTextOperationData operationData = new FullTextOperationData(
+                    DEFAULT_SCHEMA, this.table, Thread.currentThread().getName(),
+                    FullTextOperationData.OperationType.DELETE);
+                deletedRecordsCount = ftsEventSender.fireEventsForDeletedIds(
+                    operationData, deletedIds, deletedRecordsCount);
+            } catch (SQLException e) {
+                log.error("Error on selecting DB_ID to be deleted in FTS", e);
+                throw new RuntimeException(e.toString(), e);
+            }
+        }
+        return deletedRecordsCount;
+    }
+
 
     @Override
     public boolean deleteAtHeight(T t, int height) {
@@ -150,7 +203,7 @@ public abstract class DerivedDbTable<T extends DerivedEntity> implements Derived
     @Override
     public ResultSet getRangeByDbId(Connection con, PreparedStatement pstmt,
                                     MinMaxValue minMaxValue, int limit) throws SQLException {
-        Objects.requireNonNull(con, "connnection is NULL");
+        Objects.requireNonNull(con, "connection is NULL");
         Objects.requireNonNull(pstmt, "prepared statement is NULL");
         Objects.requireNonNull(minMaxValue, "minMaxValue is NULL");
         try {
@@ -229,4 +282,9 @@ public abstract class DerivedDbTable<T extends DerivedEntity> implements Derived
     public String getName() {
         return table;
     }
+
+    public boolean isSearchable() {
+        return !StringUtils.isBlank(this.fullTextSearchColumns);
+    }
+
 }

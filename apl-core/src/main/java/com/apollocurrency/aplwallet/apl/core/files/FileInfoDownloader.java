@@ -16,7 +16,7 @@ import com.apollocurrency.aplwallet.apl.crypto.Convert;
 import lombok.Getter;
 import lombok.extern.slf4j.Slf4j;
 
-import javax.inject.Inject;
+import jakarta.inject.Inject;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Map;

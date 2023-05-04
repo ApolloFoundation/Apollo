@@ -5,7 +5,8 @@
 package com.apollocurrency.aplwallet.apl.core.transaction.types.child;
 
 import com.apollocurrency.aplwallet.apl.core.chainid.BlockchainConfig;
-import com.apollocurrency.aplwallet.apl.core.blockchain.Transaction;
+import com.apollocurrency.aplwallet.apl.core.exception.AplTransactionFeatureNotEnabledException;
+import com.apollocurrency.aplwallet.apl.core.model.Transaction;
 import com.apollocurrency.aplwallet.apl.core.entity.state.account.Account;
 import com.apollocurrency.aplwallet.apl.core.entity.state.account.LedgerEvent;
 import com.apollocurrency.aplwallet.apl.core.service.blockchain.Blockchain;
@@ -19,8 +20,8 @@ import com.apollocurrency.aplwallet.apl.util.exception.AplException;
 import lombok.extern.slf4j.Slf4j;
 import org.json.simple.JSONObject;
 
-import javax.inject.Inject;
-import javax.inject.Singleton;
+import jakarta.inject.Inject;
+import jakarta.inject.Singleton;
 import java.nio.ByteBuffer;
 @Singleton
 @Slf4j
@@ -50,7 +51,7 @@ public class CreateChildTransactionType extends ChildAccountTransactionType {
     @Override
     public void doStateIndependentValidation(Transaction transaction) throws AplException.ValidationException {
         if (!getBlockchainConfig().isTransactionV2ActiveAtHeight(blockchain.getHeight())) {
-            throw new AplException.NotYetEnabledException("Transactions of Type 'CreateChildAccount' are not yet enabled");
+            throw new AplTransactionFeatureNotEnabledException("'CreateChildAccount' transaction type", transaction);
         }
         super.doStateIndependentValidation(transaction);
     }

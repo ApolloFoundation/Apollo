@@ -4,10 +4,10 @@
 
 package com.apollocurrency.aplwallet.apl.core.entity.appdata;
 
-import java.math.BigInteger;
-
 import lombok.Getter;
 import lombok.Setter;
+
+import java.math.BigInteger;
 
 @Getter
 @Setter
@@ -22,7 +22,7 @@ public class GeneratorMemoryEntity implements Comparable<GeneratorMemoryEntity> 
     private volatile BigInteger effectiveBalance;
     private volatile long deadline;
 
-        public GeneratorMemoryEntity(byte[] keySeed, byte[] publicKey, long accountId) {
+    public GeneratorMemoryEntity(byte[] keySeed, byte[] publicKey, long accountId) {
         this.keySeed = keySeed;
         this.publicKey = publicKey;
         this.accountId = accountId;

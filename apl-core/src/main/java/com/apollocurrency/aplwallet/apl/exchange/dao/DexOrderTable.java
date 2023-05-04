@@ -7,19 +7,17 @@ package com.apollocurrency.aplwallet.apl.exchange.dao;
 import com.apollocurrency.aplwallet.apl.core.converter.db.DexOrderMapper;
 import com.apollocurrency.aplwallet.apl.core.dao.state.derived.EntityDbTable;
 import com.apollocurrency.aplwallet.apl.core.dao.state.keyfactory.DbKey;
-import com.apollocurrency.aplwallet.apl.util.db.DbClause;
-import com.apollocurrency.aplwallet.apl.util.db.DbIterator;
-import com.apollocurrency.aplwallet.apl.core.model.dex.DexOrder;
 import com.apollocurrency.aplwallet.apl.core.db.DatabaseManager;
-import com.apollocurrency.aplwallet.apl.core.shard.observer.DeleteOnTrimData;
+import com.apollocurrency.aplwallet.apl.core.model.dex.DexOrder;
+import com.apollocurrency.aplwallet.apl.core.service.fulltext.FullTextOperationData;
 import com.apollocurrency.aplwallet.apl.core.utils.CollectionUtil;
-import com.apollocurrency.aplwallet.apl.dex.core.model.OrderStatus;
 import com.apollocurrency.aplwallet.apl.dex.eth.utils.EthUtil;
+import com.apollocurrency.aplwallet.apl.util.db.DbIterator;
 import lombok.extern.slf4j.Slf4j;
 
-import javax.enterprise.event.Event;
-import javax.inject.Inject;
-import javax.inject.Singleton;
+import jakarta.enterprise.event.Event;
+import jakarta.inject.Inject;
+import jakarta.inject.Singleton;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
@@ -42,8 +40,9 @@ public class DexOrderTable extends EntityDbTable<DexOrder> {
 
     @Inject
     public DexOrderTable(DatabaseManager databaseManager,
-                         Event<DeleteOnTrimData> deleteOnTrimDataEvent) {
-        super(TABLE_NAME, keyFactory, true, null, databaseManager, deleteOnTrimDataEvent);
+                         Event<FullTextOperationData> fullTextOperationDataEvent) {
+        super(TABLE_NAME, keyFactory, true, null,
+            databaseManager, fullTextOperationDataEvent);
     }
 
     @Override
@@ -60,7 +59,7 @@ public class DexOrderTable extends EntityDbTable<DexOrder> {
         try (Connection con = getDatabaseManager().getDataSource().getConnection();
              PreparedStatement pstmt = con
                  .prepareStatement("SELECT * FROM dex_offer AS offer where latest = true " +
-                     "AND offer.status = 0 AND offer.finish_time < ?")
+                     "AND offer.status = 0 AND offer.finish_time < ? ORDER BY db_id ASC")
         ) {
             int i = 0;
             pstmt.setLong(++i, currentTime);
@@ -73,10 +72,6 @@ public class DexOrderTable extends EntityDbTable<DexOrder> {
         }
 
         return dexOrders;
-    }
-
-    public List<DexOrder> getWaitingPhasingResultOrders() {
-        return CollectionUtil.toList(getManyBy(new DbClause.ByteClause("status", (byte) OrderStatus.PHASING_RESULT_PENDING.ordinal()), 0, -1));
     }
 
     @Override
@@ -117,7 +112,8 @@ public class DexOrderTable extends EntityDbTable<DexOrder> {
         try (Connection con = databaseManager.getDataSource().getConnection();
              PreparedStatement pstm = con.prepareStatement(
                  "SELECT * FROM dex_offer LEFT JOIN dex_contract ON dex_offer.id = dex_contract.counter_offer_id " +
-                     "OR dex_offer.id = dex_contract.offer_id WHERE dex_contract.id IS NULL AND dex_offer.status=1 AND dex_offer.height < ? AND dex_offer.latest = true")) {
+                     "OR dex_offer.id = dex_contract.offer_id WHERE dex_contract.id IS NULL AND dex_offer.status=1 " +
+                     "AND dex_offer.height < ? AND dex_offer.latest = true ORDER BY dex_offer.db_id ASC")) {
             pstm.setInt(1, height);
             return CollectionUtil.toList(getManyBy(con, pstm, false));
         } catch (SQLException e) {

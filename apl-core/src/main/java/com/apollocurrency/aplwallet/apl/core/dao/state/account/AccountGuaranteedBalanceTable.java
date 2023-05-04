@@ -5,6 +5,7 @@
 package com.apollocurrency.aplwallet.apl.core.dao.state.account;
 
 import com.apollocurrency.aplwallet.apl.core.chainid.BlockchainConfig;
+import com.apollocurrency.aplwallet.apl.core.service.fulltext.FullTextOperationData;
 import com.apollocurrency.aplwallet.apl.util.db.TransactionalDataSource;
 import com.apollocurrency.aplwallet.apl.core.dao.state.derived.DerivedDbTable;
 import com.apollocurrency.aplwallet.apl.core.dao.state.keyfactory.DbKey;
@@ -14,9 +15,11 @@ import com.apollocurrency.aplwallet.apl.core.db.DatabaseManager;
 import com.apollocurrency.aplwallet.apl.util.annotation.DatabaseSpecificDml;
 import com.apollocurrency.aplwallet.apl.util.annotation.DmlMarker;
 import com.apollocurrency.aplwallet.apl.util.injectable.PropertiesHolder;
+import lombok.extern.slf4j.Slf4j;
 
-import javax.inject.Inject;
-import javax.inject.Singleton;
+import jakarta.enterprise.event.Event;
+import jakarta.inject.Inject;
+import jakarta.inject.Singleton;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
@@ -28,6 +31,7 @@ import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 
 @Singleton
+@Slf4j
 public class AccountGuaranteedBalanceTable extends DerivedDbTable<AccountGuaranteedBalance> {
 
     private static final String TABLE_NAME = "account_guaranteed_balance";
@@ -49,8 +53,9 @@ public class AccountGuaranteedBalanceTable extends DerivedDbTable<AccountGuarant
     @Inject
     public AccountGuaranteedBalanceTable(BlockchainConfig blockchainConfig,
                                          PropertiesHolder propertiesHolder,
-                                         DatabaseManager databaseManager) {
-        super(TABLE_NAME, databaseManager, null);
+                                         DatabaseManager databaseManager,
+                                         Event<FullTextOperationData> fullTextOperationDataEvent) {
+        super(TABLE_NAME, databaseManager, fullTextOperationDataEvent,null);
         this.blockchainConfig = blockchainConfig;
         this.batchCommitSize = propertiesHolder.BATCH_COMMIT_SIZE();
     }
@@ -149,6 +154,7 @@ public class AccountGuaranteedBalanceTable extends DerivedDbTable<AccountGuarant
         if (amountATM <= 0) {
             return;
         }
+        log.info("Add to account {} guaranteed balance {} amount at height {}", accountId, amountATM, blockchainHeight);
         TransactionalDataSource dataSource = databaseManager.getDataSource();
         try (Connection con = dataSource.getConnection();
              PreparedStatement pstmtSelect = con.prepareStatement("SELECT additions FROM account_guaranteed_balance "
@@ -164,7 +170,11 @@ public class AccountGuaranteedBalanceTable extends DerivedDbTable<AccountGuarant
             try (ResultSet rs = pstmtSelect.executeQuery()) {
                 long additions = amountATM;
                 if (rs.next()) {
-                    additions = Math.addExact(additions, rs.getLong(ADDITIONS_COLUMN_NAME));
+
+                    long existingAdditions = rs.getLong(ADDITIONS_COLUMN_NAME);
+                    additions = Math.addExact(additions, existingAdditions);
+                    log.debug("Add existing guaranteed balance additions for account {} at height {}, additions {}, sum {}", accountId
+                    , blockchainHeight, existingAdditions, additions);
                 }
                 pstmtUpdate.setLong(1, accountId);
                 pstmtUpdate.setLong(2, additions);

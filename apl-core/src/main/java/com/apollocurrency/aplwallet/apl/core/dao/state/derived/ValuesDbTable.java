@@ -24,11 +24,11 @@ import com.apollocurrency.aplwallet.apl.core.dao.state.keyfactory.DbKey;
 import com.apollocurrency.aplwallet.apl.core.dao.state.keyfactory.KeyFactory;
 import com.apollocurrency.aplwallet.apl.core.db.DatabaseManager;
 import com.apollocurrency.aplwallet.apl.core.entity.state.derived.DerivedEntity;
-import com.apollocurrency.aplwallet.apl.core.shard.observer.DeleteOnTrimData;
+import com.apollocurrency.aplwallet.apl.core.service.fulltext.FullTextOperationData;
 import com.apollocurrency.aplwallet.apl.util.db.TransactionalDataSource;
 import lombok.extern.slf4j.Slf4j;
 
-import javax.enterprise.event.Event;
+import jakarta.enterprise.event.Event;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
@@ -41,9 +41,9 @@ public abstract class ValuesDbTable<T extends DerivedEntity> extends BasicDbTabl
 
     public ValuesDbTable(String table, KeyFactory<T> dbKeyFactory, boolean multiversion,
                          DatabaseManager databaseManager,
-                         Event<DeleteOnTrimData> deleteOnTrimDataEvent) {
+                         Event<FullTextOperationData> fullTextOperationDataEvent) {
         super(table, dbKeyFactory, multiversion, databaseManager,
-                deleteOnTrimDataEvent, null);
+                fullTextOperationDataEvent, null);
     }
 
     public final List<T> get(DbKey dbKey) {

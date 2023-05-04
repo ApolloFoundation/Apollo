@@ -33,8 +33,8 @@ import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.RegisterExtension;
 
-import javax.enterprise.event.Event;
-import javax.inject.Inject;
+import jakarta.enterprise.event.Event;
+import jakarta.inject.Inject;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -72,7 +72,6 @@ class ShardPrunableZipHashCalculatorTest extends DbContainerBaseTest {
     WeldInitiator weld = WeldInitiator.from(PrunableMessageTable.class,
         Event.class,
         ShardPrunableZipHashCalculator.class,
-        PropertiesHolder.class,
         FullTextConfigImpl.class,
         CsvEscaperImpl.class)
         .addBeans(MockBean.of(blockchainConfig, BlockchainConfig.class))

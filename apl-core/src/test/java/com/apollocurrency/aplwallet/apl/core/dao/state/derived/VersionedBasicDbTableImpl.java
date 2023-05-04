@@ -8,7 +8,7 @@ import com.apollocurrency.aplwallet.apl.core.dao.state.keyfactory.DbKey;
 import com.apollocurrency.aplwallet.apl.core.entity.model.VersionedDerivedIdEntity;
 import com.apollocurrency.aplwallet.apl.core.db.DatabaseManager;
 
-import javax.enterprise.event.Event;
+import jakarta.enterprise.event.Event;
 import java.sql.Connection;
 import java.sql.ResultSet;
 import java.sql.SQLException;
@@ -18,7 +18,10 @@ import static org.mockito.Mockito.mock;
 public class VersionedBasicDbTableImpl extends BasicDbTable<VersionedDerivedIdEntity> {
 
     public VersionedBasicDbTableImpl(DatabaseManager databaseManager) {
-        super("versioned_derived_entity", new VersionedEntityKeyFactory(), true, databaseManager, mock(Event.class), null);
+        super("versioned_derived_entity",
+            new VersionedEntityKeyFactory(),
+            true,
+            databaseManager, mock(Event.class), null);
     }
 
     @Override

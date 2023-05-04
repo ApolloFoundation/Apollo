@@ -7,6 +7,8 @@ import com.apollocurrency.aplwallet.apl.core.dao.state.derived.EntityDbTable;
 import com.apollocurrency.aplwallet.apl.core.dao.state.keyfactory.DbKey;
 import com.apollocurrency.aplwallet.apl.core.dao.state.keyfactory.LongKey;
 import com.apollocurrency.aplwallet.apl.core.dao.state.keyfactory.LongKeyFactory;
+import com.apollocurrency.aplwallet.apl.core.service.fulltext.FullTextOperationData;
+import com.apollocurrency.aplwallet.apl.core.service.fulltext.FullTextSearchUpdater;
 import com.apollocurrency.aplwallet.apl.util.db.DbUtils;
 import com.apollocurrency.aplwallet.apl.core.entity.state.account.PublicKey;
 import com.apollocurrency.aplwallet.apl.core.db.DatabaseManager;
@@ -14,7 +16,7 @@ import com.apollocurrency.aplwallet.apl.core.shard.observer.DeleteOnTrimData;
 import com.apollocurrency.aplwallet.apl.util.annotation.DatabaseSpecificDml;
 import com.apollocurrency.aplwallet.apl.util.annotation.DmlMarker;
 
-import javax.enterprise.event.Event;
+import jakarta.enterprise.event.Event;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
@@ -27,9 +29,9 @@ import java.sql.SQLException;
 public class GenesisPublicKeyTable extends EntityDbTable<PublicKey> {
 
     public GenesisPublicKeyTable(DatabaseManager databaseManager,
-                                 Event<DeleteOnTrimData> deleteOnTrimDataEvent) {
+                                 Event<FullTextOperationData> fullTextOperationDataEvent) {
         super("genesis_public_key", new PublicKeyDbFactory("account_id"), false, null,
-            databaseManager, deleteOnTrimDataEvent);
+            databaseManager, fullTextOperationDataEvent);
     }
 
     @Override

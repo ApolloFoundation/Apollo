@@ -5,7 +5,7 @@
 package com.apollocurrency.aplwallet.apl.core.rest.converter;
 
 import com.apollocurrency.aplwallet.api.dto.UnconfirmedTransactionDTO;
-import com.apollocurrency.aplwallet.apl.core.blockchain.Transaction;
+import com.apollocurrency.aplwallet.apl.core.model.Transaction;
 import com.apollocurrency.aplwallet.apl.core.service.state.account.AccountService;
 import com.apollocurrency.aplwallet.apl.core.signature.Signature;
 import com.apollocurrency.aplwallet.apl.core.transaction.TransactionTypes;
@@ -19,7 +19,7 @@ import lombok.Getter;
 import lombok.Setter;
 import org.json.simple.JSONObject;
 
-import javax.inject.Inject;
+import jakarta.enterprise.inject.Vetoed;
 import java.util.Map;
 
 /**
@@ -28,13 +28,13 @@ import java.util.Map;
  * <br>
  * Each caller should instantiate new instance or just use CDI default Dependant Scope
  */
+@Vetoed
 public class UnconfirmedTransactionConverter implements Converter<Transaction, UnconfirmedTransactionDTO> {
     private final PrunableLoadingService prunableLoadingService;
     @Getter
     @Setter
     private volatile boolean priv = true;
 
-    @Inject
     public UnconfirmedTransactionConverter(PrunableLoadingService prunableLoadingService) {
         this.prunableLoadingService = prunableLoadingService;
     }

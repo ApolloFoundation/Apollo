@@ -4,26 +4,35 @@
 
 package com.apollocurrency.aplwallet.apl.core.dao.state.shuffling;
 
+import com.apollocurrency.aplwallet.apl.core.dao.DBContainerRootTest;
 import com.apollocurrency.aplwallet.apl.core.entity.state.shuffling.Shuffling;
 import com.apollocurrency.aplwallet.apl.core.entity.state.shuffling.ShufflingStage;
 import com.apollocurrency.aplwallet.apl.data.DbTestData;
 import com.apollocurrency.aplwallet.apl.extension.DbExtension;
 import com.apollocurrency.aplwallet.apl.testutil.DbUtils;
+import lombok.extern.slf4j.Slf4j;
 import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.RegisterExtension;
 
-import javax.enterprise.event.Event;
+import jakarta.enterprise.event.Event;
 import java.util.List;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.mockito.Mockito.mock;
 
 @Tag("slow")
+@Slf4j
 public class ShufflingDbRepositoryTest extends ShufflingRepositoryTest {
+    @BeforeAll
+    static void beforeAll() {
+        log.info("Connect to the db using {}", DBContainerRootTest.class);
+    }
+
     @RegisterExtension
-    static DbExtension extension = new DbExtension(mariaDBContainer, DbTestData.getInMemDbProps(), "db/shuffling.sql", null);
+    static DbExtension extension = new DbExtension(DBContainerRootTest.mariaDBContainer, DbTestData.getInMemDbProps(), "db/shuffling.sql", null);
 
     @Override
     public ShufflingTable createRepository() {

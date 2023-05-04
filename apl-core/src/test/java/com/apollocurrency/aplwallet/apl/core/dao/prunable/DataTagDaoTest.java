@@ -4,10 +4,10 @@
 
 package com.apollocurrency.aplwallet.apl.core.dao.prunable;
 
-import com.apollocurrency.aplwallet.apl.core.blockchain.TransactionBuilderFactory;
 import com.apollocurrency.aplwallet.apl.core.chainid.BlockchainConfig;
 import com.apollocurrency.aplwallet.apl.core.config.DaoConfig;
-import com.apollocurrency.aplwallet.apl.core.config.NtpTimeConfig;
+import com.apollocurrency.aplwallet.apl.core.config.JdbiConfiguration;
+import com.apollocurrency.aplwallet.apl.core.config.TimeConfig;
 import com.apollocurrency.aplwallet.apl.core.converter.db.BlockEntityRowMapper;
 import com.apollocurrency.aplwallet.apl.core.converter.db.BlockEntityToModelConverter;
 import com.apollocurrency.aplwallet.apl.core.converter.db.BlockModelToEntityConverter;
@@ -15,7 +15,6 @@ import com.apollocurrency.aplwallet.apl.core.converter.db.PrunableTxRowMapper;
 import com.apollocurrency.aplwallet.apl.core.converter.db.TransactionEntityRowMapper;
 import com.apollocurrency.aplwallet.apl.core.converter.db.TransactionEntityToModelConverter;
 import com.apollocurrency.aplwallet.apl.core.converter.db.TransactionModelToEntityConverter;
-import com.apollocurrency.aplwallet.apl.core.converter.db.TransactionRowMapper;
 import com.apollocurrency.aplwallet.apl.core.converter.db.TxReceiptRowMapper;
 import com.apollocurrency.aplwallet.apl.core.dao.DbContainerBaseTest;
 import com.apollocurrency.aplwallet.apl.core.dao.blockchain.BlockDaoImpl;
@@ -23,13 +22,13 @@ import com.apollocurrency.aplwallet.apl.core.dao.blockchain.TransactionDaoImpl;
 import com.apollocurrency.aplwallet.apl.core.dao.state.keyfactory.DbKey;
 import com.apollocurrency.aplwallet.apl.core.dao.state.tagged.TaggedDataTimestampDao;
 import com.apollocurrency.aplwallet.apl.core.db.DatabaseManager;
-import com.apollocurrency.aplwallet.apl.core.db.JdbiConfiguration;
 import com.apollocurrency.aplwallet.apl.core.entity.prunable.DataTag;
 import com.apollocurrency.aplwallet.apl.core.entity.prunable.TaggedData;
 import com.apollocurrency.aplwallet.apl.core.service.appdata.TimeService;
 import com.apollocurrency.aplwallet.apl.core.service.appdata.impl.TimeServiceImpl;
 import com.apollocurrency.aplwallet.apl.core.service.blockchain.BlockchainImpl;
 import com.apollocurrency.aplwallet.apl.core.service.blockchain.GlobalSyncImpl;
+import com.apollocurrency.aplwallet.apl.core.service.blockchain.TransactionBuilderFactory;
 import com.apollocurrency.aplwallet.apl.core.service.blockchain.TransactionProcessor;
 import com.apollocurrency.aplwallet.apl.core.service.blockchain.TransactionServiceImpl;
 import com.apollocurrency.aplwallet.apl.core.service.fulltext.FullTextConfigImpl;
@@ -62,7 +61,7 @@ import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.RegisterExtension;
 
-import javax.inject.Inject;
+import jakarta.inject.Inject;
 import java.sql.SQLException;
 import java.util.List;
 
@@ -81,15 +80,16 @@ class DataTagDaoTest extends DbContainerBaseTest {
     @RegisterExtension
     static DbExtension extension = new DbExtension(mariaDBContainer);
     private PropertiesHolder propertiesHolder = mock(PropertiesHolder.class);
-    private NtpTimeConfig ntpTimeConfig = new NtpTimeConfig();
-    private TimeService timeService = new TimeServiceImpl(ntpTimeConfig.time());
+    TimeConfig config = new TimeConfig(false);
+    TimeService timeService = new TimeServiceImpl(config.timeSource());
+
     TransactionTestData td = new TransactionTestData();
 
     @WeldSetup
     public WeldInitiator weld = WeldInitiator.from(BlockchainImpl.class, DaoConfig.class,
         GlobalSyncImpl.class,
         TransactionServiceImpl.class, ShardDbExplorerImpl.class,
-        TransactionRowMapper.class, TransactionEntityRowMapper.class, TxReceiptRowMapper.class, PrunableTxRowMapper.class,
+        TransactionEntityRowMapper.class, TransactionEntityRowMapper.class, TxReceiptRowMapper.class, PrunableTxRowMapper.class,
         TransactionModelToEntityConverter.class, TransactionEntityToModelConverter.class,
         TransactionBuilderFactory.class,
         TaggedDataTimestampDao.class,
@@ -108,7 +108,7 @@ class DataTagDaoTest extends DbContainerBaseTest {
         .addBeans(MockBean.of(mock(PublicKeyDao.class), PublicKeyDao.class))
         .addBeans(MockBean.of(mock(PrunableLoadingService.class), PrunableLoadingService.class))
         .addBeans(MockBean.of(td.getTransactionTypeFactory(), TransactionTypeFactory.class))
-        .addBeans(MockBean.of(ntpTimeConfig, NtpTimeConfig.class))
+        .addBeans(MockBean.of(timeService, TimeConfig.class))
         .addBeans(MockBean.of(timeService, TimeService.class))
         .addBeans(MockBean.of(mock(BlockchainConfig.class), BlockchainConfig.class))
         .build();

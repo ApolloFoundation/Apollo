@@ -8,16 +8,16 @@ import com.apollocurrency.aplwallet.apl.core.converter.rest.IteratorToStreamConv
 import com.apollocurrency.aplwallet.apl.core.dao.state.exchange.ExchangeTable;
 import com.apollocurrency.aplwallet.apl.util.db.DbClause;
 import com.apollocurrency.aplwallet.apl.util.db.DbIterator;
-import com.apollocurrency.aplwallet.apl.core.blockchain.Block;
-import com.apollocurrency.aplwallet.apl.core.blockchain.Transaction;
+import com.apollocurrency.aplwallet.apl.core.model.Block;
+import com.apollocurrency.aplwallet.apl.core.model.Transaction;
 import com.apollocurrency.aplwallet.apl.core.entity.state.currency.CurrencyExchangeOffer;
 import com.apollocurrency.aplwallet.apl.core.entity.state.exchange.Exchange;
 import com.apollocurrency.aplwallet.apl.core.service.state.BlockChainInfoService;
 import com.apollocurrency.aplwallet.apl.core.service.state.exchange.ExchangeService;
 import lombok.extern.slf4j.Slf4j;
 
-import javax.inject.Inject;
-import javax.inject.Singleton;
+import jakarta.inject.Inject;
+import jakarta.inject.Singleton;
 import java.util.List;
 import java.util.stream.Stream;
 

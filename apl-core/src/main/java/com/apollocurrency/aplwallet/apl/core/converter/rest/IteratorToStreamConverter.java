@@ -7,7 +7,7 @@ package com.apollocurrency.aplwallet.apl.core.converter.rest;
 import com.apollocurrency.aplwallet.apl.util.api.converter.Converter;
 import com.apollocurrency.aplwallet.apl.util.db.DbIterator;
 
-import javax.enterprise.inject.Vetoed;
+import jakarta.enterprise.inject.Vetoed;
 import java.util.Spliterator;
 import java.util.Spliterators;
 import java.util.stream.Stream;

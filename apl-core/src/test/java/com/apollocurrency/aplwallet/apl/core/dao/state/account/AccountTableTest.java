@@ -1,10 +1,11 @@
 /*
- * Copyright © 2018-2019 Apollo Foundation
+ * Copyright © 2018-2022 Apollo Foundation
  */
 
 package com.apollocurrency.aplwallet.apl.core.dao.state.account;
 
 import com.apollocurrency.aplwallet.apl.core.dao.DbContainerBaseTest;
+import com.apollocurrency.aplwallet.apl.core.dao.state.derived.MinMaxValue;
 import com.apollocurrency.aplwallet.apl.core.dao.state.keyfactory.LongKey;
 import com.apollocurrency.aplwallet.apl.core.entity.state.account.Account;
 import com.apollocurrency.aplwallet.apl.core.entity.state.derived.VersionedDerivedEntity;
@@ -19,7 +20,8 @@ import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.RegisterExtension;
 
-import javax.enterprise.event.Event;
+import jakarta.enterprise.event.Event;
+import java.math.BigDecimal;
 import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.Comparator;
@@ -260,5 +262,19 @@ class AccountTableTest extends DbContainerBaseTest {
         List<Account> accounts = table.selectAllForKey(td.ACC_11.getId());
 
         assertEquals(List.of(td.ACC_14, td.ACC_13, td.ACC_12, td.ACC_11), accounts);
+    }
+
+    @Test
+    void getMinMaxValues_allValues() {
+        MinMaxValue minMaxValue = table.getMinMaxValue(Integer.MAX_VALUE);
+
+        assertEquals(new MinMaxValue(BigDecimal.valueOf(50), BigDecimal.valueOf(9211698109297098287L), "id", 16, 141868), minMaxValue);
+    }
+
+    @Test
+    void getMinMaxValues_limitedByHeight() {
+        MinMaxValue minMaxValue = table.getMinMaxValue(140000);
+
+        assertEquals(new MinMaxValue(BigDecimal.valueOf(50), BigDecimal.valueOf(9211698109297098287L), "id", 6, 106000), minMaxValue);
     }
 }

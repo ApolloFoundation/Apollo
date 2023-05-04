@@ -27,7 +27,7 @@ import com.apollocurrency.aplwallet.apl.util.exception.AplException;
 import org.json.simple.JSONObject;
 import org.json.simple.JSONStreamAware;
 
-import javax.servlet.http.HttpServletRequest;
+import jakarta.servlet.http.HttpServletRequest;
 
 @Deprecated
 public final class GetAccountAssetCount extends AbstractAPIRequestHandler {

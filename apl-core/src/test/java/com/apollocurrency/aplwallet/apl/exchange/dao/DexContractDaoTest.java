@@ -7,7 +7,7 @@ package com.apollocurrency.aplwallet.apl.exchange.dao;
 import com.apollocurrency.aplwallet.apl.core.config.DaoConfig;
 import com.apollocurrency.aplwallet.apl.core.dao.DbContainerBaseTest;
 import com.apollocurrency.aplwallet.apl.core.db.DatabaseManager;
-import com.apollocurrency.aplwallet.apl.core.db.JdbiConfiguration;
+import com.apollocurrency.aplwallet.apl.core.config.JdbiConfiguration;
 import com.apollocurrency.aplwallet.apl.core.model.dex.ExchangeContract;
 import com.apollocurrency.aplwallet.apl.data.DexTestData;
 import com.apollocurrency.aplwallet.apl.extension.DbExtension;
@@ -22,7 +22,7 @@ import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.RegisterExtension;
 
-import javax.inject.Inject;
+import jakarta.inject.Inject;
 import java.util.List;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;

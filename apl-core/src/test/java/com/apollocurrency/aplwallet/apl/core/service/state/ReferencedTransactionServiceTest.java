@@ -4,8 +4,8 @@
 
 package com.apollocurrency.aplwallet.apl.core.service.state;
 
-import com.apollocurrency.aplwallet.apl.core.blockchain.TransactionBuilderFactory;
-import com.apollocurrency.aplwallet.apl.core.blockchain.TransactionImpl;
+import com.apollocurrency.aplwallet.apl.core.service.blockchain.TransactionBuilderFactory;
+import com.apollocurrency.aplwallet.apl.core.model.TransactionImpl;
 import com.apollocurrency.aplwallet.apl.core.chainid.BlockchainConfig;
 import com.apollocurrency.aplwallet.apl.core.chainid.HeightConfig;
 import com.apollocurrency.aplwallet.apl.core.config.DaoConfig;
@@ -16,14 +16,13 @@ import com.apollocurrency.aplwallet.apl.core.converter.db.PrunableTxRowMapper;
 import com.apollocurrency.aplwallet.apl.core.converter.db.TransactionEntityRowMapper;
 import com.apollocurrency.aplwallet.apl.core.converter.db.TransactionEntityToModelConverter;
 import com.apollocurrency.aplwallet.apl.core.converter.db.TransactionModelToEntityConverter;
-import com.apollocurrency.aplwallet.apl.core.converter.db.TransactionRowMapper;
 import com.apollocurrency.aplwallet.apl.core.converter.db.TxReceiptRowMapper;
 import com.apollocurrency.aplwallet.apl.core.dao.DbContainerBaseTest;
 import com.apollocurrency.aplwallet.apl.core.dao.appdata.impl.ReferencedTransactionDaoImpl;
 import com.apollocurrency.aplwallet.apl.core.dao.blockchain.BlockDaoImpl;
 import com.apollocurrency.aplwallet.apl.core.dao.blockchain.TransactionDaoImpl;
 import com.apollocurrency.aplwallet.apl.core.db.DatabaseManager;
-import com.apollocurrency.aplwallet.apl.core.db.JdbiConfiguration;
+import com.apollocurrency.aplwallet.apl.core.config.JdbiConfiguration;
 import com.apollocurrency.aplwallet.apl.core.service.appdata.impl.TimeServiceImpl;
 import com.apollocurrency.aplwallet.apl.core.service.blockchain.BlockchainImpl;
 import com.apollocurrency.aplwallet.apl.core.service.blockchain.GlobalSync;
@@ -59,7 +58,7 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.RegisterExtension;
 import org.mockito.Mockito;
 
-import javax.inject.Inject;
+import jakarta.inject.Inject;
 import java.io.IOException;
 import java.nio.file.Path;
 
@@ -93,7 +92,7 @@ public class ReferencedTransactionServiceTest extends DbContainerBaseTest {
         TransactionImpl.class, BlockchainImpl.class, DaoConfig.class,
         ReferencedTransactionDaoImpl.class,
         TransactionServiceImpl.class, ShardDbExplorerImpl.class,
-        TransactionRowMapper.class, TransactionEntityRowMapper.class, TxReceiptRowMapper.class, PrunableTxRowMapper.class,
+        TransactionEntityRowMapper.class, TransactionEntityRowMapper.class, TxReceiptRowMapper.class, PrunableTxRowMapper.class,
         TransactionModelToEntityConverter.class, TransactionEntityToModelConverter.class,
         TransactionBuilderFactory.class,
         GlobalSync.class,

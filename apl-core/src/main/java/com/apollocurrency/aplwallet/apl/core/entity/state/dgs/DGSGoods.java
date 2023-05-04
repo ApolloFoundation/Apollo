@@ -4,9 +4,9 @@
 
 package com.apollocurrency.aplwallet.apl.core.entity.state.dgs;
 
-import com.apollocurrency.aplwallet.apl.core.blockchain.Transaction;
+import com.apollocurrency.aplwallet.apl.core.model.Transaction;
 import com.apollocurrency.aplwallet.apl.core.entity.state.derived.VersionedDerivedEntity;
-import com.apollocurrency.aplwallet.apl.core.transaction.messages.DigitalGoodsListing;
+import com.apollocurrency.aplwallet.apl.core.transaction.messages.DGSListingAttachment;
 import com.apollocurrency.aplwallet.apl.util.Search;
 
 import java.util.Arrays;
@@ -26,7 +26,7 @@ public class DGSGoods extends VersionedDerivedEntity {
     private boolean delisted;
 
 
-    public DGSGoods(Transaction transaction, DigitalGoodsListing attachment, int timestamp) {
+    public DGSGoods(Transaction transaction, DGSListingAttachment attachment, int timestamp) {
         super(null, transaction.getHeight());
         this.id = transaction.getId();
         this.sellerId = transaction.getSenderId();
@@ -159,4 +159,5 @@ public class DGSGoods extends VersionedDerivedEntity {
             ", height=" + getHeight() +
             '}';
     }
+
 }

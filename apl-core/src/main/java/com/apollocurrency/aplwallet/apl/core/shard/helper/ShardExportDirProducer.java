@@ -2,8 +2,8 @@ package com.apollocurrency.aplwallet.apl.core.shard.helper;
 
 import com.apollocurrency.aplwallet.apl.util.env.RuntimeEnvironment;
 
-import javax.enterprise.inject.Produces;
-import javax.inject.Named;
+import jakarta.enterprise.inject.Produces;
+import jakarta.inject.Named;
 import java.nio.file.Path;
 
 public class ShardExportDirProducer {

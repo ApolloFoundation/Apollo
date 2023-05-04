@@ -3,13 +3,12 @@
     "chainId": "00150000-cb84-4c31-9f7c-7af4c3c0080a",
     "active": true,
     "wellKnownPeers": [
-      "51.15.37.165",
-      "51.15.228.126",
-      "51.15.228.171",
-      "51.15.209.252",
-      "51.15.228.90",
-      "51.15.46.25",
-      "51.15.72.23"
+      "51.158.190.152",
+      "51.158.182.150",
+      "51.15.89.229",
+      "51.15.99.219",
+      "51.15.37.77",
+      "51.158.189.209"
     ],
     "name": "Apollo stage testnet",
     "description": "Apollo pre-release test chain (staging), running on latest build being prepared to release",
@@ -20,7 +19,9 @@
     "decimals": 8,
     "featuresHeightRequirement": {
       "dexReopenPendingOrdersHeight": 0,
-      "dexExpiredContractWithFinishedPhasingHeightAndStep3": 0
+      "dexExpiredContractWithFinishedPhasingHeightAndStep3": 0,
+      "failedTransactionsAcceptanceHeight": 0,
+      "smartContractTransactionsHeight": 0
     },
     "blockchainProperties": [
       {
@@ -50,6 +51,13 @@
         "shardingSettings": {
           "enabled": true,
           "frequency": 2000
+        },
+        "smcSettings": {
+          "masterAccountPublicKey": "dd8a4621988974e669d115b5e0d48234eed145ff2ac94ec1012805459470fe1e",
+          "fuelLimitMinValue": 10000000,
+          "fuelLimitMaxValue": 30000000000,
+          "fuelPriceMinValue": 10000,
+          "fuelPriceMaxValue": 100000000
         }
       }
     ]

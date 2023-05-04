@@ -6,7 +6,7 @@ package com.apollocurrency.aplwallet.apl.core.app.observer;
 
 import com.apollocurrency.aplwallet.apl.core.app.observer.events.BlockEvent;
 import com.apollocurrency.aplwallet.apl.core.app.observer.events.BlockEventType;
-import com.apollocurrency.aplwallet.apl.core.blockchain.Block;
+import com.apollocurrency.aplwallet.apl.core.model.Block;
 import com.apollocurrency.aplwallet.apl.core.dao.state.currency.CurrencySupplyTable;
 import com.apollocurrency.aplwallet.apl.core.dao.state.currency.CurrencyTable;
 import com.apollocurrency.aplwallet.apl.core.entity.state.account.Account;
@@ -25,9 +25,9 @@ import com.apollocurrency.aplwallet.apl.core.service.state.currency.CurrencyServ
 import com.apollocurrency.aplwallet.apl.util.db.DbIterator;
 import lombok.extern.slf4j.Slf4j;
 
-import javax.enterprise.event.Observes;
-import javax.inject.Inject;
-import javax.inject.Singleton;
+import jakarta.enterprise.event.Observes;
+import jakarta.inject.Inject;
+import jakarta.inject.Singleton;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -145,7 +145,8 @@ public class CrowdFundingObserver {
         operationData.setDbIdValue(currency.getDbId());
         operationData.addColumnData(currency.getName()).addColumnData(currency.getDescription());
         // send data into Lucene index component
-        log.trace("Put lucene index update data = {}", operationData);
+        log.debug("Put lucene index update data = {}", operationData);
+        // call to update FullTextSearch index for record deletion (as we are in separate event loop thread)
         fullTextSearchUpdater.putFullTextOperationData(operationData);
     }
 }

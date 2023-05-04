@@ -17,9 +17,9 @@ import com.apollocurrency.aplwallet.apl.exchange.dao.OrderScanDao;
 import com.apollocurrency.aplwallet.apl.util.cdi.transaction.JdbiHandleFactory;
 import com.apollocurrency.aplwallet.apl.util.cdi.transaction.JdbiTransactionalSqlObjectDaoProxyInvocationHandler;
 
-import javax.enterprise.inject.Produces;
-import javax.inject.Inject;
-import javax.inject.Singleton;
+import jakarta.enterprise.inject.Produces;
+import jakarta.inject.Inject;
+import jakarta.inject.Singleton;
 
 /**
  * Configuration DAO classes with Jdbi, Transaction resources

@@ -4,6 +4,7 @@
 
 package com.apollocurrency.aplwallet.apl.core.service.state.currency;
 
+import com.apollocurrency.aplwallet.apl.core.app.observer.events.TrimEvent;
 import com.apollocurrency.aplwallet.apl.core.chainid.BlockchainConfig;
 import com.apollocurrency.aplwallet.apl.core.chainid.HeightConfig;
 import com.apollocurrency.aplwallet.apl.core.converter.rest.IteratorToStreamConverter;
@@ -12,10 +13,10 @@ import com.apollocurrency.aplwallet.apl.core.dao.state.currency.CurrencyMintTabl
 import com.apollocurrency.aplwallet.apl.core.dao.state.currency.CurrencySupplyTable;
 import com.apollocurrency.aplwallet.apl.core.dao.state.currency.CurrencyTable;
 import com.apollocurrency.aplwallet.apl.core.dao.state.keyfactory.DbKey;
-import com.apollocurrency.aplwallet.apl.core.dao.state.keyfactory.LongKey;
+import com.apollocurrency.aplwallet.apl.core.service.fulltext.FullTextSearchUpdater;
 import com.apollocurrency.aplwallet.apl.util.db.DbClause;
 import com.apollocurrency.aplwallet.apl.util.db.DbIterator;
-import com.apollocurrency.aplwallet.apl.core.blockchain.Transaction;
+import com.apollocurrency.aplwallet.apl.core.model.Transaction;
 import com.apollocurrency.aplwallet.apl.core.entity.state.account.Account;
 import com.apollocurrency.aplwallet.apl.core.entity.state.account.AccountCurrency;
 import com.apollocurrency.aplwallet.apl.core.entity.state.account.LedgerEvent;
@@ -33,7 +34,6 @@ import com.apollocurrency.aplwallet.apl.core.service.fulltext.FullTextConfig;
 import com.apollocurrency.aplwallet.apl.core.service.fulltext.FullTextConfigImpl;
 import com.apollocurrency.aplwallet.apl.core.service.fulltext.FullTextOperationData;
 import com.apollocurrency.aplwallet.apl.core.service.fulltext.FullTextSearchService;
-import com.apollocurrency.aplwallet.apl.core.service.fulltext.FullTextSearchUpdater;
 import com.apollocurrency.aplwallet.apl.core.service.state.BlockChainInfoService;
 import com.apollocurrency.aplwallet.apl.core.service.state.DerivedDbTablesRegistryImpl;
 import com.apollocurrency.aplwallet.apl.core.service.state.DerivedTablesRegistry;
@@ -43,7 +43,7 @@ import com.apollocurrency.aplwallet.apl.core.service.state.account.AccountServic
 import com.apollocurrency.aplwallet.apl.core.service.state.currency.impl.CurrencyBuyOfferServiceImpl;
 import com.apollocurrency.aplwallet.apl.core.service.state.currency.impl.CurrencyServiceImpl;
 import com.apollocurrency.aplwallet.apl.core.service.state.exchange.ExchangeService;
-import com.apollocurrency.aplwallet.apl.core.transaction.messages.MonetarySystemCurrencyIssuance;
+import com.apollocurrency.aplwallet.apl.core.transaction.messages.MonetarySystemCurrencyIssuanceAttachment;
 import com.apollocurrency.aplwallet.apl.core.transaction.messages.MonetarySystemCurrencyMinting;
 import com.apollocurrency.aplwallet.apl.core.transaction.messages.TransactionValidationHelper;
 import com.apollocurrency.aplwallet.apl.core.transaction.types.ms.MSCurrencyIssuanceTransactionType;
@@ -65,6 +65,7 @@ import org.mockito.junit.jupiter.MockitoExtension;
 
 import java.util.Collections;
 import java.util.List;
+import java.util.concurrent.CompletableFuture;
 import java.util.stream.Stream;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
@@ -78,6 +79,10 @@ import static org.mockito.Mockito.doReturn;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.when;
+
+import jakarta.enterprise.event.Event;
+import jakarta.enterprise.util.AnnotationLiteral;
 
 @EnableWeld
 @ExtendWith(MockitoExtension.class)
@@ -90,6 +95,7 @@ class CurrencyServiceTest {
     private BlockchainProcessor blockchainProcessor = mock(BlockchainProcessor.class);
     private PropertiesHolder propertiesHolder = mock(PropertiesHolder.class);
     private HeightConfig config = Mockito.mock(HeightConfig.class);
+    private FullTextSearchUpdater fullTextSearchUpdater = mock(FullTextSearchUpdater.class);
 
     @WeldSetup
     public WeldInitiator weld = WeldInitiator.from(
@@ -103,6 +109,7 @@ class CurrencyServiceTest {
         .addBeans(MockBean.of(mock(DerivedTablesRegistry.class), DerivedTablesRegistry.class, DerivedDbTablesRegistryImpl.class))
         .addBeans(MockBean.of(blockChainInfoService, BlockChainInfoService.class))
         .addBeans(MockBean.of(databaseManager, DatabaseManager.class))
+        .addBeans(MockBean.of(fullTextSearchUpdater, FullTextSearchUpdater.class))
         .build();
 
     CurrencyService service;
@@ -135,10 +142,9 @@ class CurrencyServiceTest {
     @Mock
     CurrencyMintTable currencyMintTable;
     @Mock
-    private FullTextSearchUpdater fullTextSearchUpdater;
-    @Mock
     private FullTextSearchService fullTextSearchService;
-
+    @Mock
+    private Event<FullTextOperationData> fullTextOperationDataEvent;
     @Mock
     TransactionValidationHelper transactionValidationHelper;
 
@@ -148,7 +154,7 @@ class CurrencyServiceTest {
         service = new CurrencyServiceImpl(currencySupplyTable, currencyTable, currencyMintTable, monetaryCurrencyMintingService, blockChainInfoService,
             accountService, accountCurrencyService, currencyExchangeOfferFacade, currencyFounderService,
             exchangeService, currencyTransferService, shufflingService, blockchainConfig,
-            transactionValidationHelper, fullTextSearchUpdater, fullTextSearchService);
+            transactionValidationHelper, fullTextOperationDataEvent, fullTextSearchService);
     }
 
     @Test
@@ -156,18 +162,20 @@ class CurrencyServiceTest {
         //GIVEN
         Transaction tr = mock(Transaction.class);
         Account account = mock(Account.class);
-        MonetarySystemCurrencyIssuance attach = mock(MonetarySystemCurrencyIssuance.class);
+        MonetarySystemCurrencyIssuanceAttachment attach = mock(MonetarySystemCurrencyIssuanceAttachment.class);
         doReturn("ANY_CODE").when(attach).getCode();
         doReturn("ANY_NAME").when(attach).getName();
         doReturn(null).doReturn(null).when(currencyTable).getBy(any(DbClause.StringClause.class));
         doReturn("currency").when(currencyTable).getTableName();
+        Event mockEvent = mock(Event.class);
+        when(fullTextOperationDataEvent.select(new AnnotationLiteral<TrimEvent>() {})).thenReturn(mockEvent);
 
         //WHEN
         service.addCurrency(LedgerEvent.CURRENCY_ISSUANCE, tr.getId(), tr, account, attach);
 
         //THEN
         verify(currencyTable).insert(any(Currency.class));
-        verify(fullTextSearchUpdater).putFullTextOperationData(any(FullTextOperationData.class));
+        verify(fullTextOperationDataEvent).select(new AnnotationLiteral<TrimEvent>() {});
     }
 
     @Test
@@ -338,6 +346,9 @@ class CurrencyServiceTest {
         doReturn(buyOffers).when(buyOfferService).getOffersStream(td.CURRENCY_3, 0, -1);
         doReturn(buyOfferService).when(currencyExchangeOfferFacade).getCurrencyBuyOfferService();
         doReturn("currency").when(currencyTable).getTableName();
+        Event mockEvent = mock(Event.class);
+        when(fullTextOperationDataEvent.select(new AnnotationLiteral<TrimEvent>() {})).thenReturn(mockEvent);
+
         //WHEN
         service.delete(td.CURRENCY_3, LedgerEvent.CURRENCY_ISSUANCE, tr.getId(), account);
         //THEN
@@ -345,7 +356,7 @@ class CurrencyServiceTest {
         verify(accountCurrencyService).addToUnconfirmedCurrencyUnits(any(Account.class), any(LedgerEvent.class), anyLong(), anyLong(), anyLong());
         verify(accountCurrencyService).addToCurrencyUnits(any(Account.class), any(LedgerEvent.class), anyLong(), anyLong(), anyLong());
         verify(currencyTable).deleteAtHeight(any(Currency.class), anyInt());
-        verify(fullTextSearchUpdater).putFullTextOperationData(any(FullTextOperationData.class));
+        verify(fullTextOperationDataEvent).select(new AnnotationLiteral<TrimEvent>() {});
     }
 
     @Test
@@ -353,7 +364,7 @@ class CurrencyServiceTest {
         //GIVEN
         Transaction tx = mock(Transaction.class);
         doReturn(new MSCurrencyIssuanceTransactionType(blockchainConfig, accountService, mock(CurrencyService.class), accountCurrencyService)).when(tx).getType();
-        MonetarySystemCurrencyIssuance attachment = new MonetarySystemCurrencyIssuance("ff", "CC", "Test currency", (byte) 1, 1000, 0, 1000, 0, 0, 0, 0, (byte) 0, (byte) 0, (byte) 2);
+        MonetarySystemCurrencyIssuanceAttachment attachment = new MonetarySystemCurrencyIssuanceAttachment("ff", "CC", "Test currency", (byte) 1, 1000, 0, 1000, 0, 0, 0, 0, (byte) 0, (byte) 0, (byte) 2);
         doReturn(attachment).when(tx).getAttachment();
         doReturn(config).when(blockchainConfig).getCurrentConfig();
         doReturn(10L).when(config).getMaxBalanceATM();
@@ -364,7 +375,7 @@ class CurrencyServiceTest {
 
     @Test
     void validateCurrencyNaming() throws Exception {
-        MonetarySystemCurrencyIssuance issuance = mock(MonetarySystemCurrencyIssuance.class);
+        MonetarySystemCurrencyIssuanceAttachment issuance = mock(MonetarySystemCurrencyIssuanceAttachment.class);
         doReturn("Name").when(issuance).getName();
         doReturn("CODE").when(issuance).getCode();
         doReturn("Description").when(issuance).getDescription();

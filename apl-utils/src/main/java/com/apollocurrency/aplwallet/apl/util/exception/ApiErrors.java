@@ -9,7 +9,7 @@ package com.apollocurrency.aplwallet.apl.util.exception;
 //TODO Move to api module.
 public enum ApiErrors implements ApiErrorInfo {
 
-    INTERNAL_SERVER_EXCEPTION(0, 100, "Internal error, root cause: %s"),
+    INTERNAL_SERVER_EXCEPTION(-1, 100, "Internal error, root cause: %s"),
     BLOCKCHAIN_NOT_INITIALIZED(-1, 101, "Blockchain is not initialized"),
     UNCONFIRMED_TRANSACTION_CACHE_IS_FULL(-1, 102, "Blockchain is busy, the unconfirmed transaction cache is full"),
 
@@ -40,21 +40,32 @@ public enum ApiErrors implements ApiErrorInfo {
     REST_API_SERVER_ERROR(1, 2023, "REST API error: ''%s'', see server's log for details"),
     OVERFLOW(11, 2024, "Overflow for value ''{0}''"),
     OVERFLOW_PARAM(11, 2025, "Overflow in param name ''{0}'' for value ''{1}''"),
-    BAD_CREDENTIALS(4, 2026, "Unable to extract valid account credentials, '{0}'"),
-    FEATURE_NOT_ENABLED(9, 2027, "Feature not available, '{0}'"),
+    BAD_CREDENTIALS(4, 2026, "Unable to extract valid account credentials, ''{0}''"),
+    FEATURE_NOT_ENABLED(9, 2027, "Feature not available, ''{0}''"),
     NOT_ENOUGH_FUNDS(6, 2028, "Not enough %s funds"),
     TX_VALIDATION_FAILED(-1, 2029, "Failed to validate tx: %s"),
     CUSTOM_ERROR_MESSAGE(8, 2030, "{0}"),
+    EXCEPTION_MESSAGE(4, 2050, "{0}"),
 
     //KMS
-    EXPORT_KEY_READ_WALLET(0, 2201, "Can't read wallet."),
-    NOT_FOUND_WALLET(0, 2202, "Incorrect account id or passphrase"),
-    NOT_FOUND_ETH_ACCOUNT(0, 2203, "Incorrect ethereum address"),
-    ;
+    EXPORT_KEY_READ_WALLET(-1, 2201, "Can't read wallet."),
+    NOT_FOUND_WALLET(-1, 2202, "Incorrect account id or passphrase"),
+    NOT_FOUND_ETH_ACCOUNT(-1, 2203, "Incorrect ethereum address"),
 
-    private int oldErrorCode;
-    private int errorCode;
-    private String errorDescription;
+    //SMC
+    CONTRACT_PROCESSING_ERROR(-1, 3101, "Contract processing error: {0}."),
+    CONTRACT_VALIDATION_ERROR(-1, 3102, "Contract validation error: {0}."),
+    CONTRACT_METHOD_VALIDATION_ERROR(-1, 3103, "Contract method validation error: {0}."),
+    CONTRACT_NOT_FOUND(-1, 3104, "Contract {0} not found."),
+    CONTRACTS_NOT_FOUND(-1, 3105, "Contracts not found."),
+    CONTRACT_READ_METHOD_ERROR(-1, 3106, "Call @view method error: {0}."),
+    CONTRACT_SYNTAX_VALIDATION_ERROR(-1, 3107, "Contract syntax validation error: {0}."),
+    CONTRACT_SPEC_NOT_FOUND(-1, 3108, "Contract specification for ASR module {0} not found."),
+    CONTRACT_EVENT_FILTER_ERROR(-1, 3109, "Event filter parsing error: {0}."),
+    ;
+    private final int oldErrorCode;
+    private final int errorCode;
+    private final String errorDescription;
 
     ApiErrors(int oldErrorCode, int errorCode, String errorDescription) {
         this.oldErrorCode = oldErrorCode;
@@ -75,5 +86,9 @@ public enum ApiErrors implements ApiErrorInfo {
     @Override
     public String getErrorDescription() {
         return errorDescription;
+    }
+
+    public static String format(ApiErrorInfo error, Object... args) {
+        return Messages.format(error.getErrorDescription(), args);
     }
 }

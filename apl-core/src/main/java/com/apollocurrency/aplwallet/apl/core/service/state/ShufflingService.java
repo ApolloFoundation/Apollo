@@ -5,14 +5,14 @@
 package com.apollocurrency.aplwallet.apl.core.service.state;
 
 import com.apollocurrency.aplwallet.apl.core.app.observer.events.ShufflingEvent;
-import com.apollocurrency.aplwallet.apl.core.blockchain.Block;
-import com.apollocurrency.aplwallet.apl.core.blockchain.Transaction;
+import com.apollocurrency.aplwallet.apl.core.model.Block;
+import com.apollocurrency.aplwallet.apl.core.model.Transaction;
 import com.apollocurrency.aplwallet.apl.core.entity.state.shuffling.Shuffling;
 import com.apollocurrency.aplwallet.apl.core.entity.state.shuffling.ShufflingParticipant;
 import com.apollocurrency.aplwallet.apl.core.entity.state.shuffling.ShufflingStage;
 import com.apollocurrency.aplwallet.apl.core.transaction.messages.ShufflingAttachment;
 import com.apollocurrency.aplwallet.apl.core.transaction.messages.ShufflingCancellationAttachment;
-import com.apollocurrency.aplwallet.apl.core.transaction.messages.ShufflingCreation;
+import com.apollocurrency.aplwallet.apl.core.transaction.messages.ShufflingCreationAttachment;
 import com.apollocurrency.aplwallet.apl.core.transaction.messages.ShufflingProcessingAttachment;
 import com.apollocurrency.aplwallet.apl.core.transaction.messages.ShufflingRecipientsAttachment;
 import com.apollocurrency.aplwallet.apl.util.Listener;
@@ -23,11 +23,11 @@ public interface ShufflingService {
 
     byte[][] getData(long shufflingId, long accountId);
 
-    void restoreData(long shufflingId, long accountId, byte[][] data, int timestamp, int height);
+    byte[][] getData(long transactionId);
 
-    void setData(ShufflingParticipant participants, byte[][] data, int timestamp);
+    void restoreData(long transactionId, long shufflingId, long accountId, byte[][] data, int timestamp, int height);
 
-
+    void setData(Transaction tx, ShufflingParticipant participant, byte[][] data);
 
     List<ShufflingParticipant> getParticipants(long shufflingId);
 
@@ -51,7 +51,7 @@ public interface ShufflingService {
 
 
 
-    void addShuffling(Transaction transaction, ShufflingCreation attachment);
+    void addShuffling(Transaction transaction, ShufflingCreationAttachment attachment);
 
     int getShufflingCount();
 

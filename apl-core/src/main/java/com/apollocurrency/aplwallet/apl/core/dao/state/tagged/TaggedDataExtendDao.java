@@ -11,11 +11,11 @@ import com.apollocurrency.aplwallet.apl.core.dao.state.keyfactory.LongKey;
 import com.apollocurrency.aplwallet.apl.core.dao.state.keyfactory.LongKeyFactory;
 import com.apollocurrency.aplwallet.apl.core.entity.state.tagged.TaggedDataExtend;
 import com.apollocurrency.aplwallet.apl.core.db.DatabaseManager;
-import com.apollocurrency.aplwallet.apl.core.shard.observer.DeleteOnTrimData;
+import com.apollocurrency.aplwallet.apl.core.service.fulltext.FullTextOperationData;
 
-import javax.enterprise.event.Event;
-import javax.inject.Inject;
-import javax.inject.Singleton;
+import jakarta.enterprise.event.Event;
+import jakarta.inject.Inject;
+import jakarta.inject.Singleton;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
@@ -39,8 +39,9 @@ public class TaggedDataExtendDao extends ValuesDbTable<TaggedDataExtend> {
 
     @Inject
     public TaggedDataExtendDao(DatabaseManager databaseManager,
-                               Event<DeleteOnTrimData> deleteOnTrimDataEvent) {
-        super(DB_TABLE, taggedDataKeyFactory, true, databaseManager, deleteOnTrimDataEvent);
+                               Event<FullTextOperationData> fullTextOperationDataEvent) {
+        super(DB_TABLE, taggedDataKeyFactory, true,
+            databaseManager, fullTextOperationDataEvent);
     }
 
     public List<TaggedDataExtend> getExtendTransactionIds(long taggedDataId) {

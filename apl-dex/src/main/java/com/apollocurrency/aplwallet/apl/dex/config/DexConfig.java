@@ -3,8 +3,8 @@ package com.apollocurrency.aplwallet.apl.dex.config;
 import com.apollocurrency.aplwallet.apl.util.cdi.config.Property;
 import com.google.common.base.Preconditions;
 
-import javax.inject.Inject;
-import javax.inject.Singleton;
+import jakarta.inject.Inject;
+import jakarta.inject.Singleton;
 
 @Singleton
 public class DexConfig {

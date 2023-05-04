@@ -4,19 +4,16 @@
 
 package com.apollocurrency.aplwallet.apl.core.service.blockchain;
 
-import com.apollocurrency.aplwallet.apl.core.blockchain.Transaction;
-import com.apollocurrency.aplwallet.apl.core.blockchain.UnconfirmedTransaction;
 import com.apollocurrency.aplwallet.apl.core.chainid.BlockchainConfig;
-import com.apollocurrency.aplwallet.apl.util.db.DbTransactionHelper;
-import com.apollocurrency.aplwallet.apl.core.db.DatabaseManager;
+import com.apollocurrency.aplwallet.apl.core.model.Transaction;
 import com.apollocurrency.aplwallet.apl.core.service.appdata.TimeService;
 import com.apollocurrency.aplwallet.apl.core.service.state.account.AccountService;
 import com.apollocurrency.aplwallet.apl.core.transaction.TransactionValidator;
 import com.apollocurrency.aplwallet.apl.util.Constants;
 import lombok.extern.slf4j.Slf4j;
 
-import javax.inject.Inject;
-import javax.inject.Singleton;
+import jakarta.inject.Inject;
+import jakarta.inject.Singleton;
 
 @Singleton
 @Slf4j
@@ -27,27 +24,25 @@ public class UnconfirmedTransactionProcessingService {
     private final MemPool memPool;
     private final TransactionValidator validator;
     private final AccountService accountService;
-    private final DatabaseManager databaseManager;
 
     @Inject
-    public UnconfirmedTransactionProcessingService(TimeService timeService, Blockchain blockchain, BlockchainConfig blockchainConfig, MemPool memPool, TransactionValidator validator, AccountService accountService, DatabaseManager databaseManager) {
+    public UnconfirmedTransactionProcessingService(TimeService timeService, Blockchain blockchain, BlockchainConfig blockchainConfig, MemPool memPool, TransactionValidator validator, AccountService accountService) {
         this.timeService = timeService;
         this.blockchain = blockchain;
         this.blockchainConfig = blockchainConfig;
         this.memPool = memPool;
         this.validator = validator;
         this.accountService = accountService;
-        this.databaseManager = databaseManager;
     }
 
 
     public UnconfirmedTxValidationResult validateBeforeProcessing(Transaction transaction) {
         int curTime = timeService.getEpochTime();
         if (transaction.getTimestamp() > curTime + Constants.MAX_TIMEDRIFT || transaction.getExpiration() < curTime) {
-            return new UnconfirmedTxValidationResult(100_100, UnconfirmedTxValidationResult.Error.NOT_CURRENTLY_VALID, "Invalid transaction timestamp");
+            return new UnconfirmedTxValidationResult(100_100, UnconfirmedTxValidationResult.Error.NOT_CURRENTLY_VALID, "Invalid transaction timestamp=" + transaction.getTimestamp() + ", current time=" + curTime);
         }
         if (transaction.getVersion() < 1) {
-            return new UnconfirmedTxValidationResult(100_105, UnconfirmedTxValidationResult.Error.NOT_VALID, "Invalid transaction version");
+            return new UnconfirmedTxValidationResult(100_105, UnconfirmedTxValidationResult.Error.NOT_VALID, "Invalid transaction version=" + transaction.getVersion());
         }
 
         if (transaction.getId() == 0L) {
@@ -74,12 +69,5 @@ public class UnconfirmedTransactionProcessingService {
             }
         }
         return new UnconfirmedTxValidationResult(0, null, "");
-    }
-
-    public synchronized boolean addNewUnconfirmedTransaction(UnconfirmedTransaction unconfirmedTransaction) {
-        return DbTransactionHelper.executeInTransaction(databaseManager.getDataSource(), () -> {
-            unconfirmedTransaction.setHeight(blockchain.getHeight());
-            return memPool.addProcessed(unconfirmedTransaction);
-        });
     }
 }

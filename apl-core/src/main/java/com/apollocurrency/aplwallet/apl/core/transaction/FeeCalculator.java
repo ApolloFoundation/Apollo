@@ -2,7 +2,7 @@ package com.apollocurrency.aplwallet.apl.core.transaction;
 
 import com.apollocurrency.aplwallet.apl.core.chainid.BlockchainConfig;
 import com.apollocurrency.aplwallet.apl.core.chainid.HeightConfig;
-import com.apollocurrency.aplwallet.apl.core.blockchain.Transaction;
+import com.apollocurrency.aplwallet.apl.core.model.Transaction;
 import com.apollocurrency.aplwallet.apl.core.transaction.messages.AbstractAppendix;
 import com.apollocurrency.aplwallet.apl.core.transaction.messages.PrunableLoadingService;
 import com.apollocurrency.aplwallet.apl.util.annotation.FeeMarker;
@@ -10,8 +10,8 @@ import com.apollocurrency.aplwallet.apl.util.annotation.TransactionFee;
 import com.apollocurrency.aplwallet.apl.util.env.config.FeeRate;
 import lombok.extern.slf4j.Slf4j;
 
-import javax.inject.Inject;
-import javax.inject.Singleton;
+import jakarta.inject.Inject;
+import jakarta.inject.Singleton;
 
 @Slf4j
 @Singleton
@@ -35,6 +35,7 @@ public class FeeCalculator {
             Fee fee = appendage.getBaselineFee(transaction, oneAPL);
             totalFee = Math.addExact(totalFee, fee.getFee(transaction, appendage));
         }
+        //add ONE APL for the referenced transaction
         if (transaction.getReferencedTransactionFullHash() != null) {
             totalFee = Math.addExact(totalFee, blockchainConfig.getOneAPL());
         }

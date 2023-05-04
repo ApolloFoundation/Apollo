@@ -5,13 +5,13 @@
 package com.apollocurrency.aplwallet.apl.core.shard.helper;
 
 import com.apollocurrency.aplwallet.apl.core.app.AplAppStatus;
-import com.apollocurrency.aplwallet.apl.core.blockchain.TransactionBuilderFactory;
 import com.apollocurrency.aplwallet.apl.core.chainid.BlockchainConfig;
 import com.apollocurrency.aplwallet.apl.core.chainid.HeightConfig;
 import com.apollocurrency.aplwallet.apl.core.config.DaoConfig;
-import com.apollocurrency.aplwallet.apl.core.config.NtpTimeConfig;
+import com.apollocurrency.aplwallet.apl.core.config.JdbiConfiguration;
 import com.apollocurrency.aplwallet.apl.core.config.PropertyBasedFileConfig;
 import com.apollocurrency.aplwallet.apl.core.config.PropertyProducer;
+import com.apollocurrency.aplwallet.apl.core.config.TimeConfig;
 import com.apollocurrency.aplwallet.apl.core.converter.db.BlockEntityRowMapper;
 import com.apollocurrency.aplwallet.apl.core.converter.db.BlockEntityToModelConverter;
 import com.apollocurrency.aplwallet.apl.core.converter.db.BlockModelToEntityConverter;
@@ -19,7 +19,6 @@ import com.apollocurrency.aplwallet.apl.core.converter.db.PrunableTxRowMapper;
 import com.apollocurrency.aplwallet.apl.core.converter.db.TransactionEntityRowMapper;
 import com.apollocurrency.aplwallet.apl.core.converter.db.TransactionEntityToModelConverter;
 import com.apollocurrency.aplwallet.apl.core.converter.db.TransactionModelToEntityConverter;
-import com.apollocurrency.aplwallet.apl.core.converter.db.TransactionRowMapper;
 import com.apollocurrency.aplwallet.apl.core.converter.db.TxReceiptRowMapper;
 import com.apollocurrency.aplwallet.apl.core.converter.db.UnconfirmedTransactionEntityRowMapper;
 import com.apollocurrency.aplwallet.apl.core.dao.DbContainerBaseTest;
@@ -52,7 +51,6 @@ import com.apollocurrency.aplwallet.apl.core.dao.state.publickey.PublicKeyTableP
 import com.apollocurrency.aplwallet.apl.core.dao.state.tagged.TaggedDataExtendDao;
 import com.apollocurrency.aplwallet.apl.core.dao.state.tagged.TaggedDataTimestampDao;
 import com.apollocurrency.aplwallet.apl.core.db.DatabaseManager;
-import com.apollocurrency.aplwallet.apl.core.db.JdbiConfiguration;
 import com.apollocurrency.aplwallet.apl.core.entity.state.account.PublicKey;
 import com.apollocurrency.aplwallet.apl.core.entity.state.derived.DerivedEntity;
 import com.apollocurrency.aplwallet.apl.core.peer.PeersService;
@@ -68,6 +66,7 @@ import com.apollocurrency.aplwallet.apl.core.service.blockchain.DefaultBlockVali
 import com.apollocurrency.aplwallet.apl.core.service.blockchain.GlobalSyncImpl;
 import com.apollocurrency.aplwallet.apl.core.service.blockchain.MemPool;
 import com.apollocurrency.aplwallet.apl.core.service.blockchain.ReferencedTransactionService;
+import com.apollocurrency.aplwallet.apl.core.service.blockchain.TransactionBuilderFactory;
 import com.apollocurrency.aplwallet.apl.core.service.blockchain.TransactionProcessor;
 import com.apollocurrency.aplwallet.apl.core.service.blockchain.TransactionProcessorImpl;
 import com.apollocurrency.aplwallet.apl.core.service.blockchain.TransactionServiceImpl;
@@ -77,19 +76,20 @@ import com.apollocurrency.aplwallet.apl.core.service.fulltext.FullTextConfig;
 import com.apollocurrency.aplwallet.apl.core.service.fulltext.FullTextConfigImpl;
 import com.apollocurrency.aplwallet.apl.core.service.fulltext.FullTextSearchService;
 import com.apollocurrency.aplwallet.apl.core.service.fulltext.FullTextSearchUpdater;
+import com.apollocurrency.aplwallet.apl.core.service.fulltext.FullTextSearchUpdaterImpl;
 import com.apollocurrency.aplwallet.apl.core.service.prunable.PrunableMessageService;
 import com.apollocurrency.aplwallet.apl.core.service.state.AliasService;
 import com.apollocurrency.aplwallet.apl.core.service.state.DerivedDbTablesRegistryImpl;
 import com.apollocurrency.aplwallet.apl.core.service.state.DerivedTablesRegistry;
 import com.apollocurrency.aplwallet.apl.core.service.state.PhasingPollService;
 import com.apollocurrency.aplwallet.apl.core.service.state.TableRegistryInitializer;
+import com.apollocurrency.aplwallet.apl.core.service.state.TaggedDataServiceImpl;
 import com.apollocurrency.aplwallet.apl.core.service.state.account.AccountControlPhasingService;
 import com.apollocurrency.aplwallet.apl.core.service.state.account.AccountPublicKeyService;
 import com.apollocurrency.aplwallet.apl.core.service.state.account.AccountService;
 import com.apollocurrency.aplwallet.apl.core.service.state.account.PublicKeyDao;
 import com.apollocurrency.aplwallet.apl.core.service.state.account.impl.AccountPublicKeyServiceImpl;
 import com.apollocurrency.aplwallet.apl.core.service.state.account.impl.AccountServiceImpl;
-import com.apollocurrency.aplwallet.apl.core.service.state.impl.TaggedDataServiceImpl;
 import com.apollocurrency.aplwallet.apl.core.shard.BlockIndexService;
 import com.apollocurrency.aplwallet.apl.core.shard.BlockIndexServiceImpl;
 import com.apollocurrency.aplwallet.apl.core.shard.ShardDbExplorerImpl;
@@ -117,7 +117,6 @@ import com.apollocurrency.aplwallet.apl.exchange.dao.DexContractTable;
 import com.apollocurrency.aplwallet.apl.exchange.dao.DexOrderTable;
 import com.apollocurrency.aplwallet.apl.extension.DbExtension;
 import com.apollocurrency.aplwallet.apl.extension.TemporaryFolderExtension;
-import com.apollocurrency.aplwallet.apl.util.NtpTime;
 import com.apollocurrency.aplwallet.apl.util.cache.InMemoryCacheManager;
 import com.apollocurrency.aplwallet.apl.util.cdi.transaction.JdbiHandleFactory;
 import com.apollocurrency.aplwallet.apl.util.env.config.Chain;
@@ -136,9 +135,9 @@ import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.RegisterExtension;
 
-import javax.enterprise.event.Event;
-import javax.inject.Inject;
-import javax.inject.Named;
+import jakarta.enterprise.event.Event;
+import jakarta.inject.Inject;
+import jakarta.inject.Named;
 import java.io.File;
 import java.io.IOException;
 import java.math.BigDecimal;
@@ -216,18 +215,18 @@ class CsvExporterTest extends DbContainerBaseTest {
 
 
     private Path dataExportPath;
-    private BlockchainConfig blockchainConfig = mockBlockchainConfig();
-    private PropertiesHolder propertiesHolder = mockPropertiesHolder();
+    private final BlockchainConfig blockchainConfig = mockBlockchainConfig();
+    private final PropertiesHolder propertiesHolder = mockPropertiesHolder();
 
 
-    private NtpTimeConfig ntpTimeConfig = new NtpTimeConfig();
-    private TimeService timeService = new TimeServiceImpl(ntpTimeConfig.time());
-    private PeersService peersService = mock(PeersService.class);
-    private GeneratorService generatorService = mock(GeneratorService.class);
-    private TransactionTestData td = new TransactionTestData();
-    private BlockSerializer blockSerializer = mock(BlockSerializer.class);
-    private MemPool memPool = mock(MemPool.class);
-    private UnconfirmedTransactionProcessingService unconfirmedTransactionProcessingService = mock(UnconfirmedTransactionProcessingService.class);
+    TimeConfig config = new TimeConfig(false);
+    TimeService timeService = new TimeServiceImpl(config.timeSource());
+    private final PeersService peersService = mock(PeersService.class);
+    private final GeneratorService generatorService = mock(GeneratorService.class);
+    private final TransactionTestData td = new TransactionTestData();
+    private final BlockSerializer blockSerializer = mock(BlockSerializer.class);
+    private final MemPool memPool = mock(MemPool.class);
+    private final UnconfirmedTransactionProcessingService unconfirmedTransactionProcessingService = mock(UnconfirmedTransactionProcessingService.class);
 
     @WeldSetup
     public WeldInitiator weld = WeldInitiator.from(AccountCurrencyTable.class, AccountInfoTable.class, AccountControlPhasingTable.class, AccountAssetTable.class, DexContractTable.class, PublicKeyTableProducer.class,
@@ -240,7 +239,7 @@ class CsvExporterTest extends DbContainerBaseTest {
         DataTagDao.class, FeeCalculator.class,
         DGSGoodsTable.class,
         TransactionServiceImpl.class, ShardDbExplorerImpl.class,
-        TransactionRowMapper.class, TransactionEntityRowMapper.class, TxReceiptRowMapper.class, PrunableTxRowMapper.class,
+        TransactionEntityRowMapper.class, TransactionEntityRowMapper.class, TxReceiptRowMapper.class, PrunableTxRowMapper.class,
         TransactionModelToEntityConverter.class, TransactionEntityToModelConverter.class,
         UnconfirmedTransactionEntityRowMapper.class, UnconfirmedTransactionCreator.class,
         TransactionBuilderFactory.class,
@@ -282,8 +281,6 @@ class CsvExporterTest extends DbContainerBaseTest {
         .addBeans(MockBean.of(mock(AliasService.class), AliasService.class))
         .addBeans(MockBean.of(mock(AccountControlPhasingService.class), AccountControlPhasingService.class))
         .addBeans(MockBean.of(propertiesHolder, PropertiesHolder.class))
-        .addBeans(MockBean.of(ntpTimeConfig, NtpTimeConfig.class))
-        .addBeans(MockBean.of(ntpTimeConfig.time(), NtpTime.class))
         .addBeans(MockBean.of(timeService, TimeService.class))
         .addBeans(MockBean.of(peersService, PeersService.class))
         .addBeans(MockBean.of(generatorService, GeneratorService.class))
@@ -293,31 +290,26 @@ class CsvExporterTest extends DbContainerBaseTest {
         .addBeans(MockBean.of(unconfirmedTransactionProcessingService, UnconfirmedTransactionProcessingService.class))
         .addBeans(MockBean.of(memPool, MemPool.class))
         .addBeans(MockBean.of(mock(InMemoryCacheManager.class), InMemoryCacheManager.class))
-        .addBeans(MockBean.of(mock(FullTextSearchUpdater.class), FullTextSearchUpdater.class))
+        .addBeans(MockBean.of(mock(FullTextSearchUpdater.class), FullTextSearchUpdater.class, FullTextSearchUpdaterImpl.class))
         .addBeans(MockBean.of(mock(TaskDispatchManager.class), TaskDispatchManager.class))
         .build();
 
-    private List<String> blockIndexExportContent = List.of("block_id,block_height", "1,1", "2,2", "3,30");
-    private List<String> transactionIndexExportContent = List.of(
+    private final List<String> blockIndexExportContent = List.of("block_id,block_height", "1,1", "2,2", "3,30");
+    private final List<String> transactionIndexExportContent = List.of(
         "transaction_id,partial_transaction_hash,transaction_index,height",
         "100,b'zG8XGTR3IJylgh0305HnCuZo3RwR3XmO',0,30",
         "101,b'InCisA4/cPtdXY4No8eRnt1NM2gXbm8t',0,1",
         "102,b'uW1en2TlHFl1E3F2ke7urxiiaoZANPYs',1,1",
         "103,b'zKWh+CX5uRi+APNUBvcLEItmVrKZdVVY',2,1"
     );
-    private List<String> transactionExportContent = List.of(
-        "id,deadline,recipient_id,transaction_index,amount,fee,full_hash,height,block_id,signature,timestamp,type,subtype,sender_id,sender_public_key,block_timestamp,referenced_transaction_full_hash,phased,attachment_bytes,version,has_message,has_encrypted_message,has_public_key_announcement,ec_block_height,ec_block_id,has_encrypttoself_message,has_prunable_message,has_prunable_encrypted_message,has_prunable_attachment",
-        "3444674909301056677,1440,null,0,0,2500000000000,b'pSSXT5TxzS/MbxcZNHcgnKWCHTfTkecK5mjdHBHdeY4=',1000,-468651855371775066,b'N17xwFrlmifvJjNqWa/mkBTGi5v0Nk1bGy+k6+MCAgqGitNl818MqNPrrdxGns06fEnexeTS+tQfZyiXe3MzzA==',35073712,5,0,9211698109297098287,b'vwztBHLYuj354hgI6Y5hs0QEqtc34rrhd4zrxpi0Dzc=',9200,b'ZAAAAAAAAADMbxcZNHcgnKWCHTfTkecK5mjdHBHdeY4=',0,b'AQVmc2RmcwNRRVIFAGZzZGZzAa4VAAAAAAAAAAAAAAAAAACuFQAAAAAAAAAAAAAAAAAAAAAAAAAAAAAB',1,0,0,0,14399,-5416619518547901377,0,0,0,0",
-        "2402544248051582903,1440,null,1,0,1000000000000,b't8dFrkONVyEicKKwDj9w+11djg2jx5Ge3U0zaBduby0=',1000,-468651855371775066,b'/G8R85aqIHF8kZGh+yX6sGgVEsyXbJNdsVY4mKq62Q/8bO0o4bizOD1au1WSi7sSKmdNwGariwzFhbm0zb2PrA==',35075179,2,0,9211698109297098287,b'vwztBHLYuj354hgI6Y5hs0QEqtc34rrhd4zrxpi0Dzc=',9200,b'ZQAAAAAAAADMbxcZNHcgnKWCHTfTkecK5mjdHBHdeY4=',0,b'AQdNWUFTU0VUCwBmZGZza2RmbGFscxAnAAAAAAAAAg==',1,0,0,0,14405,-2297016555338476945,0,0,0,0",
-        "3444674909301056677,1440,null,0,0,2500000000000,b'pSSXT5TxzS/MbxcZNHcgnKWCHTfTkecK5mjdHBHdeY4=',1000,-468651855371775066,b'N17xwFrlmifvJjNqWa/mkBTGi5v0Nk1bGy+k6+MCAgqGitNl818MqNPrrdxGns06fEnexeTS+tQfZyiXe3MzzA==',35073712,5,0,9211698109297098287,b'vwztBHLYuj354hgI6Y5hs0QEqtc34rrhd4zrxpi0Dzc=',9200,b'ZAAAAAAAAADMbxcZNHcgnKWCHTfTkecK5mjdHBHdeY4=',0,b'AQVmc2RmcwNRRVIFAGZzZGZzAa4VAAAAAAAAAAAAAAAAAACuFQAAAAAAAAAAAAAAAAAAAAAAAAAAAAAB',1,0,0,0,14399,-5416619518547901377,0,0,0,0",
-        "5373370077664349170,1440,457571885748888948,0,100000000000000000,100000000,b'8ovlxZ0Lkkq5bV6fZOUcWXUTcXaR7u6vGKJqhkA09iw=',1500,-7242168411665692630,b'iv06kdDjAR5QXgNTsfcInA1AFnL47V0N3CEH4LEwqgvdF/A7LXXu2PzGRc2oi1yCrBtiHBQqutmxu5XfUXqnDA==',35078473,0,0,9211698109297098287,b'vwztBHLYuj354hgI6Y5hs0QEqtc34rrhd4zrxpi0Dzc=',13800,b't8dFrkONVyEicKKwDj9w+11djg2jx5Ge3U0zaBduby0=',0,null,1,0,0,0,14734,2621055931824266697,0,0,0,0"
+    private final List<String> transactionExportContent = List.of(
+        "id,deadline,recipient_id,transaction_index,amount,fee,full_hash,height,block_id,signature,timestamp,type,subtype,sender_id,sender_public_key,block_timestamp,referenced_transaction_full_hash,phased,attachment_bytes,version,has_message,has_encrypted_message,has_public_key_announcement,ec_block_height,ec_block_id,has_encrypttoself_message,has_prunable_message,has_prunable_encrypted_message,has_prunable_attachment,error_message",
+        "3444674909301056677,1440,null,0,0,2500000000000,b'pSSXT5TxzS/MbxcZNHcgnKWCHTfTkecK5mjdHBHdeY4=',1000,-468651855371775066,b'N17xwFrlmifvJjNqWa/mkBTGi5v0Nk1bGy+k6+MCAgqGitNl818MqNPrrdxGns06fEnexeTS+tQfZyiXe3MzzA==',35073712,5,0,9211698109297098287,b'vwztBHLYuj354hgI6Y5hs0QEqtc34rrhd4zrxpi0Dzc=',9200,b'ZAAAAAAAAADMbxcZNHcgnKWCHTfTkecK5mjdHBHdeY4=',0,b'AQVmc2RmcwNRRVIFAGZzZGZzAa4VAAAAAAAAAAAAAAAAAACuFQAAAAAAAAAAAAAAAAAAAAAAAAAAAAAB',1,0,0,0,14399,-5416619518547901377,0,0,0,0,null",
+        "2402544248051582903,1440,null,1,0,1000000000000,b't8dFrkONVyEicKKwDj9w+11djg2jx5Ge3U0zaBduby0=',1000,-468651855371775066,b'/G8R85aqIHF8kZGh+yX6sGgVEsyXbJNdsVY4mKq62Q/8bO0o4bizOD1au1WSi7sSKmdNwGariwzFhbm0zb2PrA==',35075179,2,0,9211698109297098287,b'vwztBHLYuj354hgI6Y5hs0QEqtc34rrhd4zrxpi0Dzc=',9200,b'ZQAAAAAAAADMbxcZNHcgnKWCHTfTkecK5mjdHBHdeY4=',0,b'AQdNWUFTU0VUCwBmZGZza2RmbGFscxAnAAAAAAAAAg==',1,0,0,0,14405,-2297016555338476945,0,0,0,0,null",
+        "3444674909301056677,1440,null,0,0,2500000000000,b'pSSXT5TxzS/MbxcZNHcgnKWCHTfTkecK5mjdHBHdeY4=',1000,-468651855371775066,b'N17xwFrlmifvJjNqWa/mkBTGi5v0Nk1bGy+k6+MCAgqGitNl818MqNPrrdxGns06fEnexeTS+tQfZyiXe3MzzA==',35073712,5,0,9211698109297098287,b'vwztBHLYuj354hgI6Y5hs0QEqtc34rrhd4zrxpi0Dzc=',9200,b'ZAAAAAAAAADMbxcZNHcgnKWCHTfTkecK5mjdHBHdeY4=',0,b'AQVmc2RmcwNRRVIFAGZzZGZzAa4VAAAAAAAAAAAAAAAAAACuFQAAAAAAAAAAAAAAAAAAAAAAAAAAAAAB',1,0,0,0,14399,-5416619518547901377,0,0,0,0,null",
+        "5373370077664349170,1440,457571885748888948,0,100000000000000000,100000000,b'8ovlxZ0Lkkq5bV6fZOUcWXUTcXaR7u6vGKJqhkA09iw=',1500,-7242168411665692630,b'iv06kdDjAR5QXgNTsfcInA1AFnL47V0N3CEH4LEwqgvdF/A7LXXu2PzGRc2oi1yCrBtiHBQqutmxu5XfUXqnDA==',35078473,0,0,9211698109297098287,b'vwztBHLYuj354hgI6Y5hs0QEqtc34rrhd4zrxpi0Dzc=',13800,b't8dFrkONVyEicKKwDj9w+11djg2jx5Ge3U0zaBduby0=',0,null,1,0,0,0,14734,2621055931824266697,0,0,0,0,null"
     );
-    private List<String> blockTransactionExportContent = List.of(
-        "id,deadline,recipient_id,transaction_index,amount,fee,full_hash,height,block_id,signature,timestamp,type,subtype,sender_id,sender_public_key,block_timestamp,referenced_transaction_full_hash,phased,attachment_bytes,version,has_message,has_encrypted_message,has_public_key_announcement,ec_block_height,ec_block_id,has_encrypttoself_message,has_prunable_message,has_prunable_encrypted_message,has_prunable_attachment",
-        "2083198303623116770,1440,-1017037002638468431,0,100000000000000000,100000000,b'4vcm5NEB6Rxu5zXJ2g1Vr3EAxFJjoKagkgwlWg9ltE8=',8000,6438949995368593549,b'0kgRvEvixwMRlv0iBjnxiFyOFcludnIUbIjC7qJdigzU6TuOIyTiUi46/xT6oe+BH8Q6lx/b23H3rAtWFOcGyw==',35078473,0,0,9211698109297098287,b'vwztBHLYuj354hgI6Y5hs0QEqtc34rrhd4zrxpi0Dzc=',73600,b'9X/g0icw8EsBxaExtSCZNWyJmymt2wR22DXqLeXMVpE=',FALSE,null,1,FALSE,FALSE,FALSE,14734,2621055931824266697,FALSE,FALSE,FALSE,FALSE",
-        "808614188720864902,1440,-5803127966835594607,1,100000000000000000,100000000,b'hj4MB1LGOAvnY1S9hhvgcFcR4O4rwLhNnw1xtaQnGvY=',8000,6438949995368593549,b'OEhMYSiycHqB6m8MnxlmPbzVQ1jmRNVs+iszY18tVw97kcQYIPjRkj4K/KXLDleFx2wv2FnjVMh2qWQKdYgqog==',35078473,0,0,9211698109297098287,b'vwztBHLYuj354hgI6Y5hs0QEqtc34rrhd4zrxpi0Dzc=',73600,b'4vcm5NEB6Rxu5zXJ2g1Vr3EAxFJjoKagkgwlWg9ltE8=',FALSE,null,1,FALSE,FALSE,FALSE,14734,2621055931824266697,FALSE,FALSE,FALSE,FALSE"
-    );
-    private List<String> blockExportContent = List.of(
+    private final List<String> blockExportContent = List.of(
         "id,version,timestamp,previous_block_id,total_amount,total_fee,payload_length,previous_block_hash,cumulative_difficulty,base_target,next_block_id,height,generation_signature,block_signature,payload_hash,generator_id,timeout",
         "6438949995368593549,4,73600,-5580266015477525080,0,200000000,207,b'qBVH25/pjrIk083BIPcwXTuCnxYr6zv3GXUODPSNvp0=',b'At+1GWz0FbA=',23058430050,7551185434952726924,8000,b'Wxv0Y/IC7A1KtCqWNJdu1Ht3xGLR3iXj/qPo6qit2PY=',b'mS6suKw7y7fb2/y2NzGK2rGQ1IQ7ANqJYf0272Bxjw9azKRmLP3PhEfMUR1eNqtMMhwYU4LzV38BBsK/ufgO5g==',b'i9+Y+8TPzwtm36pojOfvkGP4sXSO4jjCPoIJ8HHPzuc=',6415509874415488619,0"
     );
@@ -479,9 +471,9 @@ class CsvExporterTest extends DbContainerBaseTest {
         csvExporter.exportDerivedTableCustomSort(goodsTable, 542100, 2, Set.of("db_id", "latest", "id", "seller_id"), "name");
         List<String> allLines = Files.readAllLines(dataExportPath.resolve("goods.csv"));
         assertEquals(7, allLines.size());
-        assertTrue(allLines.get(1).startsWith("\'1"));
-        assertTrue(allLines.get(2).startsWith("\'Some product"));
-        assertTrue(allLines.get(6).startsWith("\'Test product"));
+        assertTrue(allLines.get(1).startsWith("'1"));
+        assertTrue(allLines.get(2).startsWith("'Some product"));
+        assertTrue(allLines.get(6).startsWith("'Test product"));
     }
 
     @Test
@@ -621,7 +613,7 @@ class CsvExporterTest extends DbContainerBaseTest {
 
     private PropertiesHolder mockPropertiesHolder() {
         PropertiesHolder holder = mock(PropertiesHolder.class);
-        doReturn(23).when(holder).getIntProperty("apl.derivedTablesCount", 55);
+        doReturn(23).when(holder).getIntProperty("apl.derivedTablesCount", 60);
         return holder;
     }
 }

@@ -6,8 +6,8 @@ import com.google.common.cache.CacheLoader;
 import com.google.common.cache.LoadingCache;
 import lombok.extern.slf4j.Slf4j;
 
-import javax.inject.Inject;
-import javax.inject.Singleton;
+import jakarta.inject.Inject;
+import jakarta.inject.Singleton;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
 
@@ -51,6 +51,7 @@ public class DexEthService {
                 ethGasInfo = ethGasStationInfoService.getEthPriceInfo();
 
                 if (ethGasInfo != null) {
+                    log.info("Received new gas price info from ETH Gas Station {}", ethGasInfo);
                     return ethGasInfo;
                 }
             } catch (Exception e) {
@@ -60,6 +61,7 @@ public class DexEthService {
                 ethGasInfo = ethGasStationInfoService.getEthChainPriceInfo();
 
                 if (ethGasInfo != null) {
+                    log.info("Received new gas price info from Etherchain {}", ethGasInfo);
                     return ethGasInfo;
                 }
             } catch (Exception e) {

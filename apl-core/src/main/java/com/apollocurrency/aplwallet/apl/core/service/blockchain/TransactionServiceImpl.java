@@ -8,24 +8,27 @@ import com.apollocurrency.aplwallet.api.v2.model.TxReceipt;
 import com.apollocurrency.aplwallet.apl.core.chainid.BlockchainConfig;
 import com.apollocurrency.aplwallet.apl.core.converter.db.TransactionEntityToModelConverter;
 import com.apollocurrency.aplwallet.apl.core.converter.db.TransactionModelToEntityConverter;
-import com.apollocurrency.aplwallet.apl.util.db.TransactionalDataSource;
 import com.apollocurrency.aplwallet.apl.core.dao.blockchain.TransactionDao;
-import com.apollocurrency.aplwallet.apl.core.blockchain.Transaction;
+import com.apollocurrency.aplwallet.apl.core.db.DatabaseManager;
 import com.apollocurrency.aplwallet.apl.core.entity.appdata.ChatInfo;
 import com.apollocurrency.aplwallet.apl.core.entity.blockchain.TransactionEntity;
+import com.apollocurrency.aplwallet.apl.core.model.Sort;
+import com.apollocurrency.aplwallet.apl.core.model.Transaction;
 import com.apollocurrency.aplwallet.apl.core.model.TransactionDbInfo;
-import com.apollocurrency.aplwallet.apl.core.db.DatabaseManager;
 import com.apollocurrency.aplwallet.apl.core.service.appdata.TimeService;
 import com.apollocurrency.aplwallet.apl.core.shard.ShardDbExplorer;
 import com.apollocurrency.aplwallet.apl.core.shard.ShardManagement;
 import com.apollocurrency.aplwallet.apl.core.transaction.PrunableTransaction;
 import com.apollocurrency.aplwallet.apl.crypto.Convert;
 import com.apollocurrency.aplwallet.apl.util.cdi.Transactional;
+import com.apollocurrency.aplwallet.apl.util.db.TransactionalDataSource;
 import com.apollocurrency.aplwallet.apl.util.injectable.PropertiesHolder;
 import lombok.extern.slf4j.Slf4j;
 
-import javax.inject.Inject;
-import javax.inject.Singleton;
+import jakarta.inject.Inject;
+import jakarta.inject.Singleton;
+import java.util.ArrayList;
+import java.util.Comparator;
 import java.util.Iterator;
 import java.util.List;
 import java.util.stream.Collectors;
@@ -135,6 +138,11 @@ public class TransactionServiceImpl implements TransactionService {
     }
 
     @Override
+    public void updateTransaction(Transaction transaction) {
+        transactionDao.updateTransaction(toEntityConverter.convert(transaction));
+    }
+
+    @Override
     public int getTransactionCount() {
         return transactionDao.getTransactionCount();
     }
@@ -145,14 +153,8 @@ public class TransactionServiceImpl implements TransactionService {
     }
 
     @Override
-    public List<Transaction> getTransactionsByFilter(long accountId, int numberOfConfirmations, byte type, byte subtype, int blockTimestamp, boolean withMessage, boolean phasedOnly, boolean nonPhasedOnly, int from, int to, boolean includeExpiredPrunable, boolean executedOnly, boolean includePrivate, int height, int prunableExpiration) {
-        List<TransactionEntity> transactions = transactionDao.getTransactions(databaseManager.getDataSource(), accountId, numberOfConfirmations, type, subtype, blockTimestamp, withMessage, phasedOnly, nonPhasedOnly, from, to, includeExpiredPrunable, executedOnly, includePrivate, height, prunableExpiration);
-        return transactions.stream().map(toModelConverter).collect(Collectors.toList());
-    }
-
-    @Override
-    public int getTransactionCountByFilter(long accountId, int numberOfConfirmations, byte type, byte subtype, int blockTimestamp, boolean withMessage, boolean phasedOnly, boolean nonPhasedOnly, boolean includeExpiredPrunable, boolean executedOnly, boolean includePrivate, int height, int prunableExpiration) {
-        return transactionDao.getTransactionCountByFilter(databaseManager.getDataSource(), accountId, numberOfConfirmations, type, subtype, blockTimestamp, withMessage, phasedOnly, nonPhasedOnly, includeExpiredPrunable, executedOnly, includePrivate, height, prunableExpiration);
+    public int getTransactionCountByFilter(long accountId, byte type, byte subtype, int blockTimestamp, boolean withMessage, boolean phasedOnly, boolean nonPhasedOnly, boolean executedOnly, boolean includePrivate, int height, int prunableExpiration,  boolean failedOnly, boolean nonFailedOnly) {
+        return transactionDao.getTransactionCountByFilter(databaseManager.getDataSource(), accountId, type, subtype, blockTimestamp, withMessage, phasedOnly, nonPhasedOnly, executedOnly, includePrivate, height, prunableExpiration, failedOnly, nonFailedOnly);
     }
 
     @Transactional(readOnly = true)
@@ -204,7 +206,7 @@ public class TransactionServiceImpl implements TransactionService {
     @Override
     public List<Transaction> getTransactionsCrossShardingByAccount(long accountId, int currentBlockChainHeight, int numberOfConfirmations, byte type, byte subtype,
                                                                    int blockTimestamp, boolean withMessage, boolean phasedOnly, boolean nonPhasedOnly,
-                                                                   int from, int to, boolean includeExpiredPrunable, boolean executedOnly, boolean includePrivate) {
+                                                                   int from, int to, boolean includeExpiredPrunable, boolean executedOnly, boolean includePrivate, boolean failedOnly, boolean nonFailedOnly, Sort sort) {
         long start = System.currentTimeMillis();
         int height = numberOfConfirmations > 0 ? currentBlockChainHeight - numberOfConfirmations : Integer.MAX_VALUE;
         int prunableExpiration = Math.max(0, propertiesHolder.INCLUDE_EXPIRED_PRUNABLE() && includeExpiredPrunable ?
@@ -216,52 +218,27 @@ public class TransactionServiceImpl implements TransactionService {
         if (limit > 500) { // warn for too big values
             log.warn("Computed limit is BIGGER then 500 = {} !!", limit);
         }
-
-        // start fetch from main db
-        TransactionalDataSource currentDataSource = databaseManager.getDataSource();
-        List<TransactionEntity> transactions = transactionDao.getTransactions(
-            currentDataSource,
-            accountId, numberOfConfirmations, type, subtype,
-            blockTimestamp, withMessage, phasedOnly, nonPhasedOnly,
-            from, to, includeExpiredPrunable, executedOnly, includePrivate, height, prunableExpiration);
-        int foundCount = transactionDao.getTransactionCountByFilter(currentDataSource,
-            accountId, numberOfConfirmations, type, subtype,
-            blockTimestamp, withMessage, phasedOnly, nonPhasedOnly,
-            includeExpiredPrunable, executedOnly, includePrivate, height, prunableExpiration);
-        log.trace("getTx() 2. fetched from mainDb, fetch=[{}] / foundCount={}, initLimit={}, accountId={}, type={}, subtype={}",
-            transactions.size(), foundCount, limit, accountId, type, subtype);
-
-        // check if all Txs are fetched from main db, continue inside shard dbs otherwise
-        if (transactions.size() < limit) {
-            // not all requested Tx were fetched from main, loop over shards
-            if (transactions.size() > 0) {
-                to -= (transactions.size() + from); // decrease limit by really fetched records
-                from = 0; // set to zero for shard db
-            } else {
-                from -= foundCount;
-                to -= foundCount;
-            }
-            // loop over all shard in descent order and fetch left Tx number
-            Iterator<TransactionalDataSource> fullDataSources = ((ShardManagement) databaseManager).getAllFullDataSourcesIterator();
+        List<TransactionEntity> transactions = new ArrayList<>();
+            Iterator<TransactionalDataSource> fullDataSources = ((ShardManagement) databaseManager)
+                .getAllSortedDataSourcesIterator(sort.isASC() ? Comparator.naturalOrder() : Comparator.reverseOrder());
             while (fullDataSources.hasNext()) {
                 TransactionalDataSource dataSource = fullDataSources.next();
                 // count Tx records before fetch Tx records
-                foundCount = transactionDao.getTransactionCountByFilter(dataSource,
-                    accountId, numberOfConfirmations, type, subtype,
-                    blockTimestamp, withMessage, phasedOnly, nonPhasedOnly,
-                    includeExpiredPrunable, executedOnly, includePrivate, height, prunableExpiration);
+                int foundCount = transactionDao.getTransactionCountByFilter(dataSource,
+                    accountId, type, subtype,
+                    blockTimestamp, withMessage, phasedOnly, nonPhasedOnly, executedOnly, includePrivate, height, prunableExpiration, failedOnly, nonFailedOnly);
                 log.trace("countTx 3. DS={}, from={} to={}, foundCount={} (skip='{}')\naccountId={}, type={}, subtype={}",
                     dataSource.getDbIdentity(), from, to, foundCount, (foundCount <= 0),
                     accountId, type, subtype);
                 if (foundCount == 0) {
-                    continue; // skip shard without any suitable records
+                    continue; // skip data source without any suitable records
                 }
                 // because count is > 0 then try to fetch Tx records from shard db
                 List<TransactionEntity> fetchedTxs = transactionDao.getTransactions(
                     dataSource,
-                    accountId, numberOfConfirmations, type, subtype,
+                    accountId, type, subtype,
                     blockTimestamp, withMessage, phasedOnly, nonPhasedOnly,
-                    from, to, includeExpiredPrunable, executedOnly, includePrivate, height, prunableExpiration);
+                    from, to, executedOnly, includePrivate, height, prunableExpiration, failedOnly, nonFailedOnly, sort);
                 log.trace("getTx() 4. DS={} fetched [{}] (foundCount={}) from={}, to={}", dataSource.getDbIdentity(),
                     fetchedTxs.size(), foundCount, from, to);
                 if (fetchedTxs.isEmpty()) {
@@ -276,7 +253,7 @@ public class TransactionServiceImpl implements TransactionService {
                     break;
                 }
             }
-        }
+//        }
         log.trace("Tx number Requested / Loaded : [{}] / [{}] = in {} ms", limit, transactions.size(), System.currentTimeMillis() - start);
         return transactions.stream().map(toModelConverter).collect(Collectors.toList());
     }

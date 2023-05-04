@@ -15,8 +15,8 @@ import org.jboss.weld.junit5.WeldSetup;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
-import javax.enterprise.inject.Produces;
-import javax.inject.Inject;
+import jakarta.enterprise.inject.Produces;
+import jakarta.inject.Inject;
 
 import static com.apollocurrency.aplwallet.apl.core.cache.PublicKeyCacheConfig.PUBLIC_KEY_CACHE_NAME;
 import static org.junit.jupiter.api.Assertions.assertArrayEquals;

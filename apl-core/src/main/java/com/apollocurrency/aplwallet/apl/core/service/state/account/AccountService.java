@@ -5,12 +5,13 @@
 package com.apollocurrency.aplwallet.apl.core.service.state.account;
 
 import com.apollocurrency.aplwallet.apl.core.app.GenesisImporter;
-import com.apollocurrency.aplwallet.apl.core.blockchain.Block;
 import com.apollocurrency.aplwallet.apl.core.entity.state.account.Account;
 import com.apollocurrency.aplwallet.apl.core.entity.state.account.LedgerEvent;
+import com.apollocurrency.aplwallet.apl.core.entity.state.account.PublicKey;
 import com.apollocurrency.aplwallet.apl.core.exception.DoubleSpendingException;
 import com.apollocurrency.aplwallet.apl.core.model.Balances;
-import com.apollocurrency.aplwallet.apl.crypto.Convert;
+import com.apollocurrency.aplwallet.apl.core.model.Block;
+import com.apollocurrency.aplwallet.apl.crypto.AplIdGenerator;
 import com.apollocurrency.aplwallet.apl.crypto.Crypto;
 import com.apollocurrency.aplwallet.apl.util.db.DbIterator;
 
@@ -23,7 +24,7 @@ public interface AccountService {
 
     static long getId(byte[] publicKey) {
         byte[] publicKeyHash = Crypto.sha256().digest(publicKey);
-        return Convert.transactionFullHashToId(publicKeyHash);
+        return AplIdGenerator.ACCOUNT.getIdByHash(publicKeyHash).longValue();
     }
 
     static void checkBalance(long accountId, long confirmed, long unconfirmed) {
@@ -121,11 +122,14 @@ public interface AccountService {
     Balances getAccountBalances(Account account, boolean includeEffectiveBalance, int height);
 
     //Delegated from  AccountPublicKeyService
+    PublicKey getPublicKey(long id);
+
     byte[] getPublicKeyByteArray(long id);
 
     /**
      * Creates an account with the given id and save empty public key entity into the public key table for it
-     * @param id new account id
+     *
+     * @param id        new account id
      * @param isGenesis whether the account belongs to genesis type or not
      * @return created account
      */

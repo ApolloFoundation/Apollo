@@ -4,17 +4,17 @@
 
 package com.apollocurrency.aplwallet.apl.core.service.state;
 
-import com.apollocurrency.aplwallet.apl.core.blockchain.Block;
-import com.apollocurrency.aplwallet.apl.core.blockchain.Transaction;
+import com.apollocurrency.aplwallet.apl.core.model.Block;
+import com.apollocurrency.aplwallet.apl.core.model.Transaction;
 import com.apollocurrency.aplwallet.apl.core.entity.state.account.LedgerEvent;
 import com.apollocurrency.aplwallet.apl.core.entity.state.dgs.DGSFeedback;
 import com.apollocurrency.aplwallet.apl.core.entity.state.dgs.DGSGoods;
 import com.apollocurrency.aplwallet.apl.core.entity.state.dgs.DGSPublicFeedback;
 import com.apollocurrency.aplwallet.apl.core.entity.state.dgs.DGSPurchase;
 import com.apollocurrency.aplwallet.apl.core.entity.state.dgs.DGSTag;
-import com.apollocurrency.aplwallet.apl.core.transaction.messages.DigitalGoodsDelivery;
-import com.apollocurrency.aplwallet.apl.core.transaction.messages.DigitalGoodsListing;
-import com.apollocurrency.aplwallet.apl.core.transaction.messages.DigitalGoodsPurchase;
+import com.apollocurrency.aplwallet.apl.core.transaction.messages.DGSDeliveryAttachment;
+import com.apollocurrency.aplwallet.apl.core.transaction.messages.DGSListingAttachment;
+import com.apollocurrency.aplwallet.apl.core.transaction.messages.DGSPurchaseAttachment;
 import com.apollocurrency.aplwallet.apl.core.transaction.messages.EncryptedMessageAppendix;
 import com.apollocurrency.aplwallet.apl.core.transaction.messages.MessageAppendix;
 import com.apollocurrency.aplwallet.apl.util.db.DbIterator;
@@ -68,7 +68,7 @@ public interface DGSService {
 
     List<DGSPublicFeedback> getPublicFeedbacks(DGSPurchase dgsPurchase);
 
-    void listGoods(Transaction transaction, DigitalGoodsListing attachment);
+    void listGoods(Transaction transaction, DGSListingAttachment attachment);
 
     int getTagsCount();
 
@@ -87,9 +87,9 @@ public interface DGSService {
 
     void changeQuantity(long goodsId, int deltaQuantity);
 
-    void purchase(Transaction transaction, DigitalGoodsPurchase attachment);
+    void purchase(Transaction transaction, DGSPurchaseAttachment attachment);
 
-    void deliver(Transaction transaction, DigitalGoodsDelivery attachment);
+    void deliver(Transaction transaction, DGSDeliveryAttachment attachment);
 
     void refund(LedgerEvent event, long eventId, long sellerId, long purchaseId, long refundATM,
                 EncryptedMessageAppendix encryptedMessage);

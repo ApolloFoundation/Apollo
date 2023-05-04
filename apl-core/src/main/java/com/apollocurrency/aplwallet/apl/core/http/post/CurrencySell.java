@@ -24,15 +24,14 @@ import com.apollocurrency.aplwallet.apl.core.entity.state.account.Account;
 import com.apollocurrency.aplwallet.apl.core.entity.state.currency.Currency;
 import com.apollocurrency.aplwallet.apl.core.http.APITag;
 import com.apollocurrency.aplwallet.apl.core.http.HttpParameterParserUtil;
-import com.apollocurrency.aplwallet.apl.core.http.JSONResponses;
 import com.apollocurrency.aplwallet.apl.core.http.get.GetExchanges;
 import com.apollocurrency.aplwallet.apl.core.transaction.messages.Attachment;
-import com.apollocurrency.aplwallet.apl.core.transaction.messages.MonetarySystemExchangeSell;
+import com.apollocurrency.aplwallet.apl.core.transaction.messages.MSExchangeSellAttachment;
 import com.apollocurrency.aplwallet.apl.util.exception.AplException;
 import org.json.simple.JSONStreamAware;
 
-import javax.enterprise.inject.Vetoed;
-import javax.servlet.http.HttpServletRequest;
+import jakarta.enterprise.inject.Vetoed;
+import jakarta.servlet.http.HttpServletRequest;
 
 /**
  * Sell currency for APL
@@ -66,12 +65,8 @@ public final class CurrencySell extends CreateTransactionHandler {
         long units = HttpParameterParserUtil.getLong(req, "units", 0, Long.MAX_VALUE, true);
         Account account = HttpParameterParserUtil.getSenderAccount(req);
 
-        Attachment attachment = new MonetarySystemExchangeSell(currency.getId(), rateATM, units);
-        try {
-            return createTransaction(req, account, attachment);
-        } catch (AplException.InsufficientBalanceException e) {
-            return JSONResponses.NOT_ENOUGH_CURRENCY;
-        }
+        Attachment attachment = new MSExchangeSellAttachment(currency.getId(), rateATM, units);
+        return createTransaction(req, account, attachment);
     }
 
 }

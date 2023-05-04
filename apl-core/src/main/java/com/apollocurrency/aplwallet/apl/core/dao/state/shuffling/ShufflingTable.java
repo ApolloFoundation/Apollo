@@ -6,19 +6,19 @@ package com.apollocurrency.aplwallet.apl.core.dao.state.shuffling;
 
 import com.apollocurrency.aplwallet.apl.core.dao.state.derived.VersionedDeletableEntityDbTable;
 import com.apollocurrency.aplwallet.apl.core.dao.state.keyfactory.DbKey;
+import com.apollocurrency.aplwallet.apl.core.service.fulltext.FullTextOperationData;
 import com.apollocurrency.aplwallet.apl.util.db.DbClause;
 import com.apollocurrency.aplwallet.apl.util.db.DbIterator;
 import com.apollocurrency.aplwallet.apl.util.db.DbUtils;
 import com.apollocurrency.aplwallet.apl.core.entity.state.shuffling.Shuffling;
 import com.apollocurrency.aplwallet.apl.core.entity.state.shuffling.ShufflingStage;
 import com.apollocurrency.aplwallet.apl.core.db.DatabaseManager;
-import com.apollocurrency.aplwallet.apl.core.shard.observer.DeleteOnTrimData;
 import com.apollocurrency.aplwallet.apl.core.utils.CollectionUtil;
 import com.apollocurrency.aplwallet.apl.util.ThreadUtils;
 import lombok.extern.slf4j.Slf4j;
 
-import javax.enterprise.event.Event;
-import javax.enterprise.inject.Vetoed;
+import jakarta.enterprise.event.Event;
+import jakarta.enterprise.inject.Vetoed;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
@@ -31,9 +31,9 @@ import java.util.List;
 public class ShufflingTable extends VersionedDeletableEntityDbTable<Shuffling> implements ShufflingRepository {
 
     public ShufflingTable(DatabaseManager databaseManager,
-                          Event<DeleteOnTrimData> deleteOnTrimDataEvent) {
+                          Event<FullTextOperationData> fullTextOperationDataEvent) {
         super("shuffling", dbKeyFactory, null,
-                databaseManager, deleteOnTrimDataEvent);
+                databaseManager, fullTextOperationDataEvent);
     }
 
     @Override

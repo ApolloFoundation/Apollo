@@ -8,7 +8,7 @@ import com.apollocurrency.aplwallet.apl.core.dao.state.keyfactory.DbKey;
 import com.apollocurrency.aplwallet.apl.core.entity.model.DerivedIdEntity;
 import com.apollocurrency.aplwallet.apl.core.db.DatabaseManager;
 
-import javax.enterprise.event.Event;
+import jakarta.enterprise.event.Event;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
@@ -18,7 +18,8 @@ import static org.mockito.Mockito.mock;
 
 public class EntityDbTableImpl extends EntityDbTable<DerivedIdEntity> {
     public EntityDbTableImpl(DatabaseManager databaseManager) {
-        super("derived_entity", new DerivedEntityKeyFactory(), false, null, databaseManager, mock(Event.class));
+        super("derived_entity", new DerivedEntityKeyFactory(), false,
+            null, databaseManager, mock(Event.class));
     }
 
     @Override

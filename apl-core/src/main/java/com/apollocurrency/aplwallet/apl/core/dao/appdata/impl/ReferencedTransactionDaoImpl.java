@@ -10,12 +10,11 @@ import com.apollocurrency.aplwallet.apl.core.dao.state.keyfactory.LongKeyFactory
 import com.apollocurrency.aplwallet.apl.core.db.DatabaseManager;
 import com.apollocurrency.aplwallet.apl.core.entity.appdata.ReferencedTransaction;
 import com.apollocurrency.aplwallet.apl.core.entity.blockchain.TransactionEntity;
-import com.apollocurrency.aplwallet.apl.core.shard.observer.DeleteOnTrimData;
-import org.jdbi.v3.core.Jdbi;
+import com.apollocurrency.aplwallet.apl.core.service.fulltext.FullTextOperationData;
 
-import javax.enterprise.event.Event;
-import javax.inject.Inject;
-import javax.inject.Singleton;
+import jakarta.enterprise.event.Event;
+import jakarta.inject.Inject;
+import jakarta.inject.Singleton;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
@@ -39,8 +38,9 @@ public class ReferencedTransactionDaoImpl extends EntityDbTable<ReferencedTransa
     @Inject
     public ReferencedTransactionDaoImpl(DatabaseManager databaseManager,
                                         TransactionEntityRowMapper transactionRowMapper,
-                                        Event<DeleteOnTrimData> deleteOnTrimDataEvent, Jdbi jdbi) {
-        super(TABLE, KEY_FACTORY, false, null, databaseManager, deleteOnTrimDataEvent);
+                                        Event<FullTextOperationData> fullTextOperationDataEvent) {
+        super(TABLE, KEY_FACTORY, false, null,
+            databaseManager, fullTextOperationDataEvent);
         this.transactionRowMapper = transactionRowMapper;
     }
 

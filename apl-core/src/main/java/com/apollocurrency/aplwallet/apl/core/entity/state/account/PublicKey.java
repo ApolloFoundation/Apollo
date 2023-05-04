@@ -22,7 +22,7 @@ import java.util.Objects;
 public final class PublicKey extends VersionedDerivedEntity {
 
     private final long accountId;
-    private byte[] publicKey;
+    private volatile byte[] publicKey;
 
     public PublicKey(long accountId, byte[] publicKey, int height) {
         super(null, height);

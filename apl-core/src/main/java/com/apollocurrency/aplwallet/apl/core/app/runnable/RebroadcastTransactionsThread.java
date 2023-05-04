@@ -4,7 +4,7 @@
 
 package com.apollocurrency.aplwallet.apl.core.app.runnable;
 
-import com.apollocurrency.aplwallet.apl.core.blockchain.Transaction;
+import com.apollocurrency.aplwallet.apl.core.model.Transaction;
 import com.apollocurrency.aplwallet.apl.core.peer.PeersService;
 import com.apollocurrency.aplwallet.apl.core.service.appdata.TimeService;
 import com.apollocurrency.aplwallet.apl.core.service.blockchain.Blockchain;
@@ -14,7 +14,7 @@ import com.apollocurrency.aplwallet.apl.core.service.blockchain.UnconfirmedTrans
 import com.apollocurrency.aplwallet.apl.util.Convert2;
 import lombok.extern.slf4j.Slf4j;
 
-import javax.enterprise.inject.spi.CDI;
+import jakarta.enterprise.inject.spi.CDI;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;

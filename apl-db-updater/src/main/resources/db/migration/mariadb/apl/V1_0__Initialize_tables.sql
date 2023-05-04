@@ -1036,12 +1036,14 @@ CREATE TABLE IF NOT EXISTS `shuffling`
 CREATE TABLE IF NOT EXISTS `shuffling_data`
 (
     `db_id`                 bigint(20) unsigned NOT NULL AUTO_INCREMENT primary key,
+    `transaction_id`        bigint(20) NOT NULL,
     `shuffling_id`          bigint(20) NOT NULL,
     `account_id`            bigint(20) NOT NULL,
     `data`                  blob NOT NULL,
     `transaction_timestamp` int(11)    NOT NULL,
     `height`                int(11)    NOT NULL,
     UNIQUE KEY `shuffling_data_id_height_idx` (`shuffling_id`,`height`),
+    UNIQUE KEY `shuffling_data_transaction_id_idx` (`transaction_id`),
     KEY                     `shuffling_data_transaction_timestamp_idx` (`transaction_timestamp`)
 ) ;
 
@@ -1195,6 +1197,7 @@ CREATE TABLE IF NOT EXISTS `transaction`
   `has_prunable_message` tinyint(1) NOT NULL DEFAULT 0,
   `has_prunable_encrypted_message` tinyint(1) NOT NULL DEFAULT 0,
   `has_prunable_attachment` tinyint(1) NOT NULL DEFAULT 0,
+  `error_message` varchar(1000) DEFAULT NULL,
   UNIQUE KEY `transaction_id_idx` (`id`),
   KEY `transaction_sender_id_idx` (`sender_id`),
   KEY `transaction_recipient_id_idx` (`recipient_id`),

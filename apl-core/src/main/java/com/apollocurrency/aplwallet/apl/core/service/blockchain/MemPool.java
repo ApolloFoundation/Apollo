@@ -4,8 +4,8 @@
 
 package com.apollocurrency.aplwallet.apl.core.service.blockchain;
 
-import com.apollocurrency.aplwallet.apl.core.blockchain.Transaction;
-import com.apollocurrency.aplwallet.apl.core.blockchain.UnconfirmedTransaction;
+import com.apollocurrency.aplwallet.apl.core.model.Transaction;
+import com.apollocurrency.aplwallet.apl.core.model.UnconfirmedTransaction;
 import com.apollocurrency.aplwallet.apl.core.cache.RemovedTxsCacheConfig;
 import com.apollocurrency.aplwallet.apl.core.converter.db.UnconfirmedTransactionEntityToModelConverter;
 import com.apollocurrency.aplwallet.apl.core.converter.db.UnconfirmedTransactionModelToEntityConverter;
@@ -20,8 +20,8 @@ import lombok.EqualsAndHashCode;
 import lombok.Getter;
 import lombok.extern.slf4j.Slf4j;
 
-import javax.inject.Inject;
-import javax.inject.Singleton;
+import jakarta.inject.Inject;
+import jakarta.inject.Singleton;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Comparator;
@@ -103,27 +103,32 @@ public class MemPool {
         return memoryState.getFromCache(exclude);
     }
 
-    public void addBroadcasted(Transaction tx) {
-        memoryState.addToBroadcasted(tx);
-    }
-
-    public void addBroadcastLater(Transaction tx) {
-        memoryState.broadcastLater(tx);
-    }
-
     public boolean addProcessed(UnconfirmedTransaction tx) {
         boolean canSaveTxs = getCount() < config.getMaxUnconfirmedTransactions();
         if (canSaveTxs) {
-            table.insert(
-                toEntityConverter.convert(tx)
-            );
+            table.insert(toEntityConverter.convert(tx));
             memoryState.putInCache(tx);
+            log.info("Added transaction {} into a mempool", tx.getStringId());
         }
         return canSaveTxs;
     }
 
-    public IdQueue.ReturnCode addPendingProcessing(UnconfirmedTransaction tx) {
-        return memoryState.addPendingProcessing(tx);
+    /**
+     * Add unconfirmed transaction to the pending-processing queue
+     * @param tx unconfirmed transaction to add
+     * @throws AplMemPoolFullException when pending-processing queue is full
+     * @throws AplTransactionIsAlreadyInMemPoolException when pending-processing queue already contains give transaction
+     */
+    public void addPendingProcessing(UnconfirmedTransaction tx) {
+        IdQueue.ReturnCode returnCode = memoryState.addPendingProcessing(tx);
+        if (!returnCode.isOk()) {
+            if (returnCode == IdQueue.ReturnCode.NOT_ADDED || returnCode == IdQueue.ReturnCode.FULL) {
+                throw new AplMemPoolFullException("Pending transaction's queue size is reached, unable to add new transaction: " + tx.getId());
+            }
+            if (returnCode == IdQueue.ReturnCode.ALREADY_EXIST) {
+                throw new AplTransactionIsAlreadyInMemPoolException("Transaction " + tx.getId() + " is already in the pending transaction's queue");
+            }
+        }
     }
 
     public int processingQueueSize() {
@@ -183,7 +188,8 @@ public class MemPool {
         return streamConverter.apply(table.getAll(from, to)).map(toModelConverter);
     }
 
-    public void addProcessLater(UnconfirmedTransaction unconfirmedTransaction) {
+    public void processLater(UnconfirmedTransaction unconfirmedTransaction) {
+        removedTransactions.invalidate(unconfirmedTransaction.getId());
         memoryState.processLater(unconfirmedTransaction);
     }
 

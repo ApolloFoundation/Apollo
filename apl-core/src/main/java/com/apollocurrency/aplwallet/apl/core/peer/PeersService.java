@@ -25,13 +25,15 @@ import com.apollocurrency.aplwallet.api.p2p.request.BaseP2PRequest;
 import com.apollocurrency.aplwallet.api.p2p.request.ProcessBlockRequest;
 import com.apollocurrency.aplwallet.api.p2p.request.ProcessTransactionsRequest;
 import com.apollocurrency.aplwallet.apl.core.app.runnable.limiter.TimeLimiterService;
-import com.apollocurrency.aplwallet.apl.core.blockchain.Block;
-import com.apollocurrency.aplwallet.apl.core.blockchain.Transaction;
+import com.apollocurrency.aplwallet.apl.core.model.Block;
+import com.apollocurrency.aplwallet.apl.core.model.Transaction;
 import com.apollocurrency.aplwallet.apl.core.chainid.BlockchainConfig;
 import com.apollocurrency.aplwallet.apl.core.http.API;
 import com.apollocurrency.aplwallet.apl.core.http.APIEnum;
 import com.apollocurrency.aplwallet.apl.core.rest.converter.BlockConverter;
+import com.apollocurrency.aplwallet.apl.core.rest.converter.BlockConverterCreator;
 import com.apollocurrency.aplwallet.apl.core.rest.converter.UnconfirmedTransactionConverter;
+import com.apollocurrency.aplwallet.apl.core.rest.converter.UnconfirmedTransactionConverterCreator;
 import com.apollocurrency.aplwallet.apl.core.service.appdata.TimeService;
 import com.apollocurrency.aplwallet.apl.core.service.blockchain.Blockchain;
 import com.apollocurrency.aplwallet.apl.core.service.blockchain.BlockchainProcessor;
@@ -61,9 +63,9 @@ import org.json.simple.JSONStreamAware;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import javax.enterprise.inject.spi.CDI;
-import javax.inject.Inject;
-import javax.inject.Singleton;
+import jakarta.enterprise.inject.spi.CDI;
+import jakarta.inject.Inject;
+import jakarta.inject.Singleton;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
@@ -159,7 +161,7 @@ public class PeersService {
     private JSONStreamAware myPeerInfoRequest;
     private volatile JSONStreamAware myPeerInfoResponse;
     private BlockchainProcessor blockchainProcessor;
-    private volatile TimeService timeService;
+    private final TimeService timeService;
     private final UnconfirmedTransactionConverter transactionConverter;
     private final BlockConverter blockConverter;
 //    private final ExecutorService txSendingDispatcher;
@@ -174,8 +176,8 @@ public class PeersService {
                         PeerHttpServer peerHttpServer,
                         TimeLimiterService timeLimiterService,
                         AccountService accountService,
-                        UnconfirmedTransactionConverter txConverter,
-                        BlockConverter blockConverter,
+                        UnconfirmedTransactionConverterCreator txConverterCreator,
+                        BlockConverterCreator blockConverterCreator,
                         PeerDb peerDb) {
         this.propertiesHolder = propertiesHolder;
         this.blockchainConfig = blockchainConfig;
@@ -185,11 +187,8 @@ public class PeersService {
         this.peerHttpServer = peerHttpServer;
         this.timeLimiterService = timeLimiterService;
         this.accountService = accountService;
-        this.transactionConverter = txConverter;
-        this.transactionConverter.setPriv(false);
-        this.blockConverter = blockConverter;
-        this.blockConverter.setPriv(false);
-        this.blockConverter.setAddTransactions(true);
+        this.transactionConverter = txConverterCreator.create(false);
+        this.blockConverter = blockConverterCreator.create(true, false, false);
         this.peerDb = peerDb;
         int asyncTxSendingPoolSize = propertiesHolder.getIntProperty("apl.maxAsyncPeerSendingPoolSize", 30);
 //        this.txSendingDispatcher = new ThreadPoolExecutor(5, asyncTxSendingPoolSize, 10_000, TimeUnit.MILLISECONDS, new ArrayBlockingQueue<>(asyncTxSendingPoolSize), new NamedThreadFactory("P2PTxSendingPool", true));
@@ -588,10 +587,7 @@ public class PeersService {
             }
         }
         PeerAddress myExtAddr = peerHttpServer.getMyExtAddress();
-        if (pa.compareTo(myExtAddr) == 0) {
-            return true;
-        }
-        return false;
+        return pa.compareTo(myExtAddr) == 0;
     }
 
     public Peer findOrCreatePeer(PeerAddress actualAddr, final String announcedAddress, final boolean create) {
@@ -674,7 +670,7 @@ public class PeersService {
 
         if (peer != null && peer.getAnnouncedAddress() != null) {
             // put new or replace previous
-            connectablePeers.put(peer.getAnnouncedAddress(), (PeerImpl) peer);
+            connectablePeers.put(peer.getAnnouncedAddress(), peer);
             listeners.notify(peer, Event.NEW_PEER);
             return true;
         }
@@ -728,7 +724,7 @@ public class PeersService {
             res = ((PeerImpl) peer).handshake();
         }
         if (res) {
-            connectablePeers.putIfAbsent(peer.getHostWithPort(), (PeerImpl) peer);
+            connectablePeers.putIfAbsent(peer.getHostWithPort(), peer);
         }
         return res;
     }

@@ -1,13 +1,13 @@
 /*
- *  Copyright © 2018-2020 Apollo Foundation
+ *  Copyright © 2018-2022 Apollo Foundation
  */
 
 package com.apollocurrency.aplwallet.apl.core.service.fulltext;
 
 import com.apollocurrency.aplwallet.apl.core.service.blockchain.Blockchain;
 import com.apollocurrency.aplwallet.apl.core.shard.helper.jdbc.SimpleResultSet;
-import com.apollocurrency.aplwallet.apl.util.NtpTime;
 import com.apollocurrency.aplwallet.apl.util.ReadWriteUpdateLock;
+import com.apollocurrency.aplwallet.apl.util.TimeSource;
 import com.apollocurrency.aplwallet.apl.util.annotation.DatabaseSpecificDml;
 import com.apollocurrency.aplwallet.apl.util.annotation.DmlMarker;
 import lombok.extern.slf4j.Slf4j;
@@ -31,9 +31,10 @@ import org.apache.lucene.search.TopDocs;
 import org.apache.lucene.store.Directory;
 import org.apache.lucene.store.FSDirectory;
 
-import javax.inject.Inject;
-import javax.inject.Named;
-import javax.inject.Singleton;
+import jakarta.annotation.PreDestroy;
+import jakarta.inject.Inject;
+import jakarta.inject.Named;
+import jakarta.inject.Singleton;
 import java.io.IOException;
 import java.nio.file.DirectoryStream;
 import java.nio.file.Files;
@@ -70,14 +71,14 @@ public class LuceneFullTextSearchEngine implements FullTextSearchEngine {
      * Lucene analyzer (thread-safe)
      */
     private final Analyzer analyzer = new StandardAnalyzer();
-    private NtpTime ntpTime;
+    private TimeSource source;
     private Path indexDirPath;
     private final Blockchain blockchain;
 
 
     @Inject
-    public LuceneFullTextSearchEngine(NtpTime ntpTime, @Named("indexDirPath") Path indexPath, final Blockchain blockchain) {
-        this.ntpTime = ntpTime;
+    public LuceneFullTextSearchEngine(TimeSource timeSource, @Named("indexDirPath") Path indexPath, final Blockchain blockchain) {
+        this.source = timeSource;
         this.indexDirPath = indexPath;
         this.blockchain = blockchain;
         if (!Files.exists(indexPath)) {
@@ -91,6 +92,7 @@ public class LuceneFullTextSearchEngine implements FullTextSearchEngine {
 
     @Override
     public boolean isIndexFolderEmpty() throws IOException {
+        log.debug("FullTextSearch index path/folder = '{}'", this.indexDirPath);
         boolean indexFolderExists = Files.exists(this.indexDirPath);
         if (indexFolderExists) {
             try (DirectoryStream<Path> dirStream = Files.newDirectoryStream(this.indexDirPath)) {
@@ -115,7 +117,7 @@ public class LuceneFullTextSearchEngine implements FullTextSearchEngine {
             String query = row.getTableKey();
             Document document = new Document();
             document.add(new StringField("_QUERY", query, Field.Store.YES));
-            long now = ntpTime.getTime();
+            long now = source.currentTime();
             document.add(new TextField("_MODIFIED", DateTools.timeToString(now, DateTools.Resolution.SECOND), Field.Store.NO));
             document.add(new TextField("_TABLE", schemaTableName, Field.Store.NO));
             StringJoiner sj = new StringJoiner(" ");
@@ -330,6 +332,7 @@ public class LuceneFullTextSearchEngine implements FullTextSearchEngine {
     /**
      * {@inheritDoc}
      */
+    @PreDestroy
     @Override
     public void shutdown() {
         log.trace("LuceneFullTextSearchEngine shutdown start...");

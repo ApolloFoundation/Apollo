@@ -4,21 +4,19 @@
 
 package com.apollocurrency.aplwallet.apl.core.dao.state.currency;
 
-import com.apollocurrency.aplwallet.apl.core.dao.state.derived.SearchableTableInterface;
+import com.apollocurrency.aplwallet.apl.core.dao.state.derived.SearchableTableMarkerInterface;
 import com.apollocurrency.aplwallet.apl.core.dao.state.derived.VersionedDeletableEntityDbTable;
 import com.apollocurrency.aplwallet.apl.core.dao.state.keyfactory.DbKey;
 import com.apollocurrency.aplwallet.apl.core.dao.state.keyfactory.LongKeyFactory;
 import com.apollocurrency.aplwallet.apl.core.db.DatabaseManager;
 import com.apollocurrency.aplwallet.apl.core.entity.state.currency.Currency;
-import com.apollocurrency.aplwallet.apl.core.shard.observer.DeleteOnTrimData;
+import com.apollocurrency.aplwallet.apl.core.service.fulltext.FullTextOperationData;
 import com.apollocurrency.aplwallet.apl.util.annotation.DatabaseSpecificDml;
 import com.apollocurrency.aplwallet.apl.util.annotation.DmlMarker;
-import com.apollocurrency.aplwallet.apl.util.db.DbClause;
-import com.apollocurrency.aplwallet.apl.util.db.DbIterator;
 
-import javax.enterprise.event.Event;
-import javax.inject.Inject;
-import javax.inject.Singleton;
+import jakarta.enterprise.event.Event;
+import jakarta.inject.Inject;
+import jakarta.inject.Singleton;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
@@ -29,7 +27,10 @@ import java.util.Objects;
 
 @Singleton
 @DatabaseSpecificDml(DmlMarker.FULL_TEXT_SEARCH)
-public class CurrencyTable extends VersionedDeletableEntityDbTable<Currency> implements SearchableTableInterface<Currency> {
+public class CurrencyTable extends VersionedDeletableEntityDbTable<Currency> implements SearchableTableMarkerInterface<Currency> {
+
+    public static final String TABLE_NAME = "currency";
+    public static final String FULL_TEXT_SEARCH_COLUMNS = "code,name,description";
 
     public static final LongKeyFactory<Currency> currencyDbKeyFactory = new LongKeyFactory<>("id") {
         @Override
@@ -43,9 +44,9 @@ public class CurrencyTable extends VersionedDeletableEntityDbTable<Currency> imp
 
     @Inject
     public CurrencyTable(DatabaseManager databaseManager,
-                         Event<DeleteOnTrimData> deleteOnTrimDataEvent) {
-        super("currency", currencyDbKeyFactory, "code,name,description",
-                databaseManager, deleteOnTrimDataEvent);
+                         Event<FullTextOperationData> fullTextOperationDataEvent) {
+        super(TABLE_NAME, currencyDbKeyFactory, FULL_TEXT_SEARCH_COLUMNS,
+                databaseManager, fullTextOperationDataEvent);
     }
 
     @Override
@@ -105,16 +106,6 @@ public class CurrencyTable extends VersionedDeletableEntityDbTable<Currency> imp
                 }
             }
         }
-    }
-
-    @Override
-    public final DbIterator<Currency> search(String query, DbClause dbClause, int from, int to) {
-        throw new UnsupportedOperationException("Call service, should be implemented by service");
-    }
-
-    @Override
-    public final DbIterator<Currency> search(String query, DbClause dbClause, int from, int to, String sort) {
-        throw new UnsupportedOperationException("Call service, should be implemented by service");
     }
 
 }

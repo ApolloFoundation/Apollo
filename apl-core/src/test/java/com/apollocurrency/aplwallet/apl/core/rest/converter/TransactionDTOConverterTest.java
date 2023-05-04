@@ -1,8 +1,8 @@
 package com.apollocurrency.aplwallet.apl.core.rest.converter;
 
 import com.apollocurrency.aplwallet.api.dto.TransactionDTO;
-import com.apollocurrency.aplwallet.apl.core.blockchain.Transaction;
-import com.apollocurrency.aplwallet.apl.core.blockchain.TransactionBuilderFactory;
+import com.apollocurrency.aplwallet.apl.core.model.Transaction;
+import com.apollocurrency.aplwallet.apl.core.service.blockchain.TransactionBuilderFactory;
 import com.apollocurrency.aplwallet.apl.core.chainid.BlockchainConfig;
 import com.apollocurrency.aplwallet.apl.core.service.state.PollService;
 import com.apollocurrency.aplwallet.apl.core.service.state.account.AccountService;
@@ -73,7 +73,6 @@ class TransactionDTOConverterTest {
     @Mock
     TransactionValidator validator;
 
-
     @Test
     void applyVoteCastingAttachment() throws JsonProcessingException {
         VoteCastingTransactionType voteCastingTransactionType = new VoteCastingTransactionType(blockchainConfig, accountService, pollService, validator);
@@ -84,7 +83,6 @@ class TransactionDTOConverterTest {
         TransactionDTOConverter transactionDTOConverter = new TransactionDTOConverter(builderFactory);
 
         Transaction transaction = transactionDTOConverter.apply(transactionDTO);
-
 
         assertNotNull(transaction);
         assertNotNull(transaction.getAttachment());

@@ -1,5 +1,5 @@
 /*
- *  Copyright © 2018-2019 Apollo Foundation
+ *  Copyright © 2018-2022 Apollo Foundation
  */
 
 package com.apollocurrency.aplwallet.apl.extension;
@@ -86,6 +86,10 @@ public class DbExtension implements BeforeEachCallback, /*AfterEachCallback,*/ A
         this(jdbcDatabaseContainer, properties, null, schemaScriptPath, dataScriptPath);
     }
 
+    public DbExtension(GenericContainer jdbcDatabaseContainer, DbProperties properties, String dataScriptPath) {
+        this(jdbcDatabaseContainer, properties, null, null, dataScriptPath);
+    }
+
     public DbExtension(GenericContainer jdbcDatabaseContainer, Map<String, List<String>> tableWithColumns) {
         this(jdbcDatabaseContainer);
         if (!tableWithColumns.isEmpty()) {
@@ -104,15 +108,13 @@ public class DbExtension implements BeforeEachCallback, /*AfterEachCallback,*/ A
 
     @Override
     public void beforeEach(ExtensionContext context) {
-        if (context != null && context.getTags().contains("skip-fts-init")) {
-            // skip init for some tests
-            if (fullTextSearchService == null) {
-                initFtl();
-            }
-        } else {
+        if (context == null || !context.getTags().contains("skip-fts-init")) {
             if (fullTextSearchService != null) {
                 initFtl();
             }
+        }
+        if (!staticInit) {
+            cleanAndPopulateDb();
         }
     }
 
@@ -127,6 +129,7 @@ public class DbExtension implements BeforeEachCallback, /*AfterEachCallback,*/ A
         if (fullTextSearchService != null) {
             initFtl();
         }
+        staticInit = true;
     }
 
     public void cleanAndPopulateDb() {

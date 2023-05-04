@@ -100,8 +100,8 @@ public class MariadbDatabaseAdministrator implements DatabaseAdministrator {
             Path dbDataDir = dirProvider.getDbDir();
             Path dbInstallPath = dbInstallationPath();
             Path dbOutPath = dbLogPath();
-            log.info("Setting mariadb process out path: {}", dbOutPath);
-            mariaDbProcess = new MariaDbProcess(conf,dbInstallPath,dbDataDir, dbOutPath);
+            log.info("Setting mariadb process dirs:\ninstallDir='{}'\ndataDir='{}'\noutDir='{}'", dbInstallPath, dbDataDir, dbOutPath);
+            mariaDbProcess = new MariaDbProcess(conf, dbInstallPath, dbDataDir, dbOutPath);
             res = mariaDbProcess.startAndWaitWhenReady();
         }
         return res;

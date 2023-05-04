@@ -6,11 +6,11 @@ import com.apollocurrency.aplwallet.apl.util.cache.InMemoryCacheConfigurator;
 import com.apollocurrency.aplwallet.apl.util.cache.InMemoryCacheManager;
 import com.google.common.cache.Cache;
 
-import javax.enterprise.inject.Produces;
-import javax.enterprise.inject.spi.Annotated;
-import javax.enterprise.inject.spi.InjectionPoint;
-import javax.inject.Inject;
-import javax.inject.Singleton;
+import jakarta.enterprise.inject.Produces;
+import jakarta.enterprise.inject.spi.Annotated;
+import jakarta.enterprise.inject.spi.InjectionPoint;
+import jakarta.inject.Inject;
+import jakarta.inject.Singleton;
 
 @Singleton
 public class InMemoryCDICacheFactory {

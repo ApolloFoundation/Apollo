@@ -4,10 +4,9 @@
 
 package com.apollocurrency.aplwallet.apl.core.service.blockchain;
 
-import com.apollocurrency.aplwallet.apl.core.blockchain.Block;
-import com.apollocurrency.aplwallet.apl.core.blockchain.BlockImpl;
-import com.apollocurrency.aplwallet.apl.core.blockchain.Transaction;
-import com.apollocurrency.aplwallet.apl.core.blockchain.TransactionBuilderFactory;
+import com.apollocurrency.aplwallet.apl.core.model.Block;
+import com.apollocurrency.aplwallet.apl.core.model.BlockImpl;
+import com.apollocurrency.aplwallet.apl.core.model.Transaction;
 import com.apollocurrency.aplwallet.apl.core.service.state.account.AccountService;
 import com.apollocurrency.aplwallet.apl.core.transaction.TransactionValidator;
 import com.apollocurrency.aplwallet.apl.crypto.Convert;
@@ -16,8 +15,8 @@ import lombok.extern.slf4j.Slf4j;
 import org.json.simple.JSONArray;
 import org.json.simple.JSONObject;
 
-import javax.inject.Inject;
-import javax.inject.Singleton;
+import jakarta.inject.Inject;
+import jakarta.inject.Singleton;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -37,7 +36,7 @@ public class BlockParserImpl implements BlockParser {
     }
 
     @Override
-    public BlockImpl parseBlock(JSONObject blockData, long baseTarget) throws AplException.NotValidException, AplException.NotCurrentlyValidException {
+    public BlockImpl parseBlock(JSONObject blockData, long baseTarget) throws AplException.NotValidException {
         try {
             int version = ((Number) blockData.get("version")).intValue();
             int timestamp = ((Number) blockData.get("timestamp")).intValue();
@@ -66,7 +65,7 @@ public class BlockParserImpl implements BlockParser {
                 payloadLength, payloadHash, generatorPublicKey,
                 generationSignature, blockSignature, previousBlockHash, timeout, blockTransactions, baseTarget);
             if (!block.checkSignature()) {
-                throw new AplException.NotValidException("Invalid block signature");
+                throw new AplException.NotValidException("Invalid block signature, block: " + blockData.toJSONString());
             }
             return block;
         } catch (RuntimeException e) {
@@ -75,7 +74,7 @@ public class BlockParserImpl implements BlockParser {
         }
     }
 
-    private Transaction parseTransaction(JSONObject jsonObject) throws AplException.NotValidException, AplException.NotCurrentlyValidException {
+    private Transaction parseTransaction(JSONObject jsonObject) throws AplException.NotValidException {
         Transaction tx = transactionBuilderFactory.newTransaction(jsonObject);
         if (!transactionValidator.checkSignature(null, tx)) {
             throw new AplException.NotValidException("Invalid signature of tx: " + tx.getStringId());
@@ -87,4 +86,14 @@ public class BlockParserImpl implements BlockParser {
         return Block.ADAPTIVE_BLOCK_VERSION == version || Block.INSTANT_BLOCK_VERSION == version;
     }
 
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) return true;
+        return o != null && getClass() == o.getClass();
+    }
+
+    @Override
+    public int hashCode() {
+        return 17;
+    }
 }

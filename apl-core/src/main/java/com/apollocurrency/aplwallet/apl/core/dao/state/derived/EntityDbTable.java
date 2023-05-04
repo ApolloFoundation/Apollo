@@ -25,14 +25,14 @@ import com.apollocurrency.aplwallet.apl.core.dao.state.keyfactory.KeyFactory;
 import com.apollocurrency.aplwallet.apl.core.db.DatabaseManager;
 import com.apollocurrency.aplwallet.apl.core.entity.state.derived.DerivedEntity;
 import com.apollocurrency.aplwallet.apl.core.service.blockchain.Blockchain;
-import com.apollocurrency.aplwallet.apl.core.shard.observer.DeleteOnTrimData;
+import com.apollocurrency.aplwallet.apl.core.service.fulltext.FullTextOperationData;
 import com.apollocurrency.aplwallet.apl.util.db.DbClause;
 import com.apollocurrency.aplwallet.apl.util.db.DbIterator;
 import com.apollocurrency.aplwallet.apl.util.db.DbUtils;
 import com.apollocurrency.aplwallet.apl.util.db.TransactionalDataSource;
 import org.slf4j.Logger;
 
-import javax.enterprise.event.Event;
+import jakarta.enterprise.event.Event;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
@@ -46,9 +46,9 @@ public abstract class EntityDbTable<T extends DerivedEntity> extends BasicDbTabl
 
     public EntityDbTable(String table, KeyFactory<T> dbKeyFactory, boolean multiversion, String fullTextSearchColumns,
                          DatabaseManager databaseManager,
-                         Event<DeleteOnTrimData> deleteOnTrimDataEvent) {
+                         Event<FullTextOperationData> fullTextOperationDataEvent) {
         super(table, dbKeyFactory, multiversion, databaseManager,
-                deleteOnTrimDataEvent, fullTextSearchColumns);
+                fullTextOperationDataEvent, fullTextSearchColumns);
         this.defaultSort = " ORDER BY " + (multiversion ? dbKeyFactory.getPKColumns() : " height DESC, db_id DESC ");
     }
 
@@ -356,7 +356,12 @@ public abstract class EntityDbTable<T extends DerivedEntity> extends BasicDbTabl
             restoreDeletedColumnIfSupported(con, dbKey, t);
             save(con, t);
         } catch (SQLException e) {
-            throw new RuntimeException(e.toString(), e);
+            String msg = String.format("%s: SQLState=%s, ErrorCode=%d, message=%s"
+                , e.getClass().getName()
+                , e.getSQLState()
+                , e.getErrorCode()
+                ,e.getLocalizedMessage());
+            throw new RuntimeException(msg, e);
         }
     }
 

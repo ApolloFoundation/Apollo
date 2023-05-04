@@ -23,12 +23,12 @@ package com.apollocurrency.aplwallet.apl.core.app;
 
 import com.apollocurrency.aplwallet.apl.core.addons.AddOns;
 import com.apollocurrency.aplwallet.apl.core.chainid.BlockchainConfigUpdater;
+import com.apollocurrency.aplwallet.apl.core.db.DatabaseManager;
 import com.apollocurrency.aplwallet.apl.core.http.API;
 import com.apollocurrency.aplwallet.apl.core.http.APIProxy;
 import com.apollocurrency.aplwallet.apl.core.peer.PeersService;
 import com.apollocurrency.aplwallet.apl.core.rest.filters.ApiSplitFilter;
 import com.apollocurrency.aplwallet.apl.core.rest.service.TransportInteractionService;
-import com.apollocurrency.aplwallet.apl.core.db.DatabaseManager;
 import com.apollocurrency.aplwallet.apl.core.service.appdata.TimeService;
 import com.apollocurrency.aplwallet.apl.core.service.blockchain.AbstractBlockValidator;
 import com.apollocurrency.aplwallet.apl.core.service.blockchain.Blockchain;
@@ -36,6 +36,7 @@ import com.apollocurrency.aplwallet.apl.core.service.blockchain.BlockchainImpl;
 import com.apollocurrency.aplwallet.apl.core.service.blockchain.BlockchainProcessor;
 import com.apollocurrency.aplwallet.apl.core.service.blockchain.BlockchainProcessorImpl;
 import com.apollocurrency.aplwallet.apl.core.service.blockchain.DefaultBlockValidator;
+import com.apollocurrency.aplwallet.apl.core.service.blockchain.FailedTransactionVerificationService;
 import com.apollocurrency.aplwallet.apl.core.service.blockchain.MemPool;
 import com.apollocurrency.aplwallet.apl.core.service.blockchain.ShardingInitTaskBackgroundScheduler;
 import com.apollocurrency.aplwallet.apl.core.service.blockchain.TransactionProcessingTaskScheduler;
@@ -58,8 +59,8 @@ import com.apollocurrency.aplwallet.apl.util.service.TaskDispatchManager;
 import lombok.Setter;
 import lombok.extern.slf4j.Slf4j;
 
-import javax.enterprise.inject.spi.CDI;
-import javax.inject.Inject;
+import jakarta.enterprise.inject.spi.CDI;
+import jakarta.inject.Inject;
 import java.sql.SQLException;
 import java.util.HashSet;
 import java.util.Set;
@@ -202,7 +203,6 @@ public final class AplCore {
             apiServer.start();
             aplAppStatus.durableTaskUpdate(initCoreTaskID, 5.0, "API initialization done");
 
-
             transportInteractionService = CDI.current().select(TransportInteractionService.class).get();
             transportInteractionService.start();
             aplAppStatus.durableTaskUpdate(initCoreTaskID, 5.5, "Transport control service initialization done");
@@ -267,6 +267,7 @@ public final class AplCore {
             CDI.current().select(DexOperationService.class).get();
             CDI.current().select(TransactionProcessingTaskScheduler.class).get();
             CDI.current().select(ShardingInitTaskBackgroundScheduler.class).get();
+            CDI.current().select(FailedTransactionVerificationService.class).get();
 
             //start all background tasks
             taskDispatchManager.dispatch();

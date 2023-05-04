@@ -36,7 +36,7 @@ import com.apollocurrency.aplwallet.apl.util.injectable.PropertiesHolder;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import javax.enterprise.inject.spi.CDI;
+import jakarta.enterprise.inject.spi.CDI;
 import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.PrintWriter;
@@ -205,7 +205,7 @@ public class Apollo {
 //cheat classloader to get access to "conf" package resources
         ConfPlaceholder ph = new ConfPlaceholder();
 
-//--------------- config locading section -------------------------------------
+//--------------- config locating section -------------------------------------
 
 //load configuration files
         EnvironmentVariables envVars = new EnvironmentVariables(Constants.APPLICATION_DIR_NAME);
@@ -233,7 +233,7 @@ public class Apollo {
             Constants.APPLICATION_DIR_NAME + ".properties",
             SYSTEM_PROPERTY_NAMES);
 
-// load everuthing into applicationProperies. This is the place where all configuration
+// load everything into applicationProperties. This is the place where all configuration
 // is collected from configs, command line and environment variables
         Properties applicationProperties = propertiesLoader.load();
 

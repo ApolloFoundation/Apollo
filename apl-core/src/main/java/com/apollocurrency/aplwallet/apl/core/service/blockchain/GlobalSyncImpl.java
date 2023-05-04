@@ -6,7 +6,7 @@ package com.apollocurrency.aplwallet.apl.core.service.blockchain;
 
 import com.apollocurrency.aplwallet.apl.util.ReadWriteUpdateLock;
 
-import javax.inject.Singleton;
+import jakarta.inject.Singleton;
 
 @Singleton
 public class GlobalSyncImpl implements GlobalSync {

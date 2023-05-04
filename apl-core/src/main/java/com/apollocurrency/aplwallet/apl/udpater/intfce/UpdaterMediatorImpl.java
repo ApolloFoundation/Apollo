@@ -6,7 +6,7 @@ package com.apollocurrency.aplwallet.apl.udpater.intfce;
 
 import com.apollocurrency.aplwallet.apl.core.app.AplCore;
 import com.apollocurrency.aplwallet.apl.core.app.AplCoreRuntime;
-import com.apollocurrency.aplwallet.apl.core.blockchain.Transaction;
+import com.apollocurrency.aplwallet.apl.core.model.Transaction;
 import com.apollocurrency.aplwallet.apl.core.db.DatabaseManager;
 import com.apollocurrency.aplwallet.apl.core.peer.PeersService;
 import com.apollocurrency.aplwallet.apl.core.service.appdata.GeneratorService;
@@ -19,8 +19,8 @@ import com.apollocurrency.aplwallet.apl.util.db.TransactionalDataSource;
 import com.apollocurrency.aplwallet.apl.util.injectable.PropertiesHolder;
 import org.slf4j.Logger;
 
-import javax.enterprise.inject.spi.CDI;
-import javax.inject.Singleton;
+import jakarta.enterprise.inject.spi.CDI;
+import jakarta.inject.Singleton;
 
 import static org.slf4j.LoggerFactory.getLogger;
 

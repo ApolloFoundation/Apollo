@@ -7,9 +7,9 @@ package com.apollocurrency.aplwallet.apl.core.service.fulltext;
 import com.apollocurrency.aplwallet.apl.util.StringValidator;
 import com.apollocurrency.aplwallet.apl.util.env.RuntimeEnvironment;
 
-import javax.enterprise.inject.Produces;
-import javax.inject.Named;
-import javax.inject.Singleton;
+import jakarta.enterprise.inject.Produces;
+import jakarta.inject.Named;
+import jakarta.inject.Singleton;
 import java.nio.file.Path;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
@@ -30,7 +30,7 @@ public class FullTextConfigImpl implements FullTextConfig {
 
     public synchronized void registerTable(String tableName, String indexedColumns) {
         StringValidator.requireNonBlank(tableName, "Table name");
-        tableNames.put(tableName, indexedColumns);
+        tableNames.putIfAbsent(tableName, indexedColumns);
     }
 
     @Produces
@@ -54,5 +54,15 @@ public class FullTextConfigImpl implements FullTextConfig {
     @Named("indexDirPath")
     public Path getIndexPath() {
         return ftlIndexPath == null ? RuntimeEnvironment.getInstance().getDirProvider().getFullTextSearchIndexDir() : ftlIndexPath;
+    }
+
+    @Override
+    public String toString() {
+        final StringBuffer sb = new StringBuffer("FullTextConfigImpl{");
+        sb.append("tableNames=").append(tableNames);
+        sb.append(", schema='").append(schema).append('\'');
+        sb.append(", ftlIndexPath=").append(ftlIndexPath);
+        sb.append('}');
+        return sb.toString();
     }
 }

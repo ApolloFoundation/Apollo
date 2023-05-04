@@ -1,14 +1,15 @@
 /*
- * Copyright © 2018-2020 Apollo Foundation
+ * Copyright © 2018-2021 Apollo Foundation
  */
 
 package com.apollocurrency.aplwallet.apl.core.transaction;
 
 import com.apollocurrency.antifraud.AntifraudValidator;
-import com.apollocurrency.aplwallet.apl.core.blockchain.Transaction;
-import com.apollocurrency.aplwallet.apl.core.blockchain.TransactionImpl;
 import com.apollocurrency.aplwallet.apl.core.chainid.BlockchainConfig;
 import com.apollocurrency.aplwallet.apl.core.entity.state.account.Account;
+import com.apollocurrency.aplwallet.apl.core.exception.AplAcceptableTransactionValidationException;
+import com.apollocurrency.aplwallet.apl.core.exception.AplUnacceptableTransactionValidationException;
+import com.apollocurrency.aplwallet.apl.core.model.Transaction;
 import com.apollocurrency.aplwallet.apl.core.service.blockchain.Blockchain;
 import com.apollocurrency.aplwallet.apl.core.service.state.PhasingPollService;
 import com.apollocurrency.aplwallet.apl.core.service.state.account.AccountControlPhasingService;
@@ -27,7 +28,6 @@ import com.apollocurrency.aplwallet.apl.core.transaction.messages.AppendixValida
 import com.apollocurrency.aplwallet.apl.core.transaction.messages.Attachment;
 import com.apollocurrency.aplwallet.apl.core.transaction.messages.PrunableLoadingService;
 import com.apollocurrency.aplwallet.apl.crypto.Convert;
-import com.apollocurrency.aplwallet.apl.util.Convert2;
 import com.apollocurrency.aplwallet.apl.util.annotation.ParentChildSpecific;
 import com.apollocurrency.aplwallet.apl.util.annotation.ParentMarker;
 import com.apollocurrency.aplwallet.apl.util.exception.AplException;
@@ -35,8 +35,9 @@ import com.apollocurrency.aplwallet.apl.util.io.PayloadResult;
 import com.apollocurrency.aplwallet.apl.util.io.Result;
 import lombok.extern.slf4j.Slf4j;
 
-import javax.inject.Inject;
-import javax.inject.Singleton;
+import jakarta.inject.Inject;
+import jakarta.inject.Singleton;
+import java.util.Optional;
 
 @Slf4j
 @Singleton
@@ -80,204 +81,103 @@ public class TransactionValidator {
         return attachment.isPhased(transaction) ? transaction.getPhasing().getFinishHeight() - 1 : blockchain.getHeight();
     }
 
-    private void validateLightlyWithoutAppendices(Transaction transaction) throws AplException.NotValidException {
-        if (!transactionVersionValidator.isValidVersion(transaction)) {
-            throw new AplException.NotValidException("Unsupported transaction version:" + transaction.getVersion() + " at height " + blockchain.getHeight());
-        }
-        long maxBalanceAtm = blockchainConfig.getCurrentConfig().getMaxBalanceATM();
-        short deadline = transaction.getDeadline();
-        long feeATM = transaction.getFeeATM();
-        long amountATM = transaction.getAmountATM();
-        TransactionType type = transaction.getType();
-        TransactionTypes.TransactionTypeSpec typeSpec = type.getSpec();
-        if (transaction.getTimestamp() == 0 ? (deadline != 0 || feeATM != 0) : (deadline < 1 || feeATM < 0)
-            || feeATM > maxBalanceAtm
-            || amountATM < 0
-            || amountATM > maxBalanceAtm
-            || typeSpec == null) {
-            throw new AplException.NotValidException("Invalid transaction parameters:\n type: " + type + ", timestamp: " + transaction.getTimestamp()
-                + ", deadline: " + deadline + ", fee: " + feeATM + ", amount: " + amountATM);
-        }
-        byte[] referencedTransactionFullHash = Convert.parseHexString(transaction.getReferencedTransactionFullHash());
-
-        if (referencedTransactionFullHash != null && referencedTransactionFullHash.length != 32) {
-            throw new AplException.NotValidException("Invalid referenced transaction full hash " + Convert.toHexString(referencedTransactionFullHash));
-        }
-        Attachment attachment = transaction.getAttachment();
-
-        if (attachment == null || typeSpec != attachment.getTransactionTypeSpec()) {
-            throw new AplException.NotValidException("Invalid attachment " + attachment + " for transaction of type " + type);
-        }
-
-        long recipientId = transaction.getRecipientId();
-        if (!type.canHaveRecipient() && (recipientId != 0 || amountATM != 0)) {
-            throw new AplException.NotValidException("Transactions of this type must have recipient == 0, amount == 0");
-        }
-
-        if (type.mustHaveRecipient() && recipientId == 0) {
-            throw new AplException.NotValidException("Transactions of this type must have a valid recipient");
-        }
-    }
-
-    public void validateLightly(Transaction transaction) throws AplException.ValidationException {
-        validateLightlyWithoutAppendices(transaction);
+    /**
+     * Validate transaction lightly without state fetch using its own data and node's in-memory info
+     * @param transaction transaction to validate
+     * @throws AplUnacceptableTransactionValidationException if transaction's verification failed and transaction should be cared as fully invalid
+     */
+    public void validateLightly(Transaction transaction) {
+        validateLightlyWithoutAppendages(transaction);
         for (AbstractAppendix appendage : transaction.getAppendages()) {
             AppendixValidator<AbstractAppendix> validatorFor = validatorRegistry.getValidatorFor(appendage);
-            doAppendixLightValidation(validatorFor, transaction, appendage);
+            verifyAppendageVersion(transaction, appendage);
+            doAppendixLightValidationRethrowing(transaction, appendage, validatorFor);
         }
     }
 
+    /**
+     * Validate transaction's signature, sender's fee payability and transaction's data validity without state fetch
+     * @param transaction transaction to validate
+     * @throws AplUnacceptableTransactionValidationException when transaction does not pass validation
+     */
+    public void validateSufficiently(Transaction transaction) {
+        validateLightly(transaction);
+        validateSignatureWithTxFee(transaction);
+    }
 
-    public void validateFully(Transaction transaction) throws AplException.ValidationException {
-       validateLightlyWithoutAppendices(transaction);
+    /**
+     * Fully validate transaction against the current blockchain state,
+     * Note the signature verification is performed by separate method {@link TransactionValidator#verifySignature(Transaction)}
+     * @param transaction transaction to validate
+     * @throws AplAcceptableTransactionValidationException when transaction's appendix/attachment verification failed and transaction may be accepted
+     * @throws AplUnacceptableTransactionValidationException when transaction general verification failed and transaction is not valid at all
+     * @throws com.apollocurrency.aplwallet.apl.core.exception.AplTransactionFeatureNotEnabledException when transaction is not allowed yet
+     */
+    public void validateFully(Transaction transaction) {
+       validateLightlyWithoutAppendages(transaction);
 
         if (!antifraudValidator.validate(blockchain.getHeight(), blockchainConfig.getChain().getChainId(), transaction.getSenderId(),
-            transaction.getRecipientId())) throw new AplException.NotValidException("Incorrect Passphrase");
+            transaction.getRecipientId())) {
+            throw new AplUnacceptableTransactionValidationException("Incorrect Passphrase", transaction);
+        }
 
         Account sender = accountService.getAccount(transaction.getSenderId());
-        if (sender != null && sender.isChild()) {
-            Account recipient = accountService.getAccount(transaction.getRecipientId());
-            if (recipient == null) {
-                throw new AplException.NotCurrentlyValidException("Account " + transaction.getRecipientId() + " does not exist yet.");
-            }
-            @ParentChildSpecific(ParentMarker.ADDRESS_RESTRICTION)
-            boolean rc;
-            switch (sender.getAddrScope()) {
-                case IN_FAMILY:
-                    rc = sender.getParentId() == recipient.getId() || sender.getParentId() == recipient.getParentId();
-                    break;
-                case EXTERNAL:
-                    rc = true;
-                    break;
-                case CUSTOM:
-                default:
-                    throw new AplException.NotCurrentlyValidException("Unsupported value " +
-                        sender.getAddrScope().name() +
-                        " for sender address scope;" +
-                        "sender.Id=" + sender.getId());
-            }
-            if (!rc) {
-                throw new AplException.NotCurrentlyValidException("The parent account for sender and recipient must be the same;" +
-                    "sender.parentId=" + sender.getParentId() + ", recipient.parentId=" + recipient.getParentId());
-            }
-        }
+        validateChildAccountsSpecific(transaction, sender);
 
         boolean validatingAtFinish = transaction.getPhasing() != null && transaction.getSignature() != null && phasingPollService.getPoll(transaction.getId()) != null;
-        for (AbstractAppendix appendage : transaction.getAppendages()) {
-            prunableService.loadPrunable(transaction, appendage, false);
-            //TODO Why does it need? Take a look how to use it.
-            //if (! appendage.verifyVersion()) {
-            //    throw new AplException.NotValidException("Invalid attachment version " + appendage.getVersion());
-            //}
-            AppendixValidator<AbstractAppendix> validator = validatorRegistry.getValidatorFor(appendage);
-            doAppendixFullValidation(validatingAtFinish, validator, transaction, appendage);
-        }
         Result byteArrayTx = PayloadResult.createLittleEndianByteArrayResult();
         txBContext.createSerializer(transaction.getVersion()).serialize(transaction, byteArrayTx);
         int fullSize = TransactionUtils.calculateFullSize(transaction, byteArrayTx.size());
         if (fullSize > blockchainConfig.getCurrentConfig().getMaxPayloadLength()) {
-            throw new AplException.NotValidException("Transaction size " + fullSize + " exceeds maximum payload size");
+            throw new AplUnacceptableTransactionValidationException("Transaction size " + fullSize + " exceeds maximum payload size", transaction);
         }
         int blockchainHeight = blockchain.getHeight();
         if (!validatingAtFinish) {
-            validateFeeSufficiency(transaction, blockchainHeight);
+            validateFee(sender, transaction, blockchainHeight);
             long ecBlockId = transaction.getECBlockId();
             int ecBlockHeight = transaction.getECBlockHeight();
             if (ecBlockId != 0) {
                 if (blockchainHeight < ecBlockHeight) {
-                    throw new AplException.NotCurrentlyValidException("ecBlockHeight " + ecBlockHeight
-                        + " exceeds blockchain height " + blockchainHeight);
+                    throw new AplUnacceptableTransactionValidationException("ecBlockHeight " + ecBlockHeight
+                        + " exceeds blockchain height " + blockchainHeight, transaction);
                 }
                 if (blockchain.getBlockIdAtHeight(ecBlockHeight) != ecBlockId) {
-                    throw new AplException.NotCurrentlyValidException("ecBlockHeight " + ecBlockHeight
+                    throw new AplUnacceptableTransactionValidationException("ecBlockHeight " + ecBlockHeight
                         + " does not match ecBlockId " + Long.toUnsignedString(ecBlockId)
-                        + ", transaction was generated on a fork");
+                        + ", transaction was generated on a fork", transaction);
                 }
             }
-            accountControlPhasingService.checkTransaction(transaction);
+            try {
+                accountControlPhasingService.checkTransaction(transaction);
+            } catch (AplException.NotCurrentlyValidException e) {
+                throw new AplUnacceptableTransactionValidationException(e.getMessage(), e, transaction);
+            }
+        }
+        for (AbstractAppendix appendage : transaction.getAppendages()) {
+            verifyAppendageVersion(transaction, appendage);
+            prunableService.loadPrunable(transaction, appendage, false);
+            AppendixValidator<AbstractAppendix> validator = validatorRegistry.getValidatorFor(appendage);
+            if (validatingAtFinish) {
+                validateAtFinishRethrowing(transaction, appendage, validator);
+            } else {
+                doAppendixLightValidationRethrowing(transaction, appendage, validator);
+                doAppendixStateDependentValidationRethrowing(transaction, appendage, validator);
+            }
         }
     }
 
-    private void doAppendixFullValidation(boolean validatingAtFinish, AppendixValidator<AbstractAppendix> validator, Transaction transaction, AbstractAppendix appendage) throws AplException.ValidationException {
-        if (validatingAtFinish) {
-            if (validator != null) {
-                validator.validateAtFinish(transaction, appendage, blockchain.getHeight());
-            } else {
-                appendage.validateAtFinish(transaction, blockchain.getHeight());
-            }
-        } else {
-            if (validator != null) {
-                validator.validateStateDependent(transaction, appendage, blockchain.getHeight());
-                validator.validateStateIndependent(transaction, appendage, blockchain.getHeight());
-            } else {
-                appendage.performFullValidation(transaction, blockchain.getHeight());
-            }
-        }
+    public boolean isValidVersion(int txVersion) {
+        return transactionVersionValidator.isValidVersion(txVersion);
     }
 
-    private void doAppendixLightValidation(AppendixValidator<AbstractAppendix> validator, Transaction transaction, AbstractAppendix appendage) throws AplException.ValidationException {
-            if (validator != null) {
-                validator.validateStateIndependent(transaction, appendage, blockchain.getHeight());
-            } else {
-                appendage.performLightweightValidation(transaction, blockchain.getHeight());
-            }
-    }
-
-    public int getActualTransactionVersion() {
-        return transactionVersionValidator.getActualVersion();
-    }
-
-    public boolean isValidVersion(int transactionVersion) {
-        return transactionVersionValidator.isValidVersion(transactionVersion);
-    }
-
-    public void checkVersion(int transactionVersion) {
-        transactionVersionValidator.checkVersion(transactionVersion);
-    }
-
-    public void validateSignatureWithTxFee(Transaction transaction) throws AplException.NotCurrentlyValidException, AplException.NotValidException {
+    public void validateSignatureWithTxFee(Transaction transaction) {
         Account sender = accountService.getAccount(transaction.getSenderId());
         if (sender == null) {
-            throw new AplException.NotCurrentlyValidException("Account " + Long.toUnsignedString(transaction.getSenderId()) + " does not exist yet");
+            throw new AplUnacceptableTransactionValidationException("Account " + Long.toUnsignedString(transaction.getSenderId()) + " does not exist yet", transaction);
         }
         int height = blockchain.getHeight();
         validateFee(sender, transaction, height);
         checkSignatureThrowingEx(transaction, sender);
-    }
-    public void validateSignatureWithTxFeeLessStrict(Transaction transaction) throws AplException.NotCurrentlyValidException, AplException.NotValidException {
-        int height = blockchain.getHeight();
-        validateFeeSufficiency(transaction, height);
-        checkSignatureThrowingEx(transaction, null);
-    }
-
-    private void checkSignatureThrowingEx(Transaction transaction, Account account) throws AplException.NotValidException {
-        if (!checkSignature(account, transaction)) {
-            throw new AplException.NotValidException("Invalid signature for transaction " + transaction.getId());
-        }
-    }
-
-    void validateFee(Account account, Transaction transaction, int blockchainHeight) throws AplException.NotCurrentlyValidException {
-        validateFeeSufficiency(transaction, blockchainHeight);
-        long feeATM = transaction.getFeeATM();
-        if (transaction.referencedTransactionFullHash() != null) {
-            feeATM = Math.addExact(feeATM, blockchainConfig.getUnconfirmedPoolDepositAtm());
-        }
-        if (account == null) {
-            throw new AplException.NotCurrentlyValidException("Account with  id " + transaction.getSenderId() + " is not exist yet");
-        }
-        if (account.getUnconfirmedBalanceATM() < feeATM) {
-            throw new AplException.NotCurrentlyValidException("Account balance " + account.getUnconfirmedBalanceATM() + " is not enough to pay tx fee " + feeATM);
-        }
-    }
-
-    void validateFeeSufficiency(Transaction transaction, int blockchainHeight) throws AplException.NotCurrentlyValidException {
-        long feeATM = transaction.getFeeATM();
-        long minimumFeeATM = feeCalculator.getMinimumFeeATM(transaction, blockchainHeight);
-        if (feeATM < minimumFeeATM) {
-            throw new AplException.NotCurrentlyValidException(String.format("Transaction fee %f %s less than minimum fee %f %s at height %d",
-                ((double) feeATM) / blockchainConfig.getOneAPL(), blockchainConfig.getCoinSymbol(), ((double) minimumFeeATM) / blockchainConfig.getOneAPL(), blockchainConfig.getCoinSymbol(),
-                blockchainHeight));
-        }
     }
 
     public boolean checkSignature(Transaction transaction) {
@@ -292,14 +192,18 @@ public class TransactionValidator {
             return false;
         }
         if (sender == null) {
-            log.trace("Sender account not found, senderId={}", transaction.getSenderId());
+            log.debug("Sender account is null, senderId={}, tx={}", Long.toUnsignedString(transaction.getSenderId()),
+                transaction.getStringId());
         }
         @ParentChildSpecific(ParentMarker.MULTI_SIGNATURE)
         Credential signatureCredential;
-        SignatureVerifier signatureVerifier = SignatureToolFactory.selectValidator(transaction.getVersion()).orElseThrow(UnsupportedTransactionVersion::new);
-        if (log.isTraceEnabled()) {
-            log.trace("#MULTI_SIG# verify signature validator class={}", signatureVerifier.getClass().getName());
+        Optional<SignatureVerifier> signatureVerifierOptional = SignatureToolFactory.selectValidator(transaction.getVersion());
+        if (signatureVerifierOptional.isEmpty()) {
+            log.error("Unsupported version: '{}' of the transaction: '{}'", transaction.getVersion(), transaction.getStringId());
+            return false;
         }
+        SignatureVerifier signatureVerifier = signatureVerifierOptional.get();
+        log.trace("#MULTI_SIG# verify signature validator class={}", signatureVerifier.getClass().getName());
         if (sender != null && sender.isChild()) {
             //multi-signature
             if (transaction.getVersion() < 2) {
@@ -318,40 +222,199 @@ public class TransactionValidator {
                 signatureCredential = new MultiSigCredential(transaction.getSenderPublicKey());
             }
         }
-        if (log.isTraceEnabled()) {
-            log.trace("#MULTI_SIG# verify credential={}", signatureCredential);
-        }
+        log.trace("#MULTI_SIG# verify credential={}", signatureCredential);
         if (!signatureCredential.validateCredential(keyValidator)) {
-            log.trace("#MULTI_SIG# Credential verification failed, credential={}", signatureCredential);
+            log.error("#MULTI_SIG# Credential verification failed, credential={}", signatureCredential);
             return false;
         }
+        Result byteArrayTx = PayloadResult.createLittleEndianByteArrayResult();
+        txBContext.createSerializer(transaction.getVersion())
+            .serialize(TransactionWrapperHelper.createUnsignedTransaction(transaction), byteArrayTx);
 
-        if (transaction.getSignature() != null && transaction.getSignature().isVerified()) {
-            return true;
-        } else {
-            Result byteArrayTx = PayloadResult.createLittleEndianByteArrayResult();
-            txBContext.createSerializer(transaction.getVersion())
-                .serialize(TransactionWrapperHelper.createUnsignedTransaction(transaction), byteArrayTx);
+        log.trace("#MULTI_SIG# verify signature={} publicKey={} document={}",
+            Convert.toHexString(transaction.getSignature().bytes()),
+            signatureCredential,
+            Convert.toHexString(byteArrayTx.array()));
 
-            if (log.isTraceEnabled()) {
-                log.trace("#MULTI_SIG# verify signature={} publicKey={} document={}",
-                    Convert.toHexString(transaction.getSignature().bytes()),
-                    signatureCredential,
-                    Convert.toHexString(byteArrayTx.array()));
-            }
-
-            boolean verifiedOk = signatureVerifier.verify(
-                byteArrayTx.array(), transaction.getSignature(), signatureCredential
-            );
-            if (verifiedOk) {
-                ((TransactionImpl) transaction.getTransactionImpl()).withValidSignature(verifiedOk);
-            }
-            return verifiedOk;
-        }
+        return signatureVerifier.verify(byteArrayTx.array(), transaction.getSignature(), signatureCredential);
     }
 
     public boolean verifySignature(Transaction transaction) {
-        return checkSignature(transaction) && accountPublicKeyService.setOrVerifyPublicKey(transaction.getSenderId(), transaction.getSenderPublicKey());
+        return checkSignature(transaction)
+            && accountPublicKeyService.setOrVerifyPublicKey(transaction.getSenderId(), transaction.getSenderPublicKey());
+    }
+
+    private void doAppendixLightValidationRethrowing(Transaction transaction, AbstractAppendix appendage, AppendixValidator<AbstractAppendix> validatorFor) {
+        try {
+            doAppendixLightValidation(validatorFor, transaction, appendage);
+        } catch (AplException.ValidationException e) {
+            throw new AplUnacceptableTransactionValidationException(e.getMessage(), e, transaction);
+        }
+    }
+
+    private void checkSignatureThrowingEx(Transaction transaction, Account account) {
+        if (!checkSignature(account, transaction)) {
+            throw new AplUnacceptableTransactionValidationException("Invalid signature for transaction " + transaction.getStringId(), transaction);
+        }
+    }
+
+    private void validateAtFinish(AppendixValidator<AbstractAppendix> validator, Transaction transaction, AbstractAppendix appendix) throws AplException.ValidationException {
+        if (validator != null) {
+            validator.validateAtFinish(transaction, appendix, blockchain.getHeight());
+        } else {
+            appendix.validateAtFinish(transaction, blockchain.getHeight());
+        }
+    }
+
+    private void doAppendixStateDependentValidationRethrowing(Transaction transaction, AbstractAppendix appendage, AppendixValidator<AbstractAppendix> validator) {
+        try {
+            doAppendixStateDependentValidation(validator, transaction, appendage);
+        } catch (AplException.ValidationException e) {
+            throw new AplAcceptableTransactionValidationException(e.getMessage(), e, transaction);
+        }
+    }
+
+    private void validateAtFinishRethrowing(Transaction transaction, AbstractAppendix appendage, AppendixValidator<AbstractAppendix> validator) {
+        try {
+            validateAtFinish(validator, transaction, appendage);
+        } catch (AplException.ValidationException e) {
+            throw new AplUnacceptableTransactionValidationException(e.getMessage(), transaction);
+        }
+    }
+
+    /**
+     * Performs sender's transaction fee payability verification
+     * @param account sender's account, may be null
+     * @param transaction transaction to validate fee amount
+     * @param blockchainHeight height of the blockchain on which perform validation
+     * @throws AplUnacceptableTransactionValidationException when sender's has not enough funds to pay transaction fee or sender's account does not exist
+     */
+    private void validateFee(Account account, Transaction transaction, int blockchainHeight) {
+        validateFeeSufficiency(transaction, blockchainHeight);
+        long feeATM = transaction.getFeeATM();
+        if (transaction.referencedTransactionFullHash() != null) {
+            feeATM = Math.addExact(feeATM, blockchainConfig.getUnconfirmedPoolDepositAtm());
+        }
+        if (account == null) {
+            throw new AplUnacceptableTransactionValidationException("Sender's account '" +
+                Long.toUnsignedString(transaction.getSenderId()) + "' does not exist yet", transaction);
+        }
+        if (account.getUnconfirmedBalanceATM() < feeATM) {
+            throw new AplUnacceptableTransactionValidationException("Account '" + Long.toUnsignedString(transaction.getSenderId())
+                +"' balance " + account.getUnconfirmedBalanceATM() + " is not enough to pay tx fee " + feeATM, transaction);
+        }
+    }
+
+    /**
+     * Verify that fee set for the transaction is enough at given blockchain height
+     * @param transaction transaction to validate fee amount
+     * @param blockchainHeight height of the blockchain on which perform validation
+     * @throws AplUnacceptableTransactionValidationException when transaction's fee is not enough
+     */
+    private void validateFeeSufficiency(Transaction transaction, int blockchainHeight) {
+        long feeATM = transaction.getFeeATM();
+        long minimumFeeATM = feeCalculator.getMinimumFeeATM(transaction, blockchainHeight);
+        if (feeATM < minimumFeeATM) {
+            throw new AplUnacceptableTransactionValidationException(String.format("Transaction fee %f %s less than minimum fee %f %s at height %d",
+                ((double) feeATM) / blockchainConfig.getOneAPL(), blockchainConfig.getCoinSymbol(), ((double) minimumFeeATM) / blockchainConfig.getOneAPL(), blockchainConfig.getCoinSymbol(),
+                blockchainHeight), transaction);
+        }
+    }
+
+    /**
+     * Perform light transaction validation by its own data without state fetch
+     * @param transaction transaction to validate
+     * @throws AplUnacceptableTransactionValidationException when transaction does not pass validation
+     */
+    private void validateLightlyWithoutAppendages(Transaction transaction) {
+        if (!transactionVersionValidator.isValidVersion(transaction)) {
+            throw new AplUnacceptableTransactionValidationException("Unsupported transaction version " + transaction.getVersion() + " at height " + blockchain.getHeight(), transaction);
+        }
+        long maxBalanceAtm = blockchainConfig.getCurrentConfig().getMaxBalanceATM();
+        short deadline = transaction.getDeadline();
+        long feeATM = transaction.getFeeATM();
+        long amountATM = transaction.getAmountATM();
+        TransactionType type = transaction.getType();
+        TransactionTypes.TransactionTypeSpec typeSpec = type.getSpec();
+        if (typeSpec == null
+            || (transaction.getTimestamp() == 0 ? (deadline != 0 || feeATM != 0) : (deadline < 1 || feeATM < 0))
+            || feeATM > maxBalanceAtm
+            || amountATM < 0
+            || amountATM > maxBalanceAtm) {
+            throw new AplUnacceptableTransactionValidationException("Invalid transaction parameters: type: " + type + ", timestamp: " + transaction.getTimestamp()
+                + ", deadline: " + deadline + ", fee: " + feeATM + ", amount: " + amountATM, transaction);
+        }
+        byte[] referencedTransactionFullHash = Convert.parseHexString(transaction.getReferencedTransactionFullHash());
+
+        if (referencedTransactionFullHash != null && referencedTransactionFullHash.length != 32) {
+            throw new AplUnacceptableTransactionValidationException("Invalid referenced transaction full hash " + Convert.toHexString(referencedTransactionFullHash), transaction);
+        }
+        Attachment attachment = transaction.getAttachment();
+
+        if (attachment == null || typeSpec != attachment.getTransactionTypeSpec()) {
+            throw new AplUnacceptableTransactionValidationException("Invalid attachment " + attachment + " for transaction of type " + type, transaction);
+        }
+
+        long recipientId = transaction.getRecipientId();
+        if (!type.canHaveRecipient() && (recipientId != 0 || amountATM != 0)) {
+            throw new AplUnacceptableTransactionValidationException("Transactions of this type must have recipient == 0, amount == 0", transaction);
+        }
+
+        if (type.mustHaveRecipient() && recipientId == 0) {
+            throw new AplUnacceptableTransactionValidationException("Transactions of this type must have a valid recipient", transaction);
+        }
+    }
+
+    private void doAppendixStateDependentValidation(AppendixValidator<AbstractAppendix> validator, Transaction transaction, AbstractAppendix appendage) throws AplException.ValidationException {
+        if (validator != null) {
+            validator.validateStateDependent(transaction, appendage, blockchain.getHeight());
+        } else {
+            appendage.performStateDependentValidation(transaction, blockchain.getHeight());
+        }
+    }
+
+    private void doAppendixLightValidation(AppendixValidator<AbstractAppendix> validator, Transaction transaction, AbstractAppendix appendage) throws AplException.ValidationException {
+        if (validator != null) {
+            validator.validateStateIndependent(transaction, appendage, blockchain.getHeight());
+        } else {
+            appendage.performStateIndependentValidation(transaction, blockchain.getHeight());
+        }
+    }
+
+    private void validateChildAccountsSpecific(Transaction transaction, Account sender) {
+        if (sender != null && sender.isChild()) {
+            Account recipient = accountService.getAccount(transaction.getRecipientId());
+            if (recipient == null) {
+                throw new AplUnacceptableTransactionValidationException("Recipient's account " +
+                    "'" + Long.toUnsignedString(transaction.getRecipientId()) + "' does not exist yet", transaction);
+            }
+            @ParentChildSpecific(ParentMarker.ADDRESS_RESTRICTION)
+            boolean rc;
+            switch (sender.getAddrScope()) {
+                case IN_FAMILY:
+                    rc = sender.getParentId() == recipient.getId() || sender.getParentId() == recipient.getParentId();
+                    break;
+                case EXTERNAL:
+                    rc = true;
+                    break;
+                case CUSTOM:
+                default:
+                    throw new AplUnacceptableTransactionValidationException("Unsupported value '" +
+                        sender.getAddrScope().name() +
+                        "' for sender address scope;" +
+                        "sender.Id=" + Long.toUnsignedString(sender.getId()), transaction);
+            }
+            if (!rc) {
+                throw new AplUnacceptableTransactionValidationException("The parent account for sender and recipient must be the same;" +
+                    "sender.parentId=" + Long.toUnsignedString(sender.getParentId()) + ", recipient.parentId=" + Long.toUnsignedString(recipient.getParentId()), transaction);
+            }
+        }
+    }
+
+    private void verifyAppendageVersion(Transaction transaction, AbstractAppendix appendage) {
+        if (!appendage.verifyVersion()) {
+            throw new AplUnacceptableTransactionValidationException(appendage.getAppendixName() + " appendage version '" + appendage.getVersion() + "' is not supported", transaction);
+        }
     }
 
     private static class PublicKeyValidator implements KeyValidator {
@@ -363,10 +426,9 @@ public class TransactionValidator {
 
         @Override
         public boolean validate(byte[] publicKey) {
-            if (log.isTraceEnabled()) {
-                log.trace("#MULTI_SIG# public key validation account={}", Convert2.rsAccount(AccountService.getId(publicKey)));
-            }
-            if (!accountPublicKeyService.setOrVerifyPublicKey(AccountService.getId(publicKey), publicKey)) {
+            long accountId = AccountService.getId(publicKey);
+            log.trace("#MULTI_SIG# public key validation account={}", Long.toUnsignedString(accountId));
+            if (!accountPublicKeyService.setOrVerifyPublicKey(accountId, publicKey)) {
                 log.error("Public Key Verification failed: pk={}", Convert.toHexString(publicKey));
                 return false;
             }

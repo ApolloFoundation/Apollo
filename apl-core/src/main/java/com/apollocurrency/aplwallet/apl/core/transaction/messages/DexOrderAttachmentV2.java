@@ -1,3 +1,7 @@
+/*
+ *  Copyright © 2018-2021 Apollo Foundation
+ */
+
 package com.apollocurrency.aplwallet.apl.core.transaction.messages;
 
 import com.apollocurrency.aplwallet.apl.core.model.dex.DexOrder;
@@ -5,19 +9,29 @@ import com.apollocurrency.aplwallet.apl.crypto.Convert;
 import com.apollocurrency.aplwallet.apl.crypto.NotValidException;
 import com.apollocurrency.aplwallet.apl.util.Constants;
 import com.apollocurrency.aplwallet.apl.util.exception.AplException;
+import lombok.EqualsAndHashCode;
+import lombok.Getter;
 import org.json.simple.JSONObject;
 
 import java.nio.ByteBuffer;
 
+@Getter
+@EqualsAndHashCode(callSuper = true)
 public class DexOrderAttachmentV2 extends DexOrderAttachment {
 
-    private String fromAddress;
-    private String toAddress;
+    private final String fromAddress;
+    private final String toAddress;
 
     public DexOrderAttachmentV2(DexOrder order) {
         super(order);
         this.fromAddress = order.getFromAddress();
         this.toAddress = order.getToAddress();
+    }
+
+    public DexOrderAttachmentV2(byte type, byte orderCurrency, long orderAmount, byte pairCurrency, long pairRate, byte status, int finishTime, String fromAddress, String toAddress) {
+        super(type, orderCurrency, orderAmount, pairCurrency, pairRate, status, finishTime);
+        this.fromAddress = fromAddress;
+        this.toAddress = toAddress;
     }
 
     public DexOrderAttachmentV2(ByteBuffer buffer) throws AplException.NotValidException {
@@ -67,23 +81,13 @@ public class DexOrderAttachmentV2 extends DexOrderAttachment {
     }
 
     @Override
+    public boolean verifyVersion() {
+        return this.getVersion() == 2;
+    }
+
+    @Override
     public String getAppendixName() {
         return "DexOrder_v2";
     }
 
-    public String getFromAddress() {
-        return fromAddress;
-    }
-
-    public void setFromAddress(String fromAddress) {
-        this.fromAddress = fromAddress;
-    }
-
-    public String getToAddress() {
-        return toAddress;
-    }
-
-    public void setToAddress(String toAddress) {
-        this.toAddress = toAddress;
-    }
 }

@@ -4,7 +4,8 @@
 
 package com.apollocurrency.aplwallet.apl.core.service.state.currency.impl;
 
-import com.apollocurrency.aplwallet.apl.core.blockchain.Transaction;
+import com.apollocurrency.aplwallet.apl.core.app.observer.events.TrimEvent;
+import com.apollocurrency.aplwallet.apl.core.model.Transaction;
 import com.apollocurrency.aplwallet.apl.core.chainid.BlockchainConfig;
 import com.apollocurrency.aplwallet.apl.core.converter.rest.IteratorToStreamConverter;
 import com.apollocurrency.aplwallet.apl.core.dao.state.currency.CurrencyMintTable;
@@ -24,7 +25,6 @@ import com.apollocurrency.aplwallet.apl.core.entity.state.currency.CurrencyType;
 import com.apollocurrency.aplwallet.apl.core.entity.state.exchange.Exchange;
 import com.apollocurrency.aplwallet.apl.core.service.fulltext.FullTextOperationData;
 import com.apollocurrency.aplwallet.apl.core.service.fulltext.FullTextSearchService;
-import com.apollocurrency.aplwallet.apl.core.service.fulltext.FullTextSearchUpdater;
 import com.apollocurrency.aplwallet.apl.core.service.state.BlockChainInfoService;
 import com.apollocurrency.aplwallet.apl.core.service.state.ShufflingService;
 import com.apollocurrency.aplwallet.apl.core.service.state.account.AccountCurrencyService;
@@ -35,7 +35,7 @@ import com.apollocurrency.aplwallet.apl.core.service.state.currency.CurrencyServ
 import com.apollocurrency.aplwallet.apl.core.service.state.currency.CurrencyTransferService;
 import com.apollocurrency.aplwallet.apl.core.service.state.currency.MonetaryCurrencyMintingService;
 import com.apollocurrency.aplwallet.apl.core.service.state.exchange.ExchangeService;
-import com.apollocurrency.aplwallet.apl.core.transaction.messages.MonetarySystemCurrencyIssuance;
+import com.apollocurrency.aplwallet.apl.core.transaction.messages.MonetarySystemCurrencyIssuanceAttachment;
 import com.apollocurrency.aplwallet.apl.core.transaction.messages.MonetarySystemCurrencyMinting;
 import com.apollocurrency.aplwallet.apl.core.transaction.messages.TransactionValidationHelper;
 import com.apollocurrency.aplwallet.apl.util.Constants;
@@ -49,8 +49,10 @@ import com.apollocurrency.aplwallet.apl.util.db.TransactionalDataSource;
 import com.apollocurrency.aplwallet.apl.util.exception.AplException;
 import lombok.extern.slf4j.Slf4j;
 
-import javax.inject.Inject;
-import javax.inject.Singleton;
+import jakarta.enterprise.event.Event;
+import jakarta.enterprise.util.AnnotationLiteral;
+import jakarta.inject.Inject;
+import jakarta.inject.Singleton;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
@@ -86,7 +88,7 @@ public class CurrencyServiceImpl implements CurrencyService {
     private final ShufflingService shufflingService;
     private final BlockchainConfig blockchainConfig;
     private final TransactionValidationHelper validationHelper;
-    private final FullTextSearchUpdater fullTextSearchUpdater;
+    private final Event<FullTextOperationData> fullTextOperationDataEvent;
     private final FullTextSearchService fullTextSearchService;
 
     @Inject
@@ -104,7 +106,7 @@ public class CurrencyServiceImpl implements CurrencyService {
                                ShufflingService shufflingService,
                                BlockchainConfig blockchainConfig,
                                TransactionValidationHelper transactionValidationHelper,
-                               FullTextSearchUpdater fullTextSearchUpdater,
+                               Event<FullTextOperationData> fullTextOperationDataEvent,
                                FullTextSearchService fullTextSearchService
     ) {
         this.currencySupplyTable = currencySupplyTable;
@@ -122,7 +124,7 @@ public class CurrencyServiceImpl implements CurrencyService {
         this.currencyTransferService = currencyTransferService;
         this.shufflingService = shufflingService;
         this.blockchainConfig = blockchainConfig;
-        this.fullTextSearchUpdater = fullTextSearchUpdater;
+        this.fullTextOperationDataEvent = fullTextOperationDataEvent;
         this.fullTextSearchService = fullTextSearchService;
     }
 
@@ -196,7 +198,7 @@ public class CurrencyServiceImpl implements CurrencyService {
 
     @Override
     public void addCurrency(LedgerEvent event, long eventId, Transaction transaction, Account senderAccount,
-                            MonetarySystemCurrencyIssuance attachment) {
+                            MonetarySystemCurrencyIssuanceAttachment attachment) {
         Currency oldCurrency;
         if ((oldCurrency = this.getCurrencyByCode(attachment.getCode())) != null) {
             this.delete(oldCurrency, event, eventId, senderAccount);
@@ -251,9 +253,6 @@ public class CurrencyServiceImpl implements CurrencyService {
     }
 
     public long getCurrentSupply(Currency currency) {
-//        if (!currency.is(RESERVABLE) && !currency.is(MINTABLE)) {
-//            return currency.getInitialSupply();
-//        }
         CurrencySupply currencySupply = this.loadCurrencySupplyByCurrency(currency);
         return currencySupply.getCurrentSupply();
     }
@@ -274,9 +273,6 @@ public class CurrencyServiceImpl implements CurrencyService {
 
     @Override
     public CurrencySupply loadCurrencySupplyByCurrency(Currency currency) {
-//        if (!currency.is(RESERVABLE) && !currency.is(MINTABLE)) {
-//            return null;
-//        }
         CurrencySupply currencySupply = currency.getCurrencySupply();
         if (currencySupply == null) {
             currencySupply = currencySupplyTable.get(currency.getId());
@@ -354,20 +350,16 @@ public class CurrencyServiceImpl implements CurrencyService {
             if (!isActive(currency)) {
                 Stream<CurrencyFounder> founders = currencyFounderService
                     .getCurrencyFoundersStream(currency.getId(), 0, Integer.MAX_VALUE);
-                founders.forEach((founder) -> {
-                    accountService.addToBalanceAndUnconfirmedBalanceATM(
-                        accountService.getAccount(founder.getAccountId()),
-                        event, eventId, Math.multiplyExact(currency.getReserveSupply(), founder.getAmountPerUnitATM()));
-                });
+                founders.forEach((founder) -> accountService.addToBalanceAndUnconfirmedBalanceATM(
+                    accountService.getAccount(founder.getAccountId()),
+                    event, eventId, Math.multiplyExact(currency.getReserveSupply(), founder.getAmountPerUnitATM())));
             }
             currencyFounderService.remove(currency.getId());
         }
         if (currency.is(CurrencyType.EXCHANGEABLE)) {
             Stream<CurrencyBuyOffer> buyOffers =
                 currencyExchangeOfferFacade.getCurrencyBuyOfferService().getOffersStream(currency, 0, -1);
-            buyOffers.forEach((offer) -> {
-                currencyExchangeOfferFacade.removeOffer(event, offer);
-            });
+            buyOffers.forEach((offer) -> currencyExchangeOfferFacade.removeOffer(event, offer));
         }
         if (currency.is(MINTABLE)) {
             // lazy init to break up circular dependency
@@ -397,7 +389,7 @@ public class CurrencyServiceImpl implements CurrencyService {
     public void validate(Currency currency, Transaction transaction) throws AplException.ValidationException {
         Objects.requireNonNull(transaction);
         if (currency == null) {
-            log.trace("currency = {}, tr = {}, height = {}", currency, transaction, transaction.getHeight());
+            log.trace("currency is NULL, tr = {}, height = {}", transaction, transaction.getHeight());
             log.trace("s-trace = {}", ThreadUtils.last5Stacktrace());
             throw new AplException.NotCurrentlyValidException("Unknown currency: " + transaction.getAttachment().getJSONObject());
         }
@@ -436,7 +428,7 @@ public class CurrencyServiceImpl implements CurrencyService {
 
 
     @Override
-    public void validateCurrencyNamingStateIndependent(MonetarySystemCurrencyIssuance attachment) throws AplException.ValidationException {
+    public void validateCurrencyNamingStateIndependent(MonetarySystemCurrencyIssuanceAttachment attachment) throws AplException.ValidationException {
         String name = attachment.getName();
         String code = attachment.getCode();
         String description = attachment.getDescription();
@@ -462,7 +454,7 @@ public class CurrencyServiceImpl implements CurrencyService {
         }
     }
     @Override
-    public void validateCurrencyNamingStateDependent(long issuerAccountId, MonetarySystemCurrencyIssuance attachment) throws AplException.ValidationException {
+    public void validateCurrencyNamingStateDependent(long issuerAccountId, MonetarySystemCurrencyIssuanceAttachment attachment) throws AplException.ValidationException {
         String name = attachment.getName();
         String code = attachment.getCode();
         String normalizedName = name.toLowerCase();
@@ -512,7 +504,7 @@ public class CurrencyServiceImpl implements CurrencyService {
                 account, event, eventId, currency.getId(), units);
             increaseSupply(currency, units);
         } else {
-            log.debug("Currency mint hash no longer meets target {}", attachment.getJSONObject().toJSONString());
+            log.info("Currency mint hash no longer meets target {}", attachment.getJSONObject().toJSONString());
         }
     }
 
@@ -567,7 +559,7 @@ public class CurrencyServiceImpl implements CurrencyService {
         int index = 0;
         try (ResultSet rs = fullTextSearchService.search("public", currencyTable.getTableName(), luceneQuery, Integer.MAX_VALUE, 0)) {
             while (rs.next()) {
-                Long DB_ID = rs.getLong(5);
+                Long DB_ID = rs.getLong("keys");
                 if (index == 0) {
                     inRange.append(DB_ID);
                 } else {
@@ -627,9 +619,9 @@ public class CurrencyServiceImpl implements CurrencyService {
             DEFAULT_SCHEMA, currencyTable.getTableName(), Thread.currentThread().getName());
         operationData.setOperationType(operationType);
         operationData.setDbIdValue(currency.getDbId());
-        operationData.addColumnData(currency.getName()).addColumnData(currency.getDescription());
+        operationData.addColumnData(currency.getCode()).addColumnData(currency.getName()).addColumnData(currency.getDescription());
         // send data into Lucene index component
         log.trace("Put lucene index update data = {}", operationData);
-        fullTextSearchUpdater.putFullTextOperationData(operationData);
+        this.fullTextOperationDataEvent.select(new AnnotationLiteral<TrimEvent>() {}).fire(operationData);
     }
 }

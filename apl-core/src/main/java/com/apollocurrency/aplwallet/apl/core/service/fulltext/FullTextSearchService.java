@@ -94,4 +94,6 @@ public interface FullTextSearchService {
      */
     boolean enabled();
 
+    boolean isIndexFolderEmpty();
+
 }

@@ -21,17 +21,17 @@
 package com.apollocurrency.aplwallet.apl.core.dao.state.derived;
 
 import com.apollocurrency.aplwallet.apl.core.chainid.BlockchainConfig;
+import com.apollocurrency.aplwallet.apl.core.service.fulltext.FullTextOperationData;
 import com.apollocurrency.aplwallet.apl.util.db.TransactionalDataSource;
 import com.apollocurrency.aplwallet.apl.core.dao.state.keyfactory.KeyFactory;
 import com.apollocurrency.aplwallet.apl.core.entity.state.derived.DerivedEntity;
 import com.apollocurrency.aplwallet.apl.core.db.DatabaseManager;
-import com.apollocurrency.aplwallet.apl.core.shard.observer.DeleteOnTrimData;
 import com.apollocurrency.aplwallet.apl.util.annotation.DatabaseSpecificDml;
 import com.apollocurrency.aplwallet.apl.util.annotation.DmlMarker;
 import com.apollocurrency.aplwallet.apl.util.injectable.PropertiesHolder;
 import lombok.extern.slf4j.Slf4j;
 
-import javax.enterprise.event.Event;
+import jakarta.enterprise.event.Event;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.SQLException;
@@ -47,8 +47,8 @@ public abstract class PrunableDbTable<T extends DerivedEntity> extends EntityDbT
                            DatabaseManager databaseManager,
                            BlockchainConfig blockchainConfig,
                            PropertiesHolder propertiesHolder,
-                           Event<DeleteOnTrimData> deleteOnTrimDataEvent) {
-        super(table, dbKeyFactory, multiversion, fullTextSearchColumns, databaseManager, deleteOnTrimDataEvent);
+                           Event<FullTextOperationData> fullTextOperationDataEvent) {
+        super(table, dbKeyFactory, multiversion, fullTextSearchColumns, databaseManager, fullTextOperationDataEvent);
         this.blockchainConfig = Objects.requireNonNull(blockchainConfig);
         this.propertiesHolder = Objects.requireNonNull(propertiesHolder);
     }

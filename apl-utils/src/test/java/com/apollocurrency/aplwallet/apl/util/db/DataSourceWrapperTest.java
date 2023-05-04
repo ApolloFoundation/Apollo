@@ -32,6 +32,7 @@ class DataSourceWrapperTest {
             .dbParams(dbParams)
             .dbType(dbType)
             .build();
+        dbProperties.setDbUrl(dbProperties.formatJdbcUrlString(false));
 
         dbProperties.setDbUrl(dbProperties.formatJdbcUrlString(false));
 

@@ -15,7 +15,7 @@ import com.apollocurrency.aplwallet.apl.util.exception.Messages;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
-import javax.ws.rs.core.Response;
+import jakarta.ws.rs.core.Response;
 
 public class ResponseBuilder {
 

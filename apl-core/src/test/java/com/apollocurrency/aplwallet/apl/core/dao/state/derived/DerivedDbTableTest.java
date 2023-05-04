@@ -5,19 +5,15 @@
 package com.apollocurrency.aplwallet.apl.core.dao.state.derived;
 
 import com.apollocurrency.aplwallet.apl.core.dao.DbContainerBaseTest;
-import com.apollocurrency.aplwallet.apl.core.dao.state.derived.DerivedDbTable;
-import com.apollocurrency.aplwallet.apl.core.dao.state.derived.DerivedTableData;
 import com.apollocurrency.aplwallet.apl.core.dao.state.keyfactory.DbKey;
 import com.apollocurrency.aplwallet.apl.core.dao.state.keyfactory.KeyFactory;
 import com.apollocurrency.aplwallet.apl.core.db.DatabaseManager;
 import com.apollocurrency.aplwallet.apl.core.entity.state.derived.DerivedEntity;
 import com.apollocurrency.aplwallet.apl.core.entity.state.derived.VersionedDerivedEntity;
-import com.apollocurrency.aplwallet.apl.extension.DbExtension;
 import com.apollocurrency.aplwallet.apl.testutil.DbUtils;
 import lombok.extern.slf4j.Slf4j;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
-import org.junit.jupiter.api.extension.RegisterExtension;
 
 import java.sql.SQLException;
 import java.util.Comparator;
@@ -35,9 +31,6 @@ import static org.mockito.Mockito.mock;
 @Slf4j
 public abstract class DerivedDbTableTest<T extends DerivedEntity> extends DbContainerBaseTest {
 
-    @RegisterExtension
-    static DbExtension extension = new DbExtension(mariaDBContainer);
-
     DerivedDbTable<T> derivedDbTable;
     Class<T> clazz;
 
@@ -54,7 +47,7 @@ public abstract class DerivedDbTableTest<T extends DerivedEntity> extends DbCont
     public abstract DerivedDbTable<T> getDerivedDbTable();
 
     public DatabaseManager getDatabaseManager() {
-        return extension.getDatabaseManager();
+        return getDerivedDbTable().getDatabaseManager();
     }
 
     @Test
@@ -77,7 +70,7 @@ public abstract class DerivedDbTableTest<T extends DerivedEntity> extends DbCont
     }
 
     public void testTrim(int height, int blockchainHeight) throws SQLException {
-        DbUtils.inTransaction(extension, (con) -> derivedDbTable.trim(height));
+        DbUtils.inTransaction(getDatabaseManager(), (con) -> derivedDbTable.trim(height));
 
         List<T> expected = getAll();
         List<T> all = derivedDbTable.getAllByDbId(Long.MIN_VALUE, Integer.MAX_VALUE, Long.MAX_VALUE).getValues();
@@ -91,7 +84,7 @@ public abstract class DerivedDbTableTest<T extends DerivedEntity> extends DbCont
 
     @Test
     public void testTruncate() throws SQLException {
-        DbUtils.inTransaction(extension, (con) -> derivedDbTable.truncate());
+        DbUtils.inTransaction(getDatabaseManager(), (con) -> derivedDbTable.truncate());
 
         List<T> all = derivedDbTable.getAllByDbId(Long.MIN_VALUE, Integer.MAX_VALUE, Long.MAX_VALUE).getValues();
 
@@ -100,11 +93,12 @@ public abstract class DerivedDbTableTest<T extends DerivedEntity> extends DbCont
 
     @Test
     public void testInsert() {
-        assertThrows(UnsupportedOperationException.class, () -> DbUtils.inTransaction(extension, (con) -> derivedDbTable.insert(mock(clazz))));
+        assertThrows(UnsupportedOperationException.class, () -> DbUtils.inTransaction(getDatabaseManager(), (con) -> derivedDbTable.insert(mock(clazz))));
     }
 
     @Test
     public void testRollbackToNegativeHeight() throws SQLException {
+        // fired FTS event(s) : fullTextOperationDataEvent.select(new AnnotationLiteral<TrimEvent>() {}).fire(operationData);
         testRollback(0);
     }
 
@@ -123,7 +117,7 @@ public abstract class DerivedDbTableTest<T extends DerivedEntity> extends DbCont
 
     public void testRollback(int height) throws SQLException {
         List<T> expected = sublistByHeight(getAll(), height);
-        DbUtils.inTransaction(extension, (con) -> derivedDbTable.rollback(height));
+        DbUtils.inTransaction(getDatabaseManager(), (con) -> derivedDbTable.rollback(height));
         List<T> actual = derivedDbTable.getAllByDbId(Long.MIN_VALUE, Integer.MAX_VALUE, Long.MAX_VALUE).getValues();
         assertIterableEquals(expected, actual);
     }

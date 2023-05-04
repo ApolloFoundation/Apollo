@@ -27,14 +27,14 @@ import com.apollocurrency.aplwallet.apl.core.http.APITag;
 import com.apollocurrency.aplwallet.apl.core.http.HttpParameterParserUtil;
 import com.apollocurrency.aplwallet.apl.core.service.state.DGSService;
 import com.apollocurrency.aplwallet.apl.core.transaction.messages.Attachment;
-import com.apollocurrency.aplwallet.apl.core.transaction.messages.DigitalGoodsRefund;
+import com.apollocurrency.aplwallet.apl.core.transaction.messages.DGSRefundAttachment;
 import com.apollocurrency.aplwallet.apl.crypto.Convert;
 import com.apollocurrency.aplwallet.apl.util.exception.AplException;
 import org.json.simple.JSONStreamAware;
 
-import javax.enterprise.inject.Vetoed;
-import javax.enterprise.inject.spi.CDI;
-import javax.servlet.http.HttpServletRequest;
+import jakarta.enterprise.inject.Vetoed;
+import jakarta.enterprise.inject.spi.CDI;
+import jakarta.servlet.http.HttpServletRequest;
 
 import static com.apollocurrency.aplwallet.apl.core.http.JSONResponses.DUPLICATE_REFUND;
 import static com.apollocurrency.aplwallet.apl.core.http.JSONResponses.GOODS_NOT_DELIVERED;
@@ -81,7 +81,7 @@ public final class DGSRefund extends CreateTransactionHandler {
 
         Account buyerAccount = lookupAccountService().getAccount(purchase.getBuyerId());
 
-        Attachment attachment = new DigitalGoodsRefund(purchase.getId(), refundATM);
+        Attachment attachment = new DGSRefundAttachment(purchase.getId(), refundATM);
         return createTransaction(req, sellerAccount, buyerAccount.getId(), 0, attachment);
 
     }

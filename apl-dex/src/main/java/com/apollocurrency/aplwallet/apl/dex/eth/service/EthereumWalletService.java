@@ -43,9 +43,9 @@ import org.web3j.protocol.core.methods.response.EthSendTransaction;
 import org.web3j.protocol.core.methods.response.TransactionReceipt;
 import org.web3j.utils.Numeric;
 
-import javax.annotation.PostConstruct;
-import javax.inject.Inject;
-import javax.inject.Singleton;
+import jakarta.annotation.PostConstruct;
+import jakarta.inject.Inject;
+import jakarta.inject.Singleton;
 import java.io.IOException;
 import java.math.BigDecimal;
 import java.math.BigInteger;
@@ -344,11 +344,11 @@ public class EthereumWalletService {
 
         RawTransaction rawTransaction = RawTransaction
             .createEtherTransaction(
-                nonce,
-                EthUtil.gweiToWei(gasPrice),
-                Constants.GAS_LIMIT_ETHER_TX,
-                toAddress,
-                amountWei
+                    nonce,
+                    EthUtil.gweiToWei(gasPrice),
+                    Constants.GAS_LIMIT_ETHER_TX,
+                    toAddress,
+                    amountWei
             );
 
         byte[] signedMessage = TransactionEncoder.signMessage(rawTransaction, chainId.get(), credentials);
@@ -396,9 +396,9 @@ public class EthereumWalletService {
         EthGetTransactionReceipt receipt;
         try {
             receipt = web3j
-                .ethGetTransactionReceipt(transactionHash)
-                .sendAsync()
-                .get();
+                    .ethGetTransactionReceipt(transactionHash)
+                    .sendAsync()
+                    .get();
         } catch (ExecutionException | InterruptedException e) {
             log.error(e.getMessage(), e);
             throw new DexException(e.getMessage(), e);

@@ -7,8 +7,8 @@ import lombok.Data;
 import lombok.EqualsAndHashCode;
 import lombok.NoArgsConstructor;
 
-import javax.validation.constraints.NotBlank;
-import javax.ws.rs.FormParam;
+import jakarta.validation.constraints.NotBlank;
+import jakarta.ws.rs.FormParam;
 
 @Data
 @EqualsAndHashCode

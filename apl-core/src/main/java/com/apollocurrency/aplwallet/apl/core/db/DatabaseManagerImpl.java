@@ -18,8 +18,8 @@ import com.apollocurrency.aplwallet.apl.util.injectable.DbProperties;
 import lombok.NonNull;
 import lombok.extern.slf4j.Slf4j;
 
-import javax.inject.Inject;
-import javax.inject.Singleton;
+import jakarta.inject.Inject;
+import jakarta.inject.Singleton;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
@@ -36,6 +36,7 @@ import java.util.UUID;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.CopyOnWriteArraySet;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 /**
  * Class is used for high level database and shard management.
@@ -178,6 +179,17 @@ public class DatabaseManagerImpl implements ShardManagement, DatabaseManager {
             .sorted(Comparator.reverseOrder())
             .map(id -> getOrCreateShardDataSourceById(id, new ShardAllScriptsDBUpdater()))
             .iterator();
+    }
+
+    @Override
+    public Iterator<TransactionalDataSource> getAllSortedDataSourcesIterator(Comparator<TransactionalDataSource> comparator) {
+        Set<Long> allFullShards = findAllFullShardId();
+        return
+            Stream.concat(allFullShards.stream()
+                    .map(id -> getOrCreateShardDataSourceById(id, new ShardAllScriptsDBUpdater())),
+                Stream.of(currentTransactionalDataSource))
+                .sorted(comparator)
+                .iterator();
     }
 
     /**

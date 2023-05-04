@@ -38,7 +38,7 @@ import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.testcontainers.containers.MariaDBContainer;
 
-import javax.enterprise.event.Event;
+import jakarta.enterprise.event.Event;
 import java.io.IOException;
 import java.sql.SQLException;
 import java.util.List;

@@ -10,12 +10,12 @@ import com.apollocurrency.aplwallet.apl.core.dao.state.keyfactory.LongKey;
 import com.apollocurrency.aplwallet.apl.core.dao.state.keyfactory.LongKeyFactory;
 import com.apollocurrency.aplwallet.apl.core.entity.state.poll.PollOptionResult;
 import com.apollocurrency.aplwallet.apl.core.db.DatabaseManager;
-import com.apollocurrency.aplwallet.apl.core.shard.observer.DeleteOnTrimData;
+import com.apollocurrency.aplwallet.apl.core.service.fulltext.FullTextOperationData;
 import lombok.extern.slf4j.Slf4j;
 
-import javax.enterprise.event.Event;
-import javax.inject.Inject;
-import javax.inject.Singleton;
+import jakarta.enterprise.event.Event;
+import jakarta.inject.Inject;
+import jakarta.inject.Singleton;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
@@ -37,9 +37,9 @@ public final class PollResultTable extends ValuesDbTable<PollOptionResult> {
 
     @Inject
     public PollResultTable(DatabaseManager databaseManager,
-                           Event<DeleteOnTrimData> deleteOnTrimDataEvent) {
+                           Event<FullTextOperationData> fullTextOperationDataEvent) {
         super("poll_result", POLL_RESULTS_DB_KEY_FACTORY,
-            false, databaseManager, deleteOnTrimDataEvent);
+            false, databaseManager, fullTextOperationDataEvent);
     }
 
     @Override

@@ -1,4 +1,3 @@
-
 [
   {
     "chainId": "3fecf3bd-86a3-436b-a1d6-41eefc0bd1c6",
@@ -22,7 +21,9 @@
     "featuresHeightRequirement": {
       "dexReopenPendingOrdersHeight": 3000,
       "dexExpiredContractWithFinishedPhasingHeightAndStep3": 5000,
-      "transactionV2Height": 1
+      "transactionV2Height": 1,
+      "failedTransactionsAcceptanceHeight": 0,
+      "smartContractTransactionsHeight": 100
     },
     "blockchainProperties": [
       {
@@ -52,24 +53,37 @@
         "shardingSettings": {
           "enabled": true,
           "frequency": 10000
-        },
-        "transactionFeeSettings": {
-          "feeRates": [
-            {
-              "type": 0,
-              "subType": 0,
-              "rate": 100
-            },
-            {
-              "type": 0,
-              "subType": 1,
-              "rate": 100
-            }
-          ]
         }
       },
       {
-        "height": 76000,
+        "height": 500,
+        "maxNumberOfTransactions": 255,
+        "maxArbitraryMessageLength": 160,
+        "maxNumberOfChildAccounts": 10,
+        "blockTime": 2,
+        "maxBlockTimeLimit": 3,
+        "minBlockTimeLimit": 1,
+        "maxBalance": 30000000000,
+        "consensusSettings": {
+          "adaptiveForgingSettings": {
+            "enabled": "true",
+            "adaptiveBlockTime": 10
+          }
+        },
+        "shardingSettings": {
+          "enabled": true,
+          "frequency": 10000
+        },
+        "smcSettings": {
+          "masterAccountPublicKey": "dd8a4621988974e669d115b5e0d48234eed145ff2ac94ec1012805459470fe1e",
+          "fuelLimitMinValue": 10000000,
+          "fuelLimitMaxValue": 30000000000,
+          "fuelPriceMinValue": 10000,
+          "fuelPriceMaxValue": 100000000
+        }
+      },
+      {
+        "height": 50000,
         "maxNumberOfTransactions": 255,
         "maxArbitraryMessageLength": 160,
         "maxNumberOfChildAccounts": 10,
@@ -87,6 +101,13 @@
           "enabled": true,
           "frequency": 2000
         },
+        "smcSettings": {
+          "masterAccountPublicKey": "dd8a4621988974e669d115b5e0d48234eed145ff2ac94ec1012805459470fe1e",
+          "fuelLimitMinValue": 10000000,
+          "fuelLimitMaxValue": 30000000000,
+          "fuelPriceMinValue": 10000,
+          "fuelPriceMaxValue": 100000000
+        },
         "transactionFeeSettings": {
           "feeRates": [
             {
@@ -98,50 +119,6 @@
               "type": 0,
               "subType": 1,
               "rate": 100
-            }
-          ]
-        }
-      },
-      {
-        "height": 120000,
-        "maxNumberOfTransactions": 255,
-        "maxArbitraryMessageLength": 160,
-        "maxNumberOfChildAccounts": 10,
-        "blockTime": 2,
-        "maxBlockTimeLimit": 3,
-        "minBlockTimeLimit": 1,
-        "maxBalance": 30000000000,
-        "consensusSettings": {
-          "adaptiveForgingSettings": {
-            "enabled": "true",
-            "adaptiveBlockTime": 10
-          }
-        },
-        "shardingSettings": {
-          "enabled": true,
-          "frequency": 2000
-        },
-        "transactionFeeSettings": {
-          "feeRates": [
-            {
-              "type": 1,
-              "subType": 1,
-              "baseFee": "1000"
-            },
-            {
-              "type": 1,
-              "subType": 6,
-              "baseFee": "5"
-            },
-            {
-              "type": 1,
-              "subType": 7,
-              "baseFee": "5"
-            },
-            {
-              "type": 1,
-              "subType": 8,
-              "baseFee": "5"
             }
           ]
         }

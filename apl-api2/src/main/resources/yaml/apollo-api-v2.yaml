@@ -26,6 +26,12 @@ tags:
     description: List operations by account (the bank reconcilation)
   - name: info
     description: An information
+  - name: failed-txs
+    description: Operations, related to node's failed transactions state verification and debugging designated for node's admin use
+  - name: smc
+    description: Smart contract transactions management
+  - name: asr
+    description: Apollo Specification Request for Smart contracts
 
 paths:
   /@@account:
@@ -552,239 +558,992 @@ paths:
         500:
           $ref: '#/components/responses/ServerError'
 
+  /@@failed-txs/{id}:
+    post:
+      tags:
+        - failed-txs
+      summary: Verify failed transaction by id
+      description: Verify, that given transaction failed in a same way with same error on connected peers, and return validation result
+      operationId: verifyFailedTransaction
+      parameters:
+        - name: id
+          in: path
+          description: Failed transaction id in an unsigned integer form
+          required: true
+          schema:
+            type: string
+            format: int64
+            example: '12911439768940768505'
+      responses:
+        200:
+          description: Transaction was successfully verified or is not failed
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TransactionVerificationResponse'
+        400:
+          $ref: '#/components/responses/BadRequest'
+        404:
+          $ref: '#/components/responses/NotFound'
+        500:
+          $ref: '#/components/responses/ServerError'
+      security:
+        - admin_api_key: []
+  /@@failed-txs:
+    get:
+      tags:
+        - failed-txs
+      summary: Get last verified failed transactions
+      description: Retrieve results of the last background verification of failed transactions
+      operationId: getVerifiedFailedTransactions
+      responses:
+        200:
+          description: Background verification job is working OK, and results may be present
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/LastTransactionVerificationResponse'
+        500:
+          $ref: '#/components/responses/ServerError'
+      security:
+        - admin_api_key: []
+  /@@failed-txs/:
+    post:
+      tags:
+        - failed-txs
+      summary: Launch failed transactions verification
+      description: "Will manually execute failed transaction's verification starting from the last verified height. If there is no more than 1440 blocks from the last verified height, new transaction's verification will not be started"
+      operationId: verifyFailedTransactions
+      responses:
+        200:
+          description: Verification result, in case of successful verification's launch or empty result when no failed transactions or request is sent too early
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/LastTransactionVerificationResponse'
+        500:
+          $ref: '#/components/responses/ServerError'
+      security:
+        - admin_api_key: []
+
+  /@@smc/publish:
+    post:
+      tags:
+        - smc
+      summary: Create an unsigned PublishContract transaction
+      description: |
+        Returns an unsigned PublishContract transaction as a byte array.
+      operationId: createPublishContractTx
+      requestBody:
+        description: the contract source and constructor parameters
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PublishContractReq'
+        required: true
+      responses:
+        200:
+          description: successful operation
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TransactionArrayResp'
+        400:
+          $ref: '#/components/responses/BadRequest'
+        500:
+          $ref: '#/components/responses/ServerError'
+
+  /@@smc/publish/multisig:
+    post:
+      tags:
+        - smc
+      summary: Create an unsigned PublishContract transaction
+      description: |
+        Returns an unsigned PublishContract transaction as a byte array.
+      operationId: createPublishContractTxMultisig
+      requestBody:
+        description: the contract source and constructor parameters
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PublishContractReq'
+        required: true
+      responses:
+        200:
+          description: successful operation
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TransactionArrayResp'
+        400:
+          $ref: '#/components/responses/BadRequest'
+        500:
+          $ref: '#/components/responses/ServerError'
+
+  /@@smc/validate:
+    post:
+      tags:
+        - smc
+      summary: Validate the smart contract source code
+      description: |
+        Validate the smart contract source code, check syntax errors etc.
+      operationId: validatePublishContractTx
+      requestBody:
+        description: the contract source and constructor parameters
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PublishContractReq'
+        required: true
+      responses:
+        200:
+          description: successful operation
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/BaseResponse'
+        400:
+          $ref: '#/components/responses/BadRequest'
+        500:
+          $ref: '#/components/responses/ServerError'
+
+  /@@smc/method/call:
+    post:
+      tags:
+        - smc
+      summary: Returns signed transaction to call the contract method.
+      description: |
+        Returns signed transaction to call the contract method.
+      operationId: createCallContractMethodTx
+      requestBody:
+        description: the contract method and method parameters
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CallContractMethodReq'
+        required: true
+      responses:
+        200:
+          description: successful operation
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TransactionArrayResp'
+        400:
+          $ref: '#/components/responses/BadRequest'
+        500:
+          $ref: '#/components/responses/ServerError'
+
+  /@@smc/method/validate:
+    post:
+      tags:
+        - smc
+      summary: Validate the source code of the method calling
+      description: |
+        Validate the source code of the method calling, check syntax errors etc.
+      operationId: validateCallContractMethodTx
+      requestBody:
+        description: the contract method and method parameters
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CallContractMethodReq'
+        required: true
+      responses:
+        200:
+          description: successful operation
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/BaseResponse'
+        400:
+          $ref: '#/components/responses/BadRequest'
+        500:
+          $ref: '#/components/responses/ServerError'
+
+  /@@smc/method/read:
+    post:
+      tags:
+        - smc
+      summary: read the smart contract
+      description: read the smart contract and return result value.
+      operationId: callViewMethod
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CallViewMethodReq'
+      responses:
+        200:
+          description: Returns the result of evaluating the given method of the smart contract
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ResultValueResponse'
+        400:
+          $ref: '#/components/responses/BadRequest'
+        500:
+          $ref: '#/components/responses/ServerError'
+
+  /@@smc/owner/{account}:
+    get:
+      tags:
+        - smc
+      summary: Get a list of the smart contracts published by a certain account.
+      description: Return a list of the smart contracts published by a certain account.
+      operationId: getSmcByOwnerAccount
+      parameters:
+        - name: account
+          in: path
+          description: The account id
+          required: true
+          schema:
+            type: string
+            example: 'APL-X5JH-TJKJ-DVGC-5T2V8'
+        - $ref: '#/components/parameters/FirstIndexParameter'
+        - $ref: '#/components/parameters/LastIndexParameter'
+      responses:
+        200:
+          description: successful operation
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ContractListResponse'
+        400:
+          $ref: '#/components/responses/BadRequest'
+        500:
+          $ref: '#/components/responses/ServerError'
+
+  /@@smc:
+    get:
+      tags:
+        - smc
+      summary: Get list of the smart contract details
+      description: Returns list of the smart contract details
+      operationId: getSmcList
+      parameters:
+        - name: address
+          in: query
+          description: The contract address
+          required: false
+          schema:
+            type: string
+            example: 'APL-AEAE-TJKJ-DVGC-UFGH'
+        - name: publisher
+          in: query
+          description: The publisher address
+          required: false
+          schema:
+            type: string
+            example: 'APL-X5JH-TJKJ-DVGC-5T2V8'
+        - name: name
+          in: query
+          description: The contract name
+          required: false
+          schema:
+            type: string
+            example: 'MyAPL20-1721'
+        - name: baseContract
+          in: query
+          description: The base class name
+          required: false
+          schema:
+            type: string
+            example: 'APL20'
+        - name: timestamp
+          in: query
+          description: The timestamp of the block that contains contract transaction, Unix timestamp in milliseconds
+          required: false
+          schema:
+            type: integer
+            format: int64
+            example: 1591696372000
+        - name: transaction
+          in: query
+          description: The transaction that contains contract
+          required: false
+          schema:
+            type: string
+            format: int64
+            example: 387615916963
+        - name: status
+          in: query
+          description: The contract status
+          required: false
+          schema:
+            type: string
+            description: the contract status ACTIVE, CLOSED, DESTROYED
+            example: ACTIVE
+        - $ref: '#/components/parameters/FirstIndexParameter'
+        - $ref: '#/components/parameters/LastIndexParameter'
+
+      responses:
+        200:
+          description: successful operation
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ContractListResponse'
+        400:
+          $ref: '#/components/responses/BadRequest'
+        500:
+          $ref: '#/components/responses/ServerError'
+
+  /@@smc/{address}:
+    get:
+      tags:
+        - smc
+      summary: Get the smart contract details given address.
+      description: Returns the smart contract details given address.
+      operationId: getSmcByAddress
+      parameters:
+        - name: address
+          in: path
+          description: The contract address
+          required: true
+          schema:
+            type: string
+            example: 'APL-X5JH-TJKJ-DVGC-5T2V8'
+      responses:
+        200:
+          description: successful operation
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ContractListResponse'
+        400:
+          $ref: '#/components/responses/BadRequest'
+        500:
+          $ref: '#/components/responses/ServerError'
+
+  /@@smc/{address}/event:
+    post:
+      tags:
+        - smc
+      summary: Get the contract events fired in the past.
+      description: Returns the contract events fired in the past.
+      operationId: getSmcEvents
+      parameters:
+        - name: address
+          in: path
+          description: The contract address
+          required: true
+          schema:
+            type: string
+            example: 'APL-X5JH-TJKJ-DVGC-5T2V8'
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ContractEventsRequest'
+      responses:
+        200:
+          description: successful operation
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ContractEventsResponse'
+        400:
+          $ref: '#/components/responses/BadRequest'
+        500:
+          $ref: '#/components/responses/ServerError'
+
+  /@@smc/{address}/state:
+    get:
+      tags:
+        - smc
+      summary: Get the contract state json given address.
+      description: Returns the contract state json.
+      operationId: getSmcStateByAddress
+      parameters:
+        - name: address
+          in: path
+          description: The contract address
+          required: true
+          schema:
+            type: string
+            example: 'APL-X5JH-TJKJ-DVGC-5T2V8'
+      responses:
+        200:
+          description: successful operation
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ContractStateResponse'
+        400:
+          $ref: '#/components/responses/BadRequest'
+        500:
+          $ref: '#/components/responses/ServerError'
+
+  /@@smc/{address}/spec:
+    get:
+      tags:
+        - smc
+      summary: Get the contract specification.
+      description: Returns the contract specification.
+      operationId: getSmcSpecificationByAddress
+      parameters:
+        - name: address
+          in: path
+          description: The contract address
+          required: true
+          schema:
+            type: string
+            example: 'APL-X5JH-TJKJ-DVGC-5T2V8'
+      responses:
+        200:
+          description: successful operation
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ContractSpecResponse'
+        400:
+          $ref: '#/components/responses/BadRequest'
+        500:
+          $ref: '#/components/responses/ServerError'
+
+  /@@smc/asr:
+    get:
+      tags:
+        - smc
+        - asr
+      summary: Get the ASR templates list.
+      description: Returns the ASR templates list.
+      operationId: getSmcAsrModules
+      parameters:
+        - name: language
+          in: query
+          description: The language name
+          required: false
+          schema:
+            type: string
+            example: 'js'
+        - name: version
+          in: query
+          description: The language version
+          required: false
+          schema:
+            type: string
+            example: '0.1.1'
+        - name: type
+          in: query
+          description: The module type, allowed values - token, escrow; the default value is token.
+          required: false
+          schema:
+            type: string
+            example: 'token'
+      responses:
+        200:
+          description: successful operation
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ModuleListResponse'
+        400:
+          $ref: '#/components/responses/BadRequest'
+        500:
+          $ref: '#/components/responses/ServerError'
+
+  /@@smc/asr/{module}/init:
+    get:
+      tags:
+        - smc
+        - asr
+      summary: Get the contract constructor of the given ASR module.
+      description: Returns the contract constructor
+      operationId: getAsrModuleInitSpec
+      parameters:
+        - name: module
+          in: path
+          description: The ASR module name
+          required: true
+          schema:
+            type: string
+            example: 'APL20BUY'
+        - name: language
+          in: query
+          description: The language name
+          required: false
+          schema:
+            type: string
+            example: 'js'
+        - name: version
+          in: query
+          description: The language version
+          required: false
+          schema:
+            type: string
+            example: '0.1.1'
+      responses:
+        200:
+          description: successful operation
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ContractSpecResponse'
+        400:
+          $ref: '#/components/responses/BadRequest'
+        500:
+          $ref: '#/components/responses/ServerError'
+
+  /@@smc/asr/{module}/src:
+    get:
+      tags:
+        - smc
+        - asr
+      summary: Get the ASR module source code.
+      description: Returns the source code of the ASR module
+      operationId: getAsrModuleSource
+      parameters:
+        - name: module
+          in: path
+          description: The ASR module name
+          required: true
+          schema:
+            type: string
+            example: 'APL20BUY'
+        - name: language
+          in: query
+          description: The language name
+          required: false
+          schema:
+            type: string
+            example: 'js'
+        - name: version
+          in: query
+          description: The language version
+          required: false
+          schema:
+            type: string
+            example: '0.1.1'
+      responses:
+        200:
+          description: successful operation
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ModuleSourceResponse'
+        400:
+          $ref: '#/components/responses/BadRequest'
+        500:
+          $ref: '#/components/responses/ServerError'
+
+  /@@smc/asr/{module}/spec:
+    get:
+      tags:
+        - smc
+        - asr
+      summary: Get the ASR module specification.
+      description: Returns the specification of the ASR module
+      operationId: getAsrModuleFullSpec
+      parameters:
+        - name: module
+          in: path
+          description: The ASR module name
+          required: true
+          schema:
+            type: string
+            example: 'APL20BUY'
+        - name: language
+          in: query
+          description: The language name
+          required: false
+          schema:
+            type: string
+            example: 'js'
+        - name: version
+          in: query
+          description: The language version
+          required: false
+          schema:
+            type: string
+            example: '0.1.1'
+      responses:
+        200:
+          description: successful operation
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AsrSpecResponse'
+        400:
+          $ref: '#/components/responses/BadRequest'
+        500:
+          $ref: '#/components/responses/ServerError'
+
+  /@@smc/conversion/{address}:
+    get:
+      tags:
+        - smc
+      summary: Returns the given address in four formats a hex, Reed-Solomone code, long and unsigned long string.
+      description: Returns the given address in four formats a hex, Reed-Solomone code, long and unsigned long string. Valid input formats are hex, Reed-Solomone code, long and unsigned long
+      operationId: parseAddress
+      parameters:
+        - name: address
+          in: path
+          description: The contract address
+          required: true
+          schema:
+            type: string
+            example: 'APL-X5JH-TJKJ-DVGC-5T2V8'
+      responses:
+        200:
+          description: successful operation
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AddressSpecResponse'
+        400:
+          $ref: '#/components/responses/BadRequest'
+        500:
+          $ref: '#/components/responses/ServerError'
+
 components:
+  parameters:
+    FirstIndexParameter:
+      name: firstIndex
+      in: query
+      description: The zero based index to the first data to retrive
+      required: false
+      schema:
+        type: integer
+        default: 0
+        example: 10
+    LastIndexParameter:
+      name: lastIndex
+      in: query
+      description: The zero based index to the last data to retrive
+      required: false
+      schema:
+        type: integer
+        default: -1
+        example: 25
+
   schemas:
-    TransactionInfoArrayResp:
+    AccountInfo:
+      type: object
+      required:
+        - account
+        - publicKey
+      properties:
+        account:
+          type: string
+          example: 'APL-X5JH-TJKJ-DVGC-5T2V8'
+        publicKey:
+          description: The account public key in a hex string format
+          type: string
+          format: hex_bytearray
+          example: '39dc2e813bb45ff063a376e316b10cd0addd7306555ca0dd2890194d37960152'
+        parent:
+          type: string
+          example: 'APL-AHYW-P3YX-V426-4UMP2'
+          nullable: true
+        balance:
+          type: string
+          format: integer
+          example: '45225600000000'
+        unconfirmedbalance:
+          type: string
+          format: integer
+          example: '45225600000000'
+        status:
+          type: string
+          enum:
+            - created
+            - verified
+          example: created
+
+    AccountInfoResp:
+      allOf:
+        - $ref: '#/components/schemas/BaseResponse'
+        - $ref: '#/components/schemas/AccountInfo'
+
+    AccountReq:
+      required:
+        - parent
+        - publicKey
+      type: object
+      properties:
+        parent:
+          type: string
+          description: parent account id
+          example: 'APL-X5JH-TJKJ-DVGC-5T2V8'
+        child_publicKey_list:
+          type: array
+          description: list of child account public keys
+          maxItems: 128
+          items:
+            type: string
+            format: hex_bytearray
+            example: '39dc2e813bb45ff063a376e316b10cd0adeb7306111ca0eb2890194d37960152'
+
+    AccountReqSendMoney:
+      required:
+        - parent
+        - publicKey
+      type: object
+      properties:
+        parent:
+          type: string
+          description: parent account id
+          example: 'APL-X5JH-TJKJ-DVGC-5T2V8'
+        psecret:
+          type: string
+          description: parent account secret phrase
+          example: 'ParenttopSecretPhrase'
+        sender:
+          type: string
+          description: child account id
+          example: 'APL-632K-TWX3-2ALQ-973CU'
+        csecret:
+          type: string
+          description: child account secret phrase
+          example: 'ChildtopSecretPhrase'
+        recipient:
+          type: string
+          description: recipient account id
+          example: 'APL-VWMY-APVK-UFHN-3MC7N'
+        amount:
+          type: integer
+          format: int64
+          description: the amount of ATM
+
+    AccountReqTest:
+      required:
+        - parent
+        - publicKey
+      type: object
+      properties:
+        parent:
+          type: string
+          description: parent account id
+          example: 'APL-X5JH-TJKJ-DVGC-5T2V8'
+        secret:
+          type: string
+          description: parent account secret phrase
+          example: 'topSecretPhrase'
+        child_secret_list:
+          type: array
+          description: list of child secret phrases
+          maxItems: 128
+          items:
+            type: string
+            example: 'secret1'
+
+    AddressSpec:
+      type: object
+      properties:
+        rs:
+          description: Reed-Solomone code
+          type: string
+          example: "APL-MZBG-ZYV8-Y5V3-HZZZZ"
+        long:
+          description: signed long value
+          type: string
+          example: -1234567890
+        ulong:
+          description: unsigned long value
+          type: string
+          example: 18446744072474983726
+        hex:
+          description: hex value of account number
+          type: string
+          example: 0xffffffffb669fd2e
+
+    AddressSpecResponse:
+      allOf:
+        - $ref: '#/components/schemas/BaseResponse'
+        - $ref: '#/components/schemas/AddressSpec'
+
+    ArgSpec:
+      type: object
+      properties:
+        name:
+          description: the propery name
+          type: string
+          example: "totalSupply"
+        type:
+          description: property type
+          type: string
+          example: uint
+
+    AsrMemberSpec:
+      type: object
+      properties:
+        type:
+          description: the object type, constructor, function, event, ...
+          type: string
+          example: function
+        name:
+          description: the method/function name
+          type: string
+          example: balanceOf
+        inputs:
+          description: input params
+          type: array
+          items:
+            $ref: '#/components/schemas/ArgSpec'
+        outputs:
+          description: output value
+          type: array
+          items:
+            $ref: '#/components/schemas/PropertySpec'
+        stateMutability:
+          description: "a string with one of the following values: view, nonpayable, payable, pure"
+          type: string
+          example: view
+        visibility:
+          description: object visibility internal/external/public
+          type: string
+          example: external
+        value:
+          description: output value
+          type: string
+          example: '24999000000'
+        signature:
+          description: real method arguments
+          type: string
+          example: "balanceOf('0x7d2825cf3a120411');"
+
+    AsrSpec:
+      type: object
+      properties:
+        name:
+          description: the asr schema name
+          type: string
+          example: ASR20-spec.json
+        type:
+          description: the ASR module
+          type: string
+          example: ASR20
+        members:
+          description: the list of members
+          type: array
+          items:
+            - $ref: '#/components/schemas/AsrMemberSpec'
+
+    AsrSpecResponse:
+      allOf:
+        - $ref: '#/components/schemas/BaseResponse'
+        - $ref: '#/components/schemas/AsrSpec'
+        - type: object
+          properties:
+            language:
+              description: the language name
+              type: string
+              example: js
+            version:
+              description: the language version
+              type: string
+              example: 0.1.1
+
+    BaseResponse:
+      type: object
+      properties:
+        protocol:
+          description: 'Protocol version'
+          type: string
+          example: '2'
+        requestProcessingTime:
+          description: 'Time in milliseconds that took from incoming request to response'
+          type: integer
+          format: int64
+          example: 12
+          default: 0
+        errorCode:
+          description: Error code on new API. null or 0 means success, no error.
+          type: integer
+          format: int32
+          example: 12
+        errorDescription:
+          description: Textual error description, e.g. exception message, etc that could be displayed to user
+          type: string
+          example: 'The mandatory parameter ''id'' is not specified.'
+
+    BlockchainInfo:
       allOf:
         - $ref: '#/components/schemas/BaseResponse'
         - type: object
           properties:
-            tx:
-              description: The array of transactions
-              type: array
-              items:
-                $ref: '#/components/schemas/TransactionInfo'
+            chainid:
+              type: string
+              format: uuid
+              example: '3fecf3bd-86a3-436b-a1d6-41eefc0bd1c6'
+            ticker:
+              type: string
+              example: 'USDS'
+            consensus:
+              type: string
+              example: 'Apollo'
+            mining:
+              type: string
+              example: 'Pre-mining'
+            total_supply:
+              type: integer
+              format: int64
+              example: 10000000000
+              description: The total supply
+            decimals:
+              type: integer
+              format: int16
+              example: 8
+            burning:
+              type: integer
+              format: int64
+              example: 30000
+              description: The total amount of the burned tokens
+            genesisAccount:
+              type: string
+              format: hex_bytearray
+              example: '90001259ec21d31a30898d7'
 
-    TransactionInfoResp:
+    BlockchainState:
       allOf:
         - $ref: '#/components/schemas/BaseResponse'
-        - $ref: '#/components/schemas/TransactionInfo'
+        - type: object
+          properties:
+            chainid:
+              type: string
+              format: hex_bytearray
+              example: 'a2e9b946290b48b69985dc2e5a5860a1'
+            height:
+              type: integer
+              format: int64
+              example: 4789567
+            genesisAccount:
+              type: string
+              format: hex_bytearray
+              example: '90001259ec21d31a30898d7'
+            genesisBlockId:
+              type: string
+              format: hex_bytearray
+              description: Genesis block ID
+              example: '15856251679437054149169000'
+            genesisBlockTimestamp:
+              type: integer
+              format: int64
+              description: Genesis block timestamp (epoch beginning), Unix timestamp in milliseconds
+              example: 1491696372000
+            ecBlockId:
+              type: string
+              format: hex_bytearray
+              description: The economic clustering block ID
+              example: '40faaeb15856251679437054'
+            ecBlockHeight:
+              type: integer
+              format: int64
+              description: The economic clustering block height
+              example: 3301233
+            txTimestamp:
+              type: integer
+              format: int64
+              description: Request timestamp in seconds since the genesis block
+              example: 1591696371
+            timestamp:
+              type: integer
+              format: int64
+              description: Request timestamp, Unix timestamp in milliseconds
+              example: 1591696372300
 
-    TransactionInfo:
-      type: object
-      properties:
-        id:
-          description: The transaction ID
-          type: string
-          format: hex_bytearray
-          example: '1a0feb1306043151604016701'
-        type:
-          description: Transaction type
-          type: string
-          format: int8
-          example: '2'
-        subtype:
-          description: Transaction subtype
-          type: string
-          format: int8
-          example: '1'
-        phased:
-          description: is true if the transaction is phased
-          type: boolean
-          example: false
-        timestamp:
-          type: integer
-          format: int64
-          description: Transaction timestamp, Unix timestamp in milliseconds
-          example: 1591696372000
-        deadline:
-          description: the deadline for the transaction to be confirmed in minutes,ex.1440=24h
-          type: integer
-          format: int32
-          example: 1440
-        senderPublicKey:
-          type: string
-          format: hex_bytearray
-          description: The public key of the sending account for the transaction
-        recipient:
-          type: string
-          description: The account Id of the recipient
-          example: 'APL-FXHG-6KHM-23LE-42ACU'
-        amount:
-          type: string
-          format: integer
-          description: The amount of the transaction
-          example: 34500000000
-        fee:
-          type: string
-          format: integer
-          example: 200000000
-          description: The fee of the transaction
-        referencedTransactionFullHash:
-          type: string
-          format: hex_bytearray
-          description: The full hash of a transaction referenced by this one
-          example: '5424ca4dd976a873839c7d5c9952fa15ae619f678365e8ebbc73f967142eb40d'
-        signature:
-          type: string
-          format: hex_bytearray
-          example: '920173ae606d36c1c77fc5bdf294bd048d04f85c46535525771b524dbb1ed20b73311900d4a409c293a10d8a5ab987430be4bd7478fb16a41cf775afa33c4d56'
-          description: The digital signature of the transaction
-        signatureHash:
-          type: string
-          format: hex_bytearray
-          description: SHA-256 hash of the transaction signature
-          example: '2fc1883e9b76fdc67fabee0a3def5f4b7fc2de9cd65bc8bb6d39eaf5e99498d8'
-        fullHash:
-          type: string
-          format: hex_bytearray
-          description: The full hash of the transaction
-          example: '39dc2e813bb45ff063a376e316b10cd0addd7306555ca0dd2890194d37960152'
-        attachment:
-          type: object
-          nullable: true
-          additionalProperties:
-            type: object
-          description: An object containong any additional data needed for the transaction
-        sender:
-          type: string
-          description: The sender account
-          example: 'APL-X5JH-TJKJ-DVGC-5T2V8'
-        height:
-          type: integer
-          format: int64
-          example: 4365987
-          description: The height of the block in the blockchain
-        version:
-          type: string
-          format: int8
-          example: '1'
-          description: The transaction version number
-        ecBlockId:
-          type: string
-          format: hex_bytearray
-          description: The economic clustering block ID
-          example: '40faaeb15856251679437054'
-        ecBlockHeight:
-          type: integer
-          format: int64
-          description: The economic clustering block height
-          example: 3301233
-        block:
-          type: string
-          format: hex_bytearray
-          description: The block id
-          example: '230aeb0f4585625167943'
-        confirmations:
-          type: integer
-          format: int32
-          description: the number of transaction confirmations
-          example: 387
-        blockTimestamp:
-          type: integer
-          format: int64
-          description: Block timestamp, Unix timestamp in milliseconds
-          example: 1591696372000
-        index:
-          type: integer
-          format: int32
-          description: the order of the transaction in the block
-          example: 1
-    UnconfirmedTransactionInfo:
-      type: object
-      properties:
-        id:
-          description: The transaction ID
-          type: string
-          format: hex_bytearray
-          example: '1a0feb1306043151604016701'
-        type:
-          description: Transaction type
-          type: string
-          format: int8
-          example: '2'
-        subtype:
-          description: Transaction subtype
-          type: string
-          format: int8
-          example: '1'
-        phased:
-          description: is true if the transaction is phased
-          type: boolean
-          example: false
-        timestamp:
-          type: integer
-          format: int64
-          description: Transaction timestamp, Unix timestamp in milliseconds
-          example: 1591696372000
-        deadline:
-          description: the deadline for the transaction to be confirmed in minutes,ex.1440=24h
-          type: integer
-          format: int32
-          example: 1440
-        senderPublicKey:
-          type: string
-          format: hex_bytearray
-          description: The public key of the sending account for the transaction
-        recipient:
-          type: string
-          description: The account Id of the recipient
-          example: 'APL-FXHG-6KHM-23LE-42ACU'
-        amount:
-          type: string
-          format: integer
-          description: The amount of the transaction
-          example: 34500000000
-        fee:
-          type: string
-          format: integer
-          example: 200000000
-          description: The fee of the transaction
-        referencedTransactionFullHash:
-          type: string
-          format: hex_bytearray
-          description: The full hash of a transaction referenced by this one
-          example: '5424ca4dd976a873839c7d5c9952fa15ae619f678365e8ebbc73f967142eb40d'
-        signature:
-          type: string
-          format: hex_bytearray
-          example: '920173ae606d36c1c77fc5bdf294bd048d04f85c46535525771b524dbb1ed20b73311900d4a409c293a10d8a5ab987430be4bd7478fb16a41cf775afa33c4d56'
-          description: The digital signature of the transaction
-        signatureHash:
-          type: string
-          format: hex_bytearray
-          description: SHA-256 hash of the transaction signature
-          example: '2fc1883e9b76fdc67fabee0a3def5f4b7fc2de9cd65bc8bb6d39eaf5e99498d8'
-        fullHash:
-          type: string
-          format: hex_bytearray
-          description: The full hash of the transaction
-          example: '39dc2e813bb45ff063a376e316b10cd0addd7306555ca0dd2890194d37960152'
-        attachment:
-          type: object
-          nullable: true
-          additionalProperties:
-            type: object
-          description: An object containong any additional data needed for the transaction
-        sender:
-          type: string
-          description: The sender account
-          example: 'APL-X5JH-TJKJ-DVGC-5T2V8'
-        version:
-          type: string
-          format: int8
-          example: '1'
-          description: The transaction version number
-        ecBlockId:
-          type: string
-          format: hex_bytearray
-          description: The economic clustering block ID
-          example: '40faaeb15856251679437054'
-        ecBlockHeight:
-          type: integer
-          format: int64
-          description: The economic clustering block height
-          example: 3301233
     BlockInfo:
       allOf:
         - $ref: '#/components/schemas/BaseResponse'
@@ -870,170 +1629,333 @@ components:
               type: string
               format: integer
               example: '2800000000'
-    BlockchainInfo:
-      allOf:
-        - $ref: '#/components/schemas/BaseResponse'
-        - type: object
-          properties:
-            chainid:
-              type: string
-              format: hex_bytearray
-              example: 'a2e9b946290b48b69985dc2e5a5860a1'
-            ticker:
-              type: string
-              example: 'USDS'
-            consensus:
-              type: string
-              example: 'Apollo'
-            mining:
-              type: string
-              example: 'Pre-mining'
-            total_supply:
-              type: integer
-              format: int64
-              example: 10000000000
-              description: The total supply
-            decimals:
-              type: integer
-              format: int16
-              example: 8
-            burning:
-              type: integer
-              format: int64
-              example: 30000
-              description: The total amount of the burned tokens
-            genesisAccount:
-              type: string
-              format: hex_bytearray
-              example: '90001259ec21d31a30898d7'
 
-    BlockchainState:
-      allOf:
-        - $ref: '#/components/schemas/BaseResponse'
-        - type: object
-          properties:
-            chainid:
-              type: string
-              format: hex_bytearray
-              example: 'a2e9b946290b48b69985dc2e5a5860a1'
-            height:
-              type: integer
-              format: int64
-              example: 4789567
-            genesisAccount:
-              type: string
-              format: hex_bytearray
-              example: '90001259ec21d31a30898d7'
-            genesisBlockId:
-              type: string
-              format: hex_bytearray
-              description: Genesis block ID
-              example: '15856251679437054149169000'
-            genesisBlockTimestamp:
-              type: integer
-              format: int64
-              description: Genesis block timestamp (epoch beginning), Unix timestamp in milliseconds
-              example: 1491696372000
-            ecBlockId:
-              type: string
-              format: hex_bytearray
-              description: The economic clustering block ID
-              example: '40faaeb15856251679437054'
-            ecBlockHeight:
-              type: integer
-              format: int64
-              description: The economic clustering block height
-              example: 3301233
-            txTimestamp:
-              type: integer
-              format: int64
-              description: Request timestamp in seconds since the genesis block
-              example: 1591696371
-            timestamp:
-              type: integer
-              format: int64
-              description: Request timestamp, Unix timestamp in milliseconds
-              example: 1591696372300
-    TxRequest:
+    CallContractMethodReq:
       required:
-        - tx
+        - address
+        - sender
       type: object
       properties:
-        tx:
-          description: Signed transaction data
+        address:
           type: string
-          format: hex_bytearray
-          example: '001047857c04a00539dc2e813bb45ff063a376e316b10cd0addd7306555ca0dd2890194d37960152eef5365f2400292d00ca9a3b0000000000c2eb0b000000000000000000000000000000000000000000000000000000000000000000000000920173ae606d36c1c77fc5bdf294bd048d04f85c46535525771b524dbb1ed20b73311900d4a409c293a10d8a5ab987430be4bd7478fb16a41cf775afa33c4d5600000000f1da1300fe7062e6fb2fbb37'
-          nullable: false
-    AccountReq:
-      required:
-        - parent
-        - publicKey
-      type: object
-      properties:
-        parent:
-          type: string
-          description: parent account id
+          description: the contract address
           example: 'APL-X5JH-TJKJ-DVGC-5T2V8'
-        child_publicKey_list:
-          type: array
-          description: list of child account public keys
-          maxItems: 128
-          items:
-            type: string
-            format: hex_bytearray
-            example: '39dc2e813bb45ff063a376e316b10cd0adeb7306111ca0eb2890194d37960152'
-    AccountReqTest:
-      required:
-        - parent
-        - publicKey
-      type: object
-      properties:
-        parent:
-          type: string
-          description: parent account id
-          example: 'APL-X5JH-TJKJ-DVGC-5T2V8'
-        secret:
-          type: string
-          description: parent account secret phrase
-          example: 'topSecretPhrase'
-        child_secret_list:
-          type: array
-          description: list of child secret phrases
-          maxItems: 128
-          items:
-            type: string
-            example: 'secret1'
-    AccountReqSendMoney:
-      required:
-        - parent
-        - publicKey
-      type: object
-      properties:
-        parent:
-          type: string
-          description: parent account id
-          example: 'APL-X5JH-TJKJ-DVGC-5T2V8'
-        psecret:
-          type: string
-          description: parent account secret phrase
-          example: 'ParenttopSecretPhrase'
         sender:
           type: string
-          description: child account id
-          example: 'APL-632K-TWX3-2ALQ-973CU'
-        csecret:
+          description: the sender account id
+          example: 'APL-X5JH-TJKJ-DVGC-5T2V8'
+        secretPhrase:
           type: string
-          description: child account secret phrase
-          example: 'ChildtopSecretPhrase'
-        recipient:
+          description: the sender secret phrase encrypted by ElGamal encryption
+        publicKey:
           type: string
-          description: recipient account id
-          example: 'APL-VWMY-APVK-UFHN-3MC7N'
-        amount:
+          description: the sender public key as hex string
+        value:
+          type: string
+          description: the scalar value of ATM
+          example: '20_00000000'
+        name:
+          type: string
+          description: the contract method name
+          example: 'purchase'
+        params:
+          type: array
+          description: list of method parameters
+          maxItems: 128
+          items:
+            type: string
+            example: '\"firstParam\"", "123", "\"0x98765\"'
+        fuelLimit:
+          type: string
+          description: the scalar value equal to the maximum amount of fuel; fuel limit
+          example: '5000000'
+        fuelPrice:
+          type: string
+          description: the scalar value equal to the number of ATM; fuel price
+          example: '10000'
+
+    CallMethodResult:
+      type: object
+      properties:
+        method:
+          description: the view method name
+          type: string
+          example: "balanceOf"
+        signature:
+          description: the view method signature
+          type: string
+          example: "balanceOf('0x1234567890');"
+        output:
+          description: the result
+          type: array
+          items:
+            type: string
+            format: json
+            description: the JSON stringified value; simple value or object
+            example: '"1234"  or  {"value":"99012345678"}'
+        errorCode:
+          description: error code
+          type: integer
+          example: 10002
+        errorDescription:
+          description: error description
+          type: string
+          example: "Can't call method [pay] on contract [APL20_B1]"
+
+    CallViewMethodReq:
+      required:
+        - address
+      type: object
+      properties:
+        address:
+          type: string
+          description: the contract address
+          example: 'APL-X5JH-TJKJ-DVGC-5T2V8'
+        members:
+          type: array
+          description: list of function
+          maxItems: 64
+          items:
+            $ref: '#/components/schemas/ContractMethod'
+
+    ContractDetails:
+      type: object
+      properties:
+        address:
+          type: string
+          description: contract address
+          example: 'APL-DPPW-2KJT-Z5KR-EZ4ND'
+        owner:
+          type: string
+          description: contract publisher
+          example: 'APL-X5JH-TJKJ-DVGC-5T2V8'
+        transaction:
+          type: string
+          format: hex_bytearray
+          description: transaction id
+          example: '8330faaeb404178613417'
+        signature:
+          type: string
+          format: hex_bytearray
+          description: transaction full hash
+          example: '569e87c6a14e8fbb9830df24227d77cea23e8af64df0fec83fbbe490c9dd7367'
+        fullHash:
+          type: string
+          format: hex_bytearray
+          description: transaction full hash
+          example: 'bcf47c41cd01bb7da6e2ca0cdb098f69c6d6e833592c48c17dac69a4dd0416ef'
+        timestamp:
           type: integer
           format: int64
-          description: the amount
+          description: The timestamp of the block that contains contract transaction, Unix timestamp in milliseconds
+          example: 1591696372000
+        amount:
+          type: string
+          format: integer
+          description: The amount of the transaction in ATMs (1 APL = 10_000_000 ATM)
+          example: '10_00000000'
+        status:
+          type: string
+          description: the contract status - REJECTED, CREATED, PUBLISHED, ACTIVE, CLOSED, DISABLED, DESTRUCTED
+          example: ACTIVE
+        name:
+          type: string
+          description: the contract name
+          example: 'Deal'
+        baseContract:
+          type: string
+          description: the base contract type
+          example: 'APL20BUY'
+        params:
+          type: string
+          description: list of parameters
+        src:
+          type: string
+          description: the contract source code
+        fuelLimit:
+          type: string
+          format: int64
+          description: the fuel value
+          example: '5000'
+        fuelPrice:
+          type: string
+          format: int64
+          description: the fuel price value
+          example: '100'
+        fuelCharged:
+          type: string
+          format: int64
+          description: the charged fuel value
+          example: '3987'
+
+    ContractDetailsResponse:
+      allOf:
+        - $ref: '#/components/schemas/BaseResponse'
+        - $ref: '#/components/schemas/ContractDetails'
+
+    ContractEventsRequest:
+      type: object
+      properties:
+        event:
+          type: string
+          description: the event name or predefined value 'allEvents' for getting all possible events
+          example: Transfer
+        fromBlock:
+          type: integer
+          description: |
+            The block number/height (greater than or equal to) from which to get events;|
+            The default block number is 0, the block number -1 equivalents to the latest block.
+          default: 0
+        toBlock:
+          type: integer
+          description: |
+            The block number/height (less than or equal to) upto which to get events;|
+            The default block number is -1, it equivalents to the latest block.
+          default: -1
+        from:
+          type: integer
+          description: First matching entry index, inclusive. The maximum limit is 200.
+          example: 100
+          default: 0
+        to:
+          type: integer
+          description: Last matching entry index, inclusive.
+          example: 10500
+          default: -1
+        order:
+          type: string
+          description: the sorting direction, ASC/DESC
+          default: ASC
+        filter:
+          type: string
+          description: the complex expression to filter events
+          example: "{ \"from\" : {\"$eq\": \"0x123123123123\"} }"
+
+    ContractEventsResponse:
+      allOf:
+        - $ref: '#/components/schemas/BaseResponse'
+        - type: object
+          properties:
+            events:
+              type: array
+              items:
+                $ref: '#/components/schemas/ContractEventDetails'
+
+    ContractEventDetails:
+      type: object
+      properties:
+        type:
+          type: string
+          description: the EVENT constatnt string
+          example: EVENT
+        contract:
+          type: string
+          description: the contract address as hex-string
+          example: 0x7306555ca0dd2890194d37960152eef5365f24
+        eventId:
+          type: string
+          description: the event id
+          example: 0x4d37960152eef5365f2473564231ee32ab3f01
+        name:
+          type: string
+          description: the event name
+          example: Transfer
+        spec:
+          type: string
+          description: the event specification
+          example: "Transfer:from,to,amount:2,false"
+        signature:
+          type: string
+          description: the event signature as a hex-string
+          example: 0xfd43ade1c09fade1c0d57a7af66ab4ead7c2c2eb7b11a91ffdd57a7af66ab4ead7
+        transactionIndex:
+          type: integer
+          description: the sequential transaction index within the block
+          example: 1
+        transaction:
+          type: string
+          description: the transaction address as a hex-string
+          example: 0x01047857c04a00539dc2e8
+        block:
+          type: string
+          description: the block address
+        height:
+          type: integer
+          description: the block height
+        state:
+          type: string
+          description: the event state as stringified json object
+
+
+    ContractListResponse:
+      allOf:
+        - $ref: '#/components/schemas/BaseResponse'
+        - type: object
+          properties:
+            contracts:
+              type: array
+              items:
+                $ref: '#/components/schemas/ContractDetails'
+
+    ContractMethod:
+      type: object
+      properties:
+        function:
+          type: string
+          description: the contract function/method name
+          example: 'purchase'
+        input:
+          type: array
+          description: list of parameters
+          example: '["firstParam", 123, "0x98765"]'
+          maxItems: 128
+          items:
+            type: string
+            example: '"firstParam"'
+
+    ContractSpecResponse:
+      allOf:
+        - $ref: '#/components/schemas/BaseResponse'
+        - type: object
+          properties:
+            overview:
+              description: the contract overview
+              type: array
+              items:
+                $ref: '#/components/schemas/PropertySpec'
+            members:
+              description: the contract public functions
+              type: array
+              items:
+                $ref: '#/components/schemas/MemberSpec'
+            inheritedContracts:
+              type: array
+              description: the list of inherited contracts
+              items:
+                type: string
+                description: ASR module name
+                example: ASR20BUY
+
+    ContractStateResponse:
+      allOf:
+        - $ref: '#/components/schemas/BaseResponse'
+        - type: object
+          properties:
+            state:
+              description: the contract state json
+              type: string
+              example: "{'value': 20000}"
+
+    CountResponse:
+      allOf:
+        - $ref: '#/components/schemas/BaseResponse'
+        - type: object
+          properties:
+            count:
+              type: integer
+              format: int64
+              example: 345
+
     CreateChildAccountResp:
       required:
         - parent
@@ -1051,42 +1973,300 @@ components:
               type: string
               format: hex_bytearray
               example: '001047857c04a00539dc2e813bb45ff063a376e316b10cd0addd7306555ca0dd2890194d37960152eef5365f2400292d00ca9a3b0000000000c2eb0b000000000000000000000000000000000000000000000000000000000000000000000000920173ae606d36c1c77fc5bdf294bd048d04f85c46535525771b524dbb1ed20b73311900d4a409c293a10d8a5ab987430be4bd7478fb16a41cf775afa33c4d5600000000f1da1300fe7062e6fb2fbb37'
-    AccountInfoResp:
+
+    CurrencyBurningTxCreationRequest:
+      allOf:
+        - $ref: '#/components/schemas/CurrencyBurningTxParams'
+        - $ref: '#/components/schemas/TransactionCreationRequest'
+
+    CurrencyBurningTxParams:
+      type: object
+      properties:
+        currencyId:
+          type: string
+          format: integer
+          description: Id of the currency to burn
+          example: '12074128708093990729'
+        burningAmount:
+          type: integer
+          format: int64
+          description: Amount of the currency to burn in ATUs (minimal atomic currency unit)
+          example: 100000
+
+    ErrorResponse:
+      type: object
+      properties:
+        protocol:
+          description: 'Protocol version'
+          type: string
+          example: '2'
+        errorCode:
+          description: Error code on new API. null or 0 means success, no error.
+          type: integer
+          format: int32
+          example: 12
+        errorDescription:
+          description: Textual error description, e.g. exception message, etc that could be displayed to user
+          type: string
+          example: 'The mandatory parameter ''id'' is not specified.'
+        errorDetails:
+          description: |
+            Detailed error description with debug information, helpful error data or stacktrace, by default
+            should not be displayed to user. Main purpose is create bug reports with meaningful content.
+          type: string
+          example: 'Description of failure'
+
+    HealthResponse:
       allOf:
         - $ref: '#/components/schemas/BaseResponse'
-        - $ref: '#/components/schemas/AccountInfo'
-    AccountInfo:
+        - type: object
+          properties:
+            blockchainHeight:
+              type: integer
+              format: int32
+              example: 9900345
+              description: "Current height of blockchain"
+            dbConnectionTotal:
+              type: integer
+              format: int32
+              description: "Total connections in the pool"
+            dbConnectionActive:
+              type: integer
+              format: int32
+              description: "Active connections in the pool"
+            dbConnectionIdle:
+              type: integer
+              format: int32
+              description: "Idle connections in the pool"
+            unconfirmedTxCacheSize:
+              type: integer
+              format: int32
+              description: "Current unconfirmed transactions cache size"
+            maxUnconfirmedTxCount:
+              type: integer
+              format: int32
+              description: "Max count of the unconfirmed transactions to store into database"
+            unconfirmedTxCount:
+              type: integer
+              format: int32
+              description: "Current count of the unconfirmed transactions saved into database"
+            pendingProcessingTxCount:
+              type: integer
+              format: int32
+              description: "Current count of the pending processing unconfirmed transactions in the mempool"
+            processLaterTxCount:
+              type: integer
+              format: int32
+              description: "Current count of the unconfirmed transactions to process later"
+            removedTxCount:
+              type: integer
+              format: int32
+              description: "Current count of the removed transactions from the mempool"
+            referencedTxCount:
+              type: integer
+              format: int32
+              description: "Current count of the referenced transaction in the mempool"
+            isTrimActive:
+              type: boolean
+              description: "Returns true if the trimming process is active"
+
+    LastTransactionVerificationResponse:
+      allOf:
+        - $ref: '#/components/schemas/BaseResponse'
+        - type: object
+          properties:
+            fromHeight:
+              description: Verification's beginning height
+              type: integer
+              format: uint64
+              example: 1000
+            toHeight:
+              description: Verification's end height
+              type: integer
+              format: uint64
+              example: 1720
+            verificationResults:
+              description: The array of last verified transactions both successful or not
+              type: array
+              items:
+                $ref: '#/components/schemas/TransactionVerification'
+
+    ListResponse:
+      allOf:
+        - $ref: '#/components/schemas/BaseResponse'
+        - type: object
+          properties:
+            result:
+              type: array
+              items:
+                $ref: '#/components/schemas/BaseResponse'
+              nullable: true
+
+    MemberSpec:
       type: object
-      required:
-        - account
-        - publicKey
       properties:
-        account:
+        type:
+          description: the object type- constructor, function, event etc
           type: string
+          example: function
+        name:
+          description: the event/method/function name
+          type: string
+          example: balanceOf
+        inputs:
+          description: input params
+          type: array
+          items:
+            $ref: '#/components/schemas/ArgSpec'
+        outputs:
+          description: output value
+          type: array
+          items:
+            $ref: '#/components/schemas/PropertySpec'
+        stateMutability:
+          description: "a string with one of the following values: view, nonpayable, payable, pure"
+          type: string
+          example: view
+        value:
+          description: output value
+          type: string
+          example: '24999000000'
+        signature:
+          description: real method arguments
+          type: string
+          example: "balanceOf('0x7d2825cf3a120411');"
+
+    ModuleListResponse:
+      allOf:
+        - $ref: '#/components/schemas/BaseResponse'
+        - type: object
+          properties:
+            language:
+              description: the language name
+              type: string
+              example: js
+            version:
+              description: the language version
+              type: string
+              example: 0.1.1
+            modules:
+              type: array
+              items:
+                type: string
+
+    ModuleSourceResponse:
+      allOf:
+        - $ref: '#/components/schemas/BaseResponse'
+        - type: object
+          properties:
+            name:
+              description: the module name
+              type: string
+              example: ASR20
+            language:
+              description: the language name
+              type: string
+              example: js
+            version:
+              description: the language version
+              type: string
+              example: 0.1.1
+            content:
+              description: the module source
+              type: string
+
+    ModuleSpecResponse:
+      allOf:
+        - $ref: '#/components/schemas/BaseResponse'
+        - type: object
+          properties:
+            name:
+              description: the module name
+              type: string
+              example: ASR20
+            language:
+              description: the language name
+              type: string
+              example: js
+            version:
+              description: the language version
+              type: string
+              example: 0.1.1
+            content:
+              description: the module source
+              type: string
+
+    PropertySpec:
+      type: object
+      properties:
+        name:
+          description: the propery name
+          type: string
+          example: "totalSupply"
+        type:
+          description: property type
+          type: string
+          example: uint
+        value:
+          description: property value
+          type: string
+          example: 25000000000
+
+    PublishContractReq:
+      required:
+        - sender
+      type: object
+      properties:
+        sender:
+          type: string
+          description: the sender account id
           example: 'APL-X5JH-TJKJ-DVGC-5T2V8'
+        secretPhrase:
+          type: string
+          description: the sender secret phrase encrypted by ElGamal encryption
         publicKey:
-          description: The account public key in a hex string format
           type: string
-          format: hex_bytearray
-          example: '39dc2e813bb45ff063a376e316b10cd0addd7306555ca0dd2890194d37960152'
-        parent:
+          description: the sender public key as hex string
+        source:
           type: string
-          example: 'APL-AHYW-P3YX-V426-4UMP2'
-          nullable: true
-        balance:
+          description: the contract source code
+          example: 'class Deal {}'
+        name:
           type: string
-          format: integer
-          example: '45225600000000'
-        unconfirmedbalance:
+          description: the contract name
+          example: 'Deal'
+        params:
+          type: array
+          description: list of constructor parameters
+          maxItems: 128
+          items:
+            type: string
+            example: '\"firstParam\"", "123", "\"0x98765\"'
+        value:
           type: string
-          format: integer
-          example: '45225600000000'
-        status:
+          description: the scalar value of ATM
+          example: '20_00000000'
+        fuelLimit:
           type: string
-          enum:
-            - created
-            - verified
-          example: created
+          description: the fuel value
+          example: '5000000'
+        fuelPrice:
+          type: string
+          description: the fuel price value
+          example: '10000'
+
+    QueryCountResult:
+      allOf:
+        - $ref: '#/components/schemas/BaseResponse'
+        - type: object
+          properties:
+            count:
+              type: integer
+              format: int64
+              example: 345
+            query:
+              $ref: '#/components/schemas/QueryObject'
+
     QueryObject:
       type: object
       properties:
@@ -1152,8 +2332,9 @@ components:
         orderBy:
           type: string
           nullable: true
-          enum: [asc, desc]
+          enum: [ asc, desc ]
           default: asc
+
     QueryResult:
       allOf:
         - $ref: '#/components/schemas/BaseResponse'
@@ -1170,179 +2351,18 @@ components:
                 $ref: '#/components/schemas/TxReceipt'
             query:
               $ref: '#/components/schemas/QueryObject'
-    QueryCountResult:
-      allOf:
-        - $ref: '#/components/schemas/BaseResponse'
-        - type: object
-          properties:
-            count:
-              type: integer
-              format: int64
-              example: 345
-            query:
-              $ref: '#/components/schemas/QueryObject'
-    TxReceipt:
-      description: Transaction receipt. The lightweight and compact representation of the blockchain transaction.
-        Doesn't support the transaction type conversion.
-      allOf:
-        - $ref: '#/components/schemas/BaseResponse'
-        - type: object
-          required:
-            - transaction
-            - sender
-            - recipient
-            - signature
-          properties:
-            transaction:
-              type: string
-              format: hex_bytearray
-              example: '8330faaeb404178613417'
-            sender:
-              type: string
-              example: 'APL-X5JH-TJKJ-DVGC-5T2V8'
-            recipient:
-              type: string
-              example: 'APL-FXHG-6KHM-23LE-42ACU'
-            signature:
-              type: string
-              format: hex_bytearray
-              example: 'B98CB1890E76C772A10994B210ED9CF7F9A5488672A5D82C2734BBF9D11505D1'
-            timestamp:
-              type: integer
-              format: int64
-              description: Transaction timestamp, Unix timestamp in milliseconds
-              example: 1591696372000
-            amount:
-              type: string
-              format: integer
-              example: '34500000000'
-            fee:
-              type: string
-              format: integer
-              example: '0'
-            payload:
-              type: string
-              example: '{"transaction":"1234567890", "amount":"1234567890.12"}'
-            status:
-              type: string
-              description: |
-                The transaction status. A transaction is considered as unconfirmed until it is included in a valid block.
-                A transaction is considered as confirmed after at least one confirmations, so a transaction is considered
-                as irreversible after 721 confirmations and finally a transaction is permanent if it's confirmed 1440 times.
-              enum: [unconfirmed, confirmed, irreversible, permanent]
-              example: unconfirmed
-            block:
-              description: The Id of the block containing the confirmed transaction
-              type: string
-              format: hex_bytearray
-              example: '40faaeb1585625167943'
-            blockTimestamp:
-              type: integer
-              format: int64
-              description: Block timestamp, Unix timestamp in milliseconds
-              example: 1591696372000
-            height:
-              type: integer
-              format: int64
-              example: 15623658
-            index:
-              type: integer
-              format: int32
-              description: the order of the transaction in the block
-              example: 1
-            confirmations:
-              type: integer
-              format: int64
-              description: the amount of block transaction
-              example: 1758
-    CountResponse:
-      allOf:
-        - $ref: '#/components/schemas/BaseResponse'
-        - type: object
-          properties:
-            count:
-              type: integer
-              format: int64
-              example: 345
 
-    HealthResponse:
+    ResultValueResponse:
       allOf:
         - $ref: '#/components/schemas/BaseResponse'
         - type: object
           properties:
-            blockchainHeight:
-              type: integer
-              format: int32
-              example: 9900345
-              description: "Current height of blockchain"
-            dbConnectionTotal:
-              type: integer
-              format: int32
-              description: "Total connections in the pool"
-            dbConnectionActive:
-              type: integer
-              format: int32
-              description: "Active connections in the pool"
-            dbConnectionIdle:
-              type: integer
-              format: int32
-              description: "Idle connections in the pool"
-            unconfirmedTxCacheSize:
-              type: integer
-              format: int32
-              description: "Current unconfirmed transactions cache size"
-            maxUnconfirmedTxCount:
-              type: integer
-              format: int32
-              description: "Max count of the unconfirmed transactions to store into database"
-            unconfirmedTxCount:
-              type: integer
-              format: int32
-              description: "Current count of the unconfirmed transactions saved into database"
-            pendingProcessingTxCount:
-              type: integer
-              format: int32
-              description: "Current count of the pending processing unconfirmed transactions in the mempool"
-            processLaterTxCount:
-              type: integer
-              format: int32
-              description: "Current count of the unconfirmed transactions to process later"
-            removedTxCount:
-              type: integer
-              format: int32
-              description: "Current count of the removed transactions from the mempool"
-            referencedTxCount:
-              type: integer
-              format: int32
-              description: "Current count of the referenced transaction in the mempool"
-            isTrimActive:
-              type: boolean
-              description: "Returns true if the trimming process is active"
+            results:
+              type: array
+              items:
+                $ref: '#/components/schemas/CallMethodResult'
 
-    BaseResponse:
-      type: object
-      properties:
-        protocol:
-          description: 'Protocol version'
-          type: string
-          example: '2'
-        requestProcessingTime:
-          description: 'Time in milliseconds that took from incoming request to response'
-          type: integer
-          format: int64
-          example: 12
-          default: 0
-        errorCode:
-          description: Error code on new API. null or 0 means success, no error.
-          type: integer
-          format: int32
-          example: 12
-        errorDescription:
-          description: Textual error description, e.g. exception message, etc that could be displayed to user
-          type: string
-          example: 'The mandatory parameter ''id'' is not specified.'
-
-    ListResponse:
+    StringListResponse:
       allOf:
         - $ref: '#/components/schemas/BaseResponse'
         - type: object
@@ -1350,8 +2370,21 @@ components:
             result:
               type: array
               items:
-                $ref: '#/components/schemas/BaseResponse'
-              nullable: true
+                type: string
+
+    TransactionArrayResp:
+      required:
+        - tx
+      allOf:
+        - $ref: '#/components/schemas/BaseResponse'
+        - type: object
+          properties:
+            tx:
+              description: Unsigned transaction data
+              type: string
+              format: hex_bytearray
+              example: '001047857c04a00539dc2e813bb45ff063a376e316b10cd0addd7306555ca0dd2890194d37960152eef5365f2400292d00ca9a3b0000000000c2eb0b000000000000000000000000000000000000000000000000000000000000000000000000920173ae606d36c1c77fc5bdf294bd048d04f85c46535525771b524dbb1ed20b73311900d4a409c293a10d8a5ab987430be4bd7478fb16a41cf775afa33c4d5600000000f1da1300fe7062e6fb2fbb37'
+
     TransactionCreationRequest:
       type: object
       properties:
@@ -1539,23 +2572,7 @@ components:
           format: uint8
           description: Hashing algorithm used for obtaining phasingHashedSecret from the original secret value. Possible values  2 - SHA256, 6 - RIPEMD160, 62 - RIPEMD160_SHA256
           example: 2
-    CurrencyBurningTxParams:
-      type: object
-      properties:
-        currencyId:
-          type: string
-          format: integer
-          description: Id of the currency to burn
-          example: '12074128708093990729'
-        burningAmount:
-          type: integer
-          format: int64
-          description: Amount of the currency to burn in ATUs (minimal atomic currency unit)
-          example: 100000
-    CurrencyBurningTxCreationRequest:
-      allOf:
-        - $ref: '#/components/schemas/CurrencyBurningTxParams'
-        - $ref: '#/components/schemas/TransactionCreationRequest'
+
     TransactionCreationResponse:
       allOf:
         - $ref: '#/components/schemas/BaseResponse'
@@ -1591,31 +2608,361 @@ components:
               description: whether transaction broadcasted to peers or not
               example: true
 
-    ErrorResponse:
+    TransactionInfo:
       type: object
       properties:
-        protocol:
-          description: 'Protocol version'
+        id:
+          description: The transaction ID
           type: string
+          format: hex_bytearray
+          example: '1a0feb1306043151604016701'
+        type:
+          description: Transaction type
+          type: string
+          format: int8
           example: '2'
-        errorCode:
-          description: Error code on new API. null or 0 means success, no error.
+        subtype:
+          description: Transaction subtype
+          type: string
+          format: int8
+          example: '1'
+        phased:
+          description: is true if the transaction is phased
+          type: boolean
+          example: false
+        timestamp:
+          type: integer
+          format: int64
+          description: Transaction timestamp, Unix timestamp in milliseconds
+          example: 1591696372000
+        deadline:
+          description: the deadline for the transaction to be confirmed in minutes,ex.1440=24h
           type: integer
           format: int32
-          example: 12
-        errorDescription:
-          description: Textual error description, e.g. exception message, etc that could be displayed to user
+          example: 1440
+        senderPublicKey:
           type: string
-          example: 'The mandatory parameter ''id'' is not specified.'
-        errorDetails:
-          description: |
-            Detailed error description with debug information, helpful error data or stacktrace, by default
-            should not be displayed to user. Main purpose is create bug reports with meaningful content.
+          format: hex_bytearray
+          description: The public key of the sending account for the transaction
+        recipient:
           type: string
-          example: 'Description of failure'
+          description: The account Id of the recipient
+          example: 'APL-FXHG-6KHM-23LE-42ACU'
+        amount:
+          type: string
+          format: integer
+          description: The amount of the transaction
+          example: 34500000000
+        fee:
+          type: string
+          format: integer
+          example: 200000000
+          description: The fee of the transaction
+        referencedTransactionFullHash:
+          type: string
+          format: hex_bytearray
+          description: The full hash of a transaction referenced by this one
+          example: '5424ca4dd976a873839c7d5c9952fa15ae619f678365e8ebbc73f967142eb40d'
+        signature:
+          type: string
+          format: hex_bytearray
+          example: '920173ae606d36c1c77fc5bdf294bd048d04f85c46535525771b524dbb1ed20b73311900d4a409c293a10d8a5ab987430be4bd7478fb16a41cf775afa33c4d56'
+          description: The digital signature of the transaction
+        signatureHash:
+          type: string
+          format: hex_bytearray
+          description: SHA-256 hash of the transaction signature
+          example: '2fc1883e9b76fdc67fabee0a3def5f4b7fc2de9cd65bc8bb6d39eaf5e99498d8'
+        fullHash:
+          type: string
+          format: hex_bytearray
+          description: The full hash of the transaction
+          example: '39dc2e813bb45ff063a376e316b10cd0addd7306555ca0dd2890194d37960152'
+        attachment:
+          type: object
+          nullable: true
+          additionalProperties:
+            type: object
+          description: An object containong any additional data needed for the transaction
+        sender:
+          type: string
+          description: The sender account
+          example: 'APL-X5JH-TJKJ-DVGC-5T2V8'
+        height:
+          type: integer
+          format: int64
+          example: 4365987
+          description: The height of the block in the blockchain
+        version:
+          type: string
+          format: int8
+          example: '1'
+          description: The transaction version number
+        ecBlockId:
+          type: string
+          format: hex_bytearray
+          description: The economic clustering block ID
+          example: '40faaeb15856251679437054'
+        ecBlockHeight:
+          type: integer
+          format: int64
+          description: The economic clustering block height
+          example: 3301233
+        block:
+          type: string
+          format: hex_bytearray
+          description: The block id
+          example: '230aeb0f4585625167943'
+        confirmations:
+          type: integer
+          format: int32
+          description: the number of transaction confirmations
+          example: 387
+        blockTimestamp:
+          type: integer
+          format: int64
+          description: Block timestamp, Unix timestamp in milliseconds
+          example: 1591696372000
+        index:
+          type: integer
+          format: int32
+          description: the order of the transaction in the block
+          example: 1
+
+    TransactionInfoArrayResp:
+      allOf:
+        - $ref: '#/components/schemas/BaseResponse'
+        - type: object
+          properties:
+            tx:
+              description: The array of transactions
+              type: array
+              items:
+                $ref: '#/components/schemas/TransactionInfo'
+
+    TransactionInfoResp:
+      allOf:
+        - $ref: '#/components/schemas/BaseResponse'
+        - $ref: '#/components/schemas/TransactionInfo'
+
+    TransactionVerification:
+      type: object
+      properties:
+        id:
+          description: Id of the verified transaction
+          type: string
+          format: int64
+          example: '12911439768940768505'
+        verified:
+          description: Whether verified transaction successfully or not
+          type: boolean
+          example: true
+        message:
+          description: Transaction error message, if transaction is failed, which was verified among the peers
+          type: string
+          example: Transaction error, unsufficient funds for account
+        verificationCount:
+          description: Number of transaction's successful verifications
+          type: integer
+          format: uint32
+          example: 3
+
+    TransactionVerificationResponse:
+      allOf:
+        - $ref: '#/components/schemas/BaseResponse'
+        - $ref: '#/components/schemas/TransactionVerification'
+
+    TxReceipt:
+      description: Transaction receipt. The lightweight and compact representation of the blockchain transaction.
+        Doesn't support the transaction type conversion.
+      allOf:
+        - $ref: '#/components/schemas/BaseResponse'
+        - type: object
+          required:
+            - transaction
+            - sender
+            - recipient
+            - signature
+          properties:
+            transaction:
+              type: string
+              format: hex_bytearray
+              example: '8330faaeb404178613417'
+            sender:
+              type: string
+              example: 'APL-X5JH-TJKJ-DVGC-5T2V8'
+            recipient:
+              type: string
+              example: 'APL-FXHG-6KHM-23LE-42ACU'
+            signature:
+              type: string
+              format: hex_bytearray
+              example: 'B98CB1890E76C772A10994B210ED9CF7F9A5488672A5D82C2734BBF9D11505D1'
+            timestamp:
+              type: integer
+              format: int64
+              description: Transaction timestamp, Unix timestamp in milliseconds
+              example: 1591696372000
+            amount:
+              type: string
+              format: integer
+              example: '34500000000'
+            fee:
+              type: string
+              format: integer
+              example: '0'
+            payload:
+              type: string
+              example: '{"transaction":"1234567890", "amount":"1234567890.12"}'
+            status:
+              type: string
+              description: |
+                The transaction status. A transaction is considered as unconfirmed until it is included in a valid block.
+                A transaction is considered as confirmed after at least one confirmations, so a transaction is considered
+                as irreversible after 721 confirmations and finally a transaction is permanent if it's confirmed 1440 times.
+              enum: [ unconfirmed, confirmed, irreversible, permanent ]
+              example: unconfirmed
+            block:
+              description: The Id of the block containing the confirmed transaction
+              type: string
+              format: hex_bytearray
+              example: '40faaeb1585625167943'
+            blockTimestamp:
+              type: integer
+              format: int64
+              description: Block timestamp, Unix timestamp in milliseconds
+              example: 1591696372000
+            height:
+              type: integer
+              format: int64
+              example: 15623658
+            index:
+              type: integer
+              format: int32
+              description: the order of the transaction in the block
+              example: 1
+            confirmations:
+              type: integer
+              format: int64
+              description: the amount of block transaction
+              example: 1758
+
+    TxRequest:
+      required:
+        - tx
+      type: object
+      properties:
+        tx:
+          description: Signed transaction data
+          type: string
+          format: hex_bytearray
+          example: '001047857c04a00539dc2e813bb45ff063a376e316b10cd0addd7306555ca0dd2890194d37960152eef5365f2400292d00ca9a3b0000000000c2eb0b000000000000000000000000000000000000000000000000000000000000000000000000920173ae606d36c1c77fc5bdf294bd048d04f85c46535525771b524dbb1ed20b73311900d4a409c293a10d8a5ab987430be4bd7478fb16a41cf775afa33c4d5600000000f1da1300fe7062e6fb2fbb37'
+          nullable: false
+
+    UnconfirmedTransactionInfo:
+      type: object
+      properties:
+        id:
+          description: The transaction ID
+          type: string
+          format: hex_bytearray
+          example: '1a0feb1306043151604016701'
+        type:
+          description: Transaction type
+          type: string
+          format: int8
+          example: '2'
+        subtype:
+          description: Transaction subtype
+          type: string
+          format: int8
+          example: '1'
+        phased:
+          description: is true if the transaction is phased
+          type: boolean
+          example: false
+        timestamp:
+          type: integer
+          format: int64
+          description: Transaction timestamp, Unix timestamp in milliseconds
+          example: 1591696372000
+        deadline:
+          description: the deadline for the transaction to be confirmed in minutes,ex.1440=24h
+          type: integer
+          format: int32
+          example: 1440
+        senderPublicKey:
+          type: string
+          format: hex_bytearray
+          description: The public key of the sending account for the transaction
+        recipient:
+          type: string
+          description: The account Id of the recipient
+          example: 'APL-FXHG-6KHM-23LE-42ACU'
+        amount:
+          type: string
+          format: integer
+          description: The amount of the transaction
+          example: 34500000000
+        fee:
+          type: string
+          format: integer
+          example: 200000000
+          description: The fee of the transaction
+        referencedTransactionFullHash:
+          type: string
+          format: hex_bytearray
+          description: The full hash of a transaction referenced by this one
+          example: '5424ca4dd976a873839c7d5c9952fa15ae619f678365e8ebbc73f967142eb40d'
+        signature:
+          type: string
+          format: hex_bytearray
+          example: '920173ae606d36c1c77fc5bdf294bd048d04f85c46535525771b524dbb1ed20b73311900d4a409c293a10d8a5ab987430be4bd7478fb16a41cf775afa33c4d56'
+          description: The digital signature of the transaction
+        signatureHash:
+          type: string
+          format: hex_bytearray
+          description: SHA-256 hash of the transaction signature
+          example: '2fc1883e9b76fdc67fabee0a3def5f4b7fc2de9cd65bc8bb6d39eaf5e99498d8'
+        fullHash:
+          type: string
+          format: hex_bytearray
+          description: The full hash of the transaction
+          example: '39dc2e813bb45ff063a376e316b10cd0addd7306555ca0dd2890194d37960152'
+        attachment:
+          type: object
+          nullable: true
+          additionalProperties:
+            type: object
+          description: An object containong any additional data needed for the transaction
+        sender:
+          type: string
+          description: The sender account
+          example: 'APL-X5JH-TJKJ-DVGC-5T2V8'
+        version:
+          type: string
+          format: int8
+          example: '1'
+          description: The transaction version number
+        ecBlockId:
+          type: string
+          format: hex_bytearray
+          description: The economic clustering block ID
+          example: '40faaeb15856251679437054'
+        ecBlockHeight:
+          type: integer
+          format: int64
+          description: The economic clustering block height
+          example: 3301233
   responses:
     BadRequest:
       description: Bad request - malformed request or wrong parameters
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ErrorResponse'
+    NotFound:
+      description: Requested resource is not found or operation cannot be executed since required resource is missing
       content:
         application/json:
           schema:
@@ -1636,3 +2983,7 @@ components:
       type: http
       scheme: bearer
       bearerFormat: JWT
+    admin_api_key:
+      type: apiKey
+      in: header
+      name: adminPassword

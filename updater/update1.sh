@@ -134,6 +134,8 @@ then
     cd $1/..
     rm -rfv apollo-web-ui
     rm -rfv apollo-tools
+    rm -rfv apollo-desktop
+
 
     chmod 755 $1/../apollo-blockchain/bin/*.sh
 
@@ -240,25 +242,26 @@ then
 	    NETID=b5d7b6
 
     esac
-
+    notify "Downloading database"
 # TODO: ! refactor and ncomment that block
+
 #    if [ "$#" -eq 3 ]
 #    then
 #	if [ ${NOSHARD} == false ]
 #	then
 #	    bash ./update3.sh $1 $2 $3 true ${NETID}
+#
+
 #	fi
 #    else
+    
 #	bash ./update3.sh $1 $2 $3 $4 $5
 #    fi
 
 
-
-#    notify "Downloading db shards..."
-
-    if [[ -d conf ]]; then
-	mv -fv conf apollo-blockchain
-    fi
+#    if [[ -d conf ]]; then
+#	mv -fv conf apollo-blockchain
+#    fi
     APLCMDLINE=$(echo ${APLCMDLINE} | sed s/shards/shard/g)
     if [ $3 == true ]
     then

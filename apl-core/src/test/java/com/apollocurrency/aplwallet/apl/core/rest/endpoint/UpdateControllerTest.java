@@ -1,19 +1,20 @@
 package com.apollocurrency.aplwallet.apl.core.rest.endpoint;
 
-import com.apollocurrency.aplwallet.apl.core.blockchain.EcBlockData;
-import com.apollocurrency.aplwallet.apl.core.blockchain.Transaction;
-import com.apollocurrency.aplwallet.apl.core.blockchain.TransactionBuilderFactory;
-import com.apollocurrency.aplwallet.apl.core.blockchain.TransactionImpl;
-import com.apollocurrency.aplwallet.apl.core.blockchain.TransactionSignerImpl;
 import com.apollocurrency.aplwallet.apl.core.chainid.BlockchainConfig;
 import com.apollocurrency.aplwallet.apl.core.entity.state.account.Account;
 import com.apollocurrency.aplwallet.apl.core.entity.state.account.PublicKey;
+import com.apollocurrency.aplwallet.apl.core.model.EcBlockData;
+import com.apollocurrency.aplwallet.apl.core.model.Transaction;
+import com.apollocurrency.aplwallet.apl.core.model.TransactionImpl;
 import com.apollocurrency.aplwallet.apl.core.rest.TransactionCreator;
 import com.apollocurrency.aplwallet.apl.core.rest.converter.UnconfirmedTransactionConverter;
+import com.apollocurrency.aplwallet.apl.core.rest.converter.UnconfirmedTransactionConverterCreator;
 import com.apollocurrency.aplwallet.apl.core.rest.exception.LegacyParameterExceptionMapper;
 import com.apollocurrency.aplwallet.apl.core.rest.utils.AccountParametersParser;
 import com.apollocurrency.aplwallet.apl.core.service.appdata.TimeService;
+import com.apollocurrency.aplwallet.apl.core.service.blockchain.TransactionBuilderFactory;
 import com.apollocurrency.aplwallet.apl.core.service.blockchain.TransactionProcessor;
+import com.apollocurrency.aplwallet.apl.core.service.blockchain.TransactionSignerImpl;
 import com.apollocurrency.aplwallet.apl.core.service.state.account.AccountService;
 import com.apollocurrency.aplwallet.apl.core.signature.Signature;
 import com.apollocurrency.aplwallet.apl.core.transaction.CachedTransactionTypeFactory;
@@ -33,6 +34,7 @@ import com.apollocurrency.aplwallet.apl.util.io.PayloadResult;
 import com.apollocurrency.aplwallet.apl.util.service.ElGamalEncryptor;
 import com.apollocurrency.aplwallet.vault.model.ApolloFbWallet;
 import com.apollocurrency.aplwallet.vault.service.KMSService;
+import lombok.SneakyThrows;
 import org.jboss.resteasy.mock.MockHttpResponse;
 import org.junit.jupiter.api.AfterAll;
 import org.junit.jupiter.api.BeforeEach;
@@ -43,7 +45,7 @@ import org.mockito.junit.jupiter.MockitoExtension;
 import org.skyscreamer.jsonassert.JSONAssert;
 import org.skyscreamer.jsonassert.JSONCompareMode;
 
-import javax.servlet.http.HttpServletRequest;
+import jakarta.servlet.http.HttpServletRequest;
 import java.io.UnsupportedEncodingException;
 import java.net.URISyntaxException;
 import java.util.List;
@@ -84,6 +86,9 @@ class UpdateControllerTest extends AbstractEndpointTest {
     @Mock
     KMSService KMSService = mock(KMSService.class);
 
+    @Mock
+    UnconfirmedTransactionConverterCreator creator;
+
     UpdateV2TransactionType v2Transaction;
 
     @Override
@@ -92,13 +97,16 @@ class UpdateControllerTest extends AbstractEndpointTest {
         super.setUp();
         v2Transaction = new UpdateV2TransactionType(blockchainConfig, accountService);
         UnconfirmedTransactionConverter converter = new UnconfirmedTransactionConverter(mock(PrunableLoadingService.class));
+        when(creator.create(false)).thenReturn(converter);
         CachedTransactionTypeFactory txTypeFactory = new CachedTransactionTypeFactory(List.of(v2Transaction));
-        transactionCreator = new TransactionCreator(validator, new PropertiesHolder(), timeService, new FeeCalculator(mock(PrunableLoadingService.class), blockchainConfig), blockchain, processor, txTypeFactory, new TransactionBuilderFactory(txTypeFactory, blockchainConfig), transactionSigner, blockchainConfig);
+        transactionCreator = new TransactionCreator(validator, new PropertiesHolder(), timeService,
+            new FeeCalculator(mock(PrunableLoadingService.class), blockchainConfig), blockchain, processor, txTypeFactory,
+            new TransactionBuilderFactory(txTypeFactory, blockchainConfig), transactionSigner, blockchainConfig);
         dispatcher.getProviderFactory()
             .register(ByteArrayConverterProvider.class)
             .register(LegacyParameterExceptionMapper.class)
             .register(PlatformSpecConverterProvider.class);
-        UpdateController updateController = new UpdateController(new AccountParametersParser(accountService, elGamal, KMSService), transactionCreator, converter, blockchainConfig);
+        UpdateController updateController = new UpdateController(new AccountParametersParser(accountService, elGamal, KMSService), transactionCreator, creator, blockchainConfig);
         dispatcher.getRegistry().addSingletonResource(updateController);
         dispatcher.getDefaultContextObjects().put(HttpServletRequest.class, req);
         Convert2.init("TEST", 0);
@@ -109,8 +117,9 @@ class UpdateControllerTest extends AbstractEndpointTest {
         Convert2.init("APL", 0);
     }
 
+    @SneakyThrows
     @Test
-    void testSendUpdateSuccessful() throws URISyntaxException, UnsupportedEncodingException, AplException.ValidationException {
+    void testSendUpdateSuccessful() {
         long ONE_APL = 100000000l;
         when(blockchainConfig.getOneAPL()).thenReturn(ONE_APL);
         when(elGamal.elGamalDecrypt(SECRET)).thenReturn(SECRET);
@@ -137,8 +146,9 @@ class UpdateControllerTest extends AbstractEndpointTest {
         verify(processor).broadcast(any(Transaction.class));
     }
 
+    @SneakyThrows
     @Test
-    void testSendUpdateSuccessful_usingVault() throws URISyntaxException, UnsupportedEncodingException, AplException.ValidationException {
+    void testSendUpdateSuccessful_usingVault() {
         long ONE_APL = 100000000l;
         when(blockchainConfig.getOneAPL()).thenReturn(ONE_APL);
         when(elGamal.elGamalDecrypt(SECRET)).thenReturn(SECRET);
@@ -166,12 +176,13 @@ class UpdateControllerTest extends AbstractEndpointTest {
         String json = response.getContentAsString();
 //        System.out.println("json = \n" + json);
 
-        JSONAssert.assertEquals("{\"requestProcessingTime\":0,\"type\":8,\"subtype\":3,\"phased\":false,\"timestamp\":0,\"deadline\":1440,\"senderPublicKey\":\"" + PUBLIC_KEY_SECRET + "\",\"amountATM\":\"0\",\"feeATM\":\"100000000\",\"attachment\":{\"serialNumber\":\"1\",\"level\":0,\"signature\":\"111100ff\",\"version.UpdateV2\":1,\"manifestUrl\":\"https://test11.com\",\"cn\":\"https://cn345.com\",\"version\":\"1.23.4\",\"platforms\":[{\"platform\":-1,\"architecture\":2},{\"platform\":1,\"architecture\":1}]},\"sender\":\"" + Long.toUnsignedString(ACCOUNT_ID_WITH_SECRET) +"\",\"senderRS\":\"TEST-" + Crypto.rsEncode(AbstractEndpointTest.ACCOUNT_ID_WITH_SECRET)+ "\",\"height\":2147483647,\"version\":1,\"ecBlockId\":\"121\",\"ecBlockHeight\":100000}", json, JSONCompareMode.LENIENT);
+        JSONAssert.assertEquals("{\"requestProcessingTime\":0,\"type\":8,\"subtype\":3,\"phased\":false,\"timestamp\":0,\"deadline\":1440,\"senderPublicKey\":\"" + PUBLIC_KEY_SECRET + "\",\"amountATM\":\"0\",\"feeATM\":\"100000000\",\"attachment\":{\"serialNumber\":\"1\",\"level\":0,\"signature\":\"111100ff\",\"version.UpdateV2\":1,\"manifestUrl\":\"https://test11.com\",\"cn\":\"https://cn345.com\",\"version\":\"1.23.4\",\"platforms\":[{\"platform\":-1,\"architecture\":2},{\"platform\":1,\"architecture\":1}]},\"sender\":\"" + Long.toUnsignedString(ACCOUNT_ID_WITH_SECRET) + "\",\"senderRS\":\"TEST-" + Crypto.rsEncode(AbstractEndpointTest.ACCOUNT_ID_WITH_SECRET) + "\",\"height\":2147483647,\"version\":1,\"ecBlockId\":\"121\",\"ecBlockHeight\":100000}", json, JSONCompareMode.LENIENT);
         verify(processor).broadcast(any(Transaction.class));
     }
 
+    @SneakyThrows
     @Test
-    void testSendUpdate_missingSecretPhrase() throws URISyntaxException, UnsupportedEncodingException, AplException.ValidationException {
+    void testSendUpdate_missingSecretPhrase() {
         Account sender = new Account(ACCOUNT_ID_WITH_SECRET, 10000 * blockchainConfig.getOneAPL(), 10000 * blockchainConfig.getOneAPL(), 0, 0, CURRENT_HEIGHT);
         sender.setPublicKey(new PublicKey(sender.getId(), null, 0));
 
@@ -184,8 +195,9 @@ class UpdateControllerTest extends AbstractEndpointTest {
         verify(processor, never()).broadcast(any(Transaction.class));
     }
 
+    @SneakyThrows
     @Test
-    void testSendUpdate_missingAccount() throws URISyntaxException, UnsupportedEncodingException, AplException.ValidationException {
+    void testSendUpdate_missingAccount() {
         when(elGamal.elGamalDecrypt(SECRET)).thenReturn(SECRET);
         doAnswer(invocation -> {
             String argument = invocation.getArgument(0);
