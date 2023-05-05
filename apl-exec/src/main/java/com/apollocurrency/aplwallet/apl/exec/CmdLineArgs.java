@@ -16,13 +16,13 @@ public class CmdLineArgs {
 
     public static int DEFAULT_DEBUG_LEVEL = 2;
 
-    @Option(names = {"--debug", "-d"}, description = "Debug level [0-4] from ERROR to TRACE")
+    @Option(names = {"--debug", "-d"}, description = "Common debug level [0-4] from ERROR=0, WARN=1, INFO=2, DEBUG=3, TRACE=4")
     public int debug = DEFAULT_DEBUG_LEVEL;
     @Option(names = {"--debug-updater", "-du"}, description = "Force updater to use debug certificates for verifying update transactions")
     public boolean debugUpdater;
-    @Option(names = {"--help", "-h"}, help = true, description = "Print help message")
+    @Option(names = {"--help", "-h"}, usageHelp = true, help = true, description = "Print help message")
     public boolean help;
-    @Option(names = {"--service-mode", "-s"}, help = true, description = "Run in service mode with current system user")
+    @Option(names = {"--service-mode", "-s"}, arity = "0..1", defaultValue = "false", fallbackValue = "true", description = "Run in service mode with current system user")
     public boolean serviceMode;
     @Option(names = {"--ignore-resources"}, description = "Ignore resources bundled with application jar. Default is false")
     public boolean ignoreResources = false;
@@ -36,12 +36,19 @@ public class CmdLineArgs {
     public String vaultKeystoreDir = "";
     @Option(names = {"--dex-key-dir"}, description = "Load/Save dex keys to/form specified keystore directory.")
     public String dexKeystoreDir = "";
-    @Option(names = {"--no-shard-import"}, description = "Start from Genesis block, do not try to import last shard")
+    @Option(names = {"--no-shard-import"}, arity = "0..1", defaultValue = "false", fallbackValue = "true",
+        description = "Empty node starts downloading blocks from Genesis block, does not try to import last shard downloaded from another sharded nodes." +
+        " Default: ${DEFAULT-VALUE}, if specified without parameter value is: ${FALLBACK-VALUE}."
+    )
     public boolean noShardImport = false;
-    @Option(names = {"--no-shard-create"}, description = "Do not create shards even if it configured to do so. Shards require much more resources")
+    @Option(names = {"--no-shard-create"}, arity = "0..1", defaultValue = "false", fallbackValue = "true",
+        description = "Do not create shards even if it configured to do so, default: ${DEFAULT-VALUE}, " +
+            "if specified without parameter: ${FALLBACK-VALUE}. Shards are require more OS resources."
+    )
     public boolean noShardCreate = false;
 
-    @Option(names = {"--update-attachment-file", "-u"}, description = "Full path to file which represent json of UpdateAttachment for local updates debug")
+    @Option(names = {"--update-attachment-file", "-u"},
+        description = "Full path to file which represent json of UpdateAttachment for local updates with debugging purpose.")
     public String updateAttachmentFile = "";
 
     //    TODO cleanup apl-default.properties
@@ -53,13 +60,13 @@ public class CmdLineArgs {
     public String pidFile = "";
     @Option(names = {"--net", "-n"}, help = true, description = "Connect to net [0-4]. 0 means mainnet, 1 - 1st testnet and so on")
     public int netIdx = -1;
-    @Option(names = {"--chain", "-C"}, help = true, description = "Connect to net with given chainID. UUID of chain id may be specified partially, 6 symbos min. Configs must be present.")
+    @Option(names = {"--chain", "-C"}, help = true, description = "Connect to net with given chainID. UUID of chain id may be specified partially, 6 symbols min. Config file must be present.")
     public String chainId = "";
     @Option(names = {"--testnet"}, help = true, description = "Connect to testent 1. Has higher priority then --net")
     public boolean isTestnet = false;
     //---
-    @Option(names = {"--disable-weld-concurrent-deployment"},
-        description = "If use it, Weld doesn't use ConcurrentDeployer and ConcurrentValidator to build the container. Default value is true.")
+    @Option(names = {"--disable-weld-concurrent-deployment"}, defaultValue = "false",
+        description = "If use it, Weld doesn't use ConcurrentDeployer and ConcurrentValidator to build the container. Default value is ${DEFAULT-VALUE}.")
     public boolean disableWeldConcurrentDeployment = false;
 
     public boolean isResourceIgnored() {
