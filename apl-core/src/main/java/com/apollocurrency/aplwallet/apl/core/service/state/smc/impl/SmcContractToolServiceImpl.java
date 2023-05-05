@@ -25,8 +25,8 @@ import com.apollocurrency.smc.polyglot.language.lib.Preprocessor;
 import com.apollocurrency.smc.polyglot.language.validator.Matcher;
 import lombok.extern.slf4j.Slf4j;
 
-import javax.inject.Inject;
-import javax.inject.Singleton;
+import jakarta.inject.Inject;
+import jakarta.inject.Singleton;
 
 /**
  * @author andrew.zinchenko@gmail.com

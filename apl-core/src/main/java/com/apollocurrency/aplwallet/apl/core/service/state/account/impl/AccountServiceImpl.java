@@ -34,9 +34,9 @@ import com.apollocurrency.aplwallet.apl.util.db.DbIterator;
 import com.google.common.base.Preconditions;
 import lombok.extern.slf4j.Slf4j;
 
-import javax.enterprise.event.Event;
-import javax.inject.Inject;
-import javax.inject.Singleton;
+import jakarta.enterprise.event.Event;
+import jakarta.inject.Inject;
+import jakarta.inject.Singleton;
 import java.sql.SQLException;
 import java.util.Arrays;
 import java.util.List;

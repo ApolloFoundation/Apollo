@@ -10,8 +10,8 @@ import com.apollocurrency.aplwallet.apl.core.service.blockchain.BlockchainProces
 import lombok.AllArgsConstructor;
 import lombok.NoArgsConstructor;
 
-import javax.enterprise.inject.spi.CDI;
-import javax.inject.Singleton;
+import jakarta.enterprise.inject.spi.CDI;
+import jakarta.inject.Singleton;
 import java.util.List;
 
 /**

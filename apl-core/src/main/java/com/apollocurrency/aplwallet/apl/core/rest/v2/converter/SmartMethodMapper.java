@@ -8,7 +8,7 @@ import com.apollocurrency.aplwallet.api.v2.model.ContractMethod;
 import com.apollocurrency.aplwallet.apl.util.api.converter.Converter;
 import com.apollocurrency.smc.contract.SmartMethod;
 
-import javax.inject.Singleton;
+import jakarta.inject.Singleton;
 import java.math.BigInteger;
 
 /**

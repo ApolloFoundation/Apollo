@@ -6,8 +6,8 @@ package com.apollocurrency.aplwallet.apl.core.rest.validation;
 
 import lombok.NoArgsConstructor;
 
-import javax.validation.ConstraintValidator;
-import javax.validation.ConstraintValidatorContext;
+import jakarta.validation.ConstraintValidator;
+import jakarta.validation.ConstraintValidatorContext;
 
 @NoArgsConstructor
 public class TimestampValidator implements ConstraintValidator<ValidTimestamp, Integer> {

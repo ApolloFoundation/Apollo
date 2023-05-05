@@ -4,7 +4,7 @@
 
 package com.apollocurrency.aplwallet.apl.core.dao.state.derived;
 
-import javax.enterprise.event.Event;
+import jakarta.enterprise.event.Event;
 
 import com.apollocurrency.aplwallet.apl.core.dao.state.keyfactory.DbKey;
 import com.apollocurrency.aplwallet.apl.core.entity.model.DerivedIdEntity;

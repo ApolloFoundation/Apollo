@@ -20,7 +20,7 @@ import java.util.concurrent.TimeUnit;
 
 import static org.slf4j.LoggerFactory.getLogger;
 
-public class NtpTime {
+public class NtpTime implements TimeSource {
 
     private static final Logger LOG = getLogger(NtpTime.class);
 
@@ -29,9 +29,6 @@ public class NtpTime {
     private static final int DEFAULT_TIMEOUT = 5000; // in millis
     private volatile long timeOffset = 0;
     private NTPUDPClient client;
-
-    public NtpTime() {
-    }
 
     private void setTimeDrift() {
         try {
@@ -43,22 +40,24 @@ public class NtpTime {
             String delay = (delayValue == null) ? "N/A" : delayValue.toString();
             String offset = (offsetValue == null) ? "N/A" : offsetValue.toString();
 
-            LOG.debug(" Roundtrip delay(ms)=" + delay
-                + ", clock offset(ms)=" + offset); // offset in ms
+            LOG.debug("Roundtrip delay(ms)={}, clock offset(ms)={}", delay, offset); // offset in ms
             if (offsetValue != null) {
                 timeOffset = offsetValue;
             }
         } catch (SocketTimeoutException | UnknownHostException e) {
-            LOG.debug("Exception: " + e.getMessage() + ". Keep prev offset: " + timeOffset);
+            LOG.debug("Exception: {}. Keep prev offset: {}", e.getMessage(), timeOffset);
         } catch (IOException e) {
             LOG.debug("NTP exception: {}", e.getMessage());
         }
     }
 
     /**
-     * @return current time in Millis.
+     * {@inheritDoc}
+     * This implemetation uses received from NTP time offset in millis to adjust time to the global clock when system
+     * time is out of sync for some reason
      */
-    public long getTime() {
+    @Override
+    public long currentTime() {
         return System.currentTimeMillis() + timeOffset;
     }
 

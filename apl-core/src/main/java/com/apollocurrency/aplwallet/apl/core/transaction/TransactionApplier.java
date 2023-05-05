@@ -22,8 +22,8 @@ import com.apollocurrency.aplwallet.apl.util.annotation.FeeMarker;
 import com.apollocurrency.aplwallet.apl.util.annotation.TransactionFee;
 import lombok.extern.slf4j.Slf4j;
 
-import javax.inject.Inject;
-import javax.inject.Singleton;
+import jakarta.inject.Inject;
+import jakarta.inject.Singleton;
 
 @Singleton
 @Slf4j
@@ -172,6 +172,7 @@ public class TransactionApplier {
         long feeATM = transaction.getFeeATM();
         Account sender = accountService.getAccount(transaction.getSenderId());
         accountService.addToBalanceATM(sender, LedgerEvent.FAILED_VALIDATION_TRANSACTION_FEE, transaction.getId(), 0, -feeATM);
+        log.info("Fee charged from failed by validation tx {}, from account {}, fee {}, height {}", transaction.getId(), sender.getId(), feeATM, transaction.getHeight());
     }
 
     @TransactionFee({FeeMarker.UNCONFIRMED_BALANCE, FeeMarker.FEE})

@@ -115,10 +115,10 @@ import org.jboss.weld.environment.se.WeldContainer;
 import org.json.simple.JSONObject;
 import org.json.simple.JSONValue;
 
-import javax.enterprise.event.Event;
-import javax.enterprise.util.AnnotationLiteral;
-import javax.inject.Inject;
-import javax.inject.Singleton;
+import jakarta.enterprise.event.Event;
+import jakarta.enterprise.util.AnnotationLiteral;
+import jakarta.inject.Inject;
+import jakarta.inject.Singleton;
 import java.nio.file.Path;
 import java.security.MessageDigest;
 import java.sql.Connection;
@@ -164,10 +164,10 @@ public class BlockchainProcessorImpl implements BlockchainProcessor {
     private final DatabaseManager databaseManager;
     private final ExecutorService networkService;
 
-    private final javax.enterprise.event.Event<Block> blockEvent;
-    private final javax.enterprise.event.Event<AccountLedgerEventType> ledgerEvent;
-    private final javax.enterprise.event.Event<List<Transaction>> txEvent;
-    private final javax.enterprise.event.Event<BlockchainConfig> blockchainEvent;
+    private final jakarta.enterprise.event.Event<Block> blockEvent;
+    private final jakarta.enterprise.event.Event<AccountLedgerEventType> ledgerEvent;
+    private final jakarta.enterprise.event.Event<List<Transaction>> txEvent;
+    private final jakarta.enterprise.event.Event<BlockchainConfig> blockchainEvent;
     private final GlobalSync globalSync;
     private final DerivedTablesRegistry dbTables;
     private final ReferencedTransactionService referencedTransactionService;
@@ -376,6 +376,8 @@ public class BlockchainProcessorImpl implements BlockchainProcessor {
                         log.info("Last block {} was replaced by {} at height {}", lastBlock.getStringId(), peerBlock.getStringId(), blockchain.getHeight());
                     } catch (BlockNotAcceptedException | AplBlockException e) {
                         log.info("Replacement block failed to be accepted, pushing back our last block");
+                        // reset tx fail statuses for our block to push it again
+                        lastBlock.getTransactions().forEach(Transaction::resetFail);
                         pushBlock(lastBlock);
                         transactionProcessor.processLater(peerBlock.getTransactions());
                     }

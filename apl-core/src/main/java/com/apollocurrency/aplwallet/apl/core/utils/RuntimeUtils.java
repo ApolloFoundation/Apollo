@@ -6,7 +6,7 @@ package com.apollocurrency.aplwallet.apl.core.utils;
 
 import lombok.extern.slf4j.Slf4j;
 
-import javax.enterprise.inject.Vetoed;
+import jakarta.enterprise.inject.Vetoed;
 import javax.management.MBeanServer;
 import javax.management.ObjectName;
 import java.lang.management.ManagementFactory;

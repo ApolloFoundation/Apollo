@@ -13,17 +13,21 @@ import com.apollocurrency.aplwallet.apl.util.task.Task;
 import org.eclipse.jetty.server.Connector;
 import org.eclipse.jetty.server.Server;
 import org.eclipse.jetty.server.ServerConnector;
+import org.eclipse.jetty.server.handler.ContextHandler;
 import org.eclipse.jetty.server.handler.gzip.GzipHandler;
 import org.eclipse.jetty.servlet.FilterHolder;
+import org.eclipse.jetty.servlet.ServletContainerInitializerHolder;
 import org.eclipse.jetty.servlet.ServletContextHandler;
 import org.eclipse.jetty.servlet.ServletHolder;
 import org.eclipse.jetty.servlets.DoSFilter;
+import org.eclipse.jetty.websocket.core.WebSocketComponents;
+import org.eclipse.jetty.websocket.core.server.WebSocketServerComponents;
 import org.jboss.weld.environment.servlet.Listener;
 import org.slf4j.Logger;
 
-import javax.inject.Inject;
-import javax.inject.Singleton;
-import javax.servlet.DispatcherType;
+import jakarta.inject.Inject;
+import jakarta.inject.Singleton;
+import jakarta.servlet.DispatcherType;
 import java.io.IOException;
 import java.net.Inet6Address;
 import java.net.InetAddress;
@@ -62,6 +66,7 @@ public class PeerHttpServer {
     private PeerServlet peerServlet;
     private TaskDispatchManager taskDispatchManager;
     private List<ServerSocket> p2pPortHolders = new ArrayList<>();
+    private WebSocketComponents components;
 
     @Inject
     public PeerHttpServer(PropertiesHolder propertiesHolder, UPnP upnp, JettyConnectorCreator conCreator, TaskDispatchManager taskDispatchManager) {
@@ -96,12 +101,20 @@ public class PeerHttpServer {
             }
 
             ServletContextHandler ctxHandler = new ServletContextHandler();
+            // ensure WebSocketComponents can only be called when the server is starting.
+            ContextHandler.Context servletContext = ctxHandler.getServletContext();
+            ctxHandler.addServletContainerInitializer(new ServletContainerInitializerHolder((c, ctx) ->
+                components = WebSocketServerComponents.ensureWebSocketComponents(peerServer, servletContext)
+            ));
+
             ctxHandler.setContextPath("/");
             //add Weld listener
             ctxHandler.addEventListener(new Listener());
-            peerServlet = new PeerServlet();
+            // Peers Servlet for peers management
+            peerServlet = new PeerServlet(servletContext); // That is important to pass parent servlet context into separate component with thread pool
             ServletHolder peerServletHolder = new ServletHolder(peerServlet);
             ctxHandler.addServlet(peerServletHolder, "/*");
+
             if (propertiesHolder.getBooleanProperty("apl.enablePeerServerDoSFilter")) {
                 FilterHolder dosFilterHolder = ctxHandler.addFilter(DoSFilter.class, "/*", EnumSet.of(DispatcherType.REQUEST));
                 dosFilterHolder.setInitParameter("maxRequestsPerSec", propertiesHolder.getStringProperty("apl.peerServerDoSFilter.maxRequestsPerSec"));
@@ -115,14 +128,14 @@ public class PeerHttpServer {
                 gzipHandler.setIncludedMethods("GET", "POST");
                 gzipHandler.setIncludedPaths("/*");
                 gzipHandler.setMinGzipSize(PeersService.MIN_COMPRESS_SIZE);
-                ctxHandler.setGzipHandler(gzipHandler);
+                ctxHandler.insertHandler(gzipHandler);
             }
             peerServer.setHandler(ctxHandler);
             List<Integer> internalPorts = new ArrayList<>();
             Connector[] peerConnectors = peerServer.getConnectors();
             for (Connector peerConnector : peerConnectors) {
-                if (peerConnector instanceof ServerConnector) {
-                    internalPorts.add(((ServerConnector) peerConnector).getPort());
+                if (peerConnector instanceof ServerConnector serverConnector) {
+                    internalPorts.add((serverConnector).getPort());
                 }
             }
             //if address is set in config file, we ignore UPnP
@@ -133,7 +146,7 @@ public class PeerHttpServer {
                         externalPorts.add(port);
                     }
                 }
-                if (externalPorts.size() > 0) {
+                if (!externalPorts.isEmpty()) {
                     myExtAddress = new PeerAddress(externalPorts.get(0), upnp.getExternalAddress().getHostAddress());
                 }
             }
@@ -179,12 +192,13 @@ public class PeerHttpServer {
 
     public void start() {
         Task peerUPnPInitTask = Task.builder()
-            .name("PeerUPnPInit")
+            .name("PeerServerInit")
             .task(() -> {
                 try {
                     if (peerServer != null) { // prevent NPE in offLine mode
+                        LOG.info("Starting UP networking server at {}:{}", host, myPeerServerPort);
                         peerServer.start();
-                        LOG.info("Started peer networking server at " + host + ":" + myPeerServerPort);
+                        LOG.info("Started peer networking server at {}:{}", host, myPeerServerPort);
                     } else {
                         LOG.warn("Peer networking server NOT STARTED (offLine mode?)");
                     }

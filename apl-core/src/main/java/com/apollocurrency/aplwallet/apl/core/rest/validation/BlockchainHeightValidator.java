@@ -8,9 +8,9 @@ import com.apollocurrency.aplwallet.apl.core.service.blockchain.Blockchain;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
 
-import javax.inject.Inject;
-import javax.validation.ConstraintValidator;
-import javax.validation.ConstraintValidatorContext;
+import jakarta.inject.Inject;
+import jakarta.validation.ConstraintValidator;
+import jakarta.validation.ConstraintValidatorContext;
 import java.util.Objects;
 
 @NoArgsConstructor

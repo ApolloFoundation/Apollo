@@ -9,7 +9,7 @@ import lombok.Getter;
 import lombok.NonNull;
 import lombok.Setter;
 
-import javax.enterprise.inject.Vetoed;
+import jakarta.enterprise.inject.Vetoed;
 import javax.sql.DataSource;
 import java.sql.Connection;
 import java.sql.PreparedStatement;

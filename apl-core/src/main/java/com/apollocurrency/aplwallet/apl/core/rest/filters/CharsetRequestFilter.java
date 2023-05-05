@@ -6,9 +6,9 @@ package com.apollocurrency.aplwallet.apl.core.rest.filters;
 
 import org.jboss.resteasy.plugins.providers.multipart.InputPart;
 
-import javax.ws.rs.container.ContainerRequestContext;
-import javax.ws.rs.container.ContainerRequestFilter;
-import javax.ws.rs.ext.Provider;
+import jakarta.ws.rs.container.ContainerRequestContext;
+import jakarta.ws.rs.container.ContainerRequestFilter;
+import jakarta.ws.rs.ext.Provider;
 import java.io.IOException;
 
 @Provider

@@ -14,7 +14,7 @@ import com.apollocurrency.aplwallet.apl.crypto.Convert;
 import com.apollocurrency.aplwallet.apl.util.StringUtils;
 import org.json.simple.JSONObject;
 
-import javax.inject.Inject;
+import jakarta.inject.Inject;
 
 /**
  * @author andrew.zinchenko@gmail.com

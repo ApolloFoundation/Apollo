@@ -8,7 +8,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.web3j.crypto.Credentials;
 import org.web3j.crypto.ECKeyPair;
 
-import javax.inject.Singleton;
+import jakarta.inject.Singleton;
 
 @Slf4j
 @Singleton

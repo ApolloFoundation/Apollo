@@ -4,8 +4,8 @@
 
 package com.apollocurrency.aplwallet.apl.core.dao.state.derived;
 
-import javax.enterprise.event.Event;
-import javax.enterprise.util.AnnotationLiteral;
+import jakarta.enterprise.event.Event;
+import jakarta.enterprise.util.AnnotationLiteral;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 

@@ -4,11 +4,14 @@
 
 package com.apollocurrency.aplwallet.apl.smc.ws;
 
+import jakarta.inject.Inject;
+import jakarta.inject.Singleton;
+import lombok.NoArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.eclipse.jetty.http.pathmap.UriTemplatePathSpec;
-import org.eclipse.jetty.websocket.servlet.ServletUpgradeRequest;
-import org.eclipse.jetty.websocket.servlet.ServletUpgradeResponse;
-import org.eclipse.jetty.websocket.servlet.WebSocketCreator;
+import org.eclipse.jetty.websocket.server.JettyServerUpgradeRequest;
+import org.eclipse.jetty.websocket.server.JettyServerUpgradeResponse;
+import org.eclipse.jetty.websocket.server.JettyWebSocketCreator;
 
 import java.util.stream.Collectors;
 
@@ -16,16 +19,20 @@ import java.util.stream.Collectors;
  * @author andrew.zinchenko@gmail.com
  */
 @Slf4j
-public class SmcEventSocketCreator implements WebSocketCreator {
+@Singleton
+@NoArgsConstructor
+public class SmcEventSocketCreator implements JettyWebSocketCreator {
     private static final String PATH_SPEC = "org.eclipse.jetty.http.pathmap.PathSpec";
-    private final SmcEventSocketListener eventServer;
+    @Inject
+    private SmcEventSocketListener eventServer;
 
+    @Inject
     public SmcEventSocketCreator(SmcEventSocketListener eventServer) {
         this.eventServer = eventServer;
     }
 
     @Override
-    public Object createWebSocket(ServletUpgradeRequest req, ServletUpgradeResponse resp) {
+    public Object createWebSocket(JettyServerUpgradeRequest req, JettyServerUpgradeResponse resp) {
         String errorMessage;
         var spec = req.getHttpServletRequest().getAttribute(PATH_SPEC);
         if (spec != null) {

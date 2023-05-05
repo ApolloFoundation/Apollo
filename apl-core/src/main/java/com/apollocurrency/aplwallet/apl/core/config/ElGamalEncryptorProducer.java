@@ -7,9 +7,9 @@ package com.apollocurrency.aplwallet.apl.core.config;
 import com.apollocurrency.aplwallet.apl.util.service.ElGamalEncryptor;
 import com.apollocurrency.aplwallet.apl.util.service.TaskDispatchManager;
 
-import javax.enterprise.inject.Produces;
-import javax.inject.Inject;
-import javax.inject.Singleton;
+import jakarta.enterprise.inject.Produces;
+import jakarta.inject.Inject;
+import jakarta.inject.Singleton;
 
 /**
  * Produce CDI-managed instance of the {@link ElGamalEncryptor}
