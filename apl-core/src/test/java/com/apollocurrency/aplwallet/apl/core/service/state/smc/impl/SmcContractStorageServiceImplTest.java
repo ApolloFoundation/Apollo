@@ -4,6 +4,7 @@
 
 package com.apollocurrency.aplwallet.apl.core.service.state.smc.impl;
 
+import com.apollocurrency.aplwallet.apl.core.dao.state.keyfactory.DbKey;
 import com.apollocurrency.aplwallet.apl.core.dao.state.smc.SmcContractMappingTable;
 import com.apollocurrency.aplwallet.apl.core.entity.state.smc.SmcContractMappingEntity;
 import com.apollocurrency.aplwallet.apl.core.service.blockchain.Blockchain;
@@ -69,6 +70,28 @@ class SmcContractStorageServiceImplTest {
         smcContractStorageService.saveOrUpdateEntry(contractAddress, key, name, json);
         //THEN
         verify(smcContractMappingTable, times(1)).insert(smcContractMappingEntity);
+    }
+
+    @Test
+    void updateEntry() {
+        //GIVEN
+        String json = "{}";
+        String name = "mapping";
+        Key key = AplAddress.valueOf("0x0102030405");
+        SmcContractMappingEntity smcContractMappingEntity = SmcContractMappingEntity.builder()
+            .address(contractAddress.getLongId())
+            .key(key.key())
+            .name(name)
+            .serializedObject(json)
+            .height(blockchain.getHeight()) // new height value
+            .build();
+        DbKey dbKey = SmcContractMappingTable.KEY_FACTORY.newKey(contractAddress.getLongId(), name, key.key());
+        when(smcContractMappingTable.get(dbKey)).thenReturn(smcContractMappingEntity);
+
+        //WHEN
+        smcContractStorageService.saveOrUpdateEntry(contractAddress, key, name, json);
+        //THEN
+        verify(smcContractMappingTable, times(1)).get(dbKey);
     }
 
     @Test
