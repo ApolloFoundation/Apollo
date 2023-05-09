@@ -24,6 +24,8 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
+import java.util.Optional;
+
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.mockito.Mockito.mock;
@@ -62,7 +64,8 @@ class SmcContractServiceTest {
     void setUp() {
         when(smcConfig.createLanguageContext()).thenReturn(languageContext);
         when(languageContext.getLibraryProvider()).thenReturn(libraryProvider);
-        contractService = new SmcContractServiceImpl(smcConfig, accountService, contractRepository, integratorFactory, methodMapper, methodSpecMapper);
+        contractService = new SmcContractServiceImpl(
+            smcConfig, accountService, contractRepository, integratorFactory, methodMapper, methodSpecMapper, Optional.empty());
     }
 
     @SneakyThrows

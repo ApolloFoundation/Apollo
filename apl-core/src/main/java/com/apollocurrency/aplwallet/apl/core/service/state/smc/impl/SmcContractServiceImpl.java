@@ -37,6 +37,7 @@ import java.math.BigInteger;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 
@@ -53,6 +54,7 @@ public class SmcContractServiceImpl implements SmcContractService {
     private final AccountService accountService;
     private final SmartMethodMapper methodMapper;
     private final MethodSpecMapper methodSpecMapper;
+    private SmcContractTxBatchProcessor processor; // field is used for unit testing
 
 
     @Inject
@@ -61,7 +63,8 @@ public class SmcContractServiceImpl implements SmcContractService {
                                   SmcContractRepository contractRepository,
                                   SmcBlockchainIntegratorFactory integratorFactory,
                                   SmartMethodMapper methodMapper,
-                                  MethodSpecMapper methodSpecMapper) {
+                                  MethodSpecMapper methodSpecMapper,
+                                  Optional<SmcContractTxBatchProcessor> processor) {
         this.smcConfig = smcConfig;
         final LanguageContext languageContext = smcConfig.createLanguageContext();
         this.libraryProvider = languageContext.getLibraryProvider();
@@ -70,6 +73,9 @@ public class SmcContractServiceImpl implements SmcContractService {
         this.accountService = accountService;
         this.methodMapper = methodMapper;
         this.methodSpecMapper = methodSpecMapper;
+        processor.ifPresent(
+            value -> this.processor = value
+        );
     }
 
     @SneakyThrows
@@ -196,7 +202,9 @@ public class SmcContractServiceImpl implements SmcContractService {
             integratorFactory.createReadonlyProcessor()
         );
 
-        SmcContractTxBatchProcessor processor = new CallViewMethodTxProcessor(smartContract, methods, context);
+        if (this.processor == null) { // used by unit test only !!
+            this.processor = new CallViewMethodTxProcessor(smartContract, methods, context);
+        }
 
         var rc = processor.batchProcess();
         executionLog.join(processor.getExecutionLog());
