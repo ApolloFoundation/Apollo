@@ -66,6 +66,16 @@ class InMemoryCacheManagerTest {
     }
 
     @Test
+    void testCreateSynchronizedCache() {
+        setupManager();
+        Cache<Object, Object> cache = manager.acquireCache("SYNCHRONIZED_CACHE_10");
+
+        assertNotNull(cache, "Synchronized cache should be intialized");
+        assertEquals(cache.getClass(), SynchronizedCache.class, "Cache should be of SynchronizedCache.class");
+        assertEquals(117735, ((SynchronizedCache) cache).maxSize());
+    }
+
+    @Test
     void testCacheManipulations() {
         setupManager();
         byte[] bytes1 = "1234567890".getBytes();
@@ -107,6 +117,17 @@ class InMemoryCacheManagerTest {
         assertEquals(1L, cache.size());
         assertArrayEquals(key2.getBytes(), loadingCache.get(key2));
         assertEquals(2L, loadingCache.size());
+    }
+
+    @Test
+    void testCreateSynchronizedCacheConfigurationWithLoader() {
+        assertThrows(IllegalArgumentException.class, () -> new CacheConfigurator("wrong-synchronized-cache", 2, 100, mock(CacheLoader.class), true));
+    }
+
+    @Test
+    void testCreateSynchronizedCacheConfigAndUseBuilder() {
+        CacheConfigurator wrongSyncCacheConfig = new CacheConfigurator("wrong-synchronized-cache", 2, 100, null, true);
+        assertThrows(UnsupportedOperationException.class, () -> wrongSyncCacheConfig.cacheBuilder());
     }
 
     @Test
@@ -157,7 +178,8 @@ class InMemoryCacheManagerTest {
         doReturn(64 * 1024 * 1024L).when(configurator).getAvailableMemory();
         doReturn(List.of(new CacheConfigurator("SIMPLE_CACHE_NAME_16", 16, 50),
             new CacheConfigurator("SIMPLE_CACHE_NAME_128", 128, 30),
-            new CacheConfigurator("SIMPLE_CACHE_NAME_1024", 1024, 50)
+            new CacheConfigurator("SIMPLE_CACHE_NAME_1024", 1024, 50),
+            new CacheConfigurator("SYNCHRONIZED_CACHE_10", 64, 20, null, true)
         )).when(configurator).getConfiguredCaches();
         manager = new InMemoryCacheManager(configurator);
     }

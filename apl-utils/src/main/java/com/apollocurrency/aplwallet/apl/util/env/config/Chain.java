@@ -1,27 +1,33 @@
 /*
- * Copyright © 2018 Apollo Foundation
+ * Copyright © 2018-2021 Apollo Foundation
  */
 
 package com.apollocurrency.aplwallet.apl.util.env.config;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
+import lombok.EqualsAndHashCode;
+import lombok.ToString;
 import com.fasterxml.jackson.annotation.JsonGetter;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonPropertyOrder;
 
 import java.math.BigInteger;
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.Collections;
 import java.util.Comparator;
+import java.util.HashSet;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.Objects;
+import java.util.Set;
 import java.util.UUID;
 import java.util.stream.Collectors;
 
+@EqualsAndHashCode
+@ToString
 @JsonPropertyOrder({"chainId", "active", "defaultPeers", "wellKnownPeers", "blacklistedPeers", "name", "description", "symbol",
-    "prefix", "project", "initialSupply", "decimals", "featuresHeightRequirement", "blockchainProperties"})
+    "prefix", "project", "initialSupply", "decimals", "featuresHeightRequirement","currencyIssuanceHeights", "blockchainProperties"})
 public class Chain {
     private UUID chainId;
     private boolean active;
@@ -35,8 +41,10 @@ public class Chain {
     private String project;
     private long initialSupply;
     private int decimals;
-    private long oneAPL;
+    private long oneAPL;// 10^(decimals)
     private FeaturesHeightRequirement featuresHeightRequirement;
+    private Set<Integer> currencyIssuanceHeights;
+    private Set<String> totalAmountOverflowTxs;
     private Map<Integer, BlockchainProperties> blockchainProperties;
 
     @JsonCreator
@@ -53,26 +61,30 @@ public class Chain {
     ) {
         this(chainId, false, Collections.emptyList(), wellKnownPeers, Collections.emptyList(),
             name, description, symbol, prefix, project, initialSupply, decimals,
-            blockchainProperties, null);
+             blockchainProperties, null, null, null);
     }
 
     /**
      * All fields Constructor.
      *
-     * @param chainId
-     * @param active
-     * @param defaultPeers
-     * @param wellKnownPeers
-     * @param blacklistedPeers
-     * @param name
-     * @param description
-     * @param symbol
-     * @param prefix
-     * @param project
+     * @param chainId id of the chain
+     * @param active whether active this chain or not (typically true)
+     * @param defaultPeers set of the peers to connect
+     * @param wellKnownPeers set of the privileged peers to connect
+     * @param blacklistedPeers set of the peers, which should be avoided
+     * @param name name of the chain
+     * @param description description of the chain
+     * @param symbol ticker name of the coin on the chain
+     * @param prefix account address prefix on the chain
+     * @param project name of project for this chain
      * @param initialSupply             the initial supply in APL
      * @param decimals                  the decimals value to convert APL to ATM, 1APL = 10^decimals ATM
-     * @param blockchainProperties
-     * @param featuresHeightRequirement
+     * @param blockchainProperties height-based config of the network-wide consensus parameters
+     * @param featuresHeightRequirement config to enable different features by height
+     * @param currencyIssuanceHeights heights of the currency issuance transactions,
+     *                                which were correct by the old broken currency re-issuance validation logic
+     * @param totalAmountOverflowTxs unsigned ids of the currency sell transactions, which should not be validated early by total order
+     *                        amount overflow of {@link Long} java type limits until new validation rules accepted
      */
     public Chain(UUID chainId,
                  boolean active,
@@ -87,7 +99,9 @@ public class Chain {
                  long initialSupply,
                  int decimals,
                  List<BlockchainProperties> blockchainProperties,
-                 FeaturesHeightRequirement featuresHeightRequirement
+                 FeaturesHeightRequirement featuresHeightRequirement,
+                 Set<Integer> currencyIssuanceHeights,
+                 Set<String> totalAmountOverflowTxs
     ) {
         this.chainId = chainId;
         this.active = active;
@@ -109,9 +123,19 @@ public class Chain {
                     Collectors.toMap(BlockchainProperties::getHeight, bp -> bp,
                         (oldValue, newValue) -> oldValue, LinkedHashMap::new));
         this.featuresHeightRequirement = featuresHeightRequirement;
+        this.currencyIssuanceHeights = currencyIssuanceHeights;
+        this.totalAmountOverflowTxs = totalAmountOverflowTxs;
     }
 
     public Chain() {
+    }
+
+    public Set<String> getTotalAmountOverflowTxs() {
+        return totalAmountOverflowTxs;
+    }
+
+    public void setTotalAmountOverflowTxs(Set<String> currencySellTxs) {
+        this.totalAmountOverflowTxs = currencySellTxs;
     }
 
     public FeaturesHeightRequirement getFeaturesHeightRequirement() {
@@ -223,30 +247,6 @@ public class Chain {
         this.active = active;
     }
 
-    @Override
-    public boolean equals(Object o) {
-        if (this == o) return true;
-        if (!(o instanceof Chain)) return false;
-        Chain chain = (Chain) o;
-        return active == chain.active &&
-            Objects.equals(chainId, chain.chainId) &&
-            Objects.equals(defaultPeers, chain.defaultPeers) &&
-            Objects.equals(wellKnownPeers, chain.wellKnownPeers) &&
-            Objects.equals(blacklistedPeers, chain.blacklistedPeers) &&
-            Objects.equals(name, chain.name) &&
-            Objects.equals(description, chain.description) &&
-            Objects.equals(symbol, chain.symbol) &&
-            Objects.equals(prefix, chain.prefix) &&
-            Objects.equals(project, chain.project) &&
-            Objects.equals(blockchainProperties, chain.blockchainProperties) &&
-            Objects.equals(featuresHeightRequirement, chain.featuresHeightRequirement);
-    }
-
-    @Override
-    public int hashCode() {
-        return Objects.hash(chainId, active, defaultPeers, wellKnownPeers, blacklistedPeers, name, description, symbol, prefix, project, blockchainProperties, featuresHeightRequirement);
-    }
-
     public Chain copy() {
         List<String> defaultPeersCopy = new ArrayList<>(defaultPeers);
         List<String> wellKnownPeersCopy = new ArrayList<>(wellKnownPeers);
@@ -254,28 +254,9 @@ public class Chain {
         List<BlockchainProperties> blockchainPropertiesCopy = blockchainProperties.values().stream().map(BlockchainProperties::copy).collect(Collectors.toList());
         return new Chain(chainId, active, defaultPeersCopy, wellKnownPeersCopy, blacklistedPeersCopy,
             name, description, symbol, prefix, project, initialSupply, decimals,
-            blockchainPropertiesCopy, featuresHeightRequirement != null ? featuresHeightRequirement.copy() : null);
-    }
-
-    @Override
-    public String toString() {
-        return "Chain{" +
-            "chainId=" + chainId +
-            ", active=" + active +
-            ", defaultPeers=" + defaultPeers +
-            ", wellKnownPeers=" + wellKnownPeers +
-            ", blacklistedPeers=" + blacklistedPeers +
-            ", name='" + name + '\'' +
-            ", description='" + description + '\'' +
-            ", symbol='" + symbol + '\'' +
-            ", prefix='" + prefix + '\'' +
-            ", project='" + project + '\'' +
-            ", initialSupply=" + initialSupply +
-            ", decimals=" + decimals +
-            ", oneAPL=" + oneAPL +
-            ", featuresHeightRequirement='" + featuresHeightRequirement + '\'' +
-            ", blockchainProperties=" + blockchainProperties +
-            '}';
+            blockchainPropertiesCopy, featuresHeightRequirement != null ? featuresHeightRequirement.copy() : null,
+            currencyIssuanceHeights == null ? null : new HashSet<>(currencyIssuanceHeights),
+            totalAmountOverflowTxs == null ? null : new HashSet<>(totalAmountOverflowTxs));
     }
 
     @JsonGetter("blockchainProperties")
@@ -289,5 +270,16 @@ public class Chain {
 
     public void setBlockchainProperties(Map<Integer, BlockchainProperties> blockchainProperties) {
         this.blockchainProperties = blockchainProperties;
+    }
+
+    public Set<Integer> getCurrencyIssuanceHeights() {
+        return currencyIssuanceHeights;
+    }
+
+    public void setCurrencyIssuanceHeights(Collection<Integer> currencyIssuanceHeights) {
+        if (currencyIssuanceHeights == null) {
+            return;
+        }
+        this.currencyIssuanceHeights = new HashSet<>(currencyIssuanceHeights);
     }
 }

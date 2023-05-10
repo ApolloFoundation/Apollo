@@ -6,6 +6,10 @@ package com.apollocurrency.aplwallet.apl.util;
 
 import lombok.Data;
 
+import java.util.function.Consumer;
+import java.util.function.Function;
+import java.util.function.Supplier;
+
 public class BatchSizeCalculator {
     private final int targetOperationTime;
     private final int minBatchSize;
@@ -29,11 +33,35 @@ public class BatchSizeCalculator {
         this.opEMA = new EMA(5);
     }
 
-    public void startTiming(long time, int batchSize) {
+    public <T> T doTimedOp(Function<Integer, T> op, Supplier<Long> timeSupplier) {
+        try {
+            int batchSize = currentBatchSize();
+            startTiming(timeSupplier.get(), batchSize);
+            return op.apply(batchSize);
+        } finally {
+            stopTiming(timeSupplier.get());
+        }
+    }
+    public void doTimedOp(Consumer<Integer> r) {
+        doTimedOp((Function<Integer, Void>) batchSize -> {
+            r.accept(batchSize);
+            return null;
+        });
+    }
+
+    public <T> T doTimedOp(Function<Integer, T> op) {
+        return doTimedOp(op, System::currentTimeMillis);
+    }
+
+    public int currentBatchSize() {
+        return (int) Math.max(minBatchSize, Math.min(opEMA.current(), maxBatchSize));
+    }
+
+    private void startTiming(long time, int batchSize) {
         this.lastOperation = new TimeOperation(time, batchSize);
     }
 
-    public void stopTiming(long time) {
+    private void stopTiming(long time) {
         if (lastOperation == null || lastOperation.isFinished()) {
             throw new IllegalStateException("Unable to finish timing operation, operation was not started");
         }
@@ -48,10 +76,6 @@ public class BatchSizeCalculator {
         }
         int newBatchSize = (int) (lastOperation.batchSize + lastOperation.batchSize * percent);
         opEMA.add(newBatchSize);
-    }
-
-    public int currentBatchSize() {
-        return (int) Math.max(minBatchSize, Math.min(opEMA.current(), maxBatchSize));
     }
 
     @Data

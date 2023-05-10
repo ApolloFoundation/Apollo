@@ -1,5 +1,5 @@
 /*
- * Copyright © 2018-2020 Apollo Foundation
+ * Copyright © 2018-2021 Apollo Foundation
  */
 
 package com.apollocurrency.aplwallet.apl.core.rest.endpoint;
@@ -7,9 +7,11 @@ package com.apollocurrency.aplwallet.apl.core.rest.endpoint;
 import com.apollocurrency.aplwallet.api.dto.account.AccountDTO;
 import com.apollocurrency.aplwallet.api.dto.account.AccountEffectiveBalanceDto;
 import com.apollocurrency.aplwallet.api.dto.account.AccountsCountDto;
+import com.apollocurrency.aplwallet.api.dto.account.CurrenciesWalletsDTO;
+import com.apollocurrency.aplwallet.api.dto.account.CurrencyWalletsDTO;
 import com.apollocurrency.aplwallet.api.dto.auth.Status2FA;
 import com.apollocurrency.aplwallet.api.dto.auth.TwoFactorAuthParameters;
-import com.apollocurrency.aplwallet.apl.core.blockchain.Block;
+import com.apollocurrency.aplwallet.apl.core.model.Block;
 import com.apollocurrency.aplwallet.apl.core.entity.state.account.Account;
 import com.apollocurrency.aplwallet.apl.core.entity.state.account.AccountAsset;
 import com.apollocurrency.aplwallet.apl.core.entity.state.account.AccountCurrency;
@@ -21,6 +23,7 @@ import com.apollocurrency.aplwallet.apl.core.rest.converter.AccountAssetConverte
 import com.apollocurrency.aplwallet.apl.core.rest.converter.AccountConverter;
 import com.apollocurrency.aplwallet.apl.core.rest.converter.AccountCurrencyConverter;
 import com.apollocurrency.aplwallet.apl.core.rest.converter.BlockConverter;
+import com.apollocurrency.aplwallet.apl.core.rest.converter.BlockConverterCreator;
 import com.apollocurrency.aplwallet.apl.core.rest.converter.TransactionConverter;
 import com.apollocurrency.aplwallet.apl.core.rest.converter.UnconfirmedTransactionConverter;
 import com.apollocurrency.aplwallet.apl.core.rest.service.AccountStatisticsService;
@@ -33,7 +36,7 @@ import com.apollocurrency.aplwallet.apl.core.service.state.account.AccountServic
 import com.apollocurrency.aplwallet.apl.core.service.state.asset.AssetService;
 import com.apollocurrency.aplwallet.apl.core.service.state.currency.CurrencyService;
 import com.apollocurrency.aplwallet.apl.core.service.state.order.OrderService;
-import com.apollocurrency.aplwallet.apl.core.transaction.messages.ColoredCoinsAskOrderPlacement;
+import com.apollocurrency.aplwallet.apl.core.transaction.messages.CCAskOrderPlacementAttachment;
 import com.apollocurrency.aplwallet.apl.core.transaction.messages.PrunableLoadingService;
 import com.apollocurrency.aplwallet.apl.crypto.Convert;
 import com.apollocurrency.aplwallet.apl.util.Constants;
@@ -51,6 +54,7 @@ import com.fasterxml.jackson.databind.JsonNode;
 import org.jboss.resteasy.mock.MockHttpRequest;
 import org.jboss.resteasy.mock.MockHttpResponse;
 import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.junit.jupiter.params.ParameterizedTest;
@@ -60,9 +64,10 @@ import org.mockito.Mock;
 import org.mockito.Mockito;
 import org.mockito.junit.jupiter.MockitoExtension;
 
-import javax.ws.rs.NotFoundException;
-import javax.ws.rs.core.Response;
+import jakarta.ws.rs.NotFoundException;
+import jakarta.ws.rs.core.Response;
 import java.io.IOException;
+import java.io.UnsupportedEncodingException;
 import java.net.URISyntaxException;
 import java.util.Arrays;
 import java.util.Collections;
@@ -97,7 +102,9 @@ import static org.jboss.resteasy.mock.MockHttpRequest.post;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.junit.jupiter.api.Assertions.fail;
 import static org.mockito.Mockito.doReturn;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.times;
@@ -135,7 +142,7 @@ class AccountControllerTest extends AbstractEndpointTest {
     @Mock
     private AccountAssetConverter accountAssetConverter;
     @Mock
-    private OrderService<AskOrder, ColoredCoinsAskOrderPlacement> orderService;
+    private OrderService<AskOrder, CCAskOrderPlacementAttachment> orderService;
     @Mock
     private CurrencyService currencyService;
     @Mock
@@ -150,11 +157,13 @@ class AccountControllerTest extends AbstractEndpointTest {
     private AssetService assetService = Mockito.mock(AssetService.class);
     @Mock
     private AccountParametersParser accountParametersParser = Mockito.mock(AccountParametersParser.class);
+    @Mock
+    private BlockConverterCreator blockConverterCreator;
 
     private TransactionConverter transactionConverter = new TransactionConverter(blockchain, new UnconfirmedTransactionConverter(prunableLoadingService));
     private BlockConverter blockConverter = new BlockConverter(
         blockchain, transactionConverter,
-        mock(PhasingPollService.class), mock(AccountService.class));
+        mock(PhasingPollService.class));
 
     private Block GENESIS_BLOCK, LAST_BLOCK, NEW_BLOCK;
     private Block BLOCK_0, BLOCK_1, BLOCK_2, BLOCK_3;
@@ -174,7 +183,7 @@ class AccountControllerTest extends AbstractEndpointTest {
             accountAssetConverter,
             accountCurrencyConverter,
             accountConverter,
-            blockConverter,
+            blockConverterCreator,
             new WalletKeysConverter(),
             new Account2FADetailsConverter(),
             new Account2FAConverter(),
@@ -227,21 +236,22 @@ class AccountControllerTest extends AbstractEndpointTest {
     }
 
     @Test
-    void getAccount_byAccountID_withoutIncludingAdditionalInformation() throws URISyntaxException, IOException {
-        doReturn(account).when(accountService).getAccount(ACCOUNT_ID);
-        doReturn(accountDTO).when(accountConverter).convert(account);
+    void getAccountGET_byAccountID_withoutIncludingAdditionalInformation() throws URISyntaxException, IOException {
+        prepareGetAccountCall();
+
         MockHttpResponse response = sendGetRequest("/accounts/account?account=" + ACCOUNT_ID);
 
-        assertEquals(Response.Status.OK.getStatusCode(), response.getStatus());
-        String content = response.getContentAsString();
-        print(content);
-        Map result = mapper.readValue(content, Map.class);
-        assertFalse(result.containsKey("newErrorCode"), "Unexpected error code:" + result.get("newErrorCode"));
-        assertEquals(Long.toUnsignedString(ACCOUNT_ID), result.get("account"));
-        assertEquals(ACCOUNT_RS, result.get("accountRS"));
-        //verify
-        verify(accountConverter, times(1)).convert(account);
-        verify(accountService, times(1)).getAccount(ACCOUNT_ID);
+        verifySuccessfulGetAccountExecution(response);
+    }
+
+    @Test
+    @Disabled // waiting for impl decision
+    void getAccountPOST_byAccountID_withoutIncludingAdditionalInformation() throws URISyntaxException, IOException {
+        prepareGetAccountCall();
+
+        MockHttpResponse response = sendPostRequest("/accounts/account", "account=" + ACCOUNT_ID);
+
+        verifySuccessfulGetAccountExecution(response);
     }
 
     @ParameterizedTest
@@ -256,11 +266,27 @@ class AccountControllerTest extends AbstractEndpointTest {
         assertEquals(Response.Status.OK.getStatusCode(), response.getStatus());
         String content = response.getContentAsString();
         print(content);
-        Map result = mapper.readValue(content, Map.class);
-        assertFalse(result.containsKey("newErrorCode"), "Unexpected error code:" + result.get("newErrorCode"));
-        assertNotNull(result.get("account"));
-        assertNotNull(result.get("accountRS"));
-        assertNotNull(result.get("publicKey"));
+        CurrenciesWalletsDTO dto = mapper.readValue(content, CurrenciesWalletsDTO.class);
+//        assertFalse(result.containsKey("newErrorCode"), "Unexpected error code:" + result.get("newErrorCode"));
+        assertEquals(2, dto.getCurrencies().size(), "After  successful vault wallet creation, two " +
+            "currency wallets should be created: apl and eth");
+        CurrencyWalletsDTO aplWallet = dto.getCurrencies().get(0);
+        assertEquals("apl", aplWallet.getCurrency(), "First currency in the wallet should be apl");
+        CurrencyWalletsDTO ethWallet = dto.getCurrencies().get(1);
+        assertEquals("eth", ethWallet.getCurrency(), "Second currency in the wallet should be eth");
+        assertEquals(1, aplWallet.getWallets().size(), "There should be one generated apl wallet");
+        assertEquals(1, ethWallet.getWallets().size(), "There should be one generated eth wallet");
+        Object receivedPass = dto.getPassphrase();
+        if (pass != null) {
+            assertNull(receivedPass, "Passphrase should not be present in the response, when specified by the " +
+                "sender, but got ''" + receivedPass + "'");
+        } else {
+            try {
+                UUID.fromString((String) receivedPass);
+            } catch (RuntimeException e) {
+                fail("Expected UUID passphrase in the response, but got " + receivedPass, e);
+            }
+        }
         //verify
         verify(account2FAService, times(1)).generateUserWallet(pass);
     }
@@ -591,7 +617,7 @@ class AccountControllerTest extends AbstractEndpointTest {
     @Test
     void getAccountCurrencies_getList() throws URISyntaxException, IOException {
         endpoint.setAccountCurrencyConverter(new AccountCurrencyConverter());
-        doReturn(List.of(accountCurrency)).when(accountCurrencyService).getCurrenciesByAccount(ACCOUNT_ID, CURRENT_HEIGHT, 0, 99);
+        doReturn(List.of(accountCurrency)).when(accountCurrencyService).getByAccount(ACCOUNT_ID, CURRENT_HEIGHT, 0, 99);
 
         MockHttpResponse response = sendGetRequest("/accounts/currencies?account=" + ACCOUNT_ID + "&height=" + CURRENT_HEIGHT);
 
@@ -606,7 +632,7 @@ class AccountControllerTest extends AbstractEndpointTest {
         JsonNode root = mapper.readTree(content);
         assertTrue(root.get("accountCurrencies").isArray());
         assertEquals(Long.toUnsignedString(CURRENCY_ID), root.withArray("accountCurrencies").get(0).get("currency").asText());
-        verify(accountCurrencyService, times(1)).getCurrenciesByAccount(ACCOUNT_ID, CURRENT_HEIGHT, 0, 99);
+        verify(accountCurrencyService, times(1)).getByAccount(ACCOUNT_ID, CURRENT_HEIGHT, 0, 99);
     }
 
     @Test
@@ -721,6 +747,7 @@ class AccountControllerTest extends AbstractEndpointTest {
         int to = 200;
 
         doReturn(BLOCKS).when(accountService).getAccountBlocks(ACCOUNT_ID, from, 99, timestamp);
+        doReturn(blockConverter).when(blockConverterCreator).create(false, false);
 
         MockHttpResponse response = sendGetRequest("/accounts/blocks?account=" + ACCOUNT_ID
             + "&timestamp=" + timestamp
@@ -838,6 +865,24 @@ class AccountControllerTest extends AbstractEndpointTest {
 
         WalletKeysInfo walletKeyInfo = new WalletKeysInfo(apolloWallet, null == passPhrase ? UUID.randomUUID().toString() : passPhrase);
         return walletKeyInfo;
+    }
+
+    private void verifySuccessfulGetAccountExecution(MockHttpResponse response) throws UnsupportedEncodingException, com.fasterxml.jackson.core.JsonProcessingException {
+        assertEquals(Response.Status.OK.getStatusCode(), response.getStatus());
+        String content = response.getContentAsString();
+        print(content);
+        Map result = mapper.readValue(content, Map.class);
+        assertFalse(result.containsKey("newErrorCode"), "Unexpected error code:" + result.get("newErrorCode"));
+        assertEquals(Long.toUnsignedString(ACCOUNT_ID), result.get("account"));
+        assertEquals(ACCOUNT_RS, result.get("accountRS"));
+        //verify
+        verify(accountConverter, times(1)).convert(account);
+        verify(accountService, times(1)).getAccount(ACCOUNT_ID);
+    }
+
+    private void prepareGetAccountCall() {
+        doReturn(account).when(accountService).getAccount(ACCOUNT_ID);
+        doReturn(accountDTO).when(accountConverter).convert(account);
     }
 
 }

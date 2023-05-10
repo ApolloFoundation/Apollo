@@ -7,7 +7,7 @@ import org.web3j.crypto.Credentials;
 import org.web3j.crypto.ECKeyPair;
 import org.web3j.utils.Convert;
 
-import javax.enterprise.inject.Vetoed;
+import jakarta.enterprise.inject.Vetoed;
 import java.math.BigDecimal;
 import java.math.BigInteger;
 
@@ -50,6 +50,10 @@ public class EthUtil {
 
     public static BigInteger gweiToWei(Long gwei) {
         return convertToWei(gwei, EthUnit.GWEI);
+    }
+
+    public static BigDecimal weiToGwei(BigDecimal wei) {
+        return Convert.fromWei(wei, Convert.Unit.GWEI);
     }
 
     public static BigDecimal gweiToEth(Long gwei) {

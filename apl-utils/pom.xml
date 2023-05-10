@@ -6,12 +6,16 @@
   <parent>
     <groupId>com.apollocurrency</groupId>
     <artifactId>apollo-blockchain</artifactId>
-    <version>1.48.3</version>
+    <version>2.0.1</version>
   </parent>
 
   <artifactId>apl-utils</artifactId>
   <name>apl-utils</name>
   <packaging>jar</packaging>
+
+  <properties>
+    <web3j-rlp.version>5.0.0</web3j-rlp.version>
+  </properties>
 
   <dependencies>
     <!-- CORE BOM DEPENDENCIES -->
@@ -113,23 +117,45 @@
       </dependency>
 
       <dependency>
-          <groupId>javax.ws.rs</groupId>
-          <artifactId>javax.ws.rs-api</artifactId>
+        <groupId>jakarta.ws.rs</groupId>
+        <artifactId>jakarta.ws.rs-api</artifactId>
       </dependency>
 
-      <dependency>
-          <groupId>org.jboss.weld.servlet</groupId>
-          <artifactId>weld-servlet-shaded</artifactId>
-      </dependency>
+    <dependency>
+      <groupId>org.jdbi</groupId>
+      <artifactId>jdbi3-core</artifactId>
+    </dependency>
+    <dependency>
+      <groupId>org.jdbi</groupId>
+      <artifactId>jdbi3-sqlobject</artifactId>
+    </dependency>
+    <dependency>
+      <groupId>org.web3j</groupId>
+      <artifactId>rlp</artifactId>
+      <version>${web3j-rlp.version}</version>
+    </dependency>
 
-      <dependency>
-          <groupId>org.jdbi</groupId>
-          <artifactId>jdbi3-core</artifactId>
-      </dependency>
-      <dependency>
-          <groupId>org.jdbi</groupId>
-          <artifactId>jdbi3-sqlobject</artifactId>
-      </dependency>
+    <dependency>
+      <groupId>p6spy</groupId>
+      <artifactId>p6spy</artifactId>
+    </dependency>
+    <dependency>
+      <groupId>com.googlecode.log4jdbc</groupId>
+      <artifactId>log4jdbc</artifactId>
+    </dependency>
+    <dependency>
+      <groupId>com.zaxxer</groupId>
+      <artifactId>HikariCP</artifactId>
+    </dependency>
+    <dependency>
+      <groupId>com.apollocurrency</groupId>
+      <artifactId>apl-db-updater</artifactId>
+      <version>${project.version}</version>
+    </dependency>
+    <dependency>
+      <groupId>io.firstbridge</groupId>
+      <artifactId>fbprocess</artifactId>
+    </dependency>
 
       <!-- unit tests -->
       <dependency>

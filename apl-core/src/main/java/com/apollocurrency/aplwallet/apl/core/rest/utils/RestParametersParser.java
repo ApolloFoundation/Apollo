@@ -11,9 +11,9 @@ import com.apollocurrency.aplwallet.apl.util.exception.RestParameterException;
 import lombok.extern.slf4j.Slf4j;
 import org.jboss.resteasy.core.interception.jaxrs.PostMatchContainerRequestContext;
 
-import javax.enterprise.inject.Vetoed;
-import javax.ws.rs.container.ContainerRequestContext;
-import javax.ws.rs.core.MultivaluedMap;
+import jakarta.enterprise.inject.Vetoed;
+import jakarta.ws.rs.container.ContainerRequestContext;
+import jakarta.ws.rs.core.MultivaluedMap;
 import java.util.Arrays;
 import java.util.HashMap;
 import java.util.Map;

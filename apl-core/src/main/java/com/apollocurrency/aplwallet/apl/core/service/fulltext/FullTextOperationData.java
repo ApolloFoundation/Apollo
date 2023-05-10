@@ -1,5 +1,5 @@
 /*
- *  Copyright © 2018-2020 Apollo Foundation
+ *  Copyright © 2018-2021 Apollo Foundation
  */
 
 package com.apollocurrency.aplwallet.apl.core.service.fulltext;
@@ -7,7 +7,6 @@ package com.apollocurrency.aplwallet.apl.core.service.fulltext;
 import lombok.Getter;
 import lombok.Setter;
 
-import java.math.BigInteger;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Objects;
@@ -24,16 +23,20 @@ public class FullTextOperationData {
     private String schema; // schema name
     private String tableName; // table name
     private String thread;
-    private BigInteger dbIdValue;
+    private Long dbIdValue;
     StringBuffer buffer = new StringBuffer();
 
     public FullTextOperationData(String schema, String tableName, String threadName) {
-        Objects.requireNonNull(schema);
-        Objects.requireNonNull(tableName);
-        Objects.requireNonNull(threadName);
-        this.schema = schema;
-        this.tableName = tableName;
-        this.thread = threadName;
+        this.schema = Objects.requireNonNull(schema);
+        this.tableName = Objects.requireNonNull(tableName);
+        this.thread = Objects.requireNonNull(threadName);
+    }
+
+    public FullTextOperationData(String schema, String tableName, String threadName, FullTextOperationData.OperationType operationType) {
+        this.schema = Objects.requireNonNull(schema);
+        this.tableName = Objects.requireNonNull(tableName);
+        this.thread = Objects.requireNonNull(threadName);
+        this.operationType = Objects.requireNonNull(operationType);
     }
 
     public FullTextOperationData addColumnData(Object data) {

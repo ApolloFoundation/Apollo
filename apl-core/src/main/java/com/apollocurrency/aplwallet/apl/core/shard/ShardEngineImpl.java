@@ -1,23 +1,23 @@
 /*
- * Copyright © 2018-2019 Apollo Foundation
+ * Copyright © 2018-2022 Apollo Foundation
  */
 
 package com.apollocurrency.aplwallet.apl.core.shard;
 
 import com.apollocurrency.aplwallet.api.dto.DurableTaskInfo;
 import com.apollocurrency.aplwallet.apl.core.app.AplAppStatus;
-import com.apollocurrency.aplwallet.apl.core.dao.TransactionalDataSource;
 import com.apollocurrency.aplwallet.apl.core.dao.appdata.ShardDao;
 import com.apollocurrency.aplwallet.apl.core.dao.appdata.ShardRecoveryDao;
 import com.apollocurrency.aplwallet.apl.core.dao.appdata.ShardRecoveryDaoJdbc;
 import com.apollocurrency.aplwallet.apl.core.dao.state.derived.DerivedTableInterface;
+import com.apollocurrency.aplwallet.apl.core.dao.state.derived.MinMaxValue;
 import com.apollocurrency.aplwallet.apl.core.dao.state.derived.PrunableDbTable;
+import com.apollocurrency.aplwallet.apl.core.db.DatabaseManager;
 import com.apollocurrency.aplwallet.apl.core.entity.appdata.Shard;
 import com.apollocurrency.aplwallet.apl.core.entity.appdata.ShardRecovery;
 import com.apollocurrency.aplwallet.apl.core.entity.appdata.ShardState;
-import com.apollocurrency.aplwallet.apl.core.service.appdata.DatabaseManager;
+import com.apollocurrency.aplwallet.apl.core.entity.state.derived.DerivedEntity;
 import com.apollocurrency.aplwallet.apl.core.service.appdata.TrimService;
-import com.apollocurrency.aplwallet.apl.core.service.blockchain.ShardDataSourceCreateHelper;
 import com.apollocurrency.aplwallet.apl.core.service.state.DerivedTablesRegistry;
 import com.apollocurrency.aplwallet.apl.core.shard.commands.CommandParamInfo;
 import com.apollocurrency.aplwallet.apl.core.shard.helper.AbstractHelper;
@@ -39,16 +39,16 @@ import com.apollocurrency.aplwallet.apl.util.FileUtils;
 import com.apollocurrency.aplwallet.apl.util.StringUtils;
 import com.apollocurrency.aplwallet.apl.util.Zip;
 import com.apollocurrency.aplwallet.apl.util.cdi.Transactional;
+import com.apollocurrency.aplwallet.apl.util.db.TransactionalDataSource;
 import com.apollocurrency.aplwallet.apl.util.env.dirprovider.DirProvider;
 import org.slf4j.Logger;
 
-import javax.inject.Inject;
-import javax.inject.Singleton;
+import jakarta.inject.Inject;
+import jakarta.inject.Singleton;
 import java.io.FilenameFilter;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.sql.Connection;
-import java.sql.PreparedStatement;
 import java.sql.SQLException;
 import java.util.List;
 import java.util.Objects;
@@ -74,7 +74,6 @@ import static com.apollocurrency.aplwallet.apl.core.shard.MigrateState.SHARD_SCH
 import static com.apollocurrency.aplwallet.apl.core.shard.MigrateState.SHARD_SCHEMA_FULL;
 import static com.apollocurrency.aplwallet.apl.core.shard.MigrateState.ZIP_ARCHIVE_FINISHED;
 import static com.apollocurrency.aplwallet.apl.core.shard.MigrateState.ZIP_ARCHIVE_STARTED;
-import static com.apollocurrency.aplwallet.apl.core.shard.ShardConstants.DB_BACKUP_FORMAT;
 import static org.slf4j.LoggerFactory.getLogger;
 
 /**
@@ -139,37 +138,7 @@ public class ShardEngineImpl implements ShardEngine {
      */
     @Override
     public MigrateState createBackup() {
-        long start = System.currentTimeMillis();
-        durableTaskUpdateByState(state, 0.0, "Backup main database...");
-        ShardDataSourceCreateHelper shardDataSourceCreateHelper =
-            new ShardDataSourceCreateHelper(databaseManager);
-        TransactionalDataSource sourceDataSource = databaseManager.getDataSource();
-        String nextShardName = shardDataSourceCreateHelper.createUninitializedDataSource().checkGenerateShardName();
-        Path dbDir = dirProvider.getDbDir();
-        String backupName = String.format(DB_BACKUP_FORMAT, nextShardName);
-        Path backupPath = dbDir.resolve(backupName);
-        String sql = String.format("BACKUP TO '%s'", backupPath.toAbsolutePath().toString());
-        try (Connection con = sourceDataSource.getConnection();
-             PreparedStatement ps = con.prepareStatement(sql)) {
-            ps.executeUpdate();
-            if (!Files.exists(backupPath)) {
-                state = FAILED;
-                log.error("BACKUP main db has FAILED, SQL={}, shard = {}, backup was not found in path = {}",
-                    sql, shardDataSourceCreateHelper.getShardId(), backupPath);
-                durableTaskUpdateByState(state, null, null);
-            }
-            log.debug("BACKUP by SQL={} was successful, shard = {}", sql, shardDataSourceCreateHelper.getShardId());
-            state = MigrateState.MAIN_DB_BACKUPED;
-            durableTaskUpdateByState(state, 3.0, "Backed up");
-            loadAndRefreshRecovery(sourceDataSource);
-        } catch (SQLException e) {
-            log.error("ERROR on backup db before sharding, sql = " + sql, e);
-            state = FAILED;
-            durableTaskUpdateByState(state, null, null);
-        }
-        log.debug("BACKUP db before shard ({}) in {} sec", state.name(),
-            (System.currentTimeMillis() - start) / 1000);
-        return state;
+        throw new UnsupportedOperationException("Backup shard operation is not supported");
     }
 
     /**
@@ -471,7 +440,7 @@ public class ShardEngineImpl implements ShardEngine {
                         case ShardConstants.TRANSACTION_TABLE_NAME:
                             return csvExporter.exportTransactions(paramInfo.getExcludeInfo().getExportDbIds(), paramInfo.getSnapshotBlockHeight());
                         case ShardConstants.ACCOUNT_TABLE_NAME:
-                            return exportDerivedTable(tableInfo, paramInfo, Set.of("db_id", "latest", "height", "deleted"), pruningTime, null);
+                            return exportDerivedTable(tableInfo, paramInfo, Set.of("db_id", "latest", "height", "deleted"), pruningTime, "id");
 //                        case ShardConstants.DEX_ORDER_TABLE_NAME: // now it's returned back to usual export for derived tables
                         // this is en example how to export using specified columns + index on it
 //                            return exportDerivedTable(tableInfo, paramInfo, Set.of("db_id", "latest"), -1, "height");
@@ -543,7 +512,7 @@ public class ShardEngineImpl implements ShardEngine {
     private Long exportDerivedTable(TableInfo info, CommandParamInfo paramInfo,
                                     Set<String> excludedColumns, int pruningTime,
                                     String sortColumn) {
-        DerivedTableInterface derivedTable = registry.getDerivedTable(info.getName());
+        DerivedTableInterface<? extends DerivedEntity> derivedTable = registry.getDerivedTable(info.getName());
         log.trace("Export derived: {} (isPrunable = {}) = {}", info.getName(), info.isPrunable(), derivedTable != null ? derivedTable.getName() : "NULL");
         if (derivedTable != null) {
             if (!info.isPrunable()) {
@@ -553,11 +522,9 @@ public class ShardEngineImpl implements ShardEngine {
                     return csvExporter.exportDerivedTable(derivedTable, paramInfo.getSnapshotBlockHeight(), paramInfo.getCommitBatchSize());
                 } else {
                     // some column(s) are excluded
-                    if (sortColumn != null && !sortColumn.isEmpty()) {
+                    if (StringUtils.isNotBlank(sortColumn)) {
                         // there is sorting column
-                        return csvExporter.exportDerivedTableCustomSort(
-                            derivedTable, paramInfo.getSnapshotBlockHeight(),
-                            paramInfo.getCommitBatchSize(), excludedColumns, sortColumn);
+                        return exportSorted(derivedTable, paramInfo, excludedColumns, sortColumn);
                     } else {
                         // no special sorting column, most probable DB_ID will be used by default
                         return csvExporter.exportDerivedTable(
@@ -573,6 +540,19 @@ public class ShardEngineImpl implements ShardEngine {
         } else {
             durableTaskUpdateByState(FAILED, null, null);
             throw new IllegalArgumentException("Unable to find derived table " + info.getName() + " in derived table registry");
+        }
+    }
+
+    private long exportSorted(DerivedTableInterface<? extends DerivedEntity> table, CommandParamInfo paramInfo, Set<String> excludedColumns, String sortColumn) {
+        boolean oneUniqueColumn = sortColumn.split(",").length == 1;
+        if (oneUniqueColumn) { // assume that this column is of type Long
+            MinMaxValue minMaxValue = table.getMinMaxValue(paramInfo.getSnapshotBlockHeight());
+
+            return csvExporter.exportDerivedTableByUniqueLongColumnPagination(table.getName(),
+                minMaxValue, paramInfo.getCommitBatchSize(), excludedColumns);
+        } else {
+            return csvExporter.exportDerivedTableCustomSort(table, paramInfo.getSnapshotBlockHeight(),
+                paramInfo.getCommitBatchSize(), excludedColumns, sortColumn);
         }
     }
 

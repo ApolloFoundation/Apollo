@@ -22,7 +22,7 @@ import static com.apollocurrency.aplwallet.apl.util.Constants.MIN_VALUE_FOR_MAX_
 @JsonInclude(JsonInclude.Include.NON_NULL)
 @JsonIgnoreProperties(ignoreUnknown = true)
 @JsonPropertyOrder({"height", "maxNumberOfTransactions", "maxArbitraryMessageLength", "maxNumberOfChildAccounts", "blockTime", "maxBlockTimeLimit", "minBlockTimeLimit", "maxBalance",
-    "shardingSettings", "consensusSettings", "transactionFeeSettings"})
+    "shardingSettings", "consensusSettings", "transactionFeeSettings", "smcSettings"})
 public class BlockchainProperties {
     @Getter
     private final int height;
@@ -42,6 +42,7 @@ public class BlockchainProperties {
     private ShardingSettings shardingSettings;
     private ConsensusSettings consensusSettings;
     private TransactionFeeSettings transactionFeeSettings;
+    private SmcSettings smcSettings;
 
     /**
      * Constructor for unit tests. Should not be used by JSON loading.
@@ -60,12 +61,12 @@ public class BlockchainProperties {
         @JsonProperty("height") int height,
         @JsonProperty("maxNumberOfTransactions") int maxNumberOfTransactions,
         @JsonProperty("maxArbitraryMessageLength") int maxArbitraryMessageLength,
-        @JsonProperty("maxNumberOfChildAccount") int maxNumberOfChildAccounts,
+        @JsonProperty("maxNumberOfChildAccounts") int maxNumberOfChildAccounts,
         @JsonProperty("blockTime") int blockTime,
         @JsonProperty("maxBlockTimeLimit") int maxBlockTimeLimit,
         @JsonProperty("minBlockTimeLimit") int minBlockTimeLimit,
         @JsonProperty("maxBalance") long maxBalance) {
-        this(height, maxNumberOfTransactions, maxArbitraryMessageLength, maxNumberOfChildAccounts, blockTime, maxBlockTimeLimit, minBlockTimeLimit, maxBalance, null, null, null);
+        this(height, maxNumberOfTransactions, maxArbitraryMessageLength, maxNumberOfChildAccounts, blockTime, maxBlockTimeLimit, minBlockTimeLimit, maxBalance, null, null, null, null);
     }
 
     /**
@@ -94,7 +95,8 @@ public class BlockchainProperties {
         long maxBalance,
         ShardingSettings shardingSettings,
         ConsensusSettings consensusSettings,
-        TransactionFeeSettings transactionFeeSettings
+        TransactionFeeSettings transactionFeeSettings,
+        SmcSettings smcSettings
     ) {
         this.height = height;
         this.maxNumberOfTransactions = maxNumberOfTransactions;
@@ -107,21 +109,22 @@ public class BlockchainProperties {
         this.shardingSettings = shardingSettings == null ? new ShardingSettings() : shardingSettings;
         this.consensusSettings = consensusSettings == null ? new ConsensusSettings() : consensusSettings;
         this.transactionFeeSettings = transactionFeeSettings == null ? new TransactionFeeSettings() : transactionFeeSettings;
+        this.smcSettings = smcSettings == null ? new SmcSettings() : smcSettings;
     }
 
     public BlockchainProperties(int height, int maxNumberOfTransactions, int maxArbitraryMessageLength, int blockTime, int maxBlockTimeLimit, int minBlockTimeLimit, long maxBalance, ShardingSettings shardingSettings) {
-        this(height, maxNumberOfTransactions, maxArbitraryMessageLength, 1, blockTime, maxBlockTimeLimit, minBlockTimeLimit, maxBalance, shardingSettings, null, null);
+        this(height, maxNumberOfTransactions, maxArbitraryMessageLength, 1, blockTime, maxBlockTimeLimit, minBlockTimeLimit, maxBalance, shardingSettings, null, null, null);
     }
 
 
     public BlockchainProperties(int height, int maxNumberOfTransactions, int maxArbitraryMessageLength, int blockTime, int maxBlockTimeLimit, int minBlockTimeLimit,
                                 long maxBalance, ConsensusSettings consensusSettings) {
-        this(height, maxNumberOfTransactions, maxArbitraryMessageLength, 1, blockTime, maxBlockTimeLimit, minBlockTimeLimit, maxBalance, null, consensusSettings, null);
+        this(height, maxNumberOfTransactions, maxArbitraryMessageLength, 1, blockTime, maxBlockTimeLimit, minBlockTimeLimit, maxBalance, null, consensusSettings, null, null);
     }
 
     public BlockchainProperties(int height, int maxNumberOfTransactions, int maxArbitraryMessageLength, int blockTime, int maxBlockTimeLimit, int minBlockTimeLimit,
                                 long maxBalance, ShardingSettings shardingSettings, ConsensusSettings consensusSettings) {
-        this(height, maxNumberOfTransactions, maxArbitraryMessageLength, 1, blockTime, maxBlockTimeLimit, minBlockTimeLimit, maxBalance, shardingSettings, consensusSettings, null);
+        this(height, maxNumberOfTransactions, maxArbitraryMessageLength, 1, blockTime, maxBlockTimeLimit, minBlockTimeLimit, maxBalance, shardingSettings, consensusSettings, null, null);
     }
 
     @Override
@@ -205,6 +208,16 @@ public class BlockchainProperties {
     }
 
     @JsonProperty
+    public SmcSettings getSmcSettings() {
+        return smcSettings;
+    }
+
+    @JsonProperty
+    public void setSmcSettings(SmcSettings smcSettings) {
+        this.smcSettings = smcSettings;
+    }
+
+    @JsonProperty
     public TransactionFeeSettings getTransactionFeeSettings() {
         return transactionFeeSettings;
     }
@@ -216,7 +229,7 @@ public class BlockchainProperties {
 
     public BlockchainProperties copy() {
         return new BlockchainProperties(height, maxNumberOfTransactions, maxArbitraryMessageLength, maxNumberOfChildAccounts, blockTime, maxBlockTimeLimit, minBlockTimeLimit, maxBalance,
-            shardingSettings.copy(), consensusSettings.copy(), transactionFeeSettings.copy());
+            shardingSettings.copy(), consensusSettings.copy(), transactionFeeSettings.copy(), smcSettings.copy());
     }
 
     @Override
@@ -233,6 +246,7 @@ public class BlockchainProperties {
             ", shardingSettings=" + shardingSettings +
             ", consensusSettings=" + consensusSettings +
             ", transactionFeeSettings=" + transactionFeeSettings +
+            ", smcSettings=" + smcSettings +
             '}';
     }
 }

@@ -5,7 +5,7 @@
 package com.apollocurrency.aplwallet.apl.core.transaction.messages;
 
 import com.apollocurrency.aplwallet.apl.core.chainid.BlockchainConfig;
-import com.apollocurrency.aplwallet.apl.core.blockchain.Block;
+import com.apollocurrency.aplwallet.apl.core.model.Block;
 import com.apollocurrency.aplwallet.apl.core.model.PhasingParams;
 import com.apollocurrency.aplwallet.apl.core.service.appdata.TimeService;
 import com.apollocurrency.aplwallet.apl.core.service.blockchain.Blockchain;

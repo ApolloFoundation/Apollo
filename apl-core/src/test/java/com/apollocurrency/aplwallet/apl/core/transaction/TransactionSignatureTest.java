@@ -4,11 +4,9 @@
 
 package com.apollocurrency.aplwallet.apl.core.transaction;
 
-import com.apollocurrency.aplwallet.apl.core.blockchain.Transaction;
-import com.apollocurrency.aplwallet.apl.core.blockchain.TransactionBuilderFactory;
+import com.apollocurrency.aplwallet.apl.core.model.Transaction;
+import com.apollocurrency.aplwallet.apl.core.service.blockchain.TransactionBuilderFactory;
 import com.apollocurrency.aplwallet.apl.core.chainid.BlockchainConfig;
-import com.apollocurrency.aplwallet.apl.util.io.PayloadResult;
-import com.apollocurrency.aplwallet.apl.util.io.Result;
 import com.apollocurrency.aplwallet.apl.core.service.blockchain.Blockchain;
 import com.apollocurrency.aplwallet.apl.core.service.state.account.AccountPublicKeyService;
 import com.apollocurrency.aplwallet.apl.core.service.state.account.AccountService;
@@ -22,6 +20,8 @@ import com.apollocurrency.aplwallet.apl.core.transaction.types.payment.OrdinaryP
 import com.apollocurrency.aplwallet.apl.crypto.Convert;
 import com.apollocurrency.aplwallet.apl.util.env.config.Chain;
 import com.apollocurrency.aplwallet.apl.util.exception.AplException;
+import com.apollocurrency.aplwallet.apl.util.io.PayloadResult;
+import com.apollocurrency.aplwallet.apl.util.io.Result;
 import lombok.SneakyThrows;
 import org.json.simple.JSONObject;
 import org.json.simple.parser.JSONParser;
@@ -38,7 +38,7 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.Mockito.doReturn;
-import static org.mockito.Mockito.mock;
+import static org.mockito.MockitoAnnotations.initMocks;
 
 @ExtendWith(MockitoExtension.class)
 class TransactionSignatureTest {
@@ -70,13 +70,10 @@ class TransactionSignatureTest {
     TransactionSignatureTest() throws ParseException {
     }
 
-    BlockchainConfig blockchainConfig = mock(BlockchainConfig.class);
-    Chain chain = mock(Chain.class);
-
-    {
-        doReturn(chain).when(blockchainConfig).getChain();
-    }
-
+    @Mock
+    BlockchainConfig blockchainConfig;
+    @Mock
+    Chain chain;
     @Mock
     AccountService accountService;
     @Mock
@@ -87,6 +84,8 @@ class TransactionSignatureTest {
     @SneakyThrows
     @BeforeEach
     void setUp() {
+        initMocks(this);
+        doReturn(chain).when(blockchainConfig).getChain();
         CreateChildTransactionType createChildTransactionType = new CreateChildTransactionType(blockchainConfig, accountService, accountPublicKeyService, blockchain);
         OrdinaryPaymentTransactionType paymentTransactionType = new OrdinaryPaymentTransactionType(blockchainConfig, accountService);
         TransactionBuilderFactory builderFactory = new TransactionBuilderFactory(new CachedTransactionTypeFactory(List.of(createChildTransactionType, paymentTransactionType)), blockchainConfig);

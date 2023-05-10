@@ -2,6 +2,8 @@ package com.apollocurrency.aplwallet.apl.core.dao;
 
 public class MariaDBConfigs {
 
+    public static final String DOCKER_IMAGE_NAME_VERSION = "mariadb:10.11";
+
     private static String[] envs;
 
     static {

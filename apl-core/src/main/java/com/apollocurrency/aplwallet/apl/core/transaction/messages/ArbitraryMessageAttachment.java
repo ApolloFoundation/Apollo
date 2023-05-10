@@ -6,7 +6,7 @@ package com.apollocurrency.aplwallet.apl.core.transaction.messages;
 
 import com.apollocurrency.aplwallet.apl.core.transaction.TransactionTypes;
 
-import javax.enterprise.inject.Vetoed;
+import jakarta.enterprise.inject.Vetoed;
 
 @Vetoed
 public class ArbitraryMessageAttachment extends EmptyAttachment {

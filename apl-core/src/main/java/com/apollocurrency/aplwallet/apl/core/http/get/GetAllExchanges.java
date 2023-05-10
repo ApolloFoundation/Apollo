@@ -20,7 +20,7 @@
 
 package com.apollocurrency.aplwallet.apl.core.http.get;
 
-import com.apollocurrency.aplwallet.apl.core.db.DbIterator;
+import com.apollocurrency.aplwallet.apl.util.db.DbIterator;
 import com.apollocurrency.aplwallet.apl.core.entity.state.exchange.Exchange;
 import com.apollocurrency.aplwallet.apl.core.http.APITag;
 import com.apollocurrency.aplwallet.apl.core.http.AbstractAPIRequestHandler;
@@ -31,8 +31,8 @@ import org.json.simple.JSONArray;
 import org.json.simple.JSONObject;
 import org.json.simple.JSONStreamAware;
 
-import javax.enterprise.inject.Vetoed;
-import javax.servlet.http.HttpServletRequest;
+import jakarta.enterprise.inject.Vetoed;
+import jakarta.servlet.http.HttpServletRequest;
 
 @Vetoed
 public final class GetAllExchanges extends AbstractAPIRequestHandler {

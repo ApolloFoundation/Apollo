@@ -16,7 +16,7 @@ import org.eclipse.jetty.util.ssl.SslContextFactory;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import javax.inject.Inject;
+import jakarta.inject.Inject;
 import java.nio.file.Paths;
 
 /**
@@ -67,7 +67,7 @@ public class JettyConnectorCreator {
         https_config.setSecureScheme("https");
         https_config.setSecurePort(port);
         https_config.addCustomizer(new SecureRequestCustomizer());
-        SslContextFactory sslContextFactory = new SslContextFactory.Server();
+        SslContextFactory.Server sslContextFactory = new SslContextFactory.Server();
         LOG.info("Using keystore: {} with alias: {} ", keyStorePath, keyStoreAlias);
         sslContextFactory.setKeyStorePath(keyStorePath);
         sslContextFactory.setKeyStorePassword(keyStorePassword);

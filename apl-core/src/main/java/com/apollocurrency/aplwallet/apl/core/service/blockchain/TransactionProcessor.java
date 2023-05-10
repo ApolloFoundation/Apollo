@@ -20,7 +20,7 @@
 
 package com.apollocurrency.aplwallet.apl.core.service.blockchain;
 
-import com.apollocurrency.aplwallet.apl.core.blockchain.Transaction;
+import com.apollocurrency.aplwallet.apl.core.model.Transaction;
 import com.apollocurrency.aplwallet.apl.util.exception.AplException;
 import org.json.simple.JSONArray;
 
@@ -31,7 +31,7 @@ public interface TransactionProcessor {
 
     void broadcastWhenConfirmed(Transaction transaction, Transaction uncTransaction);
 
-    void broadcast(Collection<Transaction> transactions);
+//    void broadcast(Collection<Transaction> transactions);
 
     void clearUnconfirmedTransactions();
 
@@ -39,17 +39,15 @@ public interface TransactionProcessor {
 
     void removeUnconfirmedTransaction(Transaction transaction);
 
-    void validateBeforeBroadcast(Transaction transaction) throws AplException.ValidationException;
-
-    void broadcast(Transaction transaction) throws AplException.ValidationException;
+    void broadcast(Transaction transaction);
 
     void processDelayedTxs(int number);
 
     void processLater(Collection<Transaction> transactions);
 
-    void processPeerTransactions(List<Transaction> transactions) throws AplException.NotValidException;
+    void processPeerTransactions(List<Transaction> transactions);
 
-    boolean isFullyValidTransaction(Transaction tx);
+    boolean isSufficientlyValidTransaction(Transaction tx);
 
     List<Transaction> restorePrunableData(JSONArray transactions) throws AplException.NotValidException;
 

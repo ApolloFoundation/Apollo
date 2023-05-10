@@ -4,6 +4,8 @@
 
 package com.apollocurrency.aplwallet.apl.core.service.fulltext;
 
+import static com.apollocurrency.aplwallet.apl.core.service.fulltext.FullTextSearchServiceImpl.FTL_INDEXES_TABLE;
+
 import com.apollocurrency.aplwallet.apl.util.StringValidator;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -29,17 +31,18 @@ public class DbUtils {
         List<Integer> columnTypes = new ArrayList<>();
         int dbColumn = -1;
         DatabaseMetaData metaData = connection.getMetaData();
-        ResultSet rs = metaData.getColumns(null, schemaName.toLowerCase(), tableName.toLowerCase(), null);
-        int index = 0;
-        while (rs.next()) {
-            String columnName = rs.getString("COLUMN_NAME");
-            int columnType = rs.getInt("DATA_TYPE");
-            columnNames.add(columnName);
-            columnTypes.add(columnType);
-            if (columnName.equalsIgnoreCase("DB_ID")) {
-                dbColumn = index;
+        try (ResultSet rs = metaData.getColumns(null, schemaName.toLowerCase(), tableName.toLowerCase(), null)) {
+            int index = 0;
+            while (rs.next()) {
+                String columnName = rs.getString("COLUMN_NAME");
+                int columnType = rs.getInt("DATA_TYPE");
+                columnNames.add(columnName);
+                columnTypes.add(columnType);
+                if (columnName.equalsIgnoreCase("DB_ID")) {
+                    dbColumn = index;
+                }
+                index++;
             }
-            index++;
         }
         List<Integer> indexedTextSearchColumns = getIndexColumns(connection, columnNames, columnTypes, schemaName, tableName);
         return new TableData(dbColumn, tableName.toLowerCase(), schemaName.toLowerCase(), columnNames, columnTypes, indexedTextSearchColumns);
@@ -48,7 +51,7 @@ public class DbUtils {
     private static List<Integer> getIndexColumns(Connection con, List<String> columnNames, List<Integer> columnTypes, String schema, String table) {
         List<Integer> indexColumns = new ArrayList<>();
         try (ResultSet rs = con.createStatement().executeQuery(String.format(
-            "SELECT columns FROM ftl_indexes WHERE `table` = '%s'", table.toLowerCase()))) {
+            "SELECT columns FROM " + FTL_INDEXES_TABLE + " WHERE `table` = '%s'", table.toLowerCase()))) {
             if (rs.next()) {
                 String[] columns = rs.getString(1).trim().split(",");
                 for (String column : columns) {

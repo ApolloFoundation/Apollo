@@ -4,18 +4,18 @@
 
 package com.apollocurrency.aplwallet.apl.core.service.state.asset.impl;
 
+import com.apollocurrency.aplwallet.apl.core.model.Transaction;
 import com.apollocurrency.aplwallet.apl.core.converter.rest.IteratorToStreamConverter;
 import com.apollocurrency.aplwallet.apl.core.dao.state.asset.AssetDeleteTable;
-import com.apollocurrency.aplwallet.apl.core.db.DbClause;
-import com.apollocurrency.aplwallet.apl.core.db.DbIterator;
-import com.apollocurrency.aplwallet.apl.core.blockchain.Transaction;
 import com.apollocurrency.aplwallet.apl.core.entity.state.asset.AssetDelete;
 import com.apollocurrency.aplwallet.apl.core.service.state.BlockChainInfoService;
 import com.apollocurrency.aplwallet.apl.core.service.state.asset.AssetDeleteService;
+import com.apollocurrency.aplwallet.apl.util.db.DbClause;
+import com.apollocurrency.aplwallet.apl.util.db.DbIterator;
 import lombok.extern.slf4j.Slf4j;
 
-import javax.inject.Inject;
-import javax.inject.Singleton;
+import jakarta.inject.Inject;
+import jakarta.inject.Singleton;
 import java.util.stream.Stream;
 
 @Slf4j

@@ -32,7 +32,7 @@ import com.apollocurrency.aplwallet.apl.core.http.APIServlet;
 import com.apollocurrency.aplwallet.apl.core.http.APITag;
 import com.apollocurrency.aplwallet.apl.core.http.AbstractAPIRequestHandler;
 import com.apollocurrency.aplwallet.apl.core.http.JSONData;
-import com.apollocurrency.aplwallet.apl.core.monetary.HoldingType;
+import com.apollocurrency.aplwallet.apl.core.model.HoldingType;
 import com.apollocurrency.aplwallet.apl.core.peer.PeerState;
 import com.apollocurrency.aplwallet.apl.core.service.blockchain.Blockchain;
 import com.apollocurrency.aplwallet.apl.core.service.state.PhasingPollService;
@@ -49,9 +49,9 @@ import org.json.simple.JSONObject;
 import org.json.simple.JSONStreamAware;
 import org.slf4j.Logger;
 
-import javax.enterprise.inject.Vetoed;
-import javax.enterprise.inject.spi.CDI;
-import javax.servlet.http.HttpServletRequest;
+import jakarta.enterprise.inject.Vetoed;
+import jakarta.enterprise.inject.spi.CDI;
+import jakarta.servlet.http.HttpServletRequest;
 import java.util.Collections;
 import java.util.Map;
 

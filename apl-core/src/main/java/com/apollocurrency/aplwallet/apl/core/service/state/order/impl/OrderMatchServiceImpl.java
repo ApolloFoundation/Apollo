@@ -4,7 +4,7 @@
 
 package com.apollocurrency.aplwallet.apl.core.service.state.order.impl;
 
-import com.apollocurrency.aplwallet.apl.core.blockchain.Transaction;
+import com.apollocurrency.aplwallet.apl.core.model.Transaction;
 import com.apollocurrency.aplwallet.apl.core.entity.state.Trade;
 import com.apollocurrency.aplwallet.apl.core.entity.state.account.Account;
 import com.apollocurrency.aplwallet.apl.core.entity.state.account.LedgerEvent;
@@ -17,13 +17,13 @@ import com.apollocurrency.aplwallet.apl.core.service.state.order.OrderMatchServi
 import com.apollocurrency.aplwallet.apl.core.service.state.order.OrderService;
 import com.apollocurrency.aplwallet.apl.core.service.state.qualifier.AskOrderService;
 import com.apollocurrency.aplwallet.apl.core.service.state.qualifier.BidOrderService;
-import com.apollocurrency.aplwallet.apl.core.transaction.messages.ColoredCoinsAskOrderPlacement;
-import com.apollocurrency.aplwallet.apl.core.transaction.messages.ColoredCoinsBidOrderPlacement;
+import com.apollocurrency.aplwallet.apl.core.transaction.messages.CCAskOrderPlacementAttachment;
+import com.apollocurrency.aplwallet.apl.core.transaction.messages.CCBidOrderPlacementAttachment;
 import com.apollocurrency.aplwallet.apl.util.ThreadUtils;
 import lombok.extern.slf4j.Slf4j;
 
-import javax.inject.Inject;
-import javax.inject.Singleton;
+import jakarta.inject.Inject;
+import jakarta.inject.Singleton;
 
 /**
  * @author silaev-firstbridge on 4/8/2020
@@ -33,16 +33,16 @@ import javax.inject.Singleton;
 public class OrderMatchServiceImpl implements OrderMatchService {
     private final AccountService accountService;
     private final AccountAssetService accountAssetService;
-    private final OrderService<AskOrder, ColoredCoinsAskOrderPlacement> orderAskService;
-    private final OrderService<BidOrder, ColoredCoinsBidOrderPlacement> orderBidService;
+    private final OrderService<AskOrder, CCAskOrderPlacementAttachment> orderAskService;
+    private final OrderService<BidOrder, CCBidOrderPlacementAttachment> orderBidService;
     private final TradeService tradeService;
 
     @Inject
     public OrderMatchServiceImpl(
         final AccountService accountService,
         final AccountAssetService accountAssetService,
-        @AskOrderService final OrderService<AskOrder, ColoredCoinsAskOrderPlacement> orderAskService,
-        @BidOrderService final OrderService<BidOrder, ColoredCoinsBidOrderPlacement> orderBidService,
+        @AskOrderService final OrderService<AskOrder, CCAskOrderPlacementAttachment> orderAskService,
+        @BidOrderService final OrderService<BidOrder, CCBidOrderPlacementAttachment> orderBidService,
         final TradeService tradeService
     ) {
         this.accountService = accountService;
@@ -91,13 +91,13 @@ public class OrderMatchServiceImpl implements OrderMatchService {
     }
 
     @Override
-    public void addAskOrder(Transaction transaction, ColoredCoinsAskOrderPlacement attachment) {
+    public void addAskOrder(Transaction transaction, CCAskOrderPlacementAttachment attachment) {
         orderAskService.addOrder(transaction, attachment);
         matchOrders(attachment.getAssetId());
     }
 
     @Override
-    public void addBidOrder(Transaction transaction, ColoredCoinsBidOrderPlacement attachment) {
+    public void addBidOrder(Transaction transaction, CCBidOrderPlacementAttachment attachment) {
         orderBidService.addOrder(transaction, attachment);
         matchOrders(attachment.getAssetId());
     }

@@ -2,7 +2,7 @@ package com.apollocurrency.aplwallet.apl.exchange.service.graph;
 
 import com.apollocurrency.aplwallet.apl.core.app.observer.events.BlockEvent;
 import com.apollocurrency.aplwallet.apl.core.app.observer.events.BlockEventType;
-import com.apollocurrency.aplwallet.apl.core.blockchain.Block;
+import com.apollocurrency.aplwallet.apl.core.model.Block;
 import com.apollocurrency.aplwallet.apl.core.model.dex.DexOrder;
 import com.apollocurrency.aplwallet.apl.core.service.blockchain.Blockchain;
 import com.apollocurrency.aplwallet.apl.dex.core.model.DexCurrency;
@@ -15,10 +15,10 @@ import com.apollocurrency.aplwallet.apl.util.service.TaskDispatchManager;
 import com.apollocurrency.aplwallet.apl.util.task.Task;
 import lombok.extern.slf4j.Slf4j;
 
-import javax.annotation.PostConstruct;
-import javax.enterprise.event.Observes;
-import javax.inject.Inject;
-import javax.inject.Singleton;
+import jakarta.annotation.PostConstruct;
+import jakarta.enterprise.event.Observes;
+import jakarta.inject.Inject;
+import jakarta.inject.Singleton;
 import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReentrantLock;
 

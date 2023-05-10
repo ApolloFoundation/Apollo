@@ -6,7 +6,7 @@ package com.apollocurrency.aplwallet.apl.core.transaction.types.messaging;
 
 import com.apollocurrency.aplwallet.apl.core.app.VoteWeighting;
 import com.apollocurrency.aplwallet.apl.core.chainid.BlockchainConfig;
-import com.apollocurrency.aplwallet.apl.core.blockchain.Transaction;
+import com.apollocurrency.aplwallet.apl.core.model.Transaction;
 import com.apollocurrency.aplwallet.apl.core.entity.state.account.Account;
 import com.apollocurrency.aplwallet.apl.core.entity.state.account.LedgerEvent;
 import com.apollocurrency.aplwallet.apl.core.entity.state.phasing.PhasingPoll;
@@ -22,18 +22,14 @@ import com.apollocurrency.aplwallet.apl.util.Constants;
 import com.apollocurrency.aplwallet.apl.util.exception.AplException;
 import org.json.simple.JSONObject;
 
-import javax.inject.Inject;
-import javax.inject.Singleton;
+import jakarta.inject.Inject;
+import jakarta.inject.Singleton;
+import java.math.BigDecimal;
 import java.nio.ByteBuffer;
 import java.util.Arrays;
 import java.util.List;
 @Singleton
 public class PhasingVoteCastingTransactionType extends MessagingTransactionType {
-    private final Fee PHASING_VOTE_FEE = (transaction, appendage) -> {
-        MessagingPhasingVoteCasting attachment = (MessagingPhasingVoteCasting) transaction.getAttachment();
-        return Math.multiplyExact(attachment.getTransactionFullHashes().size(), getBlockchainConfig().getOneAPL());
-    };
-
     private final PhasingPollService phasingPollService;
     private final TransactionValidator transactionValidator;
 
@@ -62,7 +58,10 @@ public class PhasingVoteCastingTransactionType extends MessagingTransactionType 
 
     @Override
     public Fee getBaselineFee(Transaction transaction) {
-        return PHASING_VOTE_FEE;
+        return getFeeFactory().createSizeBased(BigDecimal.ONE, BigDecimal.ONE, (tx, app)-> {
+            MessagingPhasingVoteCasting attachment = (MessagingPhasingVoteCasting) tx.getAttachment();
+            return attachment.getTransactionFullHashes().size();
+        }, 1);
     }
 
     @Override

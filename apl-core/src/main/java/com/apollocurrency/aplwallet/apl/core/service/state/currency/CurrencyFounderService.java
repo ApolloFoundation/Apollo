@@ -4,10 +4,10 @@
 
 package com.apollocurrency.aplwallet.apl.core.service.state.currency;
 
-import java.util.stream.Stream;
-
-import com.apollocurrency.aplwallet.apl.core.db.DbIterator;
 import com.apollocurrency.aplwallet.apl.core.entity.state.currency.CurrencyFounder;
+import com.apollocurrency.aplwallet.apl.util.db.DbIterator;
+
+import java.util.stream.Stream;
 
 public interface CurrencyFounderService {
 

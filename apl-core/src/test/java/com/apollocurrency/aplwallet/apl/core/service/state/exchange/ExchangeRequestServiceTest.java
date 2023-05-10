@@ -3,14 +3,14 @@ package com.apollocurrency.aplwallet.apl.core.service.state.exchange;
 import com.apollocurrency.aplwallet.apl.core.converter.rest.IteratorToStreamConverter;
 import com.apollocurrency.aplwallet.apl.core.dao.state.exchange.ExchangeRequestTable;
 import com.apollocurrency.aplwallet.apl.core.dao.state.keyfactory.DbKey;
-import com.apollocurrency.aplwallet.apl.core.db.DbClause;
-import com.apollocurrency.aplwallet.apl.core.db.DbIterator;
-import com.apollocurrency.aplwallet.apl.core.blockchain.Transaction;
+import com.apollocurrency.aplwallet.apl.util.db.DbClause;
+import com.apollocurrency.aplwallet.apl.util.db.DbIterator;
+import com.apollocurrency.aplwallet.apl.core.model.Transaction;
 import com.apollocurrency.aplwallet.apl.core.entity.state.exchange.ExchangeRequest;
 import com.apollocurrency.aplwallet.apl.core.service.state.BlockChainInfoService;
 import com.apollocurrency.aplwallet.apl.core.service.state.exchange.impl.ExchangeRequestServiceImpl;
 import com.apollocurrency.aplwallet.apl.core.transaction.messages.MonetarySystemExchangeBuyAttachment;
-import com.apollocurrency.aplwallet.apl.core.transaction.messages.MonetarySystemExchangeSell;
+import com.apollocurrency.aplwallet.apl.core.transaction.messages.MSExchangeSellAttachment;
 import com.apollocurrency.aplwallet.apl.data.BlockTestData;
 import com.apollocurrency.aplwallet.apl.data.ExchangeRequestTestData;
 import org.junit.jupiter.api.BeforeEach;
@@ -165,7 +165,7 @@ class ExchangeRequestServiceTest {
     @Test
     void testAddExchangeRequest() {
         Transaction transaction = mock(Transaction.class);
-        MonetarySystemExchangeSell attachment = mock(MonetarySystemExchangeSell.class);
+        MSExchangeSellAttachment attachment = mock(MSExchangeSellAttachment.class);
         doReturn(blockTestData.BLOCK_10).when(blockChainInfoService).getLastBlock();
 
         //WHEN

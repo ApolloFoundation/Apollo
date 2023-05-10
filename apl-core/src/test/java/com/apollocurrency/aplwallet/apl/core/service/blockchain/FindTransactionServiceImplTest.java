@@ -5,12 +5,12 @@
 package com.apollocurrency.aplwallet.apl.core.service.blockchain;
 
 import com.apollocurrency.aplwallet.api.v2.model.TxReceipt;
-import com.apollocurrency.aplwallet.apl.core.blockchain.Transaction;
-import com.apollocurrency.aplwallet.apl.core.blockchain.UnconfirmedTransaction;
-import com.apollocurrency.aplwallet.apl.core.dao.TransactionalDataSource;
+import com.apollocurrency.aplwallet.apl.core.model.Transaction;
+import com.apollocurrency.aplwallet.apl.core.model.UnconfirmedTransaction;
+import com.apollocurrency.aplwallet.apl.util.db.TransactionalDataSource;
 import com.apollocurrency.aplwallet.apl.core.model.AplQueryObject;
 import com.apollocurrency.aplwallet.apl.core.rest.v2.converter.TxReceiptMapper;
-import com.apollocurrency.aplwallet.apl.core.service.appdata.DatabaseManager;
+import com.apollocurrency.aplwallet.apl.core.db.DatabaseManager;
 import com.apollocurrency.aplwallet.apl.core.service.state.BlockChainInfoService;
 import com.apollocurrency.aplwallet.apl.util.Convert2;
 import org.junit.jupiter.api.BeforeAll;
@@ -80,7 +80,7 @@ class FindTransactionServiceImplTest {
         //GIVEN
         UnconfirmedTransaction tr = mock(UnconfirmedTransaction.class);
         Stream<UnconfirmedTransaction> result = List.of(tr).stream();
-        doReturn(result).when(memPool).getAllProcessedStream();
+        doReturn(result).when(memPool).getAllStream();
 
         //WHEN
         Stream<UnconfirmedTransaction> stream = findTransactionService.getAllUnconfirmedTransactionsStream();
@@ -112,7 +112,7 @@ class FindTransactionServiceImplTest {
         //GIVEN
         long transactionId = 111L;
         Transaction tx = mock(Transaction.class);
-        doReturn(tx).when(memPool).getUnconfirmedTransaction(transactionId);
+        doReturn(tx).when(memPool).get(transactionId);
 
         //WHEN
         Optional<Transaction> result = findTransactionService.findUnconfirmedTransaction(transactionId);
@@ -133,7 +133,7 @@ class FindTransactionServiceImplTest {
         doReturn(endTime + 1000).when(tr3).getTimestamp();
 
         Stream<UnconfirmedTransaction> unconfirmedTransactionStream = List.of(tr1, tr2, tr3).stream();
-        doReturn(unconfirmedTransactionStream).when(memPool).getAllProcessedStream();
+        doReturn(unconfirmedTransactionStream).when(memPool).getAllStream();
 
         TxReceipt tx1 = mock(TxReceipt.class);
         TxReceipt tx2 = mock(TxReceipt.class);
@@ -168,7 +168,7 @@ class FindTransactionServiceImplTest {
         doReturn(endTime + 1000).when(tr3).getTimestamp();
 
         Stream<UnconfirmedTransaction> unconfirmedTransactionStream = List.of(tr1, tr2, tr3).stream();
-        doReturn(unconfirmedTransactionStream).when(memPool).getAllProcessedStream();
+        doReturn(unconfirmedTransactionStream).when(memPool).getAllStream();
 
         //getTransactions(List<Long> accounts, type, subtype, startTime, endTime, fromHeight, toHeight, String sortOrder, from, to)
         doReturn(4).when(transactionService).getTransactionsCount(Collections.emptyList(),

@@ -1,5 +1,5 @@
 /*
- * Copyright (c)  2018-2021. Apollo Foundation.
+ * Copyright (c) 2018-2021. Apollo Foundation.
  */
 
 package com.apollocurrency.aplwallet.apl.util.io;
@@ -41,6 +41,12 @@ public interface WriteBuffer {
 
     WriteBuffer write(BigInteger value);
 
+    /**
+     * Copies bytes to the output buffer without any encoding
+     *
+     * @param bytes the byte array
+     * @return the output buffer
+     */
     default WriteBuffer concat(byte[] bytes) {
         return write(bytes);
     }

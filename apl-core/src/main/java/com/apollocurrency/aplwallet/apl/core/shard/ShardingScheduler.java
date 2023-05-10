@@ -7,7 +7,7 @@ package com.apollocurrency.aplwallet.apl.core.shard;
 import com.apollocurrency.aplwallet.apl.core.app.observer.events.BlockEvent;
 import com.apollocurrency.aplwallet.apl.core.app.observer.events.BlockEventType;
 import com.apollocurrency.aplwallet.apl.core.app.observer.events.TrimConfigUpdated;
-import com.apollocurrency.aplwallet.apl.core.blockchain.Block;
+import com.apollocurrency.aplwallet.apl.core.model.Block;
 import com.apollocurrency.aplwallet.apl.core.chainid.BlockchainConfig;
 import com.apollocurrency.aplwallet.apl.core.chainid.HeightConfig;
 import com.apollocurrency.aplwallet.apl.core.config.TrimEventCommand;
@@ -20,13 +20,13 @@ import lombok.Data;
 import lombok.NoArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 
-import javax.annotation.PreDestroy;
-import javax.annotation.Priority;
-import javax.enterprise.event.Event;
-import javax.enterprise.event.Observes;
-import javax.enterprise.util.AnnotationLiteral;
-import javax.inject.Inject;
-import javax.inject.Singleton;
+import jakarta.annotation.PreDestroy;
+import jakarta.annotation.Priority;
+import jakarta.enterprise.event.Event;
+import jakarta.enterprise.event.Observes;
+import jakarta.enterprise.util.AnnotationLiteral;
+import jakarta.inject.Inject;
+import jakarta.inject.Singleton;
 import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.List;
@@ -50,6 +50,7 @@ public class ShardingScheduler {
     private final BlockchainConfig blockchainConfig;
     private final TimeService timeService;
     private volatile boolean shardingFailed = false;
+    private volatile int lastShardScheduledHeight;
     private volatile int standardShardDelay;
     private final ShardSchedulingConfig config;
 
@@ -127,7 +128,6 @@ public class ShardingScheduler {
                 synchronized (this) {
                     if (scheduledShards.isEmpty()) {
                         updateTrimConfig(true, false);
-
                     } else {
                         for (ShardScheduledRecord record : scheduledShards) {
                             record.schedulingTime = timeService.systemTimeMillis();
@@ -135,8 +135,11 @@ public class ShardingScheduler {
                     }
                 }
             }
+        } catch (Exception e) {
+            logErrorAndDisableSharding("Unknown error during trying to shard, last sharding at height "
+                + lastShardScheduledHeight + "scheduled shards: " + scheduledShardings()  , e);
         } finally {
-           scheduleBackgroundShardingTask(nextShardDelay);
+            scheduleBackgroundShardingTask(nextShardDelay);
         }
     }
 
@@ -222,7 +225,7 @@ public class ShardingScheduler {
         return targetHeight;
     }
 
-    public void onBlockPushed(@Priority(javax.interceptor.Interceptor.Priority.APPLICATION) @Observes @BlockEvent(BlockEventType.BLOCK_PUSHED) Block block) {
+    public void onBlockPushed(@Priority(jakarta.interceptor.Interceptor.Priority.APPLICATION) @Observes @BlockEvent(BlockEventType.BLOCK_PUSHED) Block block) {
         int blockHeight = block.getHeight();
         long lastShardHeight = getLastShardHeight();
         int heightForSharding = blockHeight - config.getMaxRollback();
@@ -241,6 +244,11 @@ public class ShardingScheduler {
     }
 
     private Long getLastShardHeight() {
+        Long lastDbShardHeight = getLastDbShardHeight();
+        return Math.max(lastDbShardHeight, lastShardScheduledHeight);
+    }
+
+    private Long getLastDbShardHeight() {
         long lastShardHeight = 0;
         Shard shard = shardService.getLastShard();
         if (shard != null) {
@@ -250,9 +258,10 @@ public class ShardingScheduler {
     }
 
     private synchronized void scheduleSharding(int height, int blockchainHeight) {
-        ShardScheduledRecord record = new ShardScheduledRecord(shardingDelayMs(), height, blockchainHeight, timeService.systemTimeMillis());
+        lastShardScheduledHeight = height;
+        ShardScheduledRecord record = new ShardScheduledRecord(shardingDelayMs(), lastShardScheduledHeight, blockchainHeight, timeService.systemTimeMillis());
         scheduledShards.add(record);
-        log.info("Schedule new shard creation at height {}, blockchain height {}, delay {} min", height, blockchainHeight, record.timeDelay / 60 / 1000);
+        log.info("Schedule new shard creation at height {}, blockchain height {}, delay {} min", lastShardScheduledHeight, blockchainHeight, record.timeDelay / 60 / 1000);
         updateTrimConfig(false, false);
     }
 
@@ -270,6 +279,14 @@ public class ShardingScheduler {
 
     private void logErrorAndDisableSharding(String error, Object... args) {
         log.error(error, args);
+        disableSharding();
+    }
+    private void logErrorAndDisableSharding(String error, Exception e) {
+        log.error(error, e);
+        disableSharding();
+    }
+
+    private void disableSharding() {
         shardingFailed = true;
         synchronized (this) {
             scheduledShards.clear();

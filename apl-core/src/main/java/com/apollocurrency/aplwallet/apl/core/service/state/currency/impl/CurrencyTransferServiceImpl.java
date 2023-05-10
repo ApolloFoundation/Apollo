@@ -6,18 +6,18 @@ package com.apollocurrency.aplwallet.apl.core.service.state.currency.impl;
 
 import com.apollocurrency.aplwallet.apl.core.converter.rest.IteratorToStreamConverter;
 import com.apollocurrency.aplwallet.apl.core.dao.state.currency.CurrencyTransferTable;
-import com.apollocurrency.aplwallet.apl.core.db.DbClause;
-import com.apollocurrency.aplwallet.apl.core.db.DbIterator;
-import com.apollocurrency.aplwallet.apl.core.blockchain.Block;
-import com.apollocurrency.aplwallet.apl.core.blockchain.Transaction;
+import com.apollocurrency.aplwallet.apl.util.db.DbClause;
+import com.apollocurrency.aplwallet.apl.util.db.DbIterator;
+import com.apollocurrency.aplwallet.apl.core.model.Block;
+import com.apollocurrency.aplwallet.apl.core.model.Transaction;
 import com.apollocurrency.aplwallet.apl.core.entity.state.currency.CurrencyTransfer;
 import com.apollocurrency.aplwallet.apl.core.service.state.BlockChainInfoService;
 import com.apollocurrency.aplwallet.apl.core.service.state.currency.CurrencyTransferService;
-import com.apollocurrency.aplwallet.apl.core.transaction.messages.MonetarySystemCurrencyTransfer;
+import com.apollocurrency.aplwallet.apl.core.transaction.messages.MSCurrencyTransferAttachment;
 import lombok.extern.slf4j.Slf4j;
 
-import javax.inject.Inject;
-import javax.inject.Singleton;
+import jakarta.inject.Inject;
+import jakarta.inject.Singleton;
 import java.util.stream.Stream;
 
 @Slf4j
@@ -104,7 +104,7 @@ public class CurrencyTransferServiceImpl implements CurrencyTransferService {
     }
 
     @Override
-    public CurrencyTransfer addTransfer(Transaction transaction, MonetarySystemCurrencyTransfer attachment) {
+    public CurrencyTransfer addTransfer(Transaction transaction, MSCurrencyTransferAttachment attachment) {
         Block lastBlock = blockChainInfoService.getLastBlock();
         CurrencyTransfer transfer = new CurrencyTransfer(transaction, attachment, lastBlock.getTimestamp(), lastBlock.getHeight());
         currencyTransferTable.insert(transfer);

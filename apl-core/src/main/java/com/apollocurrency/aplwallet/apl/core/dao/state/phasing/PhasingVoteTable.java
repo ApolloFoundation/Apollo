@@ -9,15 +9,15 @@ import com.apollocurrency.aplwallet.apl.core.dao.state.derived.EntityDbTable;
 import com.apollocurrency.aplwallet.apl.core.dao.state.keyfactory.DbKey;
 import com.apollocurrency.aplwallet.apl.core.dao.state.keyfactory.LinkKey;
 import com.apollocurrency.aplwallet.apl.core.dao.state.keyfactory.LinkKeyFactory;
-import com.apollocurrency.aplwallet.apl.core.db.DbClause;
+import com.apollocurrency.aplwallet.apl.core.service.fulltext.FullTextOperationData;
+import com.apollocurrency.aplwallet.apl.util.db.DbClause;
 import com.apollocurrency.aplwallet.apl.core.entity.state.phasing.PhasingVote;
-import com.apollocurrency.aplwallet.apl.core.service.appdata.DatabaseManager;
-import com.apollocurrency.aplwallet.apl.core.shard.observer.DeleteOnTrimData;
+import com.apollocurrency.aplwallet.apl.core.db.DatabaseManager;
 import com.apollocurrency.aplwallet.apl.core.utils.CollectionUtil;
 
-import javax.enterprise.event.Event;
-import javax.inject.Inject;
-import javax.inject.Singleton;
+import jakarta.enterprise.event.Event;
+import jakarta.inject.Inject;
+import jakarta.inject.Singleton;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
@@ -40,8 +40,9 @@ public class PhasingVoteTable extends EntityDbTable<PhasingVote> {
 
     @Inject
     public PhasingVoteTable(DatabaseManager databaseManager,
-                            Event<DeleteOnTrimData> deleteOnTrimDataEvent) {
-        super(TABLE_NAME, KEY_FACTORY, false, null, databaseManager, deleteOnTrimDataEvent);
+                            Event<FullTextOperationData> fullTextOperationDataEvent) {
+        super(TABLE_NAME, KEY_FACTORY, false, null,
+            databaseManager, fullTextOperationDataEvent);
     }
 
     @Override

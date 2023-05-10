@@ -22,18 +22,18 @@ package com.apollocurrency.aplwallet.apl.core.dao.blockchain;
 
 import com.apollocurrency.aplwallet.apl.core.app.BlockNotFoundException;
 import com.apollocurrency.aplwallet.apl.core.converter.db.BlockEntityRowMapper;
-import com.apollocurrency.aplwallet.apl.core.dao.TransactionalDataSource;
-import com.apollocurrency.aplwallet.apl.core.db.DbUtils;
+import com.apollocurrency.aplwallet.apl.util.db.TransactionalDataSource;
+import com.apollocurrency.aplwallet.apl.util.db.DbUtils;
 import com.apollocurrency.aplwallet.apl.core.entity.blockchain.BlockEntity;
-import com.apollocurrency.aplwallet.apl.core.service.appdata.DatabaseManager;
+import com.apollocurrency.aplwallet.apl.core.db.DatabaseManager;
 import com.apollocurrency.aplwallet.apl.util.annotation.DatabaseSpecificDml;
 import com.apollocurrency.aplwallet.apl.util.annotation.DmlMarker;
 import com.apollocurrency.aplwallet.apl.util.cdi.Transactional;
 import com.apollocurrency.aplwallet.apl.util.exception.AplException;
 import org.slf4j.Logger;
 
-import javax.inject.Inject;
-import javax.inject.Singleton;
+import jakarta.inject.Inject;
+import jakarta.inject.Singleton;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
@@ -233,7 +233,7 @@ public class BlockDaoImpl implements BlockDao {
 
     @Override
     public List<BlockEntity> getBlocks(TransactionalDataSource dataSource, int from, int to, int timestamp) {
-        LOG.debug("start getBlocks DbIter( from={}, to={}, timestamp={} )...", from, to, timestamp);
+        LOG.trace("start getBlocks DbIter( from={}, to={}, timestamp={} )...", from, to, timestamp);
         if (dataSource == null) {
             dataSource = databaseManager.getDataSource();
         }

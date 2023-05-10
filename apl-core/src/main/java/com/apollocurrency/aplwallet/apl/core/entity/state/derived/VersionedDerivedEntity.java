@@ -12,7 +12,8 @@ import java.util.Objects;
 
 @ToString(callSuper = true)
 public abstract class VersionedDerivedEntity extends DerivedEntity {
-    private boolean latest = true;
+    private volatile boolean latest = true;
+    private volatile int prevHeight = -1;
 
     public VersionedDerivedEntity(Long dbId, Integer height) {
         super(dbId, height);
@@ -29,6 +30,20 @@ public abstract class VersionedDerivedEntity extends DerivedEntity {
 
     public void setLatest(boolean latest) {
         this.latest = latest;
+    }
+
+    @Override
+    public void setHeight(int height) {
+        prevHeight = super.getHeight();
+        super.setHeight(height);
+    }
+
+    /**
+     * Indicates, whether this entity should be merged into the db with previous version or should be simply inserted as new
+     * @return true when this entity exists in db on {2}
+     */
+    public boolean requireMerge() {
+        return getDbId() != 0 && prevHeight != -1 && prevHeight == super.getHeight();
     }
 
     @Override

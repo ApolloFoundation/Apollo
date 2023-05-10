@@ -9,7 +9,7 @@ import com.apollocurrency.aplwallet.apl.util.exception.AplException;
 import org.jdbi.v3.core.mapper.RowMapper;
 import org.jdbi.v3.core.statement.StatementContext;
 
-import javax.inject.Singleton;
+import jakarta.inject.Singleton;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 
@@ -36,6 +36,7 @@ public class UnconfirmedTransactionEntityRowMapper implements RowMapper<Unconfir
                     .transactionBytes(rs.getBytes("transaction_bytes"))
                     .prunableAttachmentJsonString(rs.getString("prunable_json"))
                     .build();
+            entity.setDbId(rs.getLong("db_id"));
             return entity;
         } catch (SQLException e) {
             throw new RuntimeException(e.toString(), e);

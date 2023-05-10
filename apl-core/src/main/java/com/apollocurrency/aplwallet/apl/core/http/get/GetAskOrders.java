@@ -20,7 +20,7 @@
 
 package com.apollocurrency.aplwallet.apl.core.http.get;
 
-import com.apollocurrency.aplwallet.apl.core.blockchain.Transaction;
+import com.apollocurrency.aplwallet.apl.core.model.Transaction;
 import com.apollocurrency.aplwallet.apl.core.entity.state.order.AskOrder;
 import com.apollocurrency.aplwallet.apl.core.http.APITag;
 import com.apollocurrency.aplwallet.apl.core.http.AbstractAPIRequestHandler;
@@ -30,7 +30,7 @@ import com.apollocurrency.aplwallet.apl.core.service.state.order.OrderService;
 import com.apollocurrency.aplwallet.apl.core.service.state.order.impl.AskOrderServiceImpl;
 import com.apollocurrency.aplwallet.apl.core.service.state.qualifier.AskOrderService;
 import com.apollocurrency.aplwallet.apl.core.transaction.TransactionTypes;
-import com.apollocurrency.aplwallet.apl.core.transaction.messages.ColoredCoinsAskOrderPlacement;
+import com.apollocurrency.aplwallet.apl.core.transaction.messages.CCAskOrderPlacementAttachment;
 import com.apollocurrency.aplwallet.apl.core.transaction.messages.ColoredCoinsOrderCancellationAttachment;
 import com.apollocurrency.aplwallet.apl.core.utils.CollectorUtils;
 import com.apollocurrency.aplwallet.apl.util.Filter;
@@ -39,15 +39,15 @@ import org.json.simple.JSONArray;
 import org.json.simple.JSONObject;
 import org.json.simple.JSONStreamAware;
 
-import javax.enterprise.inject.Vetoed;
-import javax.enterprise.inject.spi.CDI;
-import javax.servlet.http.HttpServletRequest;
+import jakarta.enterprise.inject.Vetoed;
+import jakarta.enterprise.inject.spi.CDI;
+import jakarta.servlet.http.HttpServletRequest;
 import java.util.Arrays;
 import java.util.List;
 
 @Vetoed
 public final class GetAskOrders extends AbstractAPIRequestHandler {
-    private final OrderService<AskOrder, ColoredCoinsAskOrderPlacement> askOrderService =
+    private final OrderService<AskOrder, CCAskOrderPlacementAttachment> askOrderService =
         CDI.current().select(AskOrderServiceImpl.class, AskOrderService.Literal.INSTANCE).get();
 
     public GetAskOrders() {

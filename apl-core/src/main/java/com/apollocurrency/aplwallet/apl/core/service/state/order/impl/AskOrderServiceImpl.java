@@ -5,26 +5,26 @@
 package com.apollocurrency.aplwallet.apl.core.service.state.order.impl;
 
 import com.apollocurrency.aplwallet.apl.core.converter.rest.IteratorToStreamConverter;
-import com.apollocurrency.aplwallet.apl.core.dao.TransactionalDataSource;
+import com.apollocurrency.aplwallet.apl.util.db.TransactionalDataSource;
 import com.apollocurrency.aplwallet.apl.core.dao.state.order.AskOrderTable;
-import com.apollocurrency.aplwallet.apl.core.db.DbClause;
-import com.apollocurrency.aplwallet.apl.core.blockchain.Transaction;
+import com.apollocurrency.aplwallet.apl.util.db.DbClause;
+import com.apollocurrency.aplwallet.apl.core.model.Transaction;
 import com.apollocurrency.aplwallet.apl.core.entity.state.order.AskOrder;
-import com.apollocurrency.aplwallet.apl.core.service.appdata.DatabaseManager;
+import com.apollocurrency.aplwallet.apl.core.db.DatabaseManager;
 import com.apollocurrency.aplwallet.apl.core.service.blockchain.Blockchain;
 import com.apollocurrency.aplwallet.apl.core.service.state.order.OrderService;
 import com.apollocurrency.aplwallet.apl.core.service.state.qualifier.AskOrderService;
-import com.apollocurrency.aplwallet.apl.core.transaction.messages.ColoredCoinsAskOrderPlacement;
+import com.apollocurrency.aplwallet.apl.core.transaction.messages.CCAskOrderPlacementAttachment;
 import lombok.extern.slf4j.Slf4j;
 
-import javax.inject.Inject;
-import javax.inject.Singleton;
+import jakarta.inject.Inject;
+import jakarta.inject.Singleton;
 import java.util.stream.Stream;
 
 @Slf4j
 @Singleton
 @AskOrderService
-public class AskOrderServiceImpl implements OrderService<AskOrder, ColoredCoinsAskOrderPlacement> {
+public class AskOrderServiceImpl implements OrderService<AskOrder, CCAskOrderPlacementAttachment> {
     static final String ORDER = " ORDER BY price ASC, creation_height ASC, transaction_height ASC, transaction_index ASC ";
     private final DatabaseManager databaseManager;
     private final AskOrderTable askOrderTable;
@@ -116,7 +116,7 @@ public class AskOrderServiceImpl implements OrderService<AskOrder, ColoredCoinsA
     }
 
     @Override
-    public void addOrder(Transaction transaction, ColoredCoinsAskOrderPlacement attachment) {
+    public void addOrder(Transaction transaction, CCAskOrderPlacementAttachment attachment) {
         final AskOrder order = new AskOrder(transaction, attachment, blockchain.getHeight());
         log.trace(">> addOrder() askOrder={}", order);
         askOrderTable.insert(order);

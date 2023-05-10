@@ -1,12 +1,10 @@
 package com.apollocurrency.aplwallet.apl.util;
 
-import javax.enterprise.inject.Vetoed;
 import java.util.List;
 
 /**
  * Util class for common string checks, used instead of apache-commons
  */
-@Vetoed
 public class StringUtils {
 
     public static boolean isNotBlank(String s) {

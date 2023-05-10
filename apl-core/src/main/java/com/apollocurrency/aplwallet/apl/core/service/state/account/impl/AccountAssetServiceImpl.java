@@ -18,13 +18,13 @@ import com.apollocurrency.aplwallet.apl.core.service.state.BlockChainInfoService
 import com.apollocurrency.aplwallet.apl.core.service.state.account.AccountAssetService;
 import com.apollocurrency.aplwallet.apl.core.service.state.account.AccountService;
 import com.apollocurrency.aplwallet.apl.core.service.state.asset.AssetDividendService;
-import com.apollocurrency.aplwallet.apl.core.transaction.messages.ColoredCoinsDividendPayment;
+import com.apollocurrency.aplwallet.apl.core.transaction.messages.CCDividendPaymentAttachment;
 import com.apollocurrency.aplwallet.apl.util.Constants;
 import lombok.extern.slf4j.Slf4j;
 
-import javax.enterprise.event.Event;
-import javax.inject.Inject;
-import javax.inject.Singleton;
+import jakarta.enterprise.event.Event;
+import jakarta.inject.Inject;
+import jakarta.inject.Singleton;
 import java.util.List;
 
 import static com.apollocurrency.aplwallet.apl.core.app.observer.events.AccountEventBinding.literal;
@@ -173,8 +173,8 @@ public class AccountAssetServiceImpl implements AccountAssetService {
     }
 
     @Override
-    public long getUnconfirmedAssetBalanceATU(Account account, long assetId) {
-        AccountAsset accountAsset = accountAssetTable.get(AccountAssetTable.newKey(account.getId(), assetId));
+    public long getUnconfirmedAssetBalanceATU(long accountId, long assetId) {
+        AccountAsset accountAsset = accountAssetTable.get(AccountAssetTable.newKey(accountId, assetId));
         return accountAsset == null ? 0 : accountAsset.getUnconfirmedQuantityATU();
     }
 
@@ -281,7 +281,7 @@ public class AccountAssetServiceImpl implements AccountAssetService {
     }
 
     @Override
-    public void payDividends(Account account, final long transactionId, ColoredCoinsDividendPayment attachment) {
+    public void payDividends(Account account, final long transactionId, CCDividendPaymentAttachment attachment) {
         log.trace(">> payDividends(..), account={}, transactionId={}, attachment={}",
             account, transactionId, attachment);
         long totalDividend = 0;

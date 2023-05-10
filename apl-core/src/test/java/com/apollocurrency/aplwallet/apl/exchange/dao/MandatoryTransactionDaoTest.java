@@ -12,6 +12,7 @@ import com.apollocurrency.aplwallet.apl.core.service.state.account.AccountServic
 import com.apollocurrency.aplwallet.apl.crypto.Convert;
 import com.apollocurrency.aplwallet.apl.exchange.service.DexService;
 import com.apollocurrency.aplwallet.apl.extension.DbExtension;
+import com.apollocurrency.aplwallet.apl.testutil.DbUtils;
 import com.apollocurrency.aplwallet.apl.util.cdi.transaction.JdbiTransactionalSqlObjectDaoProxyInvocationHandler;
 import lombok.extern.slf4j.Slf4j;
 import org.junit.jupiter.api.BeforeEach;
@@ -48,7 +49,7 @@ class MandatoryTransactionDaoTest extends DbContainerBaseTest {
 
     @BeforeEach
     void setUp() {
-        mandatoryTransactionDao = JdbiTransactionalSqlObjectDaoProxyInvocationHandler.createProxy(extension.getDatabaseManager().getJdbiHandleFactory(), MandatoryTransactionDao.class);
+        mandatoryTransactionDao = JdbiTransactionalSqlObjectDaoProxyInvocationHandler.createProxy(DbUtils.createJdbiHandleFactory(extension.getDatabaseManager()), MandatoryTransactionDao.class);
         orderTx = new MandatoryTransactionEntity(20L, 3606021951720989487L, Convert.parseHexString(orderBytes), null);
         cancelTx = new MandatoryTransactionEntity(10L, 749837771503999228L, Convert.parseHexString(cancelBytes), Convert.parseHexString("2f23970cdc290b328e922ab0de51c288066e8579237c7b0fd45add2d064f5ff6"));
     }

@@ -18,9 +18,9 @@ import com.apollocurrency.aplwallet.apl.util.env.dirprovider.DirProvider;
 import lombok.ToString;
 import lombok.extern.slf4j.Slf4j;
 
-import javax.enterprise.event.ObservesAsync;
-import javax.inject.Inject;
-import javax.inject.Singleton;
+import jakarta.enterprise.event.ObservesAsync;
+import jakarta.inject.Inject;
+import jakarta.inject.Singleton;
 import java.io.File;
 import java.nio.file.Files;
 import java.nio.file.Path;

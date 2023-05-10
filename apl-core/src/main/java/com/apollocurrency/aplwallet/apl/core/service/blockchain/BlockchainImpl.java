@@ -20,23 +20,23 @@
 
 package com.apollocurrency.aplwallet.apl.core.service.blockchain;
 
-import com.apollocurrency.aplwallet.apl.core.blockchain.Block;
-import com.apollocurrency.aplwallet.apl.core.blockchain.EcBlockData;
-import com.apollocurrency.aplwallet.apl.core.blockchain.Transaction;
 import com.apollocurrency.aplwallet.apl.core.converter.db.BlockEntityToModelConverter;
 import com.apollocurrency.aplwallet.apl.core.converter.db.BlockModelToEntityConverter;
-import com.apollocurrency.aplwallet.apl.core.dao.TransactionalDataSource;
 import com.apollocurrency.aplwallet.apl.core.dao.appdata.ShardDao;
 import com.apollocurrency.aplwallet.apl.core.dao.appdata.ShardRecoveryDao;
 import com.apollocurrency.aplwallet.apl.core.dao.appdata.TransactionIndexDao;
 import com.apollocurrency.aplwallet.apl.core.dao.blockchain.BlockDao;
+import com.apollocurrency.aplwallet.apl.core.db.DatabaseManager;
 import com.apollocurrency.aplwallet.apl.core.entity.appdata.BlockIndex;
 import com.apollocurrency.aplwallet.apl.core.entity.appdata.Shard;
 import com.apollocurrency.aplwallet.apl.core.entity.appdata.TransactionIndex;
 import com.apollocurrency.aplwallet.apl.core.entity.blockchain.BlockEntity;
 import com.apollocurrency.aplwallet.apl.core.entity.state.account.PublicKey;
+import com.apollocurrency.aplwallet.apl.core.model.Block;
+import com.apollocurrency.aplwallet.apl.core.model.EcBlockData;
+import com.apollocurrency.aplwallet.apl.core.model.Sort;
+import com.apollocurrency.aplwallet.apl.core.model.Transaction;
 import com.apollocurrency.aplwallet.apl.core.model.TransactionDbInfo;
-import com.apollocurrency.aplwallet.apl.core.service.appdata.DatabaseManager;
 import com.apollocurrency.aplwallet.apl.core.service.appdata.TimeService;
 import com.apollocurrency.aplwallet.apl.core.service.state.account.PublicKeyDao;
 import com.apollocurrency.aplwallet.apl.core.shard.BlockIndexService;
@@ -46,15 +46,17 @@ import com.apollocurrency.aplwallet.apl.core.transaction.PrunableTransaction;
 import com.apollocurrency.aplwallet.apl.core.transaction.messages.PrunableLoadingService;
 import com.apollocurrency.aplwallet.apl.crypto.Convert;
 import com.apollocurrency.aplwallet.apl.util.cdi.Transactional;
+import com.apollocurrency.aplwallet.apl.util.db.TransactionalDataSource;
 import lombok.extern.slf4j.Slf4j;
 
-import javax.inject.Inject;
-import javax.inject.Singleton;
+import jakarta.inject.Inject;
+import jakarta.inject.Singleton;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.Iterator;
 import java.util.List;
+import java.util.Objects;
 import java.util.Set;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.stream.Collectors;
@@ -251,18 +253,35 @@ public class BlockchainImpl implements Blockchain {
         if (block == null) {
             return null;
         }
-        if (block.getTransactions() == null) {
-            block.setTransactions(getBlockTransactions(block.getId()));
+        if (block.hasLoadedData()) {
+            return block;
         }
+        List<Transaction> transactions = loadBlockTransactions(block);
+        byte[] generatorPublicKey = loadGeneratorPublicKey(block);
+        block.assignBlockData(transactions, generatorPublicKey);
+        return block;
+    }
+
+    private byte[] loadGeneratorPublicKey(Block block) {
         PublicKey publicKey = publicKeyDao.searchAll(block.getGeneratorId());
         if (publicKey != null) {
-            block.setGeneratorPublicKey(publicKey.getPublicKey());
+            return publicKey.getPublicKey();
         } else {
             //special case when scan was failed and no public keys in db exist
             log.warn("No public key for generator's account {} on block {} at {}", block.getGeneratorId(), block.getId(), block.getHeight());
+            return null;
         }
-        return block;
     }
+
+    private List<Transaction> loadBlockTransactions(Block block) {
+        List<Transaction> blockTransactions = getBlockTransactions(block.getId());
+            List<Transaction> transactions = Collections.unmodifiableList(blockTransactions);
+            for (Transaction transaction : transactions) {
+                prunableService.loadTransactionPrunables(transaction);
+            }
+        return transactions;
+    }
+
     List<Block> loadBlockData(List<Block> blocks) {
         return blocks.stream().map(this::loadBlockData).collect(Collectors.toList());
     }
@@ -322,31 +341,35 @@ public class BlockchainImpl implements Blockchain {
     public void saveBlock(Block block) {
         if (block != null) {
             blockDao.saveBlock(blockModelToEntityConverter.convert(block));
-            transactionService.saveTransactions(this.getOrLoadTransactions(block));
+            transactionService.saveTransactions(block.getTransactions());
         }
     }
 
     @Override
-    public List<Transaction> getOrLoadTransactions(Block parentBlock) {
-        if (parentBlock.getTransactions() == null || parentBlock.getTransactions().size() == 0) {
-            List<Transaction> blockTransactions = this.getBlockTransactions(parentBlock.getId());
-            if (blockTransactions.size() > 0) {
-                List<Transaction> transactions = Collections.unmodifiableList(blockTransactions);
-                short index = 0;
-                for (Transaction transaction : transactions) {
-                    transaction.setBlock(parentBlock);
-                    transaction.setIndex(index++);
-                    prunableService.loadTransactionPrunables(transaction);
-                }
-                parentBlock.setTransactions(transactions);
-            } else {
-                parentBlock.setTransactions(Collections.emptyList());
-            }
-        } else if (parentBlock.getTransactions() == null) {
-            parentBlock.setTransactions(Collections.emptyList());
-        }
-        return parentBlock.getTransactions();
+    public void updateTransaction(Transaction transaction) {
+        transactionService.updateTransaction(transaction);
     }
+    //    @Override
+//    public List<Transaction> getOrLoadTransactions(Block parentBlock) {
+//        if (parentBlock.getTransactions() == null || parentBlock.getTransactions().size() == 0) {
+//            List<Transaction> blockTransactions = this.getBlockTransactions(parentBlock.getId());
+//            if (blockTransactions.size() > 0) {
+//                List<Transaction> transactions = Collections.unmodifiableList(blockTransactions);
+//                short index = 0;
+//                for (Transaction transaction : transactions) {
+//                    transaction.setBlock(parentBlock);
+//                    transaction.setIndex(index++);
+//                    prunableService.loadTransactionPrunables(transaction);
+//                }
+//                parentBlock.setTransactions(transactions);
+//            } else {
+//                parentBlock.setTransactions(Collections.emptyList());
+//            }
+//        } else if (parentBlock.getTransactions() == null) {
+//            parentBlock.setTransactions(Collections.emptyList());
+//        }
+//        return parentBlock.getTransactions();
+//    }
 
     @Transactional
     @Override
@@ -459,18 +482,9 @@ public class BlockchainImpl implements Blockchain {
         }
         List<Block> result;
         if (entityList.isEmpty()) {
-            result = Collections.EMPTY_LIST;
+            result = Collections.emptyList();
         } else {
             result = loadBlockDataFromEntities(entityList);//load the generator public key
-            for (Block block : result) {
-                List<Transaction> blockTransactions = this.getOrLoadTransactions(block);
-                if (log.isTraceEnabled()) {
-                    log.trace("Block id={} height={} Loaded {} transaction.",
-                        block.getId(),
-                        block.getHeight(),
-                        blockTransactions != null ? blockTransactions.size() : 0);
-                }
-            }
         }
         if (log.isTraceEnabled()) {
             log.trace("getBlocksAfter time {}", System.currentTimeMillis() - time);
@@ -635,12 +649,16 @@ public class BlockchainImpl implements Blockchain {
     @Override
     @Transactional(readOnly = true)
     public Integer getTransactionHeight(byte[] fullHash, int heightLimit) {
-        Transaction transaction = transactionService.findTransactionCrossShardingByFullHash(fullHash, heightLimit);
+        Transaction transaction = transactionService.findTransactionByFullHash(fullHash);
         Integer txHeight = null;
-        if (transaction != null) {
+        if (transaction != null && transaction.getHeight() <= heightLimit) {
             txHeight = transaction.getHeight();
-        } else if (hasShardTransactionByFullHash(fullHash, heightLimit)) {
-            txHeight = transactionIndexDao.getTransactionHeightByTransactionId(Convert.transactionFullHashToId(fullHash));
+        } else {
+            TransactionIndex index = transactionIndexDao.getByTransactionId(Convert.transactionFullHashToId(fullHash));
+            byte[] hash = getTransactionIndexFullHash(index);
+            if (hash != null && Arrays.equals(fullHash, hash) && index.getHeight() <= heightLimit) {
+                txHeight = index.getHeight();
+            }
         }
         return txHeight;
     }
@@ -679,11 +697,12 @@ public class BlockchainImpl implements Blockchain {
     @Override
     public List<Transaction> getTransactions(long accountId, int numberOfConfirmations, byte type, byte subtype,
                                              int blockTimestamp, boolean withMessage, boolean phasedOnly, boolean nonPhasedOnly,
-                                             int from, int to, boolean includeExpiredPrunable, boolean executedOnly, boolean includePrivate) {
+                                             int from, int to, boolean includeExpiredPrunable, boolean executedOnly,
+                                             boolean includePrivate, boolean failedOnly, boolean nonFailedOnly, Sort sort) {
 
         return transactionService.getTransactionsCrossShardingByAccount(accountId, getHeight(), numberOfConfirmations, type, subtype,
             blockTimestamp, withMessage, phasedOnly, nonPhasedOnly,
-            from, to, includeExpiredPrunable, executedOnly, includePrivate);
+            from, to, includeExpiredPrunable, executedOnly, includePrivate, failedOnly, nonFailedOnly, sort);
     }
 
     @Transactional(readOnly = true)
@@ -774,6 +793,15 @@ public class BlockchainImpl implements Blockchain {
     @Override
     public List<Block> getBlocksAfter(int height, int limit) {
         return loadBlockDataFromEntities(blockDao.getBlocksAfter(height, limit));
+    }
+
+    @Override
+    public List<Transaction> getTransactionsByIds(Set<Long> ids) {
+        return ids.stream()
+            .map(e-> transactionService.findTransactionCrossSharding(e, Integer.MAX_VALUE))
+            .map(this::loadPrunable)
+            .filter(Objects::nonNull)
+            .collect(Collectors.toList());
     }
 
 }

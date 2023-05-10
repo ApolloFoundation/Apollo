@@ -4,7 +4,7 @@
 
 package com.apollocurrency.aplwallet.apl.core.app.runnable;
 
-import com.apollocurrency.aplwallet.apl.core.blockchain.Transaction;
+import com.apollocurrency.aplwallet.apl.core.model.Transaction;
 import com.apollocurrency.aplwallet.apl.core.peer.PeersService;
 import com.apollocurrency.aplwallet.apl.core.service.appdata.TimeService;
 import com.apollocurrency.aplwallet.apl.core.service.blockchain.Blockchain;
@@ -14,7 +14,7 @@ import com.apollocurrency.aplwallet.apl.core.service.blockchain.UnconfirmedTrans
 import com.apollocurrency.aplwallet.apl.util.Convert2;
 import lombok.extern.slf4j.Slf4j;
 
-import javax.enterprise.inject.spi.CDI;
+import jakarta.enterprise.inject.spi.CDI;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
@@ -66,10 +66,10 @@ public class RebroadcastTransactionsThread implements Runnable {
         try {
             List<Transaction> transactionList = new ArrayList<>();
             int curTime = timeService.getEpochTime();
-            Collection<Transaction> broadcastedTransactions = memPool.getAllBroadcastedTransactions();
+            Collection<Transaction> broadcastedTransactions = memPool.getAllBroadcasted();
             for (Transaction transaction : broadcastedTransactions) {
                 if (transaction.getExpiration() < curTime || blockchain.hasTransaction(transaction.getId())) {
-                    memPool.removeBroadcastedTransaction(transaction);
+                    memPool.removeBroadcasted(transaction);
                 } else if (transaction.getTimestamp() < curTime - 30) {
                     transactionList.add(
                         unconfirmedTransactionCreator.from(transaction, Convert2.fromEpochTime(transaction.getTimestamp()))

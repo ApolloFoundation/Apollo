@@ -6,15 +6,15 @@ package com.apollocurrency.aplwallet.apl.core.app.observer;
 
 import com.apollocurrency.aplwallet.apl.core.app.observer.events.BlockEvent;
 import com.apollocurrency.aplwallet.apl.core.app.observer.events.BlockEventType;
-import com.apollocurrency.aplwallet.apl.core.blockchain.Block;
-import com.apollocurrency.aplwallet.apl.core.service.appdata.DatabaseManager;
+import com.apollocurrency.aplwallet.apl.core.model.Block;
+import com.apollocurrency.aplwallet.apl.core.db.DatabaseManager;
 import com.apollocurrency.aplwallet.apl.core.service.blockchain.BlockchainProcessor;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import javax.enterprise.event.ObservesAsync;
-import javax.enterprise.inject.spi.CDI;
-import javax.inject.Inject;
+import jakarta.enterprise.event.ObservesAsync;
+import jakarta.enterprise.inject.spi.CDI;
+import jakarta.inject.Inject;
 
 public class TableAnalyzingObserver {
 

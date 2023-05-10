@@ -3,10 +3,10 @@ package com.apollocurrency.aplwallet.vault.service.auth;
 import com.apollocurrency.aplwallet.apl.util.env.dirprovider.DirProvider;
 import lombok.extern.slf4j.Slf4j;
 
-import javax.enterprise.inject.Produces;
-import javax.inject.Inject;
-import javax.inject.Named;
-import javax.inject.Singleton;
+import jakarta.enterprise.inject.Produces;
+import jakarta.inject.Inject;
+import jakarta.inject.Named;
+import jakarta.inject.Singleton;
 import java.nio.file.Path;
 
 /**

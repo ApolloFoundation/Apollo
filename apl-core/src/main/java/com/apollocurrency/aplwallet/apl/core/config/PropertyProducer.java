@@ -8,10 +8,10 @@ import com.apollocurrency.aplwallet.apl.util.StringUtils;
 import com.apollocurrency.aplwallet.apl.util.cdi.config.Property;
 import com.apollocurrency.aplwallet.apl.util.injectable.PropertiesHolder;
 
-import javax.enterprise.inject.Produces;
-import javax.enterprise.inject.spi.Annotated;
-import javax.enterprise.inject.spi.InjectionPoint;
-import javax.inject.Inject;
+import jakarta.enterprise.inject.Produces;
+import jakarta.enterprise.inject.spi.Annotated;
+import jakarta.enterprise.inject.spi.InjectionPoint;
+import jakarta.inject.Inject;
 import java.util.Arrays;
 import java.util.List;
 

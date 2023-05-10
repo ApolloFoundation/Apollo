@@ -22,15 +22,14 @@ package com.apollocurrency.aplwallet.apl.core.dao.state.order;
 
 import com.apollocurrency.aplwallet.apl.core.dao.state.keyfactory.DbKey;
 import com.apollocurrency.aplwallet.apl.core.dao.state.keyfactory.LongKeyFactory;
-import com.apollocurrency.aplwallet.apl.core.db.DbIterator;
+import com.apollocurrency.aplwallet.apl.core.service.fulltext.FullTextOperationData;
+import com.apollocurrency.aplwallet.apl.util.db.DbIterator;
 import com.apollocurrency.aplwallet.apl.core.entity.state.order.AskOrder;
-import com.apollocurrency.aplwallet.apl.core.service.appdata.DatabaseManager;
-import com.apollocurrency.aplwallet.apl.core.service.state.DerivedTablesRegistry;
-import com.apollocurrency.aplwallet.apl.core.shard.observer.DeleteOnTrimData;
+import com.apollocurrency.aplwallet.apl.core.db.DatabaseManager;
 
-import javax.enterprise.event.Event;
-import javax.inject.Inject;
-import javax.inject.Singleton;
+import jakarta.enterprise.event.Event;
+import jakarta.inject.Inject;
+import jakarta.inject.Singleton;
 import javax.sql.DataSource;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
@@ -53,10 +52,9 @@ public class AskOrderTable extends OrderTable<AskOrder> {
     };
 
     @Inject
-    public AskOrderTable(DerivedTablesRegistry derivedDbTablesRegistry,
-                         DatabaseManager databaseManager,
-                         Event<DeleteOnTrimData> deleteOnTrimDataEvent) {
-        super("ask_order", askOrderDbKeyFactory, databaseManager, deleteOnTrimDataEvent);
+    public AskOrderTable(DatabaseManager databaseManager,
+                         Event<FullTextOperationData> fullTextOperationDataEvent) {
+        super("ask_order", askOrderDbKeyFactory, databaseManager, fullTextOperationDataEvent);
     }
 
     @Override

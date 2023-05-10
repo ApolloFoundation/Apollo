@@ -1,5 +1,5 @@
 /*
- * Copyright (c)  2018-2021. Apollo Foundation.
+ * Copyright (c) 2020-2021. Apollo Foundation.
  */
 
 package com.apollocurrency.aplwallet.apl.util.io;
@@ -8,13 +8,14 @@ import lombok.Getter;
 import org.json.simple.JSONObject;
 
 import java.math.BigInteger;
+import java.nio.ByteOrder;
 import java.nio.charset.StandardCharsets;
 import java.util.Objects;
 
 /**
  * @author andrew.zinchenko@gmail.com
  */
-public class JsonBuffer extends AbstractWriteBuffer implements NamedBuffer {
+public class JsonBuffer implements NamedBuffer {
     @Getter
     private final JSONObject jsonObject;
 
@@ -25,11 +26,6 @@ public class JsonBuffer extends AbstractWriteBuffer implements NamedBuffer {
     public JsonBuffer(JSONObject jsonObject) {
         Objects.requireNonNull(jsonObject);
         this.jsonObject = jsonObject;
-    }
-
-    @Override
-    public WriteBuffer write(byte data) {
-        return put("", data);
     }
 
     @Override
@@ -83,6 +79,16 @@ public class JsonBuffer extends AbstractWriteBuffer implements NamedBuffer {
     public WriteBuffer put(String tag, JSONObject value) {
         jsonObject.put(tag, value);
         return this;
+    }
+
+    @Override
+    public ByteOrder order() {
+        return null;
+    }
+
+    @Override
+    public ByteOrder setOrder(ByteOrder order) {
+        return null;
     }
 
     @Override

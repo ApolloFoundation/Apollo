@@ -5,7 +5,7 @@
 package com.apollocurrency.aplwallet.apl.core.dao.appdata;
 
 import com.apollocurrency.aplwallet.apl.core.dao.DbContainerBaseTest;
-import com.apollocurrency.aplwallet.apl.core.service.appdata.DatabaseManager;
+import com.apollocurrency.aplwallet.apl.core.db.DatabaseManager;
 import com.apollocurrency.aplwallet.apl.extension.DbExtension;
 import lombok.extern.slf4j.Slf4j;
 import org.jboss.weld.junit.MockBean;
@@ -16,7 +16,7 @@ import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.RegisterExtension;
 
-import javax.inject.Inject;
+import jakarta.inject.Inject;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;

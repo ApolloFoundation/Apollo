@@ -78,7 +78,7 @@ public class MemoryAppender extends AppenderBase<ILoggingEvent> {
     /**
      * Store a ILoggingEvent in the ring buffer
      *
-     * @param iLoggingEvent Description of the log event.
+     * @param iLoggingEvent Description of the event log.
      */
     @Override
     protected void append(ILoggingEvent iLoggingEvent) {

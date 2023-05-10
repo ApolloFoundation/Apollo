@@ -6,7 +6,7 @@ package com.apollocurrency.aplwallet.apl.core.entity.state.asset;
 
 import com.apollocurrency.aplwallet.apl.core.dao.state.keyfactory.DbKey;
 import com.apollocurrency.aplwallet.apl.core.entity.state.derived.DerivedEntity;
-import com.apollocurrency.aplwallet.apl.core.transaction.messages.ColoredCoinsDividendPayment;
+import com.apollocurrency.aplwallet.apl.core.transaction.messages.CCDividendPaymentAttachment;
 import lombok.Getter;
 import lombok.Setter;
 import lombok.ToString;
@@ -38,7 +38,7 @@ public class AssetDividend extends DerivedEntity {
         this.timestamp = timestamp;
     }
 
-    public AssetDividend(long transactionId, ColoredCoinsDividendPayment attachment,
+    public AssetDividend(long transactionId, CCDividendPaymentAttachment attachment,
                          long totalDividend, long numAccounts, int height, int timestamp) {
         this(transactionId, height, timestamp);
 

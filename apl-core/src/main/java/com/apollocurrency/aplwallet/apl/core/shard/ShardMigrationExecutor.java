@@ -28,9 +28,9 @@ import com.apollocurrency.aplwallet.apl.util.cdi.Transactional;
 import com.apollocurrency.aplwallet.apl.util.cdi.config.Property;
 import org.slf4j.Logger;
 
-import javax.enterprise.util.AnnotationLiteral;
-import javax.inject.Inject;
-import javax.inject.Singleton;
+import jakarta.enterprise.util.AnnotationLiteral;
+import jakarta.inject.Inject;
+import jakarta.inject.Singleton;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
@@ -49,7 +49,7 @@ public class ShardMigrationExecutor {
     private static final Logger log = getLogger(ShardMigrationExecutor.class);
     private final List<DataMigrateOperation> dataMigrateOperations = new ArrayList<>();
 
-    private final javax.enterprise.event.Event<MigrateState> migrateStateEvent;
+    private final jakarta.enterprise.event.Event<MigrateState> migrateStateEvent;
     private final ShardEngine shardEngine;
     private final ShardHashCalculator shardHashCalculator;
     private final ShardDao shardDao;
@@ -60,7 +60,7 @@ public class ShardMigrationExecutor {
 
     @Inject
     public ShardMigrationExecutor(ShardEngine shardEngine,
-                                  javax.enterprise.event.Event<MigrateState> migrateStateEvent,
+                                  jakarta.enterprise.event.Event<MigrateState> migrateStateEvent,
                                   ShardHashCalculator shardHashCalculator,
                                   ShardDao shardDao,
                                   ExcludedTransactionDbIdExtractor excludedTransactionDbIdExtractor,

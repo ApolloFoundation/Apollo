@@ -5,7 +5,8 @@
 package com.apollocurrency.aplwallet.apl.core.service.appdata;
 
 import com.apollocurrency.aplwallet.apl.core.app.observer.events.TrimEvent;
-import com.apollocurrency.aplwallet.apl.core.dao.TransactionalDataSource;
+import com.apollocurrency.aplwallet.apl.core.db.DatabaseManager;
+import com.apollocurrency.aplwallet.apl.util.db.TransactionalDataSource;
 import com.apollocurrency.aplwallet.apl.core.dao.appdata.TrimDao;
 import com.apollocurrency.aplwallet.apl.core.dao.state.derived.DerivedTableInterface;
 import com.apollocurrency.aplwallet.apl.core.entity.appdata.TrimEntry;
@@ -14,8 +15,8 @@ import com.apollocurrency.aplwallet.apl.util.ThreadUtils;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
-import javax.enterprise.event.Event;
-import javax.enterprise.util.AnnotationLiteral;
+import jakarta.enterprise.event.Event;
+import jakarta.enterprise.util.AnnotationLiteral;
 import java.sql.Connection;
 import java.sql.SQLException;
 import java.util.List;

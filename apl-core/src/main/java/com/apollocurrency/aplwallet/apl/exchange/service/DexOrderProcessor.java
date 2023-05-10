@@ -3,7 +3,7 @@ package com.apollocurrency.aplwallet.apl.exchange.service;
 import com.apollocurrency.aplwallet.apl.core.app.observer.events.BlockchainEvent;
 import com.apollocurrency.aplwallet.apl.core.app.observer.events.BlockchainEventType;
 import com.apollocurrency.aplwallet.apl.core.chainid.BlockchainConfig;
-import com.apollocurrency.aplwallet.apl.core.blockchain.Transaction;
+import com.apollocurrency.aplwallet.apl.core.model.Transaction;
 import com.apollocurrency.aplwallet.apl.core.entity.state.phasing.PhasingPoll;
 import com.apollocurrency.aplwallet.apl.core.http.ParameterException;
 import com.apollocurrency.aplwallet.apl.core.model.CreateTransactionRequest;
@@ -51,11 +51,11 @@ import com.apollocurrency.aplwallet.vault.service.KMSService;
 import lombok.extern.slf4j.Slf4j;
 import org.web3j.utils.Numeric;
 
-import javax.annotation.PostConstruct;
-import javax.annotation.PreDestroy;
-import javax.enterprise.event.Observes;
-import javax.inject.Inject;
-import javax.inject.Singleton;
+import jakarta.annotation.PostConstruct;
+import jakarta.annotation.PreDestroy;
+import jakarta.enterprise.event.Observes;
+import jakarta.inject.Inject;
+import jakarta.inject.Singleton;
 import java.sql.Timestamp;
 import java.util.Arrays;
 import java.util.HashMap;
@@ -853,10 +853,4 @@ public class DexOrderProcessor {
             }
         }
     }
-
-    private void validateAndBroadcast(Transaction tx) throws AplException.ValidationException {
-        validator.validateFully(tx);
-        dexService.broadcast(tx);
-    }
-
 }

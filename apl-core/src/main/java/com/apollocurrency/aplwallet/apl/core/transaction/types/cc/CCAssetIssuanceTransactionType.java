@@ -1,10 +1,10 @@
 /*
- *  Copyright © 2018-2020 Apollo Foundation
+ *  Copyright © 2018-2021 Apollo Foundation
  */
 package com.apollocurrency.aplwallet.apl.core.transaction.types.cc;
 
+import com.apollocurrency.aplwallet.apl.core.model.Transaction;
 import com.apollocurrency.aplwallet.apl.core.chainid.BlockchainConfig;
-import com.apollocurrency.aplwallet.apl.core.blockchain.Transaction;
 import com.apollocurrency.aplwallet.apl.core.entity.state.account.Account;
 import com.apollocurrency.aplwallet.apl.core.entity.state.account.LedgerEvent;
 import com.apollocurrency.aplwallet.apl.core.service.state.account.AccountAssetService;
@@ -16,11 +16,14 @@ import com.apollocurrency.aplwallet.apl.core.transaction.messages.Appendix;
 import com.apollocurrency.aplwallet.apl.core.transaction.messages.ColoredCoinsAssetIssuance;
 import com.apollocurrency.aplwallet.apl.crypto.Convert;
 import com.apollocurrency.aplwallet.apl.util.Constants;
+import com.apollocurrency.aplwallet.apl.util.annotation.FeeMarker;
+import com.apollocurrency.aplwallet.apl.util.annotation.TransactionFee;
 import com.apollocurrency.aplwallet.apl.util.exception.AplException;
 import org.json.simple.JSONObject;
 
-import javax.inject.Inject;
-import javax.inject.Singleton;
+import jakarta.inject.Inject;
+import jakarta.inject.Singleton;
+import java.math.BigDecimal;
 import java.nio.ByteBuffer;
 import java.util.Map;
 
@@ -28,15 +31,7 @@ import java.util.Map;
  * @author al
  */
 @Singleton
-public class CCAssetIssuanceTransactionType extends ColoredCoinsTransactionType {
-
-    private final Fee SINGLETON_ASSET_FEE = new Fee.SizeBasedFee(getBlockchainConfig().getOneAPL(), getBlockchainConfig().getOneAPL(), 32) {
-        public int getSize(Transaction transaction, Appendix appendage) {
-            ColoredCoinsAssetIssuance attachment = (ColoredCoinsAssetIssuance) transaction.getAttachment();
-            return attachment.getDescription().length();
-        }
-    };
-    private final Fee ASSET_ISSUANCE_FEE = (transaction, appendage) -> isSingletonIssuance(transaction) ? SINGLETON_ASSET_FEE.getFee(transaction, appendage) : Math.multiplyExact(1000, getBlockchainConfig().getOneAPL());
+public class CCAssetIssuanceTransactionType extends CCTransactionType {
 
     private final AssetService assetService;
     private final AccountAssetService accountAssetService;
@@ -65,10 +60,29 @@ public class CCAssetIssuanceTransactionType extends ColoredCoinsTransactionType 
 
     @Override
     public Fee getBaselineFee(Transaction transaction) {
-        return ASSET_ISSUANCE_FEE;
+        final long oneAPL = getBlockchainConfig().getOneAPL();
+        BigDecimal[] singletonAssetFees = getBlockchainConfig().getCurrentConfig().getAdditionalFees(getSpec(), new BigDecimal[]{BigDecimal.ONE, BigDecimal.ONE});
+        // do not change/adjust singleton asset fee
+        return getFeeFactory().createCustom(
+            (tx, appendage) -> {
+                if (isSingletonIssuance(tx)) {
+                    return new Fee.SizeBasedFee(singletonAssetFees[0].multiply(BigDecimal.valueOf(oneAPL)).longValueExact(),
+                        singletonAssetFees[1].multiply(BigDecimal.valueOf(oneAPL)).longValueExact(), 32) {
+                        @Override
+                        public int getSize(Transaction transaction, Appendix appendage) {
+                            ColoredCoinsAssetIssuance attachment = (ColoredCoinsAssetIssuance) transaction.getAttachment();
+                            return attachment.getDescription().length();
+                        }
+                    }.getFee(tx, appendage);
+                } else {
+                    return getFeeFactory().createFixed(BigDecimal.valueOf(1000)).getFee(tx, appendage);
+                }
+            });
+
     }
 
     @Override
+    @TransactionFee({FeeMarker.FEE, FeeMarker.BACK_FEE})
     public long[] getBackFees(Transaction transaction) {
         if (isSingletonIssuance(transaction)) {
             return Convert.EMPTY_LONG;

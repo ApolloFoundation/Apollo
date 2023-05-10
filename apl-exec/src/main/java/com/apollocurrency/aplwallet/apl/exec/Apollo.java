@@ -9,7 +9,6 @@ import com.apollocurrency.aplwallet.apl.conf.ConfigVerifier;
 import com.apollocurrency.aplwallet.apl.core.app.AplCoreRuntime;
 import com.apollocurrency.aplwallet.apl.core.chainid.BlockchainConfig;
 import com.apollocurrency.aplwallet.apl.core.chainid.BlockchainConfigUpdater;
-import com.apollocurrency.aplwallet.apl.core.db.DbConfig;
 import com.apollocurrency.aplwallet.apl.core.service.appdata.SecureStorageService;
 import com.apollocurrency.aplwallet.apl.udpater.intfce.UpdaterCore;
 import com.apollocurrency.aplwallet.apl.updater.core.UpdaterCoreImpl;
@@ -17,6 +16,7 @@ import com.apollocurrency.aplwallet.apl.util.Constants;
 import com.apollocurrency.aplwallet.apl.util.StringUtils;
 import com.apollocurrency.aplwallet.apl.util.cdi.AplContainer;
 import com.apollocurrency.aplwallet.apl.util.cdi.AplContainerBuilder;
+import com.apollocurrency.aplwallet.apl.util.db.MariaDbProcess;
 import com.apollocurrency.aplwallet.apl.util.env.EnvironmentVariables;
 import com.apollocurrency.aplwallet.apl.util.env.PosixExitCodes;
 import com.apollocurrency.aplwallet.apl.util.env.RuntimeEnvironment;
@@ -31,23 +31,18 @@ import com.apollocurrency.aplwallet.apl.util.env.dirprovider.ConfigDirProviderFa
 import com.apollocurrency.aplwallet.apl.util.env.dirprovider.DirProvider;
 import com.apollocurrency.aplwallet.apl.util.env.dirprovider.DirProviderFactory;
 import com.apollocurrency.aplwallet.apl.util.env.dirprovider.PredefinedDirLocations;
-import com.apollocurrency.aplwallet.apl.util.injectable.ChainsConfigHolder;
-import com.apollocurrency.aplwallet.apl.util.injectable.DbProperties;
 import com.apollocurrency.aplwallet.apl.util.injectable.PropertiesHolder;
 import com.beust.jcommander.JCommander;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import javax.enterprise.inject.spi.CDI;
+import jakarta.enterprise.inject.spi.CDI;
 import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.PrintWriter;
 import java.nio.file.Path;
 import java.nio.file.Paths;
-import java.sql.Connection;
-import java.sql.DriverManager;
-import java.sql.SQLException;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
@@ -59,14 +54,12 @@ import java.util.UUID;
  *
  * @author alukin@gmail.com
  */
-// @Singleton
 public class Apollo {
 
     //    System properties to load by PropertiesConfigLoader
     public static final String PID_FILE = "apl.pid";
     public static final String CMD_FILE = "apl.cmdline";
     public static final String APP_FILE = "apl.app";
-    public static final String APOLLO_MARIADB_INSTALL_DIR="apollo-mariadb";
     private static final List<String> SYSTEM_PROPERTY_NAMES = Arrays.asList(
         "socksProxyHost",
         "socksProxyPort",
@@ -84,9 +77,9 @@ public class Apollo {
     private static Logger log;
     private static AplContainer container;
     private static AplCoreRuntime aplCoreRuntime;
-    
+
     private static  ConfigVerifier configVerifier;
-    
+
     private static void setLogLevel(int logLevel) {
         // let's SET LEVEL EXPLOCITLY only when it was passed via command line params
         String packageName = "com.apollocurrency.aplwallet.apl";
@@ -147,9 +140,9 @@ public class Apollo {
  * @param vars parsed environment variables
  * @param props parsed application config files
  * @return properties, reqady to use in the application
- */     
+ */
     public static Properties merge(CmdLineArgs args, EnvironmentVariables vars, Properties props){
-        
+
         //{"--log-dir", "-l"}
         String logDir = StringUtils.byPrecednce(args.logDir, vars.logDir, props.getProperty("apl.customLogDir"));
         props.setProperty("apl.customLogDir",logDir);
@@ -163,11 +156,11 @@ public class Apollo {
         String dexKeystoreDir = StringUtils.byPrecednce(args.dexKeystoreDir, vars.dexKeystoreDir, props.getProperty("apl.customDexStorageDir"));
         props.setProperty("apl.customDexStorageDir", dexKeystoreDir);
         // {"--no-shard-import"}
-        String nsi = args.noShardImport==null ? "": args.noShardImport.toString();
+        String nsi = args.noShardImport ? "": String.valueOf(args.noShardImport);
         String noShardImport = StringUtils.byPrecednce(nsi, props.getProperty("apl.noshardimport"));
         props.setProperty("apl.noshardimport",noShardImport);
         // {"--no-shard-create"}
-        String nsc = args.noShardCreate == null ? "": args.noShardCreate.toString();
+        String nsc = args.noShardCreate ? "": String.valueOf(args.noShardCreate);
         String  noShardCreate = StringUtils.byPrecednce(nsc, props.getProperty("apl.noshardcreate"));
         props.setProperty("apl.noshardcreate",noShardCreate);
         // {"--2fa-dir"}
@@ -181,8 +174,8 @@ public class Apollo {
         props.getProperty("apl.customPidFile", pidFile);
         return props;
     }
-    
- //TODO: check this piece of art   
+
+ //TODO: check this piece of art
     public static void setSystemProperties(CmdLineArgs args){
         System.setProperty("apl.runtime.mode", args.serviceMode ? "service" : "user");
         System.setProperty("javax.net.ssl.trustStore", "cacerts");
@@ -196,38 +189,6 @@ public class Apollo {
         }
         UpdaterCore updaterCore = CDI.current().select(UpdaterCoreImpl.class).get();
         updaterCore.init(attachmentFilePath, debug);
-    }
-
-    private static boolean checkDbWithJDBC(DbConfig conf){
-        boolean res = true;
-        DbProperties dbConfig = conf.getDbConfig();
-        String dbURL = dbConfig.formatJdbcUrlString(true);
-        Connection conn;
-        try {
-            conn = DriverManager.getConnection(dbURL);
-            if(!conn.isValid(1)){
-                res = false;
-            }
-        } catch (SQLException ex) {
-            res = false;
-        }
-
-        return res;
-    }
-
-    private static boolean checkOrRunDatabaseServer(DbConfig conf) {
-        boolean res = checkDbWithJDBC(conf);
-        //if we have connected to database URL from config, wha have nothing to do
-        if(!res){
-            // if we can not connect to databse, we'll try start it
-            // from Apollo package. If it is first start, data base data dir
-            // will be initialized
-            Path dbDataDir = dirProvider.getDbDir();
-            Path dbInstalPath = DirProvider.getBinDir().getParent().resolve(APOLLO_MARIADB_INSTALL_DIR);
-            mariaDbProcess = new MariaDbProcess(conf,dbInstalPath,dbDataDir);
-            res = mariaDbProcess.startAndWaitWhenReady();
-        }
-        return res;
     }
 
     /**
@@ -267,7 +228,7 @@ public class Apollo {
 //set some important system properties
         setSystemProperties(args);
 
-//--------------- config locading section -------------------------------------
+//--------------- config locating section -------------------------------------
 
 //load configuration files
         EnvironmentVariables envVars = new EnvironmentVariables(Constants.APPLICATION_DIR_NAME);
@@ -295,10 +256,10 @@ public class Apollo {
             Constants.APPLICATION_DIR_NAME + ".properties",
             SYSTEM_PROPERTY_NAMES);
 
-// load everuthing into applicationProperies. This is the place where all configuration
+// load everything into applicationProperties. This is the place where all configuration
 // is collected from configs, command line and environment variables
         Properties applicationProperties = propertiesLoader.load();
-        
+
         try {
             //verify and complete configuration
             configVerifier = ConfigVerifier.create(configDirProvider.getConfigName()+"/apl-blockchain.properties");
@@ -306,8 +267,8 @@ public class Apollo {
         } catch (IOException ex) {
             System.err.println("WARNING! Can not verify config because can not read/parse default config fropm resources!");
         }
-        
-        
+
+
         ChainsConfigLoader chainsConfigLoader = new ChainsConfigLoader(
             configDirProvider,
             configDir,
@@ -317,14 +278,14 @@ public class Apollo {
 // init chains configurations by loading chains.json file
         Map<UUID, Chain> chains = chainsConfigLoader.load();
         UUID chainId = ChainUtils.getActiveChain(chains).getChainId();
-       
-        DirProviderFactory.setup( args.serviceMode, 
-                                  chainId, 
-                                  Constants.APPLICATION_DIR_NAME, 
+
+        DirProviderFactory.setup( args.serviceMode,
+                                  chainId,
+                                  Constants.APPLICATION_DIR_NAME,
                                   new PredefinedDirLocations(merge(args,envVars,applicationProperties))
                                 );
-        
-        
+
+
         dirProvider = DirProviderFactory.getProvider();
         RuntimeEnvironment.getInstance().setDirProvider(dirProvider);
 
@@ -340,15 +301,6 @@ public class Apollo {
 // runtimeMode could be user or service. It is also different for Unix and Windows
         runtimeMode = RuntimeEnvironment.getInstance().getRuntimeMode();
         runtimeMode.init(); // instance is NOT PROXIED by CDI !!
-
-// check running or run data base server process.
-
-        DbConfig dbConfig = new DbConfig(new PropertiesHolder(applicationProperties), new ChainsConfigHolder(chains));
-        if(!checkOrRunDatabaseServer(dbConfig)){
-            System.err.println(" ERROR! MariaDB process is not running and can not be started from Apollo!");
-            System.err.println(" Please install apollo-mariadb package at the same directory level as apollo-blockchain package.");
-            System.exit(PosixExitCodes.EX_SOFTWARE.exitCode());
-        }
 
 //-------------- now bring CDI container up! -------------------------------------
 

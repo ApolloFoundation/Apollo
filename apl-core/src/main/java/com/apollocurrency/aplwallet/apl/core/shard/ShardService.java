@@ -11,7 +11,7 @@ import com.apollocurrency.aplwallet.apl.core.dao.appdata.ShardDao;
 import com.apollocurrency.aplwallet.apl.core.dao.appdata.ShardRecoveryDao;
 import com.apollocurrency.aplwallet.apl.core.entity.appdata.Shard;
 import com.apollocurrency.aplwallet.apl.core.entity.appdata.ShardRecovery;
-import com.apollocurrency.aplwallet.apl.core.service.appdata.DatabaseManager;
+import com.apollocurrency.aplwallet.apl.core.db.DatabaseManager;
 import com.apollocurrency.aplwallet.apl.core.service.appdata.TrimService;
 import com.apollocurrency.aplwallet.apl.core.service.blockchain.Blockchain;
 import com.apollocurrency.aplwallet.apl.core.service.blockchain.BlockchainProcessor;
@@ -25,9 +25,9 @@ import com.apollocurrency.aplwallet.apl.util.injectable.DbProperties;
 import com.apollocurrency.aplwallet.apl.util.injectable.PropertiesHolder;
 import lombok.extern.slf4j.Slf4j;
 
-import javax.enterprise.event.Event;
-import javax.inject.Inject;
-import javax.inject.Singleton;
+import jakarta.enterprise.event.Event;
+import jakarta.inject.Inject;
+import jakarta.inject.Singleton;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.List;
@@ -232,8 +232,8 @@ public class ShardService {
 
     public CompletableFuture<MigrateState> tryCreateShardAsync(int newShardBlockHeight, int currentBlockchainHeight) {
         CompletableFuture<MigrateState> newShardingProcess = null;
-        log.debug(">> tryCreateShardAsync, scanning ? = {}, !isSharding={},\nCurrent config = {}",
-            !blockchainProcessor.isScanning(), !isSharding, blockchainConfig.getCurrentConfig());
+        log.debug(">> tryCreateShardAsync, scanning = {}, isSharding={},\nCurrent config = {}",
+            blockchainProcessor.isScanning(), isSharding, blockchainConfig.getCurrentConfig());
         if (!blockchainProcessor.isScanning()) {
             if (!isSharding) {
                 Shard lastShard = shardDao.getLastShard();

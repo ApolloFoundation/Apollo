@@ -64,27 +64,38 @@ public class InMemoryCacheManager {
         inMemoryCaches = new ConcurrentHashMap<>();
         final int sumPriority = configurator.getConfiguredCaches().stream().mapToInt(CacheConfiguration::getCachePriority).sum();
         configurator.getConfiguredCaches().forEach(config -> {
-            CacheBuilder builder = configureCache(config, configurator.getAvailableMemory(), sumPriority);
-            log.debug("Configured builder={}", builder);
-            Cache cache;
-            Optional<CacheLoader> loader = config.getCacheLoader();
-            if (loader.isPresent()) {
-                cache = builder.build(loader.get());
+            configureCacheSize(config, configurator.getAvailableMemory(), sumPriority);
+            Cache<?,?> cache;
+            if (config.shouldBeSynchronized()) {
+                cache = new SynchronizedCache<>(config.getMaxSize());
             } else {
-                cache = builder.build();
+                CacheBuilder<?, ?> builder = prepareCacheBuilder(config);
+                log.debug("Configured builder={}", builder);
+                Optional<CacheLoader> loader = config.getCacheLoader();
+                if (loader.isPresent()) {
+                    cache = builder.build(loader.get());
+                } else {
+                    cache = builder.build();
+                }
             }
             inMemoryCaches.put(config.getCacheName(), cache);
             log.debug("Allocated cache={}", config);
         });
     }
 
-    private CacheBuilder configureCache(CacheConfiguration config, long availableMemory, int sumPriority) {
+    private CacheBuilder<?, ?> prepareCacheBuilder(CacheConfiguration<?,?> config) {
+        CacheBuilder<?,?> builder = config.cacheBuilder();
+        builder.maximumSize(config.getMaxSize());
+        builder.recordStats();
+        return builder;
+    }
+
+    private void configureCacheSize(CacheConfiguration<?,?> config, long availableMemory, int sumPriority) {
         //  key#hashCode:int + value#reference
         int extra = 4 + newCalc().refExtra;
         int size = Math.max((int) (availableMemory / sumPriority * config.getCachePriority() / (config.getExpectedElementSize() + extra)), 1) + 1;
         log.debug("Recalculate and set maxSize={} for cache {}", size, config.getCacheName());
         config.setMaxSize(size);
-        return config.cacheBuilder().maximumSize(size).recordStats();
     }
 
     public List<String> getAllocatedCacheNames() {
@@ -93,7 +104,7 @@ public class InMemoryCacheManager {
 
     public CacheStats getStats(String cacheName) {
         CacheStats stats = null;
-        Cache cache = inMemoryCaches.get(cacheName);
+        Cache<?,?> cache = inMemoryCaches.get(cacheName);
         if (cache != null) {
             stats = cache.stats();
         }

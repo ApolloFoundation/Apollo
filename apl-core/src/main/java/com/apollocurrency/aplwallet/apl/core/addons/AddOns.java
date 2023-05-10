@@ -26,7 +26,7 @@ import com.apollocurrency.aplwallet.apl.core.http.AbstractAPIRequestHandler;
 import com.apollocurrency.aplwallet.apl.util.injectable.PropertiesHolder;
 import org.slf4j.Logger;
 
-import javax.enterprise.inject.spi.CDI;
+import jakarta.enterprise.inject.spi.CDI;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;

@@ -13,7 +13,7 @@ import com.apollocurrency.aplwallet.apl.core.dao.appdata.ShardRecoveryDao;
 import com.apollocurrency.aplwallet.apl.core.entity.appdata.Shard;
 import com.apollocurrency.aplwallet.apl.core.entity.appdata.ShardRecovery;
 import com.apollocurrency.aplwallet.apl.core.entity.appdata.ShardState;
-import com.apollocurrency.aplwallet.apl.core.service.appdata.DatabaseManager;
+import com.apollocurrency.aplwallet.apl.core.db.DatabaseManager;
 import com.apollocurrency.aplwallet.apl.core.service.appdata.TrimService;
 import com.apollocurrency.aplwallet.apl.core.service.blockchain.Blockchain;
 import com.apollocurrency.aplwallet.apl.core.service.blockchain.BlockchainProcessor;
@@ -32,7 +32,7 @@ import org.junit.jupiter.api.extension.RegisterExtension;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
-import javax.enterprise.event.Event;
+import jakarta.enterprise.event.Event;
 import java.io.IOException;
 import java.util.List;
 import java.util.UUID;

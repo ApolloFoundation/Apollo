@@ -10,7 +10,7 @@ import com.apollocurrency.aplwallet.apl.core.app.observer.events.TxEventType;
 import com.apollocurrency.aplwallet.apl.core.cache.DexOrderFreezingCacheConfig;
 import com.apollocurrency.aplwallet.apl.core.chainid.BlockchainConfig;
 import com.apollocurrency.aplwallet.apl.core.dao.state.phasing.PhasingApprovedResultTable;
-import com.apollocurrency.aplwallet.apl.core.blockchain.Transaction;
+import com.apollocurrency.aplwallet.apl.core.model.Transaction;
 import com.apollocurrency.aplwallet.apl.core.entity.state.account.Account;
 import com.apollocurrency.aplwallet.apl.core.entity.state.account.LedgerEvent;
 import com.apollocurrency.aplwallet.apl.core.entity.state.phasing.PhasingApprovalResult;
@@ -90,10 +90,10 @@ import org.json.simple.JSONStreamAware;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import javax.enterprise.event.Observes;
-import javax.inject.Inject;
-import javax.inject.Singleton;
-import javax.servlet.http.HttpServletRequest;
+import jakarta.enterprise.event.Observes;
+import jakarta.inject.Inject;
+import jakarta.inject.Singleton;
+import jakarta.servlet.http.HttpServletRequest;
 import java.math.BigDecimal;
 import java.math.BigInteger;
 import java.util.ArrayList;
@@ -499,11 +499,7 @@ public class DexService {
     }
 
     public void broadcast(Transaction transaction) {
-        try {
-            transactionProcessor.broadcast(transaction);
-        } catch (AplException.ValidationException e) {
-            throw new RuntimeException(e);
-        }
+        transactionProcessor.broadcast(transaction);
     }
 
     /**
@@ -544,7 +540,7 @@ public class DexService {
                 String txId = transaction != null ? Long.toUnsignedString(transaction.getId()) : null;
                 result.setTransaction(transaction);
                 result.setTxId(txId);
-            } catch (AplException.ValidationException | ParameterException e) {
+            } catch (AplException.ValidationException e) {
                 LOG.error(e.getMessage(), e);
                 throw new AplException.ExecutiveProcessException(e.getMessage());
             }
@@ -556,7 +552,7 @@ public class DexService {
     public Transaction transferApl(HttpServletRequest req, Account account, long contractId, long recipient, long amountAtm, int phasingDuration, byte[] secretHash) throws ParameterException, AplException.ValidationException {
         PhasingParams phasingParams = new PhasingParams((byte) 5, 0, 1, 0, (byte) 0, null);
         PhasingAppendixV2 phasing = new PhasingAppendixV2(-1, timeService.getEpochTime() + phasingDuration, phasingParams, null, secretHash, (byte) 2);
-        CreateTransactionRequest request = HttpRequestToCreateTransactionRequestConverter.convert(req, account, recipient, 0, new DexControlOfFrozenMoneyAttachment(contractId, amountAtm), false, accountService);
+        CreateTransactionRequest request = HttpRequestToCreateTransactionRequestConverter.convert(req, account, recipient, 0, new DexControlOfFrozenMoneyAttachment(contractId, amountAtm), false, false, accountService);
         request.setPhasing(phasing);
         request.setPhased(true);
         return dexOrderTransactionCreator.createTransactionAndBroadcastIfRequired(request);
@@ -679,13 +675,13 @@ public class DexService {
 
             order.setStatus(OrderStatus.PENDING);
             CreateTransactionRequest createOfferTransactionRequest = HttpRequestToCreateTransactionRequestConverter
-                .convert(requestWrapper, account, 0L, 0L, new DexOrderAttachmentV2(order), false, accountService);
+                .convert(requestWrapper, account, 0L, 0L, new DexOrderAttachmentV2(order), false, false, accountService);
             orderTx = dexOrderTransactionCreator.createTransactionAndBroadcastIfRequired(createOfferTransactionRequest);
             order.setId(orderTx.getId());
 
             // 2. Create contract.
             DexContractAttachment contractAttachment = new DexContractAttachment(order.getId(), counterOffer.getId(), null, null, null, null, ExchangeContractStatus.STEP_1, dexConfig.getMinAtomicSwapDuration());
-            TransactionResponse transactionResponse = dexOrderTransactionCreator.createTransaction(requestWrapper, account, 0L, 0L, contractAttachment, false);
+            TransactionResponse transactionResponse = dexOrderTransactionCreator.createTransaction(requestWrapper, account, 0L, 0L, contractAttachment, false, false);
             contractTx = transactionResponse.getTx();
 
             mandatoryTransactionService.saveMandatoryTransaction(orderTx, null);
@@ -695,7 +691,7 @@ public class DexService {
             transactionProcessor.broadcastWhenConfirmed(contractTx, orderTx);
         } else {
             CreateTransactionRequest createOfferTransactionRequest = HttpRequestToCreateTransactionRequestConverter
-                .convert(requestWrapper, account, 0L, 0L, new DexOrderAttachmentV2(order), true, accountService);
+                .convert(requestWrapper, account, 0L, 0L, new DexOrderAttachmentV2(order), true, true, accountService);
             orderTx = dexOrderTransactionCreator.createTransactionAndBroadcastIfRequired(createOfferTransactionRequest);
             order.setId(orderTx.getId());
         }
@@ -730,13 +726,13 @@ public class DexService {
                                                  DexCurrency pairCurrency
     ) throws ParameterException, AplException.ValidationException {
         DexOrder dexOrder = new DexOrder(null, account.getId(), fromAddress, toAddress, orderType, orderStatus, DexCurrency.APL, orderAmountAtm, pairCurrency, pairRate, timeService.getEpochTime() + duration);
-        CreateTransactionRequest transactionRequest = HttpRequestToCreateTransactionRequestConverter.convert(request, account, 0, 0, new DexOrderAttachmentV2(dexOrder), true, accountService);
+        CreateTransactionRequest transactionRequest = HttpRequestToCreateTransactionRequestConverter.convert(request, account, 0, 0, new DexOrderAttachmentV2(dexOrder), true, true, accountService);
         return dexOrderTransactionCreator.createTransactionAndBroadcastIfRequired(transactionRequest);
     }
 
     public Transaction sendContractStep1Transaction(HttpServletRequest request, Account account, DexOrder order, DexOrder counterOrder, int timeToReply) throws ParameterException, AplException.ValidationException {
         DexContractAttachment contractAttachment = new DexContractAttachment(order.getId(), counterOrder.getId(), null, null, null, null, ExchangeContractStatus.STEP_1, timeToReply);
-        CreateTransactionRequest transactionRequest = HttpRequestToCreateTransactionRequestConverter.convert(request, account, 0, 0, contractAttachment, true, accountService);
+        CreateTransactionRequest transactionRequest = HttpRequestToCreateTransactionRequestConverter.convert(request, account, 0, 0, contractAttachment, true, true, accountService);
         return dexOrderTransactionCreator.createTransactionAndBroadcastIfRequired(transactionRequest);
     }
 
@@ -747,13 +743,13 @@ public class DexService {
         contractAttachment.setEncryptedSecret(encryptedSecret);
         contractAttachment.setSecretHash(secretHash);
         contractAttachment.setCounterTransferTxId(counterTransferTx);
-        CreateTransactionRequest transactionRequest = HttpRequestToCreateTransactionRequestConverter.convert(request, account, 0, 0, contractAttachment, true, accountService);
+        CreateTransactionRequest transactionRequest = HttpRequestToCreateTransactionRequestConverter.convert(request, account, 0, 0, contractAttachment, true, true, accountService);
         return dexOrderTransactionCreator.createTransactionAndBroadcastIfRequired(transactionRequest);
     }
 
     public Transaction sendContractStep3Transaction(HttpServletRequest request, Account account, String transferTx, int timeToReply, ExchangeContract contract) throws ParameterException, AplException.ValidationException {
         DexContractAttachment contractAttachment = new DexContractAttachment(contract.getOrderId(), contract.getCounterOrderId(), null, transferTx, null, null, ExchangeContractStatus.STEP_3, timeToReply);
-        CreateTransactionRequest transactionRequest = HttpRequestToCreateTransactionRequestConverter.convert(request, account, 0, 0, contractAttachment, true, accountService);
+        CreateTransactionRequest transactionRequest = HttpRequestToCreateTransactionRequestConverter.convert(request, account, 0, 0, contractAttachment, true, true, accountService);
         return dexOrderTransactionCreator.createTransactionAndBroadcastIfRequired(transactionRequest);
     }
 

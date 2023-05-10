@@ -30,8 +30,8 @@ import org.json.simple.JSONArray;
 import org.json.simple.JSONObject;
 import org.json.simple.JSONStreamAware;
 
-import javax.enterprise.inject.Vetoed;
-import javax.servlet.http.HttpServletRequest;
+import jakarta.enterprise.inject.Vetoed;
+import jakarta.servlet.http.HttpServletRequest;
 import java.util.List;
 
 @Vetoed
@@ -50,7 +50,7 @@ public final class GetCurrencyAccounts extends AbstractAPIRequestHandler {
         int height = HttpParameterParserUtil.getHeight(req);
 
         JSONArray accountCurrencies = new JSONArray();
-        List<AccountCurrency> accounts = lookupAccountCurrencyService().getCurrenciesByCurrency(currencyId, height, firstIndex, lastIndex);
+        List<AccountCurrency> accounts = lookupAccountCurrencyService().getByCurrency(currencyId, height, firstIndex, lastIndex);
         accounts.forEach(accountCurrency -> accountCurrencies.add(JSONData.accountCurrency(accountCurrency, true, false)));
 
         JSONObject response = new JSONObject();

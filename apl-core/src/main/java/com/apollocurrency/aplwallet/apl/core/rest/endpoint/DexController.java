@@ -7,7 +7,7 @@ package com.apollocurrency.aplwallet.apl.core.rest.endpoint;
 import com.apollocurrency.aplwallet.api.dto.ExchangeContractDTO;
 import com.apollocurrency.aplwallet.api.request.GetEthBalancesRequest;
 import com.apollocurrency.aplwallet.api.response.WithdrawResponse;
-import com.apollocurrency.aplwallet.apl.core.db.DbUtils;
+import com.apollocurrency.aplwallet.apl.util.db.DbUtils;
 import com.apollocurrency.aplwallet.apl.core.entity.state.account.Account;
 import com.apollocurrency.aplwallet.apl.core.http.HttpParameterParserUtil;
 import com.apollocurrency.aplwallet.apl.core.http.JSONResponses;
@@ -58,28 +58,28 @@ import lombok.extern.slf4j.Slf4j;
 import org.jboss.resteasy.annotations.jaxrs.FormParam;
 import org.json.simple.JSONStreamAware;
 
-import javax.annotation.security.PermitAll;
-import javax.annotation.security.RolesAllowed;
-import javax.inject.Inject;
-import javax.inject.Singleton;
-import javax.servlet.http.HttpServletRequest;
-import javax.validation.constraints.Max;
-import javax.validation.constraints.Min;
-import javax.validation.constraints.NotBlank;
-import javax.validation.constraints.NotNull;
-import javax.validation.constraints.PositiveOrZero;
-import javax.ws.rs.DefaultValue;
-import javax.ws.rs.GET;
-import javax.ws.rs.NotFoundException;
-import javax.ws.rs.POST;
-import javax.ws.rs.Path;
-import javax.ws.rs.PathParam;
-import javax.ws.rs.Produces;
-import javax.ws.rs.QueryParam;
-import javax.ws.rs.core.Context;
-import javax.ws.rs.core.MediaType;
-import javax.ws.rs.core.Response;
-import javax.ws.rs.core.SecurityContext;
+import jakarta.annotation.security.PermitAll;
+import jakarta.annotation.security.RolesAllowed;
+import jakarta.inject.Inject;
+import jakarta.inject.Singleton;
+import jakarta.servlet.http.HttpServletRequest;
+import jakarta.validation.constraints.Max;
+import jakarta.validation.constraints.Min;
+import jakarta.validation.constraints.NotBlank;
+import jakarta.validation.constraints.NotNull;
+import jakarta.validation.constraints.PositiveOrZero;
+import jakarta.ws.rs.DefaultValue;
+import jakarta.ws.rs.GET;
+import jakarta.ws.rs.NotFoundException;
+import jakarta.ws.rs.POST;
+import jakarta.ws.rs.Path;
+import jakarta.ws.rs.PathParam;
+import jakarta.ws.rs.Produces;
+import jakarta.ws.rs.QueryParam;
+import jakarta.ws.rs.core.Context;
+import jakarta.ws.rs.core.MediaType;
+import jakarta.ws.rs.core.Response;
+import jakarta.ws.rs.core.SecurityContext;
 import java.math.BigDecimal;
 import java.math.BigInteger;
 import java.util.List;
@@ -425,7 +425,7 @@ public class DexController {
 
             try {
 
-                JSONStreamAware response = dexOrderTransactionCreator.createTransaction(requestWrapper, account, 0L, 0L, dexOrderCancelAttachment, true).getJson();
+                JSONStreamAware response = dexOrderTransactionCreator.createTransaction(requestWrapper, account, 0L, 0L, dexOrderCancelAttachment, true, true).getJson();
                 return Response.ok(JSON.toString(response)).build();
             } catch (AplException.ValidationException e) {
                 return Response.ok(JSON.toString(JSONResponses.NOT_ENOUGH_APL)).build();

@@ -9,9 +9,9 @@ import com.apollocurrency.aplwallet.apl.util.task.Task;
 import com.apollocurrency.aplwallet.apl.util.task.TaskDispatcher;
 import lombok.extern.slf4j.Slf4j;
 
-import javax.annotation.PostConstruct;
-import javax.inject.Inject;
-import javax.inject.Singleton;
+import jakarta.annotation.PostConstruct;
+import jakarta.inject.Inject;
+import jakarta.inject.Singleton;
 import java.sql.Timestamp;
 import java.util.List;
 import java.util.Objects;

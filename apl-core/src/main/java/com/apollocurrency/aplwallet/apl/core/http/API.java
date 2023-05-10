@@ -20,17 +20,21 @@
 package com.apollocurrency.aplwallet.apl.core.http;
 
 import com.apollocurrency.aplwallet.apl.core.peer.PeersService;
+import com.apollocurrency.aplwallet.apl.core.rest.exception.AplCoreLogicExceptionMapper;
 import com.apollocurrency.aplwallet.apl.core.rest.exception.ClientErrorExceptionMapper;
 import com.apollocurrency.aplwallet.apl.core.rest.exception.ConstraintViolationExceptionMapper;
 import com.apollocurrency.aplwallet.apl.core.rest.exception.DefaultGlobalExceptionMapper;
 import com.apollocurrency.aplwallet.apl.core.rest.exception.IllegalArgumentExceptionMapper;
 import com.apollocurrency.aplwallet.apl.core.rest.exception.LegacyParameterExceptionMapper;
 import com.apollocurrency.aplwallet.apl.core.rest.exception.ParameterExceptionMapper;
+import com.apollocurrency.aplwallet.apl.core.rest.exception.TransactionValidationExceptionMapper;
 import com.apollocurrency.aplwallet.apl.core.rest.filters.ApiProtectionFilter;
 import com.apollocurrency.aplwallet.apl.core.rest.filters.ApiSplitFilter;
 import com.apollocurrency.aplwallet.apl.core.rest.filters.CharsetRequestFilter;
 import com.apollocurrency.aplwallet.apl.core.rest.filters.Secured2FAInterceptor;
 import com.apollocurrency.aplwallet.apl.core.rest.filters.SecurityInterceptor;
+import com.apollocurrency.aplwallet.apl.smc.ws.SmcEventSocketCreator;
+import com.apollocurrency.aplwallet.apl.smc.ws.SmcEventSocketListener;
 import com.apollocurrency.aplwallet.apl.util.Constants;
 import com.apollocurrency.aplwallet.apl.util.UPnP;
 import com.apollocurrency.aplwallet.apl.util.api.converter.ByteArrayConverterProvider;
@@ -58,14 +62,17 @@ import org.eclipse.jetty.servlet.ServletHolder;
 import org.eclipse.jetty.servlets.CrossOriginFilter;
 import org.eclipse.jetty.util.security.Constraint;
 import org.eclipse.jetty.util.thread.QueuedThreadPool;
+import org.eclipse.jetty.websocket.jakarta.server.config.JakartaWebSocketServletContainerInitializer;
+import org.eclipse.jetty.websocket.jakarta.server.internal.BasicServerEndpointConfig;
+import org.eclipse.jetty.websocket.servlet.WebSocketUpgradeFilter;
 import org.jboss.resteasy.plugins.server.servlet.HttpServletDispatcher;
 import org.jboss.resteasy.plugins.server.servlet.ResteasyContextParameters;
 import org.jboss.weld.environment.servlet.Listener;
 import org.slf4j.Logger;
 
-import javax.inject.Inject;
-import javax.inject.Singleton;
-import javax.servlet.MultipartConfigElement;
+import jakarta.inject.Inject;
+import jakarta.inject.Singleton;
+import jakarta.servlet.MultipartConfigElement;
 import java.math.BigInteger;
 import java.net.InetAddress;
 import java.net.URI;
@@ -88,7 +95,6 @@ import static org.slf4j.LoggerFactory.getLogger;
 @Slf4j
 public final class API {
 
-    private static final Logger LOG = getLogger(API.class);
     private static final String[] DISABLED_HTTP_METHODS = {"TRACE", "OPTIONS", "HEAD"};
     public static final String DEFAULT_WEBUI_DIR = "apollo-web-ui";
     public static final String INDEX_HTML = "index.html";
@@ -119,12 +125,14 @@ public final class API {
     final boolean enableSSL;
     private final UPnP upnp;
     private final JettyConnectorCreator jettyConnectorCreator;
+    private final SmcEventSocketListener smcEventServer;
 
     @Inject
-    public API(PropertiesHolder propertiesHolder, UPnP upnp, JettyConnectorCreator jettyConnectorCreator) {
+    public API(PropertiesHolder propertiesHolder, UPnP upnp, JettyConnectorCreator jettyConnectorCreator, SmcEventSocketListener smcEventServer) {
         this.propertiesHolder = propertiesHolder;
         this.upnp = upnp;
         this.jettyConnectorCreator = jettyConnectorCreator;
+        this.smcEventServer = smcEventServer;
         maxRecords = propertiesHolder.getIntProperty("apl.maxAPIRecords");
         enableAPIUPnP = propertiesHolder.getBooleanProperty("apl.enableAPIUPnP");
         apiServerIdleTimeout = propertiesHolder.getIntProperty("apl.apiServerIdleTimeout");
@@ -147,7 +155,7 @@ public final class API {
                     try {
                         nets.add(new NetworkAddress(host));
                     } catch (UnknownHostException e) {
-                        LOG.error("Unknown network " + host, e);
+                        log.error("Unknown network " + host, e);
                         throw new RuntimeException(e.toString(), e);
                     }
                 } else {
@@ -174,26 +182,27 @@ public final class API {
             welcomePageUri = new URI(enableSSL ? "https" : "http", null, localhost, enableSSL ? sslPort : port, "/", null, null);
             serverRootUri = new URI(enableSSL ? "https" : "http", null, localhost, enableSSL ? sslPort : port, "", null, null);
         } catch (URISyntaxException e) {
-            LOG.info("Cannot resolve browser URI", e);
+            log.info("Cannot resolve browser URI", e);
         }
         openAPIPort = !propertiesHolder.isLightClient() && "0.0.0.0".equals(host) && allowedBotHosts == null && (!enableSSL || port != sslPort) ? port : 0;
         openAPISSLPort = !propertiesHolder.isLightClient() && "0.0.0.0".equals(host) && allowedBotHosts == null && enableSSL ? sslPort : 0;
         isOpenAPI = openAPIPort > 0 || openAPISSLPort > 0;
     }
 
-
     private static boolean isWebUIHere(Path webUiPath) {
         boolean res = false;
         if (Files.exists(webUiPath)
             && Files.isDirectory(webUiPath)
             && Files.exists(webUiPath.resolve(INDEX_HTML))) {
-            log.debug("Web UI index.html foind in: {}.", webUiPath.toString());
+            log.debug("Web UI index.html found in: {}.", webUiPath);
             res = true;
         }
+        log.debug("is WebUI found ? = '{}' by path = '{}'", res, webUiPath);
         return res;
     }
 
     public static String findWebUiDir() {
+        log.debug("LookUp webUIDir...");
         final Path binDir = DirProvider.getBinDir();
         boolean useHtmlStub = true;
         final String webUIlocation = propertiesHolder.getStringProperty("apl.apiResourceBase", DEFAULT_WEBUI_DIR);
@@ -229,7 +238,7 @@ public final class API {
                 log.error("Cannot find dir with index.html: {}. Gonna proceed without any html-stub.", webUiPath);
             }
         }
-
+        log.debug("LookUp webUIDir = {}", webUiPath);
         return webUiPath.toString();
     }
 
@@ -246,10 +255,9 @@ public final class API {
             }
         } catch (UnknownHostException e) {
             // can't resolve, disallow
-            LOG.info("Unknown remote host " + remoteHost);
+            log.info("Unknown remote host " + remoteHost);
         }
         return false;
-
     }
 
     public static URI getWelcomePageUri() {
@@ -257,139 +265,70 @@ public final class API {
     }
 
     @SneakyThrows
-    public final void start() {
-
+    public void start() {
+        log.debug("API start, serverEnabled? = '{}'...", enableAPIServer);
         if (enableAPIServer) {
-
             final QueuedThreadPool threadPool = getQueuedThreadPool();
             apiServer = new Server(threadPool);
-
             //
             // Create the HTTP connector
             //
             if (!enableSSL || port != sslPort) {
                 jettyConnectorCreator.addHttpConnector(host, port, apiServer, apiServerIdleTimeout);
-                LOG.info("API server using HTTP port " + port);
+                log.info("API server using HTTP port " + port);
             }
             //
             // Create the HTTPS connector
             //
-
             if (enableSSL) {
                 jettyConnectorCreator.addHttpSConnector(host, sslPort, apiServer, apiServerIdleTimeout);
             }
 
             HandlerList apiHandlers = new HandlerList();
-
             ServletContextHandler apiHandler = new ServletContextHandler();
-            String apiResourceBase = findWebUiDir();
-            if (apiResourceBase != null && !apiResourceBase.isEmpty()) {
-                ServletHolder defaultServletHolder = new ServletHolder(new DefaultServlet());
-                defaultServletHolder.setInitParameter("dirAllowed", "false");
-                defaultServletHolder.setInitParameter("resourceBase", apiResourceBase);
-                defaultServletHolder.setInitParameter("welcomeServlets", "true");
-                defaultServletHolder.setInitParameter("redirectWelcome", "true");
-                defaultServletHolder.setInitParameter("gzip", "true");
-                defaultServletHolder.setInitParameter("etags", "true");
-                apiHandler.addServlet(defaultServletHolder, "/*");
-                String[] wellcome = {propertiesHolder.getStringProperty("apl.apiWelcomeFile")};
-                apiHandler.setWelcomeFiles(wellcome);
-            }
+
+            //ADD default servlet on Root path=/
+            setupDefaultServlet(apiHandler);
+
             //add Weld listener
             apiHandler.addEventListener(new Listener());
-            ServletHolder servletHolder = apiHandler.addServlet(APIServlet.class, "/apl");
-            servletHolder.getRegistration().setMultipartConfig(new MultipartConfigElement(
-                null, Math.max(propertiesHolder.getIntProperty("apl.maxUploadFileSize"), Constants.MAX_TAGGED_DATA_DATA_LENGTH), -1L, 0));
 
-            servletHolder = apiHandler.addServlet(APIProxyServlet.class, "/apl-proxy");
-            servletHolder.setInitParameters(Collections.singletonMap("idleTimeout",
-                "" + Math.max(apiServerIdleTimeout - APIProxyServlet.PROXY_IDLE_TIMEOUT_DELTA, 0)));
-            servletHolder.getRegistration().setMultipartConfig(new MultipartConfigElement(
-                null, Math.max(propertiesHolder.getIntProperty("apl.maxUploadFileSize"), Constants.MAX_TAGGED_DATA_DATA_LENGTH), -1L, 0));
+            //ADD APIServlet on path=/apl
+            setupAPIServlet(apiHandler);
 
-            GzipHandler gzipHandler = new GzipHandler();
-            if (!propertiesHolder.getBooleanProperty("apl.enableAPIServerGZIPFilter", isOpenAPI)) {
-                gzipHandler.setExcludedPaths("/apl", "/apl-proxy");
-            }
-            gzipHandler.setIncludedMethods("GET", "POST");
-            gzipHandler.setMinGzipSize(PeersService.MIN_COMPRESS_SIZE);
-            gzipHandler.addExcludedPaths("/blocks");
-            apiHandler.setGzipHandler(gzipHandler);
+            //ADD API-ProxyServlet on path=/apl-proxy
+            setupAPIProxyServlet(apiHandler);
 
-            apiHandler.addServlet(APITestServlet.class, "/test");
-            apiHandler.addServlet(APITestServlet.class, "/test-proxy");
+            setupGZIPHandler(apiHandler);
+
+            apiHandler.addServlet(APITestServlet.class.getCanonicalName(), "/test");
+            apiHandler.addServlet(APITestServlet.class.getCanonicalName(), "/test-proxy");
 
             apiHandler.addServlet(BlockEventSourceServlet.class, "/blocks").setAsyncSupported(true);
+
+            //ADD Smart-contract Event server, endpoint path=/smc/event/{address}.
+            setupSmcEventServer(apiHandler, smcEventServer);
 
 //TODO: do we need it at all?
 //            apiHandler.addServlet(DbShellServlet.class, "/dbshell");
             apiHandler.addEventListener(new ApiContextListener());
             // Filter to forward requests to new API
             {
-                FilterHolder filterHolder = apiHandler.addFilter(ApiSplitFilter.class, "/*", null);
+                FilterHolder filterHolder = apiHandler.addFilter(ApiSplitFilter.class.getCanonicalName(), "/*", null);
                 filterHolder.setAsyncSupported(true);
-                filterHolder = apiHandler.addFilter(ApiProtectionFilter.class, "/*", null);
-                filterHolder.setAsyncSupported(true);
-            }
-            if (apiServerCORS) {
-                FilterHolder filterHolder = apiHandler.addFilter(CrossOriginFilter.class, "/*", null);
-                filterHolder.setInitParameter("allowedHeaders", "*");
+                filterHolder = apiHandler.addFilter(ApiProtectionFilter.class.getCanonicalName(), "/*", null);
                 filterHolder.setAsyncSupported(true);
             }
+            setupCORSFilter(apiHandler);
 
-            if (propertiesHolder.getBooleanProperty("apl.apiFrameOptionsSameOrigin")) {
-                FilterHolder filterHolder = apiHandler.addFilter(XFrameOptionsFilter.class, "/*", null);
-                filterHolder.setAsyncSupported(true);
-            }
+            setupOptionFilter(apiHandler);
             disableHttpMethods(apiHandler);
 
-            // --------- ADD REST support servlet (RESTEasy)
-            ServletHolder restEasyServletHolder = new ServletHolder(new HttpServletDispatcher());
-            restEasyServletHolder.setInitParameter("resteasy.servlet.mapping.prefix", "/rest");
-            restEasyServletHolder.setInitParameter("resteasy.injector.factory", "org.jboss.resteasy.cdi.CdiInjectorFactory");
-            //restEasyServletHolder.setInitParameter("resteasy.role.based.security", "true");
+            //ADD REST support servlet (RESTEasy)
+            setupRESTEasy(apiHandler);
 
-            restEasyServletHolder.setInitParameter(ResteasyContextParameters.RESTEASY_PROVIDERS,
-                new StringJoiner(",")
-                    .add(ConstraintViolationExceptionMapper.class.getName())
-                    .add(ClientErrorExceptionMapper.class.getName())
-                    .add(ParameterExceptionMapper.class.getName())
-                    .add(LegacyParameterExceptionMapper.class.getName())
-                    .add(SecurityInterceptor.class.getName())
-                    .add(Secured2FAInterceptor.class.getName())
-                    .add(RestParameterExceptionMapper.class.getName())
-                    .add(DefaultGlobalExceptionMapper.class.getName())
-                    .add(CharsetRequestFilter.class.getName())
-                    .add(IllegalArgumentExceptionMapper.class.getName())
-                    .add(PlatformSpecConverterProvider.class.getName())
-                    .add(ByteArrayConverterProvider.class.getName())
-                    .toString()
-            );
-
-            String restEasyAppClassName = RestEasyApplication.class.getName();
-            restEasyServletHolder.setInitParameter("javax.ws.rs.Application", restEasyAppClassName);
-            apiHandler.addServlet(restEasyServletHolder, "/rest/*");
-            // init Weld here
-            apiHandler.addEventListener(new org.jboss.weld.module.web.servlet.WeldInitialListener());
-            //need this listener to support scopes properly
-            apiHandler.addEventListener(new org.jboss.weld.environment.servlet.Listener());
-
-            //--------- ADD swagger/openApi generated docs and API test page
-            // Set the path to our static (Swagger UI) resources
-            URL su = API.class.getResource("/swaggerui");
-            if (su != null) {
-                LOG.info("Swagger UI html/js resources base path= {}", su.toURI().toString());
-                String resourceBasePath = su.toExternalForm();
-                ContextHandler contextHandler = new ContextHandler("/swagger");
-                ResourceHandler swFileHandler = new ResourceHandler();
-                swFileHandler.setDirectoriesListed(false);
-                swFileHandler.setWelcomeFiles(new String[]{INDEX_HTML});
-                swFileHandler.setResourceBase(resourceBasePath);
-                contextHandler.setHandler(swFileHandler);
-                apiHandlers.addHandler(contextHandler);
-            } else {
-                LOG.warn("Swagger html/js resources not found, swagger UI is off.");
-            }
+            //ADD swagger/openApi generated docs and API test page
+            setupSwaggerUI(apiHandlers);
 
             apiHandlers.addHandler(apiHandler);
             apiHandlers.addHandler(new DefaultHandler());
@@ -397,9 +336,6 @@ public final class API {
             apiServer.setHandler(apiHandlers);
             apiServer.addBean(new APIErrorHandler());
             apiServer.setStopAtShutdown(true);
-//            Log.getRootLogger().setDebugEnabled(true);
-
-            try {
 
                 if (enableAPIUPnP && upnp.isAvailable()) {
                     Connector[] apiConnectors = apiServer.getConnectors();
@@ -412,24 +348,157 @@ public final class API {
                         openAPIPort = externalPorts.get(0);
                     }
                 }
-
+            try {
                 apiServer.start();
 
-                LOG.info("Started API server at " + host + ":" + port + (enableSSL && port != sslPort ? ", " + host + ":" + sslPort : ""));
+                log.info("Started API server at {}:{} {}", host, port, (enableSSL && port != sslPort ? ", " + host + ":" + sslPort : ""));
             } catch (Exception e) {
-                LOG.error("Failed to start API server", e);
+                log.error("Failed to start API server", e);
                 throw new RuntimeException(e.toString(), e);
             }
-            //  }, true);
-
         } else {
             apiServer = null;
             openAPIPort = 0;
             openAPISSLPort = 0;
             isOpenAPI = false;
-            LOG.info("API server not enabled");
+            log.info("API server not enabled");
         }
 
+    }
+
+    private void setupAPIProxyServlet(ServletContextHandler apiHandler) {
+        ServletHolder servletHolder = apiHandler.addServlet(APIProxyServlet.class, "/apl-proxy");
+        servletHolder.setInitParameters(Collections.singletonMap("idleTimeout",
+            "" + Math.max(apiServerIdleTimeout - APIProxyServlet.PROXY_IDLE_TIMEOUT_DELTA, 0)));
+        servletHolder.getRegistration().setMultipartConfig(new MultipartConfigElement(
+            null, Math.max(propertiesHolder.getIntProperty("apl.maxUploadFileSize"), Constants.MAX_TAGGED_DATA_DATA_LENGTH), -1L, 0));
+    }
+
+    private void setupAPIServlet(ServletContextHandler apiHandler) {
+        ServletHolder servletHolder = apiHandler.addServlet(APIServlet.class, "/apl");
+        servletHolder.getRegistration().setMultipartConfig(new MultipartConfigElement(
+            null, Math.max(propertiesHolder.getIntProperty("apl.maxUploadFileSize"), Constants.MAX_TAGGED_DATA_DATA_LENGTH), -1L, 0));
+    }
+
+    private void setupGZIPHandler(ServletContextHandler apiHandler) {
+        GzipHandler gzipHandler = new GzipHandler();
+        if (!propertiesHolder.getBooleanProperty("apl.enableAPIServerGZIPFilter", isOpenAPI)) {
+            gzipHandler.setExcludedPaths("/apl", "/apl-proxy");
+        }
+        gzipHandler.setIncludedMethods("GET", "POST");
+        gzipHandler.setMinGzipSize(PeersService.MIN_COMPRESS_SIZE);
+        gzipHandler.addExcludedPaths("/blocks");
+        apiHandler.setGzipHandler(gzipHandler);
+    }
+
+    private void setupDefaultServlet(ServletContextHandler apiHandler) {
+        String apiResourceBase = findWebUiDir();
+        boolean resourceBaseEmpty = apiResourceBase.isEmpty();
+        if (!resourceBaseEmpty) {
+            log.debug("Apollo-WebUI dir is found ! Ok !");
+            ServletHolder defaultServletHolder = new ServletHolder(new DefaultServlet());
+            defaultServletHolder.setInitParameter("dirAllowed", "false");
+            defaultServletHolder.setInitParameter("resourceBase", apiResourceBase);
+            defaultServletHolder.setInitParameter("welcomeServlets", "true");
+            defaultServletHolder.setInitParameter("redirectWelcome", "true");
+            defaultServletHolder.setInitParameter("gzip", "true");
+            defaultServletHolder.setInitParameter("etags", "true");
+            apiHandler.addServlet(defaultServletHolder, "/*");
+            String[] wellcome = {propertiesHolder.getStringProperty("apl.apiWelcomeFile")};
+            apiHandler.setWelcomeFiles(wellcome);
+        } else {
+            log.debug("Apollo-WebUI dir is NOT found ! '{}'", resourceBaseEmpty);
+        }
+    }
+
+    private void setupOptionFilter(ServletContextHandler apiHandler) {
+        if (propertiesHolder.getBooleanProperty("apl.apiFrameOptionsSameOrigin")) {
+            FilterHolder filterHolder = apiHandler.addFilter(XFrameOptionsFilter.class, "/*", null);
+            filterHolder.setAsyncSupported(true);
+        }
+    }
+
+    private void setupCORSFilter(ServletContextHandler apiHandler) {
+        if (apiServerCORS) {
+            FilterHolder filterHolder = apiHandler.addFilter(CrossOriginFilter.class, "/*", null);
+            filterHolder.setInitParameter("allowedHeaders", "*");
+            filterHolder.setAsyncSupported(true);
+        }
+    }
+
+    private void setupRESTEasy(ServletContextHandler apiHandler) {
+        ServletHolder restEasyServletHolder = new ServletHolder(new HttpServletDispatcher());
+        restEasyServletHolder.setInitParameter("resteasy.servlet.mapping.prefix", "/rest");
+        restEasyServletHolder.setInitParameter("resteasy.injector.factory", "org.jboss.resteasy.cdi.CdiInjectorFactory");
+        //restEasyServletHolder.setInitParameter("resteasy.role.based.security", "true");
+
+        restEasyServletHolder.setInitParameter(ResteasyContextParameters.RESTEASY_PROVIDERS,
+            new StringJoiner(",")
+                .add(ConstraintViolationExceptionMapper.class.getName())
+                .add(ClientErrorExceptionMapper.class.getName())
+                .add(ParameterExceptionMapper.class.getName())
+                .add(LegacyParameterExceptionMapper.class.getName())
+                .add(SecurityInterceptor.class.getName())
+                .add(Secured2FAInterceptor.class.getName())
+                .add(RestParameterExceptionMapper.class.getName())
+                .add(DefaultGlobalExceptionMapper.class.getName())
+                .add(CharsetRequestFilter.class.getName())
+                .add(IllegalArgumentExceptionMapper.class.getName())
+                .add(PlatformSpecConverterProvider.class.getName())
+                .add(ByteArrayConverterProvider.class.getName())
+                .add(AplCoreLogicExceptionMapper.class.getName())
+                .add(TransactionValidationExceptionMapper.class.getName())
+                .toString()
+        );
+
+        String restEasyAppClassName = RestEasyApplication.class.getName();
+        restEasyServletHolder.setInitParameter("jakarta.ws.rs.Application", restEasyAppClassName);
+        apiHandler.addServlet(restEasyServletHolder, "/rest/*");
+        // init Weld here
+        apiHandler.addEventListener(new org.jboss.weld.module.web.servlet.WeldInitialListener());
+        //need this listener to support scopes properly
+        apiHandler.addEventListener(new Listener());
+    }
+
+    private void setupSwaggerUI(HandlerList apiHandlers) throws URISyntaxException {
+        // Set the path to our static (Swagger UI) resources
+        URL su = API.class.getResource("/swaggerui");
+        if (su != null) {
+            log.info("Swagger UI html/js resources base path= {}", su.toURI());
+            String resourceBasePath = su.toExternalForm();
+            ContextHandler contextHandler = new ContextHandler("/swagger");
+            ResourceHandler swFileHandler = new ResourceHandler();
+            swFileHandler.setDirectoriesListed(false);
+            swFileHandler.setWelcomeFiles(new String[]{INDEX_HTML});
+            swFileHandler.setResourceBase(resourceBasePath);
+            contextHandler.setHandler(swFileHandler);
+            apiHandlers.addHandler(contextHandler);
+        } else {
+            log.warn("Swagger html/js resources not found, swagger UI is off.");
+        }
+    }
+
+    private void setupSmcEventServer(ServletContextHandler apiHandler, final SmcEventSocketListener server) {
+        if (propertiesHolder.getBooleanProperty("apl.smc.enableEventSubscriptionServer", true)) {
+            log.info("Smart-contract Event server is enabled");
+            String path = propertiesHolder.getStringProperty("apl.smc.event.path");
+            JakartaWebSocketServletContainerInitializer.configure(apiHandler,
+                (servletContext, nativeWebSocketConfiguration) -> {
+                    // Configure default max size
+                    nativeWebSocketConfiguration.setDefaultMaxTextMessageBufferSize(65535);
+                    nativeWebSocketConfiguration.setDefaultMaxSessionIdleTimeout(10 * 60 * 1000L);//10min
+                    // Add websockets
+//                    nativeWebSocketConfiguration.addMapping(pathSpec, new SmcEventSocketCreator(server));
+                    // TODO YL: NEEDS checking with WS connection
+                    nativeWebSocketConfiguration.addEndpoint(new BasicServerEndpointConfig(SmcEventSocketCreator.class, path) );
+                    log.info("Smart-contract Event subscription path = {}", path);
+                });
+            // Add generic filter that will accept WebSocket upgrade.
+//            WebSocketUpgradeFilter.getFilter(apiHandler.getServletContext());
+            WebSocketUpgradeFilter.ensureFilter(apiHandler.getServletContext());
+        } else {
+            log.info("Smart-contract Event server is disabled.");
+        }
     }
 
     private QueuedThreadPool getQueuedThreadPool() {
@@ -449,7 +518,7 @@ public final class API {
         return threadPool;
     }
 
-    public final void shutdown() {
+    public void shutdown() {
         if (apiServer != null) {
             try {
                 apiServer.stop();
@@ -457,7 +526,7 @@ public final class API {
                     upnp.deletePort(extPort);
                 }
             } catch (Exception e) {
-                LOG.info("Failed to stop API server", e);
+                log.info("Failed to stop API server", e);
             }
         }
     }

@@ -6,7 +6,7 @@ package com.apollocurrency.aplwallet.apl.core.service.state.currency;
 
 import com.apollocurrency.aplwallet.apl.core.chainid.BlockchainConfig;
 import com.apollocurrency.aplwallet.apl.core.dao.state.currency.CurrencyBuyOfferTable;
-import com.apollocurrency.aplwallet.apl.core.blockchain.Transaction;
+import com.apollocurrency.aplwallet.apl.core.model.Transaction;
 import com.apollocurrency.aplwallet.apl.core.entity.state.account.Account;
 import com.apollocurrency.aplwallet.apl.core.entity.state.account.LedgerEvent;
 import com.apollocurrency.aplwallet.apl.core.entity.state.currency.AvailableOffers;
@@ -15,13 +15,14 @@ import com.apollocurrency.aplwallet.apl.core.entity.state.currency.CurrencyExcha
 import com.apollocurrency.aplwallet.apl.core.entity.state.currency.CurrencySellOffer;
 import com.apollocurrency.aplwallet.apl.core.service.appdata.TimeService;
 import com.apollocurrency.aplwallet.apl.core.service.appdata.impl.TimeServiceImpl;
-import com.apollocurrency.aplwallet.apl.core.service.appdata.DatabaseManager;
+import com.apollocurrency.aplwallet.apl.core.db.DatabaseManager;
 import com.apollocurrency.aplwallet.apl.core.service.blockchain.Blockchain;
 import com.apollocurrency.aplwallet.apl.core.service.blockchain.BlockchainImpl;
 import com.apollocurrency.aplwallet.apl.core.service.blockchain.BlockchainProcessor;
 import com.apollocurrency.aplwallet.apl.core.service.blockchain.BlockchainProcessorImpl;
 import com.apollocurrency.aplwallet.apl.core.service.fulltext.FullTextConfig;
 import com.apollocurrency.aplwallet.apl.core.service.fulltext.FullTextConfigImpl;
+import com.apollocurrency.aplwallet.apl.core.service.fulltext.FullTextSearchUpdater;
 import com.apollocurrency.aplwallet.apl.core.service.prunable.PrunableMessageService;
 import com.apollocurrency.aplwallet.apl.core.service.prunable.impl.PrunableMessageServiceImpl;
 import com.apollocurrency.aplwallet.apl.core.service.state.BlockChainInfoService;
@@ -32,7 +33,7 @@ import com.apollocurrency.aplwallet.apl.core.service.state.account.AccountServic
 import com.apollocurrency.aplwallet.apl.core.service.state.currency.impl.CurrencyBuyOfferServiceImpl;
 import com.apollocurrency.aplwallet.apl.core.service.state.currency.impl.CurrencyExchangeOfferFacadeImpl;
 import com.apollocurrency.aplwallet.apl.core.service.state.exchange.ExchangeService;
-import com.apollocurrency.aplwallet.apl.core.transaction.messages.MonetarySystemPublishExchangeOffer;
+import com.apollocurrency.aplwallet.apl.core.transaction.messages.MSPublishExchangeOfferAttachment;
 import com.apollocurrency.aplwallet.apl.data.AccountTestData;
 import com.apollocurrency.aplwallet.apl.data.BlockTestData;
 import com.apollocurrency.aplwallet.apl.data.CurrencyBuyOfferTestData;
@@ -70,6 +71,7 @@ class CurrencyExchangeOfferFacadeTest {
     private DatabaseManager databaseManager = mock(DatabaseManager.class);
     private BlockChainInfoService blockChainInfoService = mock(BlockChainInfoService.class);
     private BlockchainProcessor blockchainProcessor = mock(BlockchainProcessor.class);
+    private FullTextSearchUpdater fullTextSearchUpdater = mock(FullTextSearchUpdater.class);
 
     @WeldSetup
     public WeldInitiator weld = WeldInitiator.from(
@@ -85,6 +87,7 @@ class CurrencyExchangeOfferFacadeTest {
         .addBeans(MockBean.of(Mockito.mock(PropertiesHolder.class), PropertiesHolder.class))
         .addBeans(MockBean.of(Mockito.mock(PrunableMessageService.class), PrunableMessageService.class, PrunableMessageServiceImpl.class))
         .addBeans(MockBean.of(databaseManager, DatabaseManager.class))
+        .addBeans(MockBean.of(fullTextSearchUpdater, FullTextSearchUpdater.class))
         .build();
 
     @Mock
@@ -121,7 +124,7 @@ class CurrencyExchangeOfferFacadeTest {
         //GIVEN
         Transaction tr = mock(Transaction.class);
         doReturn(tdBuy.OFFER_7.getAccountId()).when(tr).getSenderId();
-        MonetarySystemPublishExchangeOffer attach = mock(MonetarySystemPublishExchangeOffer.class);
+        MSPublishExchangeOfferAttachment attach = mock(MSPublishExchangeOfferAttachment.class);
         doReturn(tdBuy.OFFER_7.getCurrencyId()).when(attach).getCurrencyId();
         doReturn(tdBuy.OFFER_7).when(currencyBuyOfferService).getOffer(tdBuy.OFFER_7.getCurrencyId(), tdBuy.OFFER_7.getAccountId());
         doReturn(tdSell.OFFER_5).when(currencySellOfferService).getOffer(tdBuy.OFFER_7.getId());

@@ -26,7 +26,7 @@ import com.apollocurrency.aplwallet.apl.core.service.state.account.impl.AccountS
 import com.apollocurrency.aplwallet.apl.crypto.Convert;
 import com.apollocurrency.aplwallet.apl.crypto.Crypto;
 
-import javax.enterprise.inject.spi.CDI;
+import jakarta.enterprise.inject.spi.CDI;
 import java.util.Arrays;
 
 public final class Token {

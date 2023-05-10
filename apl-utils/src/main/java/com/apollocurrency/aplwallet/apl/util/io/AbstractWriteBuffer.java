@@ -1,5 +1,5 @@
 /*
- * Copyright (c)  2018-2021. Apollo Foundation.
+ * Copyright (c) 2018-2021. Apollo Foundation.
  */
 
 package com.apollocurrency.aplwallet.apl.util.io;
@@ -34,8 +34,6 @@ public abstract class AbstractWriteBuffer implements WriteBuffer {
     public ByteOrder order() {
         return order;
     }
-
-    public abstract WriteBuffer write(byte data);
 
     @Override
     public WriteBuffer write(byte[] value) {
@@ -83,27 +81,27 @@ public abstract class AbstractWriteBuffer implements WriteBuffer {
 
     protected void writeShort(short v) {
         putShortParts((byte) (0xFF & v)
-                , (byte) (0xFF & (v >> 8)));
+            , (byte) (0xFF & (v >> 8)));
 
     }
 
     protected void writeInt(int v) {
         putIntParts((byte) (0xFF & v)
-                , (byte) (0xFF & (v >> 8))
-                , (byte) (0xFF & (v >> 16))
-                , (byte) (0xFF & (v >> 24)));
+            , (byte) (0xFF & (v >> 8))
+            , (byte) (0xFF & (v >> 16))
+            , (byte) (0xFF & (v >> 24)));
 
     }
 
     protected void writeLong(long v) {
         putLongParts((byte) (0xFF & v)
-                , (byte) (0xFF & (v >> 8))
-                , (byte) (0xFF & (v >> 16))
-                , (byte) (0xFF & (v >> 24))
-                , (byte) (0xFF & (v >> 32))
-                , (byte) (0xFF & (v >> 40))
-                , (byte) (0xFF & (v >> 48))
-                , (byte) (0xFF & (v >> 56)));
+            , (byte) (0xFF & (v >> 8))
+            , (byte) (0xFF & (v >> 16))
+            , (byte) (0xFF & (v >> 24))
+            , (byte) (0xFF & (v >> 32))
+            , (byte) (0xFF & (v >> 40))
+            , (byte) (0xFF & (v >> 48))
+            , (byte) (0xFF & (v >> 56)));
 
     }
 

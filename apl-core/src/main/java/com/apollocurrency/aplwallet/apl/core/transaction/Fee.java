@@ -20,8 +20,14 @@
 
 package com.apollocurrency.aplwallet.apl.core.transaction;
 
-import com.apollocurrency.aplwallet.apl.core.blockchain.Transaction;
+import com.apollocurrency.aplwallet.apl.core.model.Transaction;
 import com.apollocurrency.aplwallet.apl.core.transaction.messages.Appendix;
+import com.apollocurrency.smc.contract.fuel.FuelCalculator;
+import com.apollocurrency.smc.contract.fuel.VolumeBasedPayable;
+import lombok.extern.slf4j.Slf4j;
+
+import java.math.BigInteger;
+import java.util.Objects;
 
 public interface Fee {
 
@@ -80,6 +86,40 @@ public interface Fee {
 
         public abstract int getSize(Transaction transaction, Appendix appendage);
 
+    }
+
+    @Slf4j
+    abstract class FuelBasedFee implements Fee {
+
+        private final FuelCalculator fuelCalculator;
+
+        public FuelBasedFee(FuelCalculator fuelCalculator) {
+            this.fuelCalculator = Objects.requireNonNull(fuelCalculator);
+        }
+
+        @Override
+        public final long getFee(Transaction transaction, Appendix appendage) {
+            final int size = getSize(transaction, appendage);
+            BigInteger fuelPrice = getFuelPrice(transaction, appendage);
+            long fee = fuelPrice.multiply(fuelCalculator.calc(() -> size)).longValueExact();
+            log.debug("FuelBasedFee: fuel={} payableSize={}, fuelPrice={} => fee={}", fuelCalculator, size, fuelPrice, fee);
+            return fee;
+        }
+
+        /**
+         * Returns the value equal to fuel needs to successfully publish or call the contract.
+         *
+         * @param value the given payable object
+         * @return the value equal to fuel needs to successfully publish or call the contract.
+         */
+        public BigInteger calcFuel(VolumeBasedPayable value) {
+            final int size = value.getPayableSize();
+            return fuelCalculator.calc(() -> size);
+        }
+
+        public abstract int getSize(Transaction transaction, Appendix appendage);
+
+        public abstract BigInteger getFuelPrice(Transaction transaction, Appendix appendage);
     }
 
 }

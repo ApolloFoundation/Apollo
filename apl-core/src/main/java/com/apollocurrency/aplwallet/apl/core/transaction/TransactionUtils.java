@@ -4,7 +4,7 @@
 
 package com.apollocurrency.aplwallet.apl.core.transaction;
 
-import com.apollocurrency.aplwallet.apl.core.blockchain.Transaction;
+import com.apollocurrency.aplwallet.apl.core.model.Transaction;
 import com.apollocurrency.aplwallet.apl.core.signature.Signature;
 import com.apollocurrency.aplwallet.apl.core.transaction.messages.Appendix;
 import com.apollocurrency.aplwallet.apl.crypto.Crypto;
@@ -33,7 +33,15 @@ public class TransactionUtils {
     }
 
     public static byte getVersionSubtypeByte(Transaction transaction) {
-        return (byte) ((transaction.getVersion() << 4) & 0xf0 | transaction.getType().getSpec().getSubtype() & 0x0f);
+        return (byte) ((transaction.getVersion() << 4) & 0xF0 | transaction.getType().getSpec().getSubtype() & 0x0F);
+    }
+
+    public static byte getVersion(byte versionSubType) {
+        return (byte) ((versionSubType & 0xF0) >> 4);
+    }
+
+    public static byte getSubtype(byte versionSubType) {
+        return (byte) (versionSubType & 0x0F);
     }
 
     public static int getTransactionFlags(Transaction transaction) {
@@ -67,6 +75,21 @@ public class TransactionUtils {
             flags |= position;
         }
         return flags;
+    }
+
+    /**
+     * Calculates the full size of transaction using {@link Transaction} itself
+     * and it's default serialization size with appendices typically obtained using {@link com.apollocurrency.aplwallet.apl.core.transaction.common.TxSerializer}
+     * @param tx transaction with appendices to calculate full size
+     * @param txStandardByteSize default serialized size of given transaction obtained using {@link com.apollocurrency.aplwallet.apl.core.transaction.common.TxSerializer}
+     * @return full size of the given transaction
+     */
+    public static int calculateFullSize(Transaction tx, int txStandardByteSize) {
+        //byteLength acts here as tx size with appendices default size, to get tx size with appendices full size we need to substract default size and add full size
+        return txStandardByteSize + tx.getAppendages()
+            .stream()
+            .mapToInt(app-> app.getFullSize() - app.getSize())
+            .sum();
     }
 
 

@@ -4,20 +4,23 @@
 
 package com.apollocurrency.aplwallet.apl.core.transaction;
 
-import com.apollocurrency.aplwallet.apl.core.blockchain.TransactionBuilderFactory;
-import com.apollocurrency.aplwallet.apl.core.blockchain.TransactionSigner;
-import com.apollocurrency.aplwallet.apl.core.blockchain.TransactionSignerImpl;
 import com.apollocurrency.aplwallet.apl.core.chainid.BlockchainConfig;
 import com.apollocurrency.aplwallet.apl.core.chainid.HeightConfig;
 import com.apollocurrency.aplwallet.apl.core.dao.appdata.ReferencedTransactionDao;
-import com.apollocurrency.aplwallet.apl.core.blockchain.EcBlockData;
-import com.apollocurrency.aplwallet.apl.core.blockchain.Transaction;
 import com.apollocurrency.aplwallet.apl.core.entity.state.account.AddressScope;
+import com.apollocurrency.aplwallet.apl.core.exception.AplAcceptableTransactionValidationException;
+import com.apollocurrency.aplwallet.apl.core.exception.AplTransactionFeatureNotEnabledException;
+import com.apollocurrency.aplwallet.apl.core.exception.AplUnacceptableTransactionValidationException;
 import com.apollocurrency.aplwallet.apl.core.model.CreateTransactionRequest;
+import com.apollocurrency.aplwallet.apl.core.model.EcBlockData;
+import com.apollocurrency.aplwallet.apl.core.model.Transaction;
 import com.apollocurrency.aplwallet.apl.core.rest.TransactionCreator;
 import com.apollocurrency.aplwallet.apl.core.service.appdata.TimeService;
 import com.apollocurrency.aplwallet.apl.core.service.blockchain.Blockchain;
+import com.apollocurrency.aplwallet.apl.core.service.blockchain.TransactionBuilderFactory;
 import com.apollocurrency.aplwallet.apl.core.service.blockchain.TransactionProcessor;
+import com.apollocurrency.aplwallet.apl.core.service.blockchain.TransactionSigner;
+import com.apollocurrency.aplwallet.apl.core.service.blockchain.TransactionSignerImpl;
 import com.apollocurrency.aplwallet.apl.core.service.state.PhasingPollService;
 import com.apollocurrency.aplwallet.apl.core.service.state.account.AccountControlPhasingService;
 import com.apollocurrency.aplwallet.apl.core.service.state.account.AccountPublicKeyService;
@@ -102,10 +105,10 @@ public class ChildAccountTransactionTypeTest {
     CreateChildTransactionType type = new CreateChildTransactionType(blockchainConfig, accountService, accountPublicKeyService, blockchain);
     TransactionBuilderFactory builder = new TransactionBuilderFactory(new CachedTransactionTypeFactory(List.of(type)), blockchainConfig);
     TransactionVersionValidator txVersionValidator = new TransactionVersionValidator(blockchainConfig, blockchain);
-    TransactionApplier txApplier = new TransactionApplier(blockchainConfig, referencedTransactionDao, accountService, accountPublicKeyService, prunableLoadingService, applierRegistry);
+    TransactionApplier txApplier = new TransactionApplier(blockchainConfig, referencedTransactionDao, accountService, accountPublicKeyService, prunableLoadingService, applierRegistry, blockchain);
     TransactionValidator txValidator = new TransactionValidator(blockchainConfig, phasingPollService, blockchain, calculator, accountService, accountPublicKeyService, accountControlPhasingService, txVersionValidator, prunableLoadingService, validatorRegistry);
     TransactionSigner txSigner = new TransactionSignerImpl(blockchainConfig);
-    TransactionCreator txCreator = new TransactionCreator(txValidator, propertiesHolder, timeService, calculator, blockchain, processor, new CachedTransactionTypeFactory(List.of(type)), builder, txSigner);
+    TransactionCreator txCreator = new TransactionCreator(txValidator, propertiesHolder, timeService, calculator, blockchain, processor, new CachedTransactionTypeFactory(List.of(type)), builder, txSigner, blockchainConfig);
 
     @BeforeEach
     void setUp() {
@@ -211,10 +214,13 @@ public class ChildAccountTransactionTypeTest {
             .timestamp(300)
             .keySeed(Crypto.getKeySeed(SENDER_SECRET_PHRASE))
             .broadcast(false)
+            .secretPhrase(SENDER_SECRET_PHRASE)
             .build();
         Transaction tx = txCreator.createTransactionThrowingException(request);
         assertNotNull(tx);
+        when(accountService.getAccount(SENDER_ID)).thenReturn(SENDER);
         when(blockchain.getHeight()).thenReturn(ECBLOCK_HEIGHT + 1);
+        when(blockchain.getBlockIdAtHeight(ECBLOCK_HEIGHT)).thenReturn(ECBLOCK_ID);
         when(blockchainConfig.getCurrentConfig()).thenReturn(heightConfig);
         when(chain.getChainId()).thenReturn(UUID.randomUUID());
         when(blockchainConfig.getChain()).thenReturn(chain);
@@ -222,9 +228,11 @@ public class ChildAccountTransactionTypeTest {
         when(accountService.getAccount(CHILD_ACCOUNT_ATTACHMENT.getChildPublicKey().get(0))).thenReturn(null);
         when(accountService.getAccount(CHILD_ACCOUNT_ATTACHMENT.getChildPublicKey().get(1))).thenReturn(null);
         when(blockchainConfig.isTransactionV2ActiveAtHeight(ECBLOCK_HEIGHT + 1)).thenReturn(false);
+        when(heightConfig.getMaxPayloadLength()).thenReturn(Integer.MAX_VALUE);
+
         //WHEN
 
-        AplException.NotYetEnabledException ex = assertThrows(AplException.NotYetEnabledException.class, () -> txValidator.validateFully(tx));
+        AplTransactionFeatureNotEnabledException ex = assertThrows(AplTransactionFeatureNotEnabledException.class, () -> txValidator.validateFully(tx));
 
         assertTrue((ex.getMessage()).contains("CreateChildAccount"), "Exception (NotYetEnabled) should belong to disabled CreateChildAccount transactions");
 
@@ -243,32 +251,35 @@ public class ChildAccountTransactionTypeTest {
             .timestamp(300)
             .keySeed(Crypto.getKeySeed(SENDER_SECRET_PHRASE))
             .broadcast(false)
+            .secretPhrase(SENDER_SECRET_PHRASE)
             .build();
         Transaction tx = txCreator.createTransactionThrowingException(request);
 
         assertNotNull(tx);
+        when(accountService.getAccount(SENDER_ID)).thenReturn(SENDER);
         when(blockchain.getHeight()).thenReturn(ECBLOCK_HEIGHT + 1);
         when(blockchain.getBlockIdAtHeight(ECBLOCK_HEIGHT)).thenReturn(ECBLOCK_ID);
         when(blockchainConfig.getCurrentConfig()).thenReturn(heightConfig);
         when(chain.getChainId()).thenReturn(UUID.randomUUID());
         when(blockchainConfig.getChain()).thenReturn(chain);
         when(heightConfig.getMaxBalanceATM()).thenReturn(Long.MAX_VALUE);
+        when(heightConfig.getMaxPayloadLength()).thenReturn(Integer.MAX_VALUE);
         when(blockchainConfig.isTransactionV2ActiveAtHeight(ECBLOCK_HEIGHT + 1)).thenReturn(true);
 
         //WHEN
         try {
             txValidator.validateFully(tx);
             fail("Unexpected flow.");
-        } catch (AplException.ValidationException e) {
+        } catch (AplUnacceptableTransactionValidationException e) {
             //THEN
             assertTrue(e.getMessage().contains("Wrong value of the transaction amount"), "Unexpected exception message.");
         }
     }
 
     @Test
-    void validateAttachment_withWrongChildAccountCount() throws AplException.ValidationException {
+    void validateAttachment_withWrongChildAccountCount() {
         //GIVEN
-        int wrongChildCountValue = 1;// 2 is valid
+        int wrongChildCountValue = 3;// 2 is valid
         CreateTransactionRequest request = CreateTransactionRequest.builder()
             .senderAccount(SENDER)
             .recipientId(SENDER_ID)
@@ -279,16 +290,19 @@ public class ChildAccountTransactionTypeTest {
             .attachment(new ChildAccountAttachment(AddressScope.IN_FAMILY, wrongChildCountValue, List.of(CHILD_PUBLIC_KEY_1, CHILD_PUBLIC_KEY_2)))
             .timestamp(300)
             .broadcast(false)
+            .secretPhrase(SENDER_SECRET_PHRASE)
             .build();
         Transaction tx = txCreator.createTransactionThrowingException(request);
 
         assertNotNull(tx);
+        when(accountService.getAccount(SENDER_ID)).thenReturn(SENDER);
         when(blockchain.getHeight()).thenReturn(ECBLOCK_HEIGHT + 1);
         when(blockchain.getBlockIdAtHeight(ECBLOCK_HEIGHT)).thenReturn(ECBLOCK_ID);
         when(blockchainConfig.getCurrentConfig()).thenReturn(heightConfig);
         when(chain.getChainId()).thenReturn(UUID.randomUUID());
         when(blockchainConfig.getChain()).thenReturn(chain);
         when(heightConfig.getMaxBalanceATM()).thenReturn(Long.MAX_VALUE);
+        when(heightConfig.getMaxPayloadLength()).thenReturn(Integer.MAX_VALUE);
         when(blockchainConfig.isTransactionV2ActiveAtHeight(ECBLOCK_HEIGHT + 1)).thenReturn(true);
 
 
@@ -296,9 +310,9 @@ public class ChildAccountTransactionTypeTest {
         try {
             txValidator.validateFully(tx);
             fail("Unexpected flow.");
-        } catch (AplException.ValidationException e) {
+        } catch (AplUnacceptableTransactionValidationException e) {
             //THEN
-            assertTrue(e.getMessage().contains("Wrong value of the child count, count=1"), "Unexpected exception message.");
+            assertTrue(e.getMessage().contains("Wrong value of the child count, count=3"), "Unexpected exception message.");
         }
     }
 
@@ -315,23 +329,26 @@ public class ChildAccountTransactionTypeTest {
             .attachment(new ChildAccountAttachment(AddressScope.IN_FAMILY, 2, List.of(CHILD_PUBLIC_KEY_1, Convert.parseHexString(SENDER_PUBLIC_KEY))))
             .timestamp(300)
             .broadcast(false)
+            .secretPhrase(SENDER_SECRET_PHRASE)
             .build();
         Transaction tx = txCreator.createTransactionThrowingException(request);
 
         assertNotNull(tx);
+        when(accountService.getAccount(SENDER_ID)).thenReturn(SENDER);
         when(blockchain.getHeight()).thenReturn(ECBLOCK_HEIGHT + 1);
         when(blockchain.getBlockIdAtHeight(ECBLOCK_HEIGHT)).thenReturn(ECBLOCK_ID);
         when(blockchainConfig.getCurrentConfig()).thenReturn(heightConfig);
         when(chain.getChainId()).thenReturn(UUID.randomUUID());
         when(blockchainConfig.getChain()).thenReturn(chain);
         when(heightConfig.getMaxBalanceATM()).thenReturn(Long.MAX_VALUE);
+        when(heightConfig.getMaxPayloadLength()).thenReturn(Integer.MAX_VALUE);
         when(blockchainConfig.isTransactionV2ActiveAtHeight(ECBLOCK_HEIGHT + 1)).thenReturn(true);
 
         //WHEN
         try {
             txValidator.validateFully(tx);
             fail("Unexpected flow.");
-        } catch (AplException.ValidationException e) {
+        } catch (AplUnacceptableTransactionValidationException e) {
             //THEN
             assertTrue(e.getMessage().contains("a child can't simultaneously be a parent"), "Unexpected exception message.");
         }
@@ -350,22 +367,25 @@ public class ChildAccountTransactionTypeTest {
             .attachment(CHILD_ACCOUNT_ATTACHMENT)
             .timestamp(300)
             .broadcast(false)
+            .secretPhrase(SENDER_SECRET_PHRASE)
             .build();
         Transaction tx = txCreator.createTransactionThrowingException(request);
 
         assertNotNull(tx);
+        when(accountService.getAccount(SENDER_ID)).thenReturn(SENDER);
         when(blockchain.getHeight()).thenReturn(ECBLOCK_HEIGHT + 1);
         when(blockchain.getBlockIdAtHeight(ECBLOCK_HEIGHT)).thenReturn(ECBLOCK_ID);
         when(blockchainConfig.getCurrentConfig()).thenReturn(heightConfig);
         when(chain.getChainId()).thenReturn(UUID.randomUUID());
         when(blockchainConfig.getChain()).thenReturn(chain);
+        when(heightConfig.getMaxPayloadLength()).thenReturn(Integer.MAX_VALUE);
         when(heightConfig.getMaxBalanceATM()).thenReturn(Long.MAX_VALUE);
         when(blockchainConfig.isTransactionV2ActiveAtHeight(ECBLOCK_HEIGHT + 1)).thenReturn(true);
         //WHEN
         try {
             txValidator.validateFully(tx);
             fail("Unexpected flow.");
-        } catch (AplException.ValidationException e) {
+        } catch (AplAcceptableTransactionValidationException e) {
             //THEN
             assertTrue(e.getMessage().contains("Child account already exists"), "Unexpected exception message.");
         }

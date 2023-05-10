@@ -16,10 +16,10 @@ import com.apollocurrency.aplwallet.apl.util.service.TaskDispatchManager;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import javax.enterprise.context.ApplicationScoped;
-import javax.enterprise.inject.Produces;
-import javax.enterprise.inject.spi.CDI;
-import javax.inject.Singleton;
+import jakarta.enterprise.context.ApplicationScoped;
+import jakarta.enterprise.inject.Produces;
+import jakarta.enterprise.inject.spi.CDI;
+import jakarta.inject.Singleton;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
@@ -65,11 +65,11 @@ public class AplCoreRuntime {
         return dbConfig;
     }
 
-    @Produces @ApplicationScoped
+    @Produces @Singleton
     public DirProvider getDirProvider() {
         return dirProvider;
     }
-    @Produces   @ApplicationScoped
+    @Produces @Singleton
     public ConfigDirProvider configDirProvider() {
         return ConfigDirProviderFactory.getConfigDirProvider();
     }

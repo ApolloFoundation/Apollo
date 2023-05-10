@@ -1,13 +1,12 @@
 /*
- *  Copyright © 2018-2020 Apollo Foundation
+ *  Copyright © 2018-2021 Apollo Foundation
  */
 package com.apollocurrency.aplwallet.apl.core.transaction.types.child;
 
+import com.apollocurrency.aplwallet.apl.core.model.Transaction;
 import com.apollocurrency.aplwallet.apl.core.chainid.BlockchainConfig;
-import com.apollocurrency.aplwallet.apl.core.blockchain.Transaction;
 import com.apollocurrency.aplwallet.apl.core.entity.state.account.Account;
 import com.apollocurrency.aplwallet.apl.core.service.state.account.AccountService;
-import com.apollocurrency.aplwallet.apl.core.transaction.Fee;
 import com.apollocurrency.aplwallet.apl.core.transaction.TransactionType;
 import com.apollocurrency.aplwallet.apl.core.transaction.TransactionTypes;
 import com.apollocurrency.aplwallet.apl.core.transaction.messages.ChildAccountAttachment;
@@ -35,9 +34,6 @@ public abstract class ChildAccountTransactionType extends TransactionType {
     boolean isAccountExists(byte[] childPublicKey) {
         return getAccountService().getAccount(childPublicKey) != null;
     }
-
-    private final Fee TX_FEE = new Fee.ConstantFee(getBlockchainConfig().getOneAPL());
-
 
     @Override
     public void doStateDependentValidation(Transaction transaction) throws AplException.NotValidException {
@@ -100,11 +96,6 @@ public abstract class ChildAccountTransactionType extends TransactionType {
     @Override
     public boolean isPhasable() {
         return false;
-    }
-
-    @Override
-    public Fee getBaselineFee(Transaction transaction) {
-        return TX_FEE;
     }
 
 }

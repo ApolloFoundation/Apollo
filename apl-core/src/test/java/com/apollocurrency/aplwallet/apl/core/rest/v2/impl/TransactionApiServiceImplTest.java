@@ -12,19 +12,20 @@ import com.apollocurrency.aplwallet.api.v2.model.ListResponse;
 import com.apollocurrency.aplwallet.api.v2.model.TransactionInfoResp;
 import com.apollocurrency.aplwallet.api.v2.model.TxReceipt;
 import com.apollocurrency.aplwallet.api.v2.model.TxRequest;
+import com.apollocurrency.aplwallet.apl.core.model.Transaction;
+import com.apollocurrency.aplwallet.apl.core.service.blockchain.TransactionBuilderFactory;
 import com.apollocurrency.aplwallet.apl.core.chainid.BlockchainConfig;
-import com.apollocurrency.aplwallet.apl.core.blockchain.Transaction;
 import com.apollocurrency.aplwallet.apl.core.rest.v2.converter.TransactionInfoMapper;
 import com.apollocurrency.aplwallet.apl.core.rest.v2.converter.TxReceiptMapper;
 import com.apollocurrency.aplwallet.apl.core.service.blockchain.Blockchain;
 import com.apollocurrency.aplwallet.apl.core.service.blockchain.MemPool;
+import com.apollocurrency.aplwallet.apl.core.service.blockchain.TransactionProcessor;
 import com.apollocurrency.aplwallet.apl.core.service.state.BlockChainInfoService;
 import com.apollocurrency.aplwallet.apl.core.service.state.account.AccountPublicKeyService;
 import com.apollocurrency.aplwallet.apl.core.service.state.account.AccountService;
 import com.apollocurrency.aplwallet.apl.core.signature.Signature;
 import com.apollocurrency.aplwallet.apl.core.signature.SignatureToolFactory;
 import com.apollocurrency.aplwallet.apl.core.transaction.CachedTransactionTypeFactory;
-import com.apollocurrency.aplwallet.apl.core.blockchain.TransactionBuilderFactory;
 import com.apollocurrency.aplwallet.apl.core.transaction.messages.PrunableLoadingService;
 import com.apollocurrency.aplwallet.apl.core.transaction.types.child.CreateChildTransactionType;
 import com.apollocurrency.aplwallet.apl.crypto.Convert;
@@ -39,8 +40,8 @@ import org.junit.jupiter.params.provider.ValueSource;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
-import javax.ws.rs.core.Response;
-import javax.ws.rs.core.SecurityContext;
+import jakarta.ws.rs.core.Response;
+import jakarta.ws.rs.core.SecurityContext;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -54,7 +55,6 @@ import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.junit.jupiter.api.Assertions.fail;
-import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.doReturn;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.spy;
@@ -85,6 +85,8 @@ class TransactionApiServiceImplTest {
     AccountService accountService;
     @Mock
     AccountPublicKeyService accountPublicKeyService;
+    @Mock
+    TransactionProcessor processor;
 
     TxReceiptMapper txReceiptMapper;
     TransactionInfoMapper transactionInfoMapper;
@@ -96,7 +98,7 @@ class TransactionApiServiceImplTest {
         Convert2.init("APL", 1739068987193023818L);
         txReceiptMapper = new TxReceiptMapper(blockChainInfoService);
         transactionInfoMapper = new TransactionInfoMapper(blockchain, prunableLoadingService);
-        transactionApiService = new TransactionApiServiceImpl(memPool, blockchainConfig, blockchain, txReceiptMapper, transactionInfoMapper, transactionBuilderFactory);
+        transactionApiService = new TransactionApiServiceImpl(memPool, blockchainConfig, blockchain, txReceiptMapper, transactionInfoMapper, transactionBuilderFactory, processor);
     }
 
     @SneakyThrows
@@ -105,8 +107,8 @@ class TransactionApiServiceImplTest {
         //GIVEN
         TxRequest request = new TxRequest();
         request.setTx(SIGNED_TX_1_HEX);
-        doReturn(true).when(memPool).canSafelyAcceptTransactions(1);
-        doReturn(true).when(memPool).softBroadcast(any(Transaction.class));
+        doReturn(1).when(memPool).pendingProcessingRemainingCapacity();
+//        doReturn(true).when(memPool).softBroadcast(any(Transaction.class));
         //WHEN
         Response response = transactionApiService.broadcastTx(request, securityContext);
         //THEN
@@ -121,7 +123,7 @@ class TransactionApiServiceImplTest {
         //GIVEN
         TxRequest request = new TxRequest();
         request.setTx(SIGNED_TX_1_HEX);
-        doReturn(true).when(memPool).canSafelyAcceptTransactions(1);
+        doReturn(0).when(memPool).pendingProcessingRemainingCapacity();
         //WHEN
         Response response = transactionApiService.broadcastTx(request, securityContext);
         //THEN
@@ -162,8 +164,8 @@ class TransactionApiServiceImplTest {
         request2.setTx(SIGNED_TX_1_WRONG_LENGTH);
         requestList.add(request2);
 
-        doReturn(true).when(memPool).canSafelyAcceptTransactions(2);
-        doReturn(true).when(memPool).softBroadcast(any(Transaction.class));
+        doReturn(2).when(memPool).pendingProcessingRemainingCapacity();
+//        doReturn(true).when(memPool).softBroadcast(any(Transaction.class));
 
         //WHEN
         Response response = transactionApiService.broadcastTxBatch(requestList, securityContext);

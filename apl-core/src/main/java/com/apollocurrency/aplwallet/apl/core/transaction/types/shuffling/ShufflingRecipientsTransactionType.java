@@ -5,7 +5,7 @@
 package com.apollocurrency.aplwallet.apl.core.transaction.types.shuffling;
 
 import com.apollocurrency.aplwallet.apl.core.chainid.BlockchainConfig;
-import com.apollocurrency.aplwallet.apl.core.blockchain.Transaction;
+import com.apollocurrency.aplwallet.apl.core.model.Transaction;
 import com.apollocurrency.aplwallet.apl.core.entity.state.account.Account;
 import com.apollocurrency.aplwallet.apl.core.entity.state.account.LedgerEvent;
 import com.apollocurrency.aplwallet.apl.core.entity.state.shuffling.Shuffling;
@@ -24,8 +24,9 @@ import com.apollocurrency.aplwallet.apl.crypto.Crypto;
 import com.apollocurrency.aplwallet.apl.util.exception.AplException;
 import org.json.simple.JSONObject;
 
-import javax.inject.Inject;
-import javax.inject.Singleton;
+import jakarta.inject.Inject;
+import jakarta.inject.Singleton;
+import java.math.BigDecimal;
 import java.nio.ByteBuffer;
 import java.util.Arrays;
 import java.util.HashSet;
@@ -37,7 +38,6 @@ import static com.apollocurrency.aplwallet.apl.core.transaction.TransactionTypes
 
 @Singleton
 public class ShufflingRecipientsTransactionType extends ShufflingTransactionType {
-    private final Fee SHUFFLING_RECIPIENTS_FEE = new Fee.ConstantFee(Math.multiplyExact(11, getBlockchainConfig().getOneAPL()));
     private final ShufflingService shufflingService;
 
     @Inject
@@ -63,7 +63,7 @@ public class ShufflingRecipientsTransactionType extends ShufflingTransactionType
 
     @Override
     public Fee getBaselineFee(Transaction transaction) {
-        return SHUFFLING_RECIPIENTS_FEE;
+        return getFeeFactory().createFixed(BigDecimal.valueOf(11));
     }
 
     @Override

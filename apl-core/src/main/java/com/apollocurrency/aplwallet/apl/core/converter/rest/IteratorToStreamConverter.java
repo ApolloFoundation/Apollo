@@ -4,10 +4,10 @@
 
 package com.apollocurrency.aplwallet.apl.core.converter.rest;
 
-import com.apollocurrency.aplwallet.apl.core.db.DbIterator;
 import com.apollocurrency.aplwallet.apl.util.api.converter.Converter;
+import com.apollocurrency.aplwallet.apl.util.db.DbIterator;
 
-import javax.enterprise.inject.Vetoed;
+import jakarta.enterprise.inject.Vetoed;
 import java.util.Spliterator;
 import java.util.Spliterators;
 import java.util.stream.Stream;
@@ -26,9 +26,10 @@ import java.util.stream.StreamSupport;
 public class IteratorToStreamConverter<T> implements Converter<DbIterator<T>, Stream<T>> {
     @Override
     public Stream<T> apply(DbIterator<T> dbIterator) {
+        Spliterator<T> spliterator = Spliterators.spliteratorUnknownSize(dbIterator, Spliterator.ORDERED);
         return StreamSupport.stream(
-            Spliterators.spliteratorUnknownSize(dbIterator, Spliterator.ORDERED),
+            spliterator,
             false
-        );
+        ).onClose(dbIterator::close);
     }
 }

@@ -20,7 +20,7 @@
 
 package com.apollocurrency.aplwallet.apl.core.http.get;
 
-import com.apollocurrency.aplwallet.apl.core.db.DbIterator;
+import com.apollocurrency.aplwallet.apl.util.db.DbIterator;
 import com.apollocurrency.aplwallet.apl.core.entity.state.account.Account;
 import com.apollocurrency.aplwallet.apl.core.entity.state.account.AccountAsset;
 import com.apollocurrency.aplwallet.apl.core.entity.state.account.AccountCurrency;
@@ -43,9 +43,9 @@ import org.json.simple.JSONArray;
 import org.json.simple.JSONObject;
 import org.json.simple.JSONStreamAware;
 
-import javax.enterprise.inject.Vetoed;
-import javax.enterprise.inject.spi.CDI;
-import javax.servlet.http.HttpServletRequest;
+import jakarta.enterprise.inject.Vetoed;
+import jakarta.enterprise.inject.spi.CDI;
+import jakarta.servlet.http.HttpServletRequest;
 import java.util.List;
 
 @Deprecated
@@ -147,7 +147,7 @@ public final class GetAccount extends AbstractAPIRequestHandler {
         }
 
         if (includeCurrencies) {
-            List<AccountCurrency> accountCurrencies = accountCurrencyService.getCurrenciesByAccount(account, 0, -1);
+            List<AccountCurrency> accountCurrencies = accountCurrencyService.getByAccount(account, 0, -1);
             JSONArray currencyJSON = new JSONArray();
             accountCurrencies.forEach(accountCurrency -> currencyJSON.add(JSONData.accountCurrency(accountCurrency, false, true)));
             if (currencyJSON.size() > 0) {

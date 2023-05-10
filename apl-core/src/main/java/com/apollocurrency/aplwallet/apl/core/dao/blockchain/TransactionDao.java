@@ -1,7 +1,9 @@
 package com.apollocurrency.aplwallet.apl.core.dao.blockchain;
 
 import com.apollocurrency.aplwallet.api.v2.model.TxReceipt;
-import com.apollocurrency.aplwallet.apl.core.dao.TransactionalDataSource;
+import com.apollocurrency.aplwallet.apl.core.model.Sort;
+import com.apollocurrency.aplwallet.apl.util.db.TransactionalDataSource;
+import com.apollocurrency.aplwallet.apl.core.entity.appdata.ChatInfo;
 import com.apollocurrency.aplwallet.apl.core.entity.blockchain.TransactionEntity;
 import com.apollocurrency.aplwallet.apl.core.model.TransactionDbInfo;
 import com.apollocurrency.aplwallet.apl.core.transaction.PrunableTransaction;
@@ -38,25 +40,30 @@ public interface TransactionDao {
 
     void saveTransactions(List<TransactionEntity> transactions);
 
+    void updateTransaction(TransactionEntity transaction);
+
     int getTransactionCount();
 
     Long getTransactionCount(TransactionalDataSource dataSource, int from, int to);
 
-    List<TransactionEntity> getTransactions(TransactionalDataSource dataSource,
-                                            long accountId, int numberOfConfirmations, byte type, byte subtype,
-                                            int blockTimestamp, boolean withMessage, boolean phasedOnly, boolean nonPhasedOnly,
-                                            int from, int to, boolean includeExpiredPrunable, boolean executedOnly, boolean includePrivate,
-                                            int height, int prunableExpiration);
+    List<TransactionEntity> getTransactions(
+        TransactionalDataSource dataSource,
+        long accountId, byte type, byte subtype,
+        int blockTimestamp, boolean withMessage, boolean phasedOnly, boolean nonPhasedOnly,
+        int from, int to, boolean executedOnly, boolean includePrivate,
+        int height, int prunableExpiration, boolean failedOnly, boolean nonFailedOnly, Sort sort);
 
-    int getTransactionCountByFilter(TransactionalDataSource dataSource,
-                                    long accountId, int numberOfConfirmations, byte type, byte subtype,
-                                    int blockTimestamp, boolean withMessage, boolean phasedOnly, boolean nonPhasedOnly,
-                                    boolean includeExpiredPrunable, boolean executedOnly, boolean includePrivate,
-                                    int height, int prunableExpiration);
+    int getTransactionCountByFilter(
+        TransactionalDataSource dataSource, long accountId,
+        byte type, byte subtype, int blockTimestamp, boolean withMessage, boolean phasedOnly,
+        boolean nonPhasedOnly, boolean executedOnly,
+        boolean includePrivate, int height, int prunableExpiration, boolean failedOnly, boolean nonFailedOnly);
 
     List<TransactionEntity> getTransactions(byte type, byte subtype, int from, int to);
 
     List<TransactionEntity> getTransactionsChatHistory(long account1, long account2, int from, int to);
+
+    List<ChatInfo> getChatAccounts(long accountId, int from, int to);
 
     List<TransactionEntity> getTransactions(int fromDbId, int toDbId);
 

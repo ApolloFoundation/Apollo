@@ -11,7 +11,7 @@ import com.apollocurrency.aplwallet.apl.udpater.intfce.UpdaterMediator;
 import com.apollocurrency.aplwallet.apl.updater.UpdaterConstants;
 import com.apollocurrency.aplwallet.apl.updater.service.UpdaterService;
 
-import javax.inject.Inject;
+import jakarta.inject.Inject;
 
 public class UpdaterFactoryImpl implements UpdaterFactory {
     private UpdaterMediator updaterMediator;

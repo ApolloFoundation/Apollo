@@ -4,7 +4,7 @@
 
 package com.apollocurrency.aplwallet.apl.core.dao.appdata;
 
-import com.apollocurrency.aplwallet.apl.core.db.AbstractTwoFactorAuthRepositoryTest;
+import com.apollocurrency.aplwallet.apl.core.dao.state.derived.AbstractTwoFactorAuthRepositoryTest;
 import com.apollocurrency.aplwallet.apl.data.TwoFactorAuthTestData;
 import com.apollocurrency.aplwallet.apl.util.Convert2;
 import com.apollocurrency.aplwallet.apl.util.JSON;

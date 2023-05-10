@@ -20,8 +20,6 @@
 
 package com.apollocurrency.aplwallet.apl.core.http.get;
 
-import com.apollocurrency.aplwallet.apl.core.db.DbIterator;
-import com.apollocurrency.aplwallet.apl.core.db.DbUtils;
 import com.apollocurrency.aplwallet.apl.core.entity.state.shuffling.Shuffling;
 import com.apollocurrency.aplwallet.apl.core.http.APITag;
 import com.apollocurrency.aplwallet.apl.core.http.AbstractAPIRequestHandler;
@@ -31,8 +29,9 @@ import org.json.simple.JSONArray;
 import org.json.simple.JSONObject;
 import org.json.simple.JSONStreamAware;
 
-import javax.enterprise.inject.Vetoed;
-import javax.servlet.http.HttpServletRequest;
+import jakarta.enterprise.inject.Vetoed;
+import jakarta.servlet.http.HttpServletRequest;
+import java.util.List;
 
 @Vetoed
 public final class GetAllShufflings extends AbstractAPIRequestHandler {
@@ -53,20 +52,16 @@ public final class GetAllShufflings extends AbstractAPIRequestHandler {
         JSONObject response = new JSONObject();
         JSONArray jsonArray = new JSONArray();
         response.put("shufflings", jsonArray);
-        DbIterator<Shuffling> shufflings = null;
-        try {
-            if (finishedOnly) {
-                shufflings = shufflingService.getFinishedShufflings(firstIndex, lastIndex);
-            } else if (includeFinished) {
-                shufflings = shufflingService.getAll(firstIndex, lastIndex);
-            } else {
-                shufflings = shufflingService.getActiveShufflings(firstIndex, lastIndex);
-            }
-            for (Shuffling shuffling : shufflings) {
-                jsonArray.add(JSONData.shuffling(shuffling, includeHoldingInfo));
-            }
-        } finally {
-            DbUtils.close(shufflings);
+        List<Shuffling> shufflings;
+        if (finishedOnly) {
+            shufflings = shufflingService.getFinishedShufflings(firstIndex, lastIndex);
+        } else if (includeFinished) {
+            shufflings = shufflingService.getAll(firstIndex, lastIndex);
+        } else {
+            shufflings = shufflingService.getActiveShufflings(firstIndex, lastIndex);
+        }
+        for (Shuffling shuffling : shufflings) {
+            jsonArray.add(JSONData.shuffling(shuffling, includeHoldingInfo));
         }
         return response;
     }

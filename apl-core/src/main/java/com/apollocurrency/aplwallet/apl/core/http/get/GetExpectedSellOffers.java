@@ -20,21 +20,21 @@
 
 package com.apollocurrency.aplwallet.apl.core.http.get;
 
-import com.apollocurrency.aplwallet.apl.core.blockchain.Transaction;
+import com.apollocurrency.aplwallet.apl.core.model.Transaction;
 import com.apollocurrency.aplwallet.apl.core.http.APITag;
 import com.apollocurrency.aplwallet.apl.core.http.AbstractAPIRequestHandler;
 import com.apollocurrency.aplwallet.apl.core.http.HttpParameterParserUtil;
 import com.apollocurrency.aplwallet.apl.core.http.JSONData;
 import com.apollocurrency.aplwallet.apl.core.http.ParameterException;
 import com.apollocurrency.aplwallet.apl.core.transaction.TransactionTypes;
-import com.apollocurrency.aplwallet.apl.core.transaction.messages.MonetarySystemPublishExchangeOffer;
+import com.apollocurrency.aplwallet.apl.core.transaction.messages.MSPublishExchangeOfferAttachment;
 import com.apollocurrency.aplwallet.apl.util.Filter;
 import org.json.simple.JSONArray;
 import org.json.simple.JSONObject;
 import org.json.simple.JSONStreamAware;
 
-import javax.enterprise.inject.Vetoed;
-import javax.servlet.http.HttpServletRequest;
+import jakarta.enterprise.inject.Vetoed;
+import jakarta.servlet.http.HttpServletRequest;
 import java.util.Collections;
 import java.util.Comparator;
 import java.util.List;
@@ -43,8 +43,8 @@ import java.util.List;
 public final class GetExpectedSellOffers extends AbstractAPIRequestHandler {
 
     private final Comparator<Transaction> rateComparator = (o1, o2) -> {
-        MonetarySystemPublishExchangeOffer a1 = (MonetarySystemPublishExchangeOffer) o1.getAttachment();
-        MonetarySystemPublishExchangeOffer a2 = (MonetarySystemPublishExchangeOffer) o2.getAttachment();
+        MSPublishExchangeOfferAttachment a1 = (MSPublishExchangeOfferAttachment) o1.getAttachment();
+        MSPublishExchangeOfferAttachment a2 = (MSPublishExchangeOfferAttachment) o2.getAttachment();
         return Long.compare(a1.getSellRateATM(), a2.getSellRateATM());
     };
 
@@ -66,7 +66,7 @@ public final class GetExpectedSellOffers extends AbstractAPIRequestHandler {
             if (accountId != 0 && transaction.getSenderId() != accountId) {
                 return false;
             }
-            MonetarySystemPublishExchangeOffer attachment = (MonetarySystemPublishExchangeOffer) transaction.getAttachment();
+            MSPublishExchangeOfferAttachment attachment = (MSPublishExchangeOfferAttachment) transaction.getAttachment();
             return currencyId == 0 || attachment.getCurrencyId() == currencyId;
         };
 

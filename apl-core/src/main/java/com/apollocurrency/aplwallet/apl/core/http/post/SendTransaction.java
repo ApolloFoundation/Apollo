@@ -20,8 +20,8 @@
 
 package com.apollocurrency.aplwallet.apl.core.http.post;
 
-import com.apollocurrency.aplwallet.apl.core.blockchain.Transaction;
-import com.apollocurrency.aplwallet.apl.core.blockchain.UnconfirmedTransaction;
+import com.apollocurrency.aplwallet.apl.core.model.Transaction;
+import com.apollocurrency.aplwallet.apl.core.model.UnconfirmedTransaction;
 import com.apollocurrency.aplwallet.apl.core.http.APITag;
 import com.apollocurrency.aplwallet.apl.core.http.AbstractAPIRequestHandler;
 import com.apollocurrency.aplwallet.apl.core.http.HttpParameterParserUtil;
@@ -32,9 +32,9 @@ import com.apollocurrency.aplwallet.apl.crypto.Convert;
 import org.json.simple.JSONObject;
 import org.json.simple.JSONStreamAware;
 
-import javax.enterprise.inject.Vetoed;
-import javax.enterprise.inject.spi.CDI;
-import javax.servlet.http.HttpServletRequest;
+import jakarta.enterprise.inject.Vetoed;
+import jakarta.enterprise.inject.spi.CDI;
+import jakarta.servlet.http.HttpServletRequest;
 import java.util.Collections;
 
 /**

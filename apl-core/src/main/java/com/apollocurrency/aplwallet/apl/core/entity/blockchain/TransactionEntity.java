@@ -4,6 +4,7 @@
 
 package com.apollocurrency.aplwallet.apl.core.entity.blockchain;
 
+import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
 
@@ -12,6 +13,7 @@ import lombok.Data;
  */
 @Data
 @Builder
+@AllArgsConstructor
 public class TransactionEntity {
     private long dbId;
     private long id;
@@ -45,19 +47,9 @@ public class TransactionEntity {
     private boolean hasPrunableMessage;
     private boolean hasPrunableEencryptedMessage;
     private boolean hasPrunableAttachment;
+    private String errorMessage;
 
     /* Serialized attachment and all appendages */
     private byte[] attachmentBytes;
-
-    /**
-     * Transaction V3 properties
-     */
-    /*
-    private String chainId;
-    private BigInteger nonce;
-    private BigInteger amount;
-    private BigInteger fuelLimit;
-    private BigInteger fuelPrice;
-     */
 
 }

@@ -1,15 +1,20 @@
 /*
- * Copyright © 2018 Apollo Foundation
+ * Copyright © 2018-2021 Apollo Foundation
  */
 
 package com.apollocurrency.aplwallet.apl.core.chainid;
 
+import com.apollocurrency.aplwallet.apl.core.transaction.TransactionTypes;
 import com.apollocurrency.aplwallet.apl.util.Constants;
 import com.apollocurrency.aplwallet.apl.util.env.config.BlockchainProperties;
 import com.apollocurrency.aplwallet.apl.util.env.config.ConsensusSettings;
+import com.apollocurrency.aplwallet.apl.util.env.config.FeeRate;
 
+import java.math.BigDecimal;
 import java.math.BigInteger;
+import java.util.Arrays;
 import java.util.Objects;
+import java.util.Optional;
 
 public class HeightConfig {
     private final BlockchainProperties bp;
@@ -130,8 +135,56 @@ public class HeightConfig {
         return bp.getShardingSettings().getFrequency();
     }
 
-    public short getFeeRate(byte type, byte subType) {
-        return bp.getTransactionFeeSettings().getRate(type, subType);
+    public byte[] getSmcMasterAccountPublicKey() {
+        return bp.getSmcSettings().getMasterAccountPK();
+    }
+
+    public BigInteger getSmcFuelLimitMinValue() {
+        return BigInteger.valueOf(bp.getSmcSettings().getFuelLimitMinValue());
+    }
+
+    public BigInteger getSmcFuelLimitMaxValue() {
+        return BigInteger.valueOf(bp.getSmcSettings().getFuelLimitMaxValue());
+    }
+
+    public BigInteger getSmcFuelPriceMinValue() {
+        return BigInteger.valueOf(bp.getSmcSettings().getFuelPriceMinValue());
+    }
+
+    public BigInteger getSmcFuelPriceMaxValue() {
+        return BigInteger.valueOf(bp.getSmcSettings().getFuelPriceMaxValue());
+    }
+
+    public int getFeeRate(TransactionTypes.TransactionTypeSpec spec) {
+        Optional<FeeRate> rate = bp.getTransactionFeeSettings().getFeeRate(spec.getType(), spec.getSubtype());
+        return rate.map(FeeRate::getRate).orElse(FeeRate.DEFAULT_RATE);
+    }
+
+    public BigDecimal getBaseFee(TransactionTypes.TransactionTypeSpec spec, BigDecimal defaultRate) {
+        Objects.requireNonNull(spec);
+        Objects.requireNonNull(defaultRate);
+        Optional<FeeRate> rate = bp.getTransactionFeeSettings().getFeeRate(spec.getType(), spec.getSubtype());
+        return rate.flatMap(FeeRate::getBaseFee).orElse(defaultRate);
+    }
+
+    public BigDecimal getSizeBasedFee(TransactionTypes.TransactionTypeSpec spec, BigDecimal defaultRate) {
+        Objects.requireNonNull(spec);
+        Objects.requireNonNull(defaultRate);
+        Optional<FeeRate> rate = bp.getTransactionFeeSettings().getFeeRate(spec.getType(), spec.getSubtype());
+        return rate.flatMap(FeeRate::getSizeFee).orElse(defaultRate);
+    }
+
+    public BigDecimal[] getAdditionalFees(TransactionTypes.TransactionTypeSpec spec, BigDecimal[] defaultRate) {
+        Objects.requireNonNull(spec);
+        Objects.requireNonNull(defaultRate);
+        Optional<FeeRate> rate = bp.getTransactionFeeSettings().getFeeRate(spec.getType(), spec.getSubtype());
+        if (rate.isEmpty()) {
+            return defaultRate;
+        }
+        BigDecimal[] rates = Arrays.copyOf(defaultRate, defaultRate.length);
+        BigDecimal[] additionalFees = rate.get().getAdditionalFees();
+        System.arraycopy(additionalFees, 0, rates, 0, Math.min(rates.length, additionalFees.length));
+        return rates;
     }
 
     @Override

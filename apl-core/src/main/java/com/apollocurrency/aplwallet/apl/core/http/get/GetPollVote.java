@@ -31,8 +31,8 @@ import com.apollocurrency.aplwallet.apl.util.JSON;
 import com.apollocurrency.aplwallet.apl.util.exception.AplException;
 import org.json.simple.JSONStreamAware;
 
-import javax.enterprise.inject.Vetoed;
-import javax.servlet.http.HttpServletRequest;
+import jakarta.enterprise.inject.Vetoed;
+import jakarta.servlet.http.HttpServletRequest;
 
 @Vetoed
 public class GetPollVote extends AbstractAPIRequestHandler {

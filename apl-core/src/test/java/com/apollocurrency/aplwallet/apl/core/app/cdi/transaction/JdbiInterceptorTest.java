@@ -10,7 +10,7 @@ import com.apollocurrency.aplwallet.apl.core.dao.DbContainerBaseTest;
 import com.apollocurrency.aplwallet.apl.extension.DbExtension;
 import com.apollocurrency.aplwallet.apl.util.cdi.Transactional;
 import com.apollocurrency.aplwallet.apl.util.cdi.transaction.JdbiHandleFactory;
-import com.apollocurrency.aplwallet.apl.util.cdi.transaction.JdbiTransactionalInterceptor;
+import com.apollocurrency.aplwallet.apl.core.db.JdbiTransactionalInterceptor;
 import lombok.extern.slf4j.Slf4j;
 import org.jboss.weld.environment.se.Weld;
 import org.jboss.weld.junit.AbstractWeldInitiator;
@@ -18,15 +18,16 @@ import org.jboss.weld.junit.MockBean;
 import org.jboss.weld.junit5.EnableWeld;
 import org.jboss.weld.junit5.WeldInitiator;
 import org.jboss.weld.junit5.WeldSetup;
+import org.jdbi.v3.core.Jdbi;
 import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.RegisterExtension;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import javax.enterprise.inject.spi.CDI;
-import javax.inject.Inject;
-import javax.inject.Singleton;
+import jakarta.enterprise.inject.spi.CDI;
+import jakarta.inject.Inject;
+import jakarta.inject.Singleton;
 
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.mockito.Mockito.doReturn;
@@ -44,7 +45,7 @@ public class JdbiInterceptorTest extends DbContainerBaseTest {
     @RegisterExtension
     static DbExtension extension = new DbExtension(mariaDBContainer);
 
-    JdbiHandleFactory factory = spy(new JdbiHandleFactory());
+    JdbiHandleFactory factory = spy(new JdbiHandleFactory(Jdbi.create(extension.getDatabaseManager().getDataSource().original())));
     private Weld weld = AbstractWeldInitiator.createWeld();
     @WeldSetup
     public WeldInitiator weldInitiator = WeldInitiator.from(weld)
@@ -53,7 +54,6 @@ public class JdbiInterceptorTest extends DbContainerBaseTest {
     private TransactionTestClass testClass;
 
     {
-        factory.setJdbi(extension.getDatabaseManager().getJdbi());
         weld.addInterceptor(JdbiTransactionalInterceptor.class);
 
         weld.addBeanClasses(JdbiTransactionalInterceptor.class, TransactionTestClass.class, AnotherTransactionTestClass.class);

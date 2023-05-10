@@ -8,7 +8,7 @@ import com.apollocurrency.aplwallet.api.v2.model.AccountReqSendMoney;
 import com.apollocurrency.aplwallet.api.v2.model.AccountReqTest;
 import com.apollocurrency.aplwallet.api.v2.model.CreateChildAccountResp;
 import com.apollocurrency.aplwallet.apl.core.chainid.BlockchainConfig;
-import com.apollocurrency.aplwallet.apl.core.blockchain.Transaction;
+import com.apollocurrency.aplwallet.apl.core.model.Transaction;
 import com.apollocurrency.aplwallet.apl.core.entity.state.account.Account;
 import com.apollocurrency.aplwallet.apl.core.entity.state.account.AddressScope;
 import com.apollocurrency.aplwallet.apl.util.io.PayloadResult;
@@ -28,17 +28,16 @@ import com.apollocurrency.aplwallet.apl.crypto.Convert;
 import com.apollocurrency.aplwallet.apl.crypto.Crypto;
 import com.apollocurrency.aplwallet.apl.util.exception.ApiErrors;
 
-import javax.enterprise.context.RequestScoped;
-import javax.inject.Inject;
-import javax.ws.rs.core.Response;
-import javax.ws.rs.core.SecurityContext;
+import jakarta.enterprise.context.RequestScoped;
+import jakarta.inject.Inject;
+import jakarta.ws.rs.core.Response;
+import jakarta.ws.rs.core.SecurityContext;
 import java.util.Objects;
 import java.util.stream.Collectors;
 
 @RequestScoped
 public class AccountApiServiceImpl implements AccountApiService {
 
-    private final BlockchainConfig blockchainConfig;
     private final AccountService accountService;
     private final AccountInfoMapper accountInfoMapper;
     private final TransactionCreator transactionCreator;
@@ -49,7 +48,6 @@ public class AccountApiServiceImpl implements AccountApiService {
         this.accountService = Objects.requireNonNull(accountService);
         this.accountInfoMapper = Objects.requireNonNull(accountInfoMapper);
         this.transactionCreator = Objects.requireNonNull(transactionCreator);
-        this.blockchainConfig = Objects.requireNonNull(blockchainConfig);
         this.txBContext = TxBContext.newInstance(blockchainConfig.getChain());
     }
 

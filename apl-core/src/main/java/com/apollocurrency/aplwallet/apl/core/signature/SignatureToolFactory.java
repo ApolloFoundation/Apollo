@@ -1,5 +1,5 @@
 /*
- * Copyright (c)  2018-2020. Apollo Foundation.
+ * Copyright (c)  2020-2021. Apollo Foundation.
  */
 
 package com.apollocurrency.aplwallet.apl.core.signature;
@@ -13,6 +13,7 @@ import lombok.extern.slf4j.Slf4j;
 
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
@@ -25,14 +26,21 @@ import java.util.Set;
 @NoArgsConstructor(access = AccessLevel.PACKAGE)
 public class SignatureToolFactory {
 
+    //TODO: read from properties, example: "elliptic-curve=Curve25519", "pk-size=32"
+    private static final List<String> DEFAULT_MULTISIG_PARAMS = List.of();
+
+    private static final SignatureVerifier multiSigValidator = new MultiSigVerifierImpl(DEFAULT_MULTISIG_PARAMS);
+
     private static final SignatureVerifier[] validators = new SignatureVerifier[]
-        {new SignatureVerifierV1(), new MultiSigVerifierImpl()};
+        {new SignatureVerifierV1(), multiSigValidator, multiSigValidator};
 
     private static final SignatureParser[] parsers = new SignatureParser[]
         {new SigData.Parser(), new MultiSigData.Parser()};
 
-    private static final DocumentSigner[] docSigners = new DocumentSigner[]
-        {new DocumentSignerV1(), new MultiSigSigner()};
+    private static final DocumentSigner[] docSigners = new DocumentSigner[]{
+        new DocumentSignerV1()
+        , new MultiSigSigner(parsers[1], DEFAULT_MULTISIG_PARAMS)
+    };
 
     public static Signature createSignature(byte[] signature) {
         return new SigData(Objects.requireNonNull(signature));
@@ -112,6 +120,11 @@ public class SignatureToolFactory {
     }
 
     static class MultiSigVerifierImpl implements SignatureVerifier {
+        private final List<String> params;
+
+        public MultiSigVerifierImpl(List<String> params) {
+            this.params = params;
+        }
 
         @Override
         public boolean verify(byte[] document, Signature signature, Credential credential) {
@@ -132,6 +145,7 @@ public class SignatureToolFactory {
                             log.debug("Pk already verified, pk={}", Convert.toHexString(pk));
                         }
                     } else {
+                        //TODO: use params in cryptography routine
                         if (Crypto.verify(multiSigData.getSignature(pk), document, pk)) {
                             verifiedPks.add(pk);
                         }
@@ -174,6 +188,14 @@ public class SignatureToolFactory {
     }
 
     static class MultiSigSigner implements DocumentSigner {
+        private final SignatureParser parser;
+        private final List<String> params;
+
+        public MultiSigSigner(SignatureParser parser, List<String> params) {
+            this.parser = parser;
+            this.params = params;
+        }
+
         @Override
         public Signature sign(byte[] document, Credential credential) {
             Objects.requireNonNull(document);
@@ -185,10 +207,11 @@ public class SignatureToolFactory {
             for (byte[] seed : multiSigCredential.getKeys()) {
                 signatures.put(
                     Crypto.getPublicKey(seed),
+                    //TODO: use params in cryptography routine
                     Crypto.sign(document, seed)
                 );
             }
-            MultiSigData multiSigData = new MultiSigData(signatures.size());
+            MultiSigData multiSigData = new MultiSigData(signatures.size(), params, parser);
             signatures.forEach(multiSigData::addSignature);
             if (log.isTraceEnabled()) {
                 log.trace("#MULTI_SIG# sign multi-signature: {}", multiSigData.getHexString());

@@ -35,12 +35,12 @@ import org.json.simple.JSONObject;
 import org.json.simple.JSONStreamAware;
 import org.slf4j.Logger;
 
-import javax.enterprise.inject.spi.CDI;
-import javax.inject.Inject;
-import javax.servlet.ServletException;
-import javax.servlet.http.HttpServlet;
-import javax.servlet.http.HttpServletRequest;
-import javax.servlet.http.HttpServletResponse;
+import jakarta.enterprise.inject.spi.CDI;
+import jakarta.inject.Inject;
+import jakarta.servlet.ServletException;
+import jakarta.servlet.http.HttpServlet;
+import jakarta.servlet.http.HttpServletRequest;
+import jakarta.servlet.http.HttpServletResponse;
 import java.io.IOException;
 import java.io.Writer;
 import java.util.Collections;
@@ -194,11 +194,6 @@ public final class APIServlet extends HttpServlet {
                 globalSync.readLock();
             }
             try {
-//                TransactionalDataSource dataSource = databaseManager.getDataSource();
-                try {
-//                    if (apiRequestHandler.startDbTransaction()) {
-//                        dataSource.begin();
-//                    }
                     if (requireBlockId != 0 && !blockchain.hasBlock(requireBlockId)) {
                         response = REQUIRED_BLOCK_NOT_FOUND;
                         return;
@@ -212,11 +207,6 @@ public final class APIServlet extends HttpServlet {
                     if (requireLastBlockId == 0 && requireBlockId != 0 && response instanceof JSONObject) {
                         ((JSONObject) response).put("lastBlock", blockchain.getLastBlock().getStringId());
                     }
-                } finally {
-//                    if (apiRequestHandler.startDbTransaction()) {
-//                        dataSource.commit(true);
-//                    }
-                }
             } finally {
                 if (requireBlockId != 0 || requireLastBlockId != 0) {
                     globalSync.readUnlock();

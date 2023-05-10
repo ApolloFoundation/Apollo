@@ -20,8 +20,8 @@
 
 package com.apollocurrency.aplwallet.apl.core.peer.endpoint;
 
-import com.apollocurrency.aplwallet.apl.core.blockchain.Transaction;
-import com.apollocurrency.aplwallet.apl.core.blockchain.UnconfirmedTransaction;
+import com.apollocurrency.aplwallet.apl.core.model.Transaction;
+import com.apollocurrency.aplwallet.apl.core.model.UnconfirmedTransaction;
 import com.apollocurrency.aplwallet.apl.core.peer.Peer;
 import com.apollocurrency.aplwallet.apl.core.transaction.TransactionJsonSerializer;
 import com.apollocurrency.aplwallet.apl.util.JSON;
@@ -30,8 +30,8 @@ import org.json.simple.JSONArray;
 import org.json.simple.JSONObject;
 import org.json.simple.JSONStreamAware;
 
-import javax.enterprise.inject.spi.CDI;
-import javax.inject.Singleton;
+import jakarta.enterprise.inject.spi.CDI;
+import jakarta.inject.Singleton;
 import java.util.List;
 import java.util.Set;
 @Slf4j
@@ -51,7 +51,7 @@ public final class GetUnconfirmedTransactions extends PeerRequestHandler {
             return JSON.emptyJSON;
         }
 
-        Set<UnconfirmedTransaction> transactionSet = lookupMemPool().getCachedUnconfirmedTransactions(exclude);
+        Set<UnconfirmedTransaction> transactionSet = lookupMemPool().getCached(exclude);
         log.trace("Return {} txs to peer {}", transactionSet.size(), peer.getHost());
         JSONArray transactionsData = new JSONArray();
         for (Transaction transaction : transactionSet) {

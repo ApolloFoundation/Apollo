@@ -5,7 +5,9 @@
 package com.apollocurrency.aplwallet.apl.core.service.blockchain;
 
 import com.apollocurrency.aplwallet.api.v2.model.TxReceipt;
-import com.apollocurrency.aplwallet.apl.core.blockchain.Transaction;
+import com.apollocurrency.aplwallet.apl.core.entity.appdata.ChatInfo;
+import com.apollocurrency.aplwallet.apl.core.model.Sort;
+import com.apollocurrency.aplwallet.apl.core.model.Transaction;
 import com.apollocurrency.aplwallet.apl.core.model.TransactionDbInfo;
 import com.apollocurrency.aplwallet.apl.core.transaction.PrunableTransaction;
 
@@ -41,25 +43,17 @@ public interface TransactionService {
 
     void saveTransactions(List<Transaction> transactions);
 
+    void updateTransaction(Transaction transaction);
+
     int getTransactionCount();
 
     Long getTransactionCount(int from, int to);
 
-    List<Transaction> getTransactionsCrossShardingByAccount(long accountId, int currentBlockChainHeight, int numberOfConfirmations, byte type, byte subtype,
-                                                            int blockTimestamp, boolean withMessage, boolean phasedOnly, boolean nonPhasedOnly,
-                                                            int from, int to, boolean includeExpiredPrunable, boolean executedOnly, boolean includePrivate);
-
-    List<Transaction> getTransactionsByFilter(long accountId, int numberOfConfirmations, byte type, byte subtype,
-                                              int blockTimestamp, boolean withMessage, boolean phasedOnly, boolean nonPhasedOnly,
-                                              int from, int to, boolean includeExpiredPrunable, boolean executedOnly, boolean includePrivate,
-                                              int height, int prunableExpiration);
-
-    int getTransactionCountByFilter(long accountId, int numberOfConfirmations, byte type, byte subtype,
-                                    int blockTimestamp, boolean withMessage, boolean phasedOnly, boolean nonPhasedOnly,
-                                    boolean includeExpiredPrunable, boolean executedOnly, boolean includePrivate,
-                                    int height, int prunableExpiration);
+    int getTransactionCountByFilter(long accountId, byte type, byte subtype, int blockTimestamp, boolean withMessage, boolean phasedOnly, boolean nonPhasedOnly, boolean executedOnly, boolean includePrivate, int height, int prunableExpiration, boolean failedOnly, boolean nonFailedOnly);
 
     List<Transaction> getTransactionsChatHistory(long account1, long account2, int from, int to);
+
+    List<ChatInfo> getChatAccounts(long accountId, int from, int to);
 
     List<Transaction> getTransactions(byte type, byte subtype, int from, int to);
 
@@ -81,4 +75,7 @@ public interface TransactionService {
                                     String sortOrder,
                                     int from, int to);
 
+    List<Transaction> getTransactionsCrossShardingByAccount(long accountId, int currentBlockChainHeight, int numberOfConfirmations, byte type, byte subtype,
+                                                            int blockTimestamp, boolean withMessage, boolean phasedOnly, boolean nonPhasedOnly,
+                                                            int from, int to, boolean includeExpiredPrunable, boolean executedOnly, boolean includePrivate, boolean failedOnly, boolean nonFailedOnly, Sort sort);
 }

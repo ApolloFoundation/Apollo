@@ -6,8 +6,8 @@ package com.apollocurrency.aplwallet.apl.core.app.observer;
 
 import com.apollocurrency.aplwallet.apl.core.app.observer.events.BlockEvent;
 import com.apollocurrency.aplwallet.apl.core.app.observer.events.BlockEventType;
-import com.apollocurrency.aplwallet.apl.core.db.DbIterator;
-import com.apollocurrency.aplwallet.apl.core.blockchain.Block;
+import com.apollocurrency.aplwallet.apl.util.db.DbIterator;
+import com.apollocurrency.aplwallet.apl.core.model.Block;
 import com.apollocurrency.aplwallet.apl.core.entity.state.account.Account;
 import com.apollocurrency.aplwallet.apl.core.entity.state.account.LedgerEvent;
 import com.apollocurrency.aplwallet.apl.core.entity.state.dgs.DGSGoods;
@@ -16,9 +16,9 @@ import com.apollocurrency.aplwallet.apl.core.service.state.DGSService;
 import com.apollocurrency.aplwallet.apl.core.service.state.account.AccountService;
 import lombok.extern.slf4j.Slf4j;
 
-import javax.enterprise.event.Observes;
-import javax.inject.Inject;
-import javax.inject.Singleton;
+import jakarta.enterprise.event.Observes;
+import jakarta.inject.Inject;
+import jakarta.inject.Singleton;
 import java.util.ArrayList;
 import java.util.List;
 
