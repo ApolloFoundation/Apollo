@@ -133,7 +133,7 @@ public class Apollo {
     }
 
 /**
- * Merge command line argumentsm environment variables and properties from config files
+ * Merge command line arguments environment variables and properties from config files
  * into one set of properties. Precedence: command line, environment vars, configs.
  * It means that command line can overwrite env vars and configs
  * @param args parsed command line arguments
@@ -265,7 +265,7 @@ public class Apollo {
             configVerifier = ConfigVerifier.create(configDirProvider.getConfigName()+"/apl-blockchain.properties");
             applicationProperties = configVerifier.parse(applicationProperties, Constants.VERSION);
         } catch (IOException ex) {
-            System.err.println("WARNING! Can not verify config because can not read/parse default config fropm resources!");
+            System.err.println("WARNING! Can not verify config because can not read/parse default config from resources!");
         }
 
 
