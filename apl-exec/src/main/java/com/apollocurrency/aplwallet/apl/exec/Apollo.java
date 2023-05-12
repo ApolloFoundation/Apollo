@@ -144,33 +144,33 @@ public class Apollo {
     public static Properties merge(CmdLineArgs args, EnvironmentVariables vars, Properties props){
 
         //{"--log-dir", "-l"}
-        String logDir = StringUtils.byPrecednce(args.logDir, vars.logDir, props.getProperty("apl.customLogDir"));
+        String logDir = StringUtils.byPrecedence(args.logDir, vars.logDir, props.getProperty("apl.customLogDir"));
         props.setProperty("apl.customLogDir",logDir);
         //{"--db-dir"}
-        String dbDir = StringUtils.byPrecednce(args.dbDir, vars.dbDir, props.getProperty("apl.customDbDir"));
+        String dbDir = StringUtils.byPrecedence(args.dbDir, vars.dbDir, props.getProperty("apl.customDbDir"));
         props.setProperty("apl.customDbDir", dbDir);
         // {"--vault-key-dir"}
-        String vaultKeystoreDir = StringUtils.byPrecednce(args.vaultKeystoreDir, vars.vaultKeystoreDir, props.getProperty("apl.customVaultKeystoreDir"));
+        String vaultKeystoreDir = StringUtils.byPrecedence(args.vaultKeystoreDir, vars.vaultKeystoreDir, props.getProperty("apl.customVaultKeystoreDir"));
         props.setProperty("apl.customVaultKeystoreDir", vaultKeystoreDir);
         // {"--dex-key-dir"}
-        String dexKeystoreDir = StringUtils.byPrecednce(args.dexKeystoreDir, vars.dexKeystoreDir, props.getProperty("apl.customDexStorageDir"));
+        String dexKeystoreDir = StringUtils.byPrecedence(args.dexKeystoreDir, vars.dexKeystoreDir, props.getProperty("apl.customDexStorageDir"));
         props.setProperty("apl.customDexStorageDir", dexKeystoreDir);
         // {"--no-shard-import"}
         String nsi = args.noShardImport ? "": String.valueOf(args.noShardImport);
-        String noShardImport = StringUtils.byPrecednce(nsi, props.getProperty("apl.noshardimport"));
+        String noShardImport = StringUtils.byPrecedence(nsi, props.getProperty("apl.noshardimport"));
         props.setProperty("apl.noshardimport",noShardImport);
         // {"--no-shard-create"}
         String nsc = args.noShardCreate ? "": String.valueOf(args.noShardCreate);
-        String  noShardCreate = StringUtils.byPrecednce(nsc, props.getProperty("apl.noshardcreate"));
+        String  noShardCreate = StringUtils.byPrecedence(nsc, props.getProperty("apl.noshardcreate"));
         props.setProperty("apl.noshardcreate",noShardCreate);
         // {"--2fa-dir"}
-        String twoFactorAuthDir = StringUtils.byPrecednce(args.twoFactorAuthDir,vars.twoFactorAuthDir, props.getProperty("apl.dir2FA"));
+        String twoFactorAuthDir = StringUtils.byPrecedence(args.twoFactorAuthDir,vars.twoFactorAuthDir, props.getProperty("apl.dir2FA"));
         props.setProperty("apl.dir2FA",twoFactorAuthDir);
         // {"--dexp-dir"}
-        String  dataExportDir  = StringUtils.byPrecednce(args.dataExportDir, vars.dataExportDir, props.getProperty("apl.customDataExportDir"));
+        String  dataExportDir  = StringUtils.byPrecedence(args.dataExportDir, vars.dataExportDir, props.getProperty("apl.customDataExportDir"));
         props.setProperty("apl.customDataExportDir",dataExportDir);
         // {"--pid-file"}
-        String pidFile =  StringUtils.byPrecednce(args.pidFile, vars.pidFile, props.getProperty("apl.customPidFile"));
+        String pidFile =  StringUtils.byPrecedence(args.pidFile, vars.pidFile, props.getProperty("apl.customPidFile"));
         props.getProperty("apl.customPidFile", pidFile);
         return props;
     }
@@ -262,7 +262,7 @@ public class Apollo {
 
         try {
             //verify and complete configuration
-            configVerifier = ConfigVerifier.create(configDirProvider.getConfigName()+"/apl-blockchain.properties");
+            configVerifier = ConfigVerifier.create(configDirProvider.getConfigName() + File.separator + "apl-blockchain.properties");
             applicationProperties = configVerifier.parse(applicationProperties, Constants.VERSION);
         } catch (IOException ex) {
             System.err.println("WARNING! Can not verify config because can not read/parse default config from resources!");
