@@ -32,6 +32,7 @@ import com.apollocurrency.aplwallet.apl.util.injectable.PropertiesHolder;
 import lombok.extern.slf4j.Slf4j;
 import org.jboss.weld.junit.MockBean;
 import org.jboss.weld.junit5.EnableWeld;
+import org.jboss.weld.junit5.ExplicitParamInjection;
 import org.jboss.weld.junit5.WeldInitiator;
 import org.jboss.weld.junit5.WeldSetup;
 import org.junit.jupiter.api.AfterEach;
@@ -64,6 +65,7 @@ import static org.mockito.Mockito.when;
 @Slf4j
 @Tag("slow")
 @EnableWeld
+@ExplicitParamInjection
 class SmcContractTableTest extends DbContainerBaseTest {
 
     @RegisterExtension

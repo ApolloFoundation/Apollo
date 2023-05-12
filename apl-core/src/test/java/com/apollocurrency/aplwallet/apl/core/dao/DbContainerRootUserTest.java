@@ -7,13 +7,13 @@ import org.testcontainers.containers.output.Slf4jLogConsumer;
 import org.testcontainers.junit.jupiter.Container;
 
 @Slf4j
-public abstract class DBContainerRootTest {
+public abstract class DbContainerRootUserTest {
 
     @Container
     public static final GenericContainer mariaDBContainer;
 
     static {
-        mariaDBContainer = new MariaDBContainer("mariadb:10.5")
+        mariaDBContainer = new MariaDBContainer(MariaDBConfigs.DOCKER_IMAGE_NAME_VERSION)
             .withDatabaseName("testdb")
             .withUsername("root")
             .withPassword("rootpass")

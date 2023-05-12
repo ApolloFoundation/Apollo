@@ -1,7 +1,6 @@
 /*
  * Copyright © 2018 Apollo Foundation
  */
-
 package com.apollocurrency.aplwallet.apl.util.env.dirprovider;
 
 import com.apollocurrency.aplwallet.apl.util.StringUtils;
@@ -9,27 +8,50 @@ import com.apollocurrency.aplwallet.apl.util.StringUtils;
 import java.nio.file.InvalidPathException;
 import java.nio.file.Path;
 import java.nio.file.Paths;
-
+import java.util.Properties;
+import lombok.Getter;
 
 public class PredefinedDirLocations {
-    private Path dbDir;
-    private Path logsDir;
-    private Path vaultKeystoreDir;
-    private Path dexStorageDir;
-    private Path pidFilePath;
-    private Path twoFactorAuthDir;
-    private Path dataExportDir; // path to keep exported CSV files
 
-    public PredefinedDirLocations() {
-        this(null, null, null, null, null, null, null);
+    @Getter
+    private final Path dbDir;
+    @Getter
+    private final Path logsDir;
+    @Getter
+    private final Path vaultKeystoreDir;
+    @Getter
+    private final Path dexKeystoreDir;
+    @Getter
+    private final Path pidFilePath;
+    @Getter
+    private final Path twoFactorAuthDir;
+    @Getter
+    private final Path dataExportDir; // path to keep exported CSV files
+
+    public PredefinedDirLocations(Properties properties) {
+        this(
+                (String) properties.get("apl.customDbDir"),
+                (String) properties.get("apl.customLogDir"),
+                (String) properties.get("apl.customVaultKeystoreDir"),
+                (String) properties.get("apl.customPidFile"),
+                (String) properties.get("apl.dir2FA"),
+                (String) properties.get("apl.customDataExportDir"),
+                (String) properties.get("apl.customDexStorageDir")
+        );
     }
 
-    public PredefinedDirLocations(String dbDir, String logsDir, String vaultKeystoreDir, String pidFilePath,
-                                  String twoFactorAuthDir, String dataExportDir, String dexStorage) {
+    public PredefinedDirLocations(String dbDir,
+            String logsDir,
+            String vaultKeystoreDir,
+            String pidFilePath,
+            String twoFactorAuthDir,
+            String dataExportDir,
+            String dexStorage) 
+    {
         this.dbDir = getPath(dbDir);
         this.logsDir = getPath(logsDir);
         this.vaultKeystoreDir = getPath(vaultKeystoreDir);
-        this.dexStorageDir = getPath(dexStorage);
+        this.dexKeystoreDir = getPath(dexStorage);
 
         this.pidFilePath = getPath(pidFilePath);
         this.twoFactorAuthDir = getPath(twoFactorAuthDir);
@@ -46,31 +68,4 @@ public class PredefinedDirLocations {
         return null;
     }
 
-    public Path getDbDir() {
-        return dbDir;
-    }
-
-    public Path getLogsDir() {
-        return logsDir;
-    }
-
-    public Path getVaultKeystoreDir() {
-        return vaultKeystoreDir;
-    }
-
-    public Path getPidFilePath() {
-        return pidFilePath;
-    }
-
-    public Path getTwoFactorAuthDir() {
-        return twoFactorAuthDir;
-    }
-
-    public Path getDataExportDir() {
-        return dataExportDir;
-    }
-
-    public Path getDexKeystoreDir() {
-        return dexStorageDir;
-    }
 }

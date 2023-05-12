@@ -5,7 +5,7 @@
 package com.apollocurrency.aplwallet.apl.core.dao.state.shuffling;
 
 import com.apollocurrency.aplwallet.apl.core.chainid.BlockchainConfig;
-import com.apollocurrency.aplwallet.apl.core.dao.DBContainerRootTest;
+import com.apollocurrency.aplwallet.apl.core.dao.DbContainerRootUserTest;
 import com.apollocurrency.aplwallet.apl.core.dao.state.keyfactory.LongKey;
 import com.apollocurrency.aplwallet.apl.data.DbTestData;
 import com.apollocurrency.aplwallet.apl.data.ShufflingTestData;
@@ -22,8 +22,9 @@ import jakarta.enterprise.event.Event;
 import static org.junit.jupiter.api.Assertions.assertArrayEquals;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.mockito.Mockito.mock;
+
 @Tag("slow")
-class ShufflingDataTableTest extends DBContainerRootTest {
+class ShufflingDataTableTest extends DbContainerRootUserTest {
     @RegisterExtension
     static DbExtension extension = new DbExtension(mariaDBContainer, DbTestData.getInMemDbProps(), "db/shuffling.sql", null);
 

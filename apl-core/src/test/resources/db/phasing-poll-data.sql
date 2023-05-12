@@ -1,4 +1,7 @@
 TRUNCATE TABLE transaction;
+-- Clean txs metadata to not interfere with real transactions in this script from previosly launched tests
+TRUNCATE TABLE transaction_shard_index;
+TRUNCATE TABLE block_index;
 TRUNCATE TABLE block;
 TRUNCATE TABLE phasing_poll;
 TRUNCATE TABLE phasing_poll_result;
@@ -6,6 +9,7 @@ TRUNCATE TABLE phasing_poll_voter;
 TRUNCATE TABLE phasing_vote;
 TRUNCATE TABLE phasing_poll_linked_transaction;
 TRUNCATE TABLE phasing_approval_tx;
+TRUNCATE TABLE transaction_shard_index;
 
 INSERT INTO block
 (DB_ID,         ID,                     HEIGHT,      VERSION,   `TIMESTAMP`,  PREVIOUS_BLOCK_ID,  TOTAL_AMOUNT,        TOTAL_FEE,   PAYLOAD_LENGTH,   PREVIOUS_BLOCK_HASH,                                                   CUMULATIVE_DIFFICULTY,  BASE_TARGET,    NEXT_BLOCK_ID,               GENERATION_SIGNATURE,                                                   BLOCK_SIGNATURE,                                                                                                                        PAYLOAD_HASH,                                                           GENERATOR_ID,       TIMEOUT) VALUES

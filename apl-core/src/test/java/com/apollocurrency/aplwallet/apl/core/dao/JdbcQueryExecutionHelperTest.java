@@ -20,7 +20,7 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 @Tag("slow")
-class JdbcQueryExecutionHelperTest extends DBContainerRootTest{
+class JdbcQueryExecutionHelperTest extends DbContainerRootUserTest {
 
     @RegisterExtension
     static DbExtension dbExtension = new DbExtension(mariaDBContainer);

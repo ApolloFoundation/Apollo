@@ -4,7 +4,7 @@
 
 package com.apollocurrency.aplwallet.apl.core.db;
 
-import com.apollocurrency.aplwallet.apl.core.dao.DBContainerRootTest;
+import com.apollocurrency.aplwallet.apl.core.dao.DbContainerRootUserTest;
 import com.apollocurrency.aplwallet.apl.core.shard.ShardManagement;
 import com.apollocurrency.aplwallet.apl.data.DbTestData;
 import com.apollocurrency.aplwallet.apl.db.updater.ShardAllScriptsDBUpdater;
@@ -57,7 +57,7 @@ import static org.mockito.Mockito.verify;
 @Slf4j
 @Tag("slow")
 @ExtendWith(MockitoExtension.class)
-class DatabaseManagerTest extends DBContainerRootTest {
+class DatabaseManagerTest extends DbContainerRootUserTest {
     private static PropertiesHolder propertiesHolder = new PropertiesHolder();
     private DbProperties baseDbProperties;
     private DatabaseManagerImpl databaseManager;
