@@ -1,26 +1,25 @@
 /*
- *  Copyright © 2018-2019 Apollo Foundation
+ *  Copyright © 2018-2021 Apollo Foundation
  */
 
 package com.apollocurrency.aplwallet.apl.core.service.state.account.impl;
 
+import com.apollocurrency.aplwallet.apl.core.app.GenesisAccounts;
 import com.apollocurrency.aplwallet.apl.core.app.GenesisImporter;
 import com.apollocurrency.aplwallet.apl.core.app.observer.events.AccountEventType;
 import com.apollocurrency.aplwallet.apl.core.app.observer.events.AccountLedgerEventBinding;
 import com.apollocurrency.aplwallet.apl.core.app.observer.events.AccountLedgerEventType;
-import com.apollocurrency.aplwallet.apl.core.blockchain.Block;
 import com.apollocurrency.aplwallet.apl.core.chainid.BlockchainConfig;
 import com.apollocurrency.aplwallet.apl.core.dao.state.account.AccountGuaranteedBalanceTable;
-import com.apollocurrency.aplwallet.apl.core.dao.state.account.AccountTable;
+import com.apollocurrency.aplwallet.apl.core.dao.state.account.AccountTableInterface;
 import com.apollocurrency.aplwallet.apl.core.dao.state.keyfactory.DbKey;
-import com.apollocurrency.aplwallet.apl.core.db.DbClause;
-import com.apollocurrency.aplwallet.apl.core.db.DbIterator;
 import com.apollocurrency.aplwallet.apl.core.entity.state.account.Account;
 import com.apollocurrency.aplwallet.apl.core.entity.state.account.LedgerEntry;
 import com.apollocurrency.aplwallet.apl.core.entity.state.account.LedgerEvent;
 import com.apollocurrency.aplwallet.apl.core.entity.state.account.LedgerHolding;
 import com.apollocurrency.aplwallet.apl.core.entity.state.account.PublicKey;
 import com.apollocurrency.aplwallet.apl.core.model.Balances;
+import com.apollocurrency.aplwallet.apl.core.model.Block;
 import com.apollocurrency.aplwallet.apl.core.service.blockchain.GlobalSync;
 import com.apollocurrency.aplwallet.apl.core.service.state.BlockChainInfoService;
 import com.apollocurrency.aplwallet.apl.core.service.state.account.AccountPublicKeyService;
@@ -30,12 +29,14 @@ import com.apollocurrency.aplwallet.apl.util.Constants;
 import com.apollocurrency.aplwallet.apl.util.ThreadUtils;
 import com.apollocurrency.aplwallet.apl.util.annotation.FeeMarker;
 import com.apollocurrency.aplwallet.apl.util.annotation.TransactionFee;
+import com.apollocurrency.aplwallet.apl.util.db.DbClause;
+import com.apollocurrency.aplwallet.apl.util.db.DbIterator;
 import com.google.common.base.Preconditions;
 import lombok.extern.slf4j.Slf4j;
 
-import javax.enterprise.event.Event;
-import javax.inject.Inject;
-import javax.inject.Singleton;
+import jakarta.enterprise.event.Event;
+import jakarta.inject.Inject;
+import jakarta.inject.Singleton;
 import java.sql.SQLException;
 import java.util.Arrays;
 import java.util.List;
@@ -57,7 +58,7 @@ public class AccountServiceImpl implements AccountService {
     public static final int EFFECTIVE_BALANCE_CONFIRMATIONS = 1440;
     public static final Set<Integer> BLOCK_HEIGHTS = Set.of(6851525, 6851444, 6997642);
 
-    private final AccountTable accountTable;
+    private final AccountTableInterface accountTable;
     private final AccountGuaranteedBalanceTable accountGuaranteedBalanceTable;
     private final BlockchainConfig blockchainConfig;
     private final GlobalSync sync;
@@ -65,14 +66,15 @@ public class AccountServiceImpl implements AccountService {
     private final Event<Account> accountEvent;
     private final Event<LedgerEntry> logLedgerEvent;
     private final BlockChainInfoService blockChainInfoService;
+    private final GenesisAccounts genesisAccounts;
 
     @Inject
-    public AccountServiceImpl(AccountTable accountTable, BlockchainConfig blockchainConfig,
+    public AccountServiceImpl(AccountTableInterface accountTable, BlockchainConfig blockchainConfig,
                               GlobalSync sync,
                               AccountPublicKeyService accountPublicKeyService,
                               Event<Account> accountEvent, Event<LedgerEntry> logLedgerEvent,
                               AccountGuaranteedBalanceTable accountGuaranteedBalanceTable,
-                              BlockChainInfoService blockChainInfoService) {
+                              BlockChainInfoService blockChainInfoService, GenesisAccounts genesisAccounts) {
         this.accountTable = accountTable;
         this.blockchainConfig = blockchainConfig;
         this.sync = sync;
@@ -81,6 +83,7 @@ public class AccountServiceImpl implements AccountService {
         this.logLedgerEvent = logLedgerEvent;
         this.accountGuaranteedBalanceTable = accountGuaranteedBalanceTable;
         this.blockChainInfoService = blockChainInfoService;
+        this.genesisAccounts = genesisAccounts;
     }
 
     @Override
@@ -90,7 +93,7 @@ public class AccountServiceImpl implements AccountService {
 
     @Override
     public Account getAccount(long id) {
-        DbKey dbKey = AccountTable.newKey(id);
+        DbKey dbKey = AccountTableInterface.newKey(id);
         Account account = accountTable.get(dbKey);
 
         if (account == null) {
@@ -105,7 +108,7 @@ public class AccountServiceImpl implements AccountService {
 
     @Override
     public Account getAccount(long id, int height) {
-        DbKey dbKey = AccountTable.newKey(id);
+        DbKey dbKey = AccountTableInterface.newKey(id);
         Account account = getAccount(dbKey, height);
         if (account == null) {
             PublicKey publicKey = accountPublicKeyService.getByHeight(id, height);
@@ -173,7 +176,7 @@ public class AccountServiceImpl implements AccountService {
     @Override
     public Account createAccount(long id, byte[] publicKey) {
         Preconditions.checkArgument(id != 0, "Invalid accountId 0");
-        DbKey dbKey = AccountTable.newKey(id);
+        DbKey dbKey = AccountTableInterface.newKey(id);
         Account account = accountTable.get(dbKey);
         if (account == null) {
             account = new Account(id, dbKey);
@@ -219,7 +222,13 @@ public class AccountServiceImpl implements AccountService {
     public long getEffectiveBalanceAPL(Account account, int height, boolean lock) {
         if (height <= EFFECTIVE_BALANCE_CONFIRMATIONS) {
             Account genesisAccount = getAccount(account.getId(), 0);
-            return genesisAccount == null ? 0 : genesisAccount.getBalanceATM() / blockchainConfig.getOneAPL();
+            long genesisBalance;
+            if (genesisAccount == null || genesisAccount.getBalanceATM() == 0) {
+                genesisBalance = genesisAccounts.getGenesisBalance(account.getId());
+            } else {
+                genesisBalance = genesisAccount.getBalanceATM();
+            }
+            return genesisBalance / blockchainConfig.getOneAPL();
         }
         if (account.getPublicKey() == null) {
             account.setPublicKey(accountPublicKeyService.getPublicKey(account.getId()));
@@ -502,6 +511,10 @@ public class AccountServiceImpl implements AccountService {
     }
 
     //Delegated from AccountPublicKeyService
+    @Override
+    public PublicKey getPublicKey(long id) {
+        return accountPublicKeyService.getPublicKey(id);
+    }
 
     @Override
     public byte[] getPublicKeyByteArray(long id) {
@@ -511,7 +524,7 @@ public class AccountServiceImpl implements AccountService {
     @Override
     public Account addAccount(long id, boolean isGenesis) {
         Preconditions.checkArgument(id != 0, "Invalid accountId 0");
-        DbKey dbKey = AccountTable.newKey(id);
+        DbKey dbKey = AccountTableInterface.newKey(id);
         Account account = accountTable.get(dbKey);
         if (account == null) {
             account = new Account(id, dbKey);

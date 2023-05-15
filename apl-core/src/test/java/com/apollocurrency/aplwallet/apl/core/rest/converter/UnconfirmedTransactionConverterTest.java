@@ -5,8 +5,8 @@
 package com.apollocurrency.aplwallet.apl.core.rest.converter;
 
 import com.apollocurrency.aplwallet.api.dto.UnconfirmedTransactionDTO;
-import com.apollocurrency.aplwallet.apl.core.blockchain.Transaction;
-import com.apollocurrency.aplwallet.apl.core.blockchain.TransactionBuilderFactory;
+import com.apollocurrency.aplwallet.apl.core.model.Transaction;
+import com.apollocurrency.aplwallet.apl.core.service.blockchain.TransactionBuilderFactory;
 import com.apollocurrency.aplwallet.apl.core.chainid.BlockchainConfig;
 import com.apollocurrency.aplwallet.apl.core.transaction.TransactionJsonSerializerImpl;
 import com.apollocurrency.aplwallet.apl.core.transaction.messages.PrunableLoadingService;
@@ -15,6 +15,7 @@ import com.apollocurrency.aplwallet.apl.util.Convert2;
 import com.apollocurrency.aplwallet.apl.util.JSON;
 import com.apollocurrency.aplwallet.apl.util.env.config.Chain;
 import com.fasterxml.jackson.core.JsonProcessingException;
+import lombok.SneakyThrows;
 import org.json.simple.JSONObject;
 import org.json.simple.parser.ParseException;
 import org.junit.jupiter.api.AfterEach;
@@ -69,8 +70,9 @@ class UnconfirmedTransactionConverterTest {
         Convert2.init("APL", 0);
     }
 
+    @SneakyThrows
     @Test
-    void convert_private_tx() throws ParseException, JsonProcessingException {
+    void convert_private_tx() {
         transactionConverter.setPriv(false);
 
         UnconfirmedTransactionDTO actualTxDTO = transactionConverter.convert(expectedPrivTx);
@@ -82,10 +84,11 @@ class UnconfirmedTransactionConverterTest {
         assertEquals(expectedPrivTx, actualTx); // priv data synchronized into byte array
         JSONObject actualJson = jsonSerialier.toJson(actualTx);
         JSONAssert.assertNotEquals(anonymousPrivatePaymentTx, actualJson.toJSONString(), true); // different fullhash/id
-        }
+    }
 
+    @SneakyThrows
     @Test
-    void convertPrivatePaymentTx_with_priv() throws ParseException, JsonProcessingException {
+    void convertPrivatePaymentTx_with_priv() {
         transactionConverter.setPriv(true);
 
         UnconfirmedTransactionDTO actualTxDTO = transactionConverter.convert(expectedPrivTx);

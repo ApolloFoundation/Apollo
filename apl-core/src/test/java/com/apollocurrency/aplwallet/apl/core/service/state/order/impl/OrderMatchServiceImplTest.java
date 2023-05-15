@@ -1,14 +1,14 @@
 package com.apollocurrency.aplwallet.apl.core.service.state.order.impl;
 
-import com.apollocurrency.aplwallet.apl.core.blockchain.Transaction;
+import com.apollocurrency.aplwallet.apl.core.model.Transaction;
 import com.apollocurrency.aplwallet.apl.core.entity.state.order.AskOrder;
 import com.apollocurrency.aplwallet.apl.core.entity.state.order.BidOrder;
 import com.apollocurrency.aplwallet.apl.core.service.state.TradeService;
 import com.apollocurrency.aplwallet.apl.core.service.state.account.AccountAssetService;
 import com.apollocurrency.aplwallet.apl.core.service.state.account.AccountService;
 import com.apollocurrency.aplwallet.apl.core.service.state.order.OrderService;
-import com.apollocurrency.aplwallet.apl.core.transaction.messages.ColoredCoinsAskOrderPlacement;
-import com.apollocurrency.aplwallet.apl.core.transaction.messages.ColoredCoinsBidOrderPlacement;
+import com.apollocurrency.aplwallet.apl.core.transaction.messages.CCAskOrderPlacementAttachment;
+import com.apollocurrency.aplwallet.apl.core.transaction.messages.CCBidOrderPlacementAttachment;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -33,10 +33,10 @@ class OrderMatchServiceImplTest {
     private AccountAssetService accountAssetService;
 
     @Mock
-    private OrderService<AskOrder, ColoredCoinsAskOrderPlacement> orderAskService;
+    private OrderService<AskOrder, CCAskOrderPlacementAttachment> orderAskService;
 
     @Mock
-    private OrderService<BidOrder, ColoredCoinsBidOrderPlacement> orderBidService;
+    private OrderService<BidOrder, CCBidOrderPlacementAttachment> orderBidService;
 
     @Mock
     private TradeService tradeService;
@@ -60,7 +60,7 @@ class OrderMatchServiceImplTest {
     void shouldAddAskOrder() {
         //GIVEN
         final Transaction transaction = mock(Transaction.class);
-        final ColoredCoinsAskOrderPlacement attachment = mock(ColoredCoinsAskOrderPlacement.class);
+        final CCAskOrderPlacementAttachment attachment = mock(CCAskOrderPlacementAttachment.class);
         final long assetId = 10L;
         when(attachment.getAssetId()).thenReturn(assetId);
 
@@ -76,7 +76,7 @@ class OrderMatchServiceImplTest {
     void shouldAddBidOrder() {
         //GIVEN
         final Transaction transaction = mock(Transaction.class);
-        final ColoredCoinsBidOrderPlacement attachment = mock(ColoredCoinsBidOrderPlacement.class);
+        final CCBidOrderPlacementAttachment attachment = mock(CCBidOrderPlacementAttachment.class);
         final long assetId = 10L;
         when(attachment.getAssetId()).thenReturn(assetId);
 

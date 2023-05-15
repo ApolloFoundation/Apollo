@@ -5,11 +5,10 @@
 package com.apollocurrency.aplwallet.apl.core.converter.db;
 
 import com.apollocurrency.aplwallet.apl.core.entity.blockchain.TransactionEntity;
-import com.apollocurrency.aplwallet.apl.util.exception.AplException;
 import org.jdbi.v3.core.mapper.RowMapper;
 import org.jdbi.v3.core.statement.StatementContext;
 
-import javax.inject.Singleton;
+import jakarta.inject.Singleton;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 
@@ -18,14 +17,10 @@ public class TransactionEntityRowMapper implements RowMapper<TransactionEntity> 
 
     @Override
     public TransactionEntity map(ResultSet rs, StatementContext ctx) throws SQLException {
-        try {
-            return mapWithException(rs, ctx);
-        } catch (AplException.NotValidException e) {
-            throw new RuntimeException(e.toString(), e);
-        }
+        return mapWithException(rs, ctx);
     }
 
-    public TransactionEntity mapWithException(ResultSet rs, StatementContext ctx) throws AplException.NotValidException {
+    public TransactionEntity mapWithException(ResultSet rs, StatementContext ctx)  {
         try {
             TransactionEntity entity = TransactionEntity.builder()
                     .version(rs.getByte("version"))
@@ -58,6 +53,7 @@ public class TransactionEntityRowMapper implements RowMapper<TransactionEntity> 
                 .hasPrunableMessage(rs.getBoolean("has_prunable_message"))
                 .hasPrunableEencryptedMessage(rs.getBoolean("has_prunable_encrypted_message"))
                 .hasPrunableAttachment(rs.getBoolean("has_prunable_attachment"))
+                .errorMessage(rs.getString("error_message"))
                 .build();
 
             return entity;

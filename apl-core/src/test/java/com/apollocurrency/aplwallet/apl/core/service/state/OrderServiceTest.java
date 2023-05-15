@@ -7,7 +7,7 @@ import com.apollocurrency.aplwallet.apl.core.dao.state.derived.VersionedDeletabl
 import com.apollocurrency.aplwallet.apl.core.entity.state.order.AskOrder;
 import com.apollocurrency.aplwallet.apl.core.service.state.order.OrderService;
 import com.apollocurrency.aplwallet.apl.core.service.state.order.impl.AskOrderServiceImpl;
-import com.apollocurrency.aplwallet.apl.core.transaction.messages.ColoredCoinsAskOrderPlacement;
+import com.apollocurrency.aplwallet.apl.core.transaction.messages.CCAskOrderPlacementAttachment;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.function.Executable;
 
@@ -19,7 +19,7 @@ import static org.mockito.Mockito.verify;
  * @author silaev-firstbridge on 4/15/2020
  */
 class OrderServiceTest {
-    private final OrderService<AskOrder, ColoredCoinsAskOrderPlacement> orderService =
+    private final OrderService<AskOrder, CCAskOrderPlacementAttachment> orderService =
         new AskOrderServiceImpl(
             null, null, null, null
         );

@@ -10,9 +10,9 @@ import com.apollocurrency.aplwallet.apl.util.cache.InMemoryCacheConfigurator;
 import com.google.common.cache.CacheLoader;
 import lombok.extern.slf4j.Slf4j;
 
-import javax.annotation.PostConstruct;
-import javax.inject.Inject;
-import javax.inject.Singleton;
+import jakarta.annotation.PostConstruct;
+import jakarta.inject.Inject;
+import jakarta.inject.Singleton;
 import java.util.List;
 
 @Singleton
@@ -29,7 +29,8 @@ public class AplCacheConfig implements InMemoryCacheConfigurator {
             new PublicKeyCacheConfig(60),
             new BlockIndexCacheConfig(60),
             new DexOrderFreezingCacheConfig(15, orderFreezingCacheLoader),
-            new RemovedTxsCacheConfig(5)
+            new RemovedTxsCacheConfig(5),
+            new AccountCacheConfig(30)
         };
     }
 

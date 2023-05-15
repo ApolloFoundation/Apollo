@@ -48,28 +48,31 @@ import com.apollocurrency.aplwallet.apl.util.QueuedThreadPool;
 import com.apollocurrency.aplwallet.apl.util.injectable.PropertiesHolder;
 import com.apollocurrency.aplwallet.apl.util.io.CountingInputReader;
 import lombok.extern.slf4j.Slf4j;
-import org.eclipse.jetty.websocket.servlet.ServletUpgradeRequest;
-import org.eclipse.jetty.websocket.servlet.ServletUpgradeResponse;
-import org.eclipse.jetty.websocket.servlet.WebSocketCreator;
-import org.eclipse.jetty.websocket.servlet.WebSocketServlet;
-import org.eclipse.jetty.websocket.servlet.WebSocketServletFactory;
+import org.eclipse.jetty.server.handler.ContextHandler;
+import org.eclipse.jetty.websocket.server.JettyServerUpgradeRequest;
+import org.eclipse.jetty.websocket.server.JettyServerUpgradeResponse;
+import org.eclipse.jetty.websocket.server.JettyWebSocketCreator;
+import org.eclipse.jetty.websocket.server.JettyWebSocketServerContainer;
+import org.eclipse.jetty.websocket.server.JettyWebSocketServlet;
+import org.eclipse.jetty.websocket.server.JettyWebSocketServletFactory;
 import org.json.simple.JSONObject;
 import org.json.simple.JSONStreamAware;
 import org.json.simple.JSONValue;
 import org.json.simple.parser.ParseException;
 
-import javax.annotation.PreDestroy;
-import javax.enterprise.inject.spi.CDI;
-import javax.inject.Inject;
-import javax.servlet.ServletException;
+import jakarta.annotation.PreDestroy;
+import jakarta.enterprise.inject.spi.CDI;
+import jakarta.inject.Inject;
+import jakarta.servlet.ServletException;
 import java.io.IOException;
 import java.io.Reader;
 import java.io.StringReader;
 import java.io.StringWriter;
 import java.nio.channels.ClosedChannelException;
+import java.time.Duration;
 import java.util.concurrent.ExecutorService;
 @Slf4j
-public final class PeerServlet extends WebSocketServlet {
+public final class PeerServlet extends JettyWebSocketServlet {
     @Inject
     private PropertiesHolder propertiesHolder;
     @Inject
@@ -86,6 +89,14 @@ public final class PeerServlet extends WebSocketServlet {
     private PeersService peersService;
 
     private ExecutorService threadPool;
+    /**
+     * Outer/parent servlet context should be passed into this thread
+     */
+    private ContextHandler.Context servletContext;
+
+    public PeerServlet(ContextHandler.Context servletContext) {
+        this.servletContext = servletContext;
+    }
 
     @Override
     public void init() throws ServletException {
@@ -167,9 +178,11 @@ public final class PeerServlet extends WebSocketServlet {
      * @param factory WebSocket factory
      */
     @Override
-    public void configure(WebSocketServletFactory factory) {
-        factory.getPolicy().setIdleTimeout(PeersService.webSocketIdleTimeout);
-        factory.getPolicy().setMaxBinaryMessageSize(PeersService.MAX_MESSAGE_SIZE);
+    public void configure(JettyWebSocketServletFactory factory) {
+        // important call to setup outer/parent servlet context
+        JettyWebSocketServerContainer.ensureContainer(this.servletContext);
+        factory.setIdleTimeout(Duration.ofMillis( PeersService.webSocketIdleTimeout ));
+        factory.setMaxBinaryMessageSize(PeersService.MAX_MESSAGE_SIZE);
         factory.setCreator(new PeerSocketCreator());
     }
 
@@ -328,7 +341,7 @@ public final class PeerServlet extends WebSocketServlet {
     /**
      * WebSocket creator for peer connections
      */
-    private class PeerSocketCreator implements WebSocketCreator {
+    private class PeerSocketCreator implements JettyWebSocketCreator {
         /**
          * Create a peer WebSocket
          *
@@ -337,10 +350,10 @@ public final class PeerServlet extends WebSocketServlet {
          * @return WebSocket
          */
         @Override
-        public Object createWebSocket(ServletUpgradeRequest req, ServletUpgradeResponse resp) {
+        public Object createWebSocket(JettyServerUpgradeRequest req, JettyServerUpgradeResponse resp) {
             Object res = null;
-            String host = req.getRemoteAddress();
-            int port = req.getRemotePort();
+            String host = req.getHttpServletRequest().getRemoteHost();
+            int port = req.getHttpServletRequest().getRemotePort();
             PeerAddress pa = new PeerAddress(port, host);
             //we use remote port to distinguish peers behind the NAT/UPnP
             //TODO: it is bad and we have to use reliable node ID to distinguish peers

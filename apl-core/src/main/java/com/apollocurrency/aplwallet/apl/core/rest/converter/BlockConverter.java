@@ -6,15 +6,15 @@ package com.apollocurrency.aplwallet.apl.core.rest.converter;
 
 import com.apollocurrency.aplwallet.api.dto.BlockDTO;
 import com.apollocurrency.aplwallet.api.dto.TransactionDTO;
-import com.apollocurrency.aplwallet.apl.core.blockchain.Block;
+import com.apollocurrency.aplwallet.api.dto.TxErrorHashDTO;
+import com.apollocurrency.aplwallet.apl.core.model.Block;
 import com.apollocurrency.aplwallet.apl.core.service.blockchain.Blockchain;
 import com.apollocurrency.aplwallet.apl.core.service.state.PhasingPollService;
-import com.apollocurrency.aplwallet.apl.core.service.state.account.AccountService;
 import com.apollocurrency.aplwallet.apl.crypto.Convert;
 import com.apollocurrency.aplwallet.apl.util.Convert2;
 import com.apollocurrency.aplwallet.apl.util.api.converter.Converter;
 
-import javax.inject.Inject;
+import jakarta.enterprise.inject.Vetoed;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
@@ -26,36 +26,31 @@ import java.util.stream.Collectors;
  * <br>
  * Each caller should instantiate new instance or just use CDI default Dependant Scope</p>
  */
+@Vetoed
 public class BlockConverter implements Converter<Block, BlockDTO> {
 
     private final Blockchain blockchain;
     private final TransactionConverter transactionConverter;
     private final PhasingPollService phasingPollService;
-    private final AccountService accountService;
     private volatile boolean isAddTransactions = false;
     private volatile boolean isAddPhasedTransactions = false;
 
-    @Inject
     public BlockConverter(Blockchain blockchain, TransactionConverter transactionConverter,
-                          PhasingPollService phasingPollService, AccountService accountService) {
+                          PhasingPollService phasingPollService) {
         this.blockchain = blockchain;
         this.transactionConverter = transactionConverter;
         this.phasingPollService = phasingPollService;
-        this.accountService = accountService;
     }
 
     @Override
     public BlockDTO apply(Block model) {
 
         BlockDTO dto = new BlockDTO();
+        blockchain.loadBlockData(model);
         dto.setBlock(model.getStringId());
         dto.setHeight(model.getHeight());
         dto.setGenerator(Long.toUnsignedString(model.getGeneratorId()));
         dto.setGeneratorRS(Convert2.rsAccount(model.getGeneratorId()));
-        if (!model.hasGeneratorPublicKey()) {
-            byte [] generatorPublicKey = accountService.getPublicKeyByteArray(model.getGeneratorId());
-            model.setGeneratorPublicKey(generatorPublicKey);
-        }
         dto.setGeneratorPublicKey(Convert.toHexString(model.getGeneratorPublicKey()));
         dto.setTimestamp(model.getTimestamp());
         dto.setTimeout(model.getTimeout());
@@ -79,15 +74,17 @@ public class BlockConverter implements Converter<Block, BlockDTO> {
         if (this.isAddPhasedTransactions) {
             this.addPhasedTransactions(dto, model);
         }
+        dto.setNumberOfFailedTxs(model.getTxErrorHashes().size());
+        model.getTxErrorHashes().forEach(e-> dto.getTxErrorHashes().add(new TxErrorHashDTO(Long.toUnsignedString(e.getId()), Convert.toHexString(e.getErrorHash()), e.getError())));
         return dto;
     }
 
     public void addTransactions(BlockDTO o, Block model) {
         if (o != null && model != null) {
-            blockchain.getOrLoadTransactions(model);
             List<TransactionDTO> transactionDTOList = model.getTransactions().stream().map(transactionConverter).collect(Collectors.toList());
             o.setNumberOfTransactions((long) model.getTransactions().size());
-            o.setTotalAmountATM(String.valueOf(transactionDTOList.stream().map(TransactionDTO::getAmountATM).mapToLong(Long::parseLong).sum()));
+            // we cant use here original block.totalAmountATM because of private transactions
+            o.setTotalAmountATM(String.valueOf(transactionDTOList.stream().filter(e-> e.getErrorMessage() == null).map(TransactionDTO::getAmountATM).mapToLong(Long::parseLong).sum()));
             if (this.isAddTransactions) {
                 o.setTransactions(transactionDTOList);
             }

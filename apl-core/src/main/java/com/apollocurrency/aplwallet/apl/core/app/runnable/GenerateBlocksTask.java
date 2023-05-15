@@ -1,12 +1,12 @@
 /*
- * Copyright © 2019-2020 Apollo Foundation
+ * Copyright © 2019-2022 Apollo Foundation
  */
 
 package com.apollocurrency.aplwallet.apl.core.app.runnable;
 
 import com.apollocurrency.aplwallet.apl.core.chainid.BlockchainConfig;
 import com.apollocurrency.aplwallet.apl.core.entity.appdata.GeneratorMemoryEntity;
-import com.apollocurrency.aplwallet.apl.core.blockchain.Block;
+import com.apollocurrency.aplwallet.apl.core.model.Block;
 import com.apollocurrency.aplwallet.apl.core.service.appdata.TimeService;
 import com.apollocurrency.aplwallet.apl.core.service.appdata.impl.GeneratorServiceImpl;
 import com.apollocurrency.aplwallet.apl.core.service.blockchain.Blockchain;
@@ -17,7 +17,7 @@ import com.apollocurrency.aplwallet.apl.util.ThreadUtils;
 import com.apollocurrency.aplwallet.apl.util.injectable.PropertiesHolder;
 import lombok.extern.slf4j.Slf4j;
 
-import javax.enterprise.inject.spi.CDI;
+import jakarta.enterprise.inject.spi.CDI;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
@@ -42,6 +42,7 @@ public class GenerateBlocksTask implements Runnable {
 
     private volatile List<GeneratorMemoryEntity> sortedForgers = null;
     private int delayTime;
+    private volatile boolean conditionToResetForgers = false;
 
     public GenerateBlocksTask(PropertiesHolder propertiesHolder,
                               GlobalSync globalSync,
@@ -75,6 +76,10 @@ public class GenerateBlocksTask implements Runnable {
         try {
             try {
                 globalSync.updateLock();
+                long forgingIterationStart = System.currentTimeMillis();
+                if (checkIfResetNeeded()) {
+                    resetSortedForgers();
+                }
                 log.trace("Acquire generation lock");
                 try {
                     Block lastBlock = blockchain.getLastBlock();
@@ -98,7 +103,7 @@ public class GenerateBlocksTask implements Runnable {
                                     log.debug("Pop off: {} will pop off last block {}", generator.toString(), lastBlock.getStringId());
                                     List<Block> poppedOffBlock = lookupBlockchainProcessor().popOffToCommonBlock(previousBlock);
                                     for (Block block : poppedOffBlock) {
-                                        transactionProcessor.processLater(blockchain.getOrLoadTransactions(block));
+                                        transactionProcessor.processLater(block.getTransactions());
                                     }
                                     lastBlock = previousBlock;
                                     lastBlockId = previousBlock.getId();
@@ -134,15 +139,21 @@ public class GenerateBlocksTask implements Runnable {
                         if (suspendForging) {
                             break;
                         }
-                        if (generator.getHitTime() > generationLimit
-                            || generatorService.forge(lastBlock, generationLimit, generator)) {
-                            log.trace("run - generator.forge() = {}", generator);
-                            return;
+                        boolean fastEnough = generator.getHitTime() <= generationLimit;
+                        if (!fastEnough) {
+                            log.trace("Skip {}, Reason: Too slow. Generation limit {} ", generator, generationLimit);
+                            continue;
+                        }
+                        boolean forged = generatorService.forge(lastBlock, generationLimit, generator);
+                        if (!forged) {
+                            log.trace("{} hasn't generated a block. Go to next", generator);
+                        } else {
+                            break;
                         }
                     }
                 } finally {
                     globalSync.updateUnlock();
-                    log.trace("Release generation lock  ({} ms)", (System.currentTimeMillis() - start));
+                    log.trace("Forging job is done in ({} ms), forging time ({} ms)", (System.currentTimeMillis() - start), (System.currentTimeMillis() - forgingIterationStart));
                 }
             } catch (Exception e) {
                 log.error("Error in block generation thread ({} ms)", (System.currentTimeMillis() - start), e);
@@ -155,12 +166,23 @@ public class GenerateBlocksTask implements Runnable {
         }
     }
 
+    public synchronized boolean resetForgersAsync() {
+        var rc = conditionToResetForgers;
+        conditionToResetForgers = true;
+        return rc;
+    }
+
+    public synchronized boolean checkIfResetNeeded() {
+        return conditionToResetForgers;
+    }
+
     public List<GeneratorMemoryEntity> getSortedForgers() {
         return sortedForgers;
     }
 
-    public void resetSortedForgers() {
+    public synchronized void resetSortedForgers() {
         sortedForgers = null;
+        conditionToResetForgers = false;
     }
 
     public void setDelayTime(int delayTime) {

@@ -5,23 +5,23 @@
 package com.apollocurrency.aplwallet.apl.core.dao.prunable;
 
 import com.apollocurrency.aplwallet.apl.core.converter.db.tagged.DataTagMapper;
-import com.apollocurrency.aplwallet.apl.core.dao.TransactionalDataSource;
+import com.apollocurrency.aplwallet.apl.core.service.fulltext.FullTextOperationData;
+import com.apollocurrency.aplwallet.apl.util.db.TransactionalDataSource;
 import com.apollocurrency.aplwallet.apl.core.dao.state.derived.EntityDbTable;
 import com.apollocurrency.aplwallet.apl.core.dao.state.keyfactory.DbKey;
 import com.apollocurrency.aplwallet.apl.core.dao.state.keyfactory.StringKeyFactory;
-import com.apollocurrency.aplwallet.apl.core.db.DbClause;
-import com.apollocurrency.aplwallet.apl.core.db.DbIterator;
+import com.apollocurrency.aplwallet.apl.util.db.DbClause;
+import com.apollocurrency.aplwallet.apl.util.db.DbIterator;
 import com.apollocurrency.aplwallet.apl.core.entity.prunable.DataTag;
 import com.apollocurrency.aplwallet.apl.core.entity.prunable.TaggedData;
-import com.apollocurrency.aplwallet.apl.core.service.appdata.DatabaseManager;
-import com.apollocurrency.aplwallet.apl.core.shard.observer.DeleteOnTrimData;
+import com.apollocurrency.aplwallet.apl.core.db.DatabaseManager;
 import com.apollocurrency.aplwallet.apl.util.annotation.DatabaseSpecificDml;
 import com.apollocurrency.aplwallet.apl.util.annotation.DmlMarker;
 import lombok.extern.slf4j.Slf4j;
 
-import javax.enterprise.event.Event;
-import javax.inject.Inject;
-import javax.inject.Singleton;
+import jakarta.enterprise.event.Event;
+import jakarta.inject.Inject;
+import jakarta.inject.Singleton;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
@@ -47,8 +47,9 @@ public class DataTagDao extends EntityDbTable<DataTag> {
 
     @Inject
     public DataTagDao(DatabaseManager databaseManager,
-                      Event<DeleteOnTrimData> deleteOnTrimDataEvent) {
-        super(DB_TABLE, tagDbKeyFactory, true, null, databaseManager, deleteOnTrimDataEvent);
+                      Event<FullTextOperationData> fullTextOperationDataEvent) {
+        super(DB_TABLE, tagDbKeyFactory, true, null,
+            databaseManager, fullTextOperationDataEvent);
     }
 
     public DbKey newDbKey(DataTag dataTag) {
@@ -71,7 +72,7 @@ public class DataTagDao extends EntityDbTable<DataTag> {
             dataTag.setHeight(height);
             dataTag.setCount(dataTag.getCount() + 1);
             if (log.isTraceEnabled()) {
-                log.trace("New quantity for tag value {} - {} at {} - ", tagValue, dataTag.getCount(), height, last3Stacktrace());
+                log.trace("New quantity for tag value {} - {} at {} - {}", tagValue, dataTag.getCount(), height, last3Stacktrace());
             }
             insert(dataTag);
         }

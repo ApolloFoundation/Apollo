@@ -4,15 +4,15 @@
 
 package com.apollocurrency.aplwallet.apl.core.service.blockchain;
 
-import com.apollocurrency.aplwallet.apl.core.blockchain.Block;
+import com.apollocurrency.aplwallet.apl.core.model.Block;
 import com.apollocurrency.aplwallet.apl.core.transaction.TransactionJsonSerializer;
 import com.apollocurrency.aplwallet.apl.crypto.Convert;
 import lombok.NonNull;
 import org.json.simple.JSONArray;
 import org.json.simple.JSONObject;
 
-import javax.inject.Inject;
-import javax.inject.Singleton;
+import jakarta.inject.Inject;
+import jakarta.inject.Singleton;
 
 @Singleton
 public class BlockSerializer {
@@ -44,7 +44,7 @@ public class BlockSerializer {
         json.put("timeout", block.getTimeout());
 
         JSONArray transactionsData = new JSONArray();
-        this.blockchain.getOrLoadTransactions(block)
+        this.blockchain.loadBlockData(block).getTransactions()
                 .forEach(transaction -> transactionsData.add(transactionJsonSerializer.toJson(transaction)));
 
         json.put("transactions", transactionsData);

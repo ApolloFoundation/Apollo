@@ -12,7 +12,7 @@ import com.google.common.util.concurrent.TimeLimiter;
 import lombok.extern.slf4j.Slf4j;
 import org.jboss.weld.environment.util.Collections;
 
-import javax.inject.Singleton;
+import jakarta.inject.Singleton;
 import java.util.Enumeration;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ExecutorService;

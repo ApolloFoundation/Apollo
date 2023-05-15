@@ -1,10 +1,10 @@
 /*
- *  Copyright © 2018-2020 Apollo Foundation
+ *  Copyright © 2018-2021 Apollo Foundation
  */
 package com.apollocurrency.aplwallet.apl.core.transaction.types.cc;
 
 import com.apollocurrency.aplwallet.apl.core.chainid.BlockchainConfig;
-import com.apollocurrency.aplwallet.apl.core.blockchain.Transaction;
+import com.apollocurrency.aplwallet.apl.core.model.Transaction;
 import com.apollocurrency.aplwallet.apl.core.entity.state.account.Account;
 import com.apollocurrency.aplwallet.apl.core.entity.state.account.LedgerEvent;
 import com.apollocurrency.aplwallet.apl.core.entity.state.order.BidOrder;
@@ -13,20 +13,20 @@ import com.apollocurrency.aplwallet.apl.core.service.state.order.OrderService;
 import com.apollocurrency.aplwallet.apl.core.service.state.qualifier.BidOrderService;
 import com.apollocurrency.aplwallet.apl.core.transaction.TransactionTypes;
 import com.apollocurrency.aplwallet.apl.core.transaction.messages.ColoredCoinsBidOrderCancellation;
-import com.apollocurrency.aplwallet.apl.core.transaction.messages.ColoredCoinsBidOrderPlacement;
+import com.apollocurrency.aplwallet.apl.core.transaction.messages.CCBidOrderPlacementAttachment;
 import com.apollocurrency.aplwallet.apl.util.exception.AplException;
 import org.json.simple.JSONObject;
 
-import javax.inject.Inject;
-import javax.inject.Singleton;
+import jakarta.inject.Inject;
+import jakarta.inject.Singleton;
 import java.nio.ByteBuffer;
 
 @Singleton
-public class CCBidOrderCancellationTransactionType extends ColoredCoinsOrderCancellationTransactionType {
-    private final OrderService<BidOrder, ColoredCoinsBidOrderPlacement> bidOrderService;
+public class CCBidOrderCancellationTransactionType extends CCOrderCancellationTransactionType {
+    private final OrderService<BidOrder, CCBidOrderPlacementAttachment> bidOrderService;
 
     @Inject
-    public CCBidOrderCancellationTransactionType(BlockchainConfig blockchainConfig, AccountService accountService, @BidOrderService OrderService<BidOrder, ColoredCoinsBidOrderPlacement> bidOrderService) {
+    public CCBidOrderCancellationTransactionType(BlockchainConfig blockchainConfig, AccountService accountService, @BidOrderService OrderService<BidOrder, CCBidOrderPlacementAttachment> bidOrderService) {
         super(blockchainConfig, accountService);
         this.bidOrderService = bidOrderService;
     }

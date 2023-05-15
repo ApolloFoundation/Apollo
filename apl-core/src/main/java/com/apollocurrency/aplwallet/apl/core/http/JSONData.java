@@ -30,8 +30,8 @@ import com.apollocurrency.aplwallet.apl.core.chainid.BlockchainConfig;
 import com.apollocurrency.aplwallet.apl.core.entity.appdata.GeneratorMemoryEntity;
 import com.apollocurrency.aplwallet.apl.core.entity.appdata.funding.FundingMonitorInstance;
 import com.apollocurrency.aplwallet.apl.core.entity.appdata.funding.MonitoredAccount;
-import com.apollocurrency.aplwallet.apl.core.blockchain.Block;
-import com.apollocurrency.aplwallet.apl.core.blockchain.Transaction;
+import com.apollocurrency.aplwallet.apl.core.model.Block;
+import com.apollocurrency.aplwallet.apl.core.model.Transaction;
 import com.apollocurrency.aplwallet.apl.core.entity.prunable.DataTag;
 import com.apollocurrency.aplwallet.apl.core.entity.prunable.PrunableMessage;
 import com.apollocurrency.aplwallet.apl.core.entity.prunable.TaggedData;
@@ -75,7 +75,7 @@ import com.apollocurrency.aplwallet.apl.core.entity.state.poll.PollOptionResult;
 import com.apollocurrency.aplwallet.apl.core.entity.state.shuffling.Shuffler;
 import com.apollocurrency.aplwallet.apl.core.entity.state.shuffling.Shuffling;
 import com.apollocurrency.aplwallet.apl.core.entity.state.shuffling.ShufflingParticipant;
-import com.apollocurrency.aplwallet.apl.core.monetary.HoldingType;
+import com.apollocurrency.aplwallet.apl.core.model.HoldingType;
 import com.apollocurrency.aplwallet.apl.core.peer.Hallmark;
 import com.apollocurrency.aplwallet.apl.core.peer.Peer;
 import com.apollocurrency.aplwallet.apl.core.service.appdata.funding.FundingMonitorService;
@@ -98,14 +98,14 @@ import com.apollocurrency.aplwallet.apl.core.service.state.exchange.ExchangeServ
 import com.apollocurrency.aplwallet.apl.core.transaction.TransactionJsonSerializer;
 import com.apollocurrency.aplwallet.apl.core.transaction.TransactionTypes;
 import com.apollocurrency.aplwallet.apl.core.transaction.messages.Appendix;
-import com.apollocurrency.aplwallet.apl.core.transaction.messages.ColoredCoinsAssetDelete;
-import com.apollocurrency.aplwallet.apl.core.transaction.messages.ColoredCoinsAssetTransfer;
+import com.apollocurrency.aplwallet.apl.core.transaction.messages.CCAssetDeleteAttachment;
+import com.apollocurrency.aplwallet.apl.core.transaction.messages.CCAssetTransferAttachment;
 import com.apollocurrency.aplwallet.apl.core.transaction.messages.ColoredCoinsOrderCancellationAttachment;
-import com.apollocurrency.aplwallet.apl.core.transaction.messages.ColoredCoinsOrderPlacementAttachment;
-import com.apollocurrency.aplwallet.apl.core.transaction.messages.MonetarySystemCurrencyIssuance;
-import com.apollocurrency.aplwallet.apl.core.transaction.messages.MonetarySystemCurrencyTransfer;
+import com.apollocurrency.aplwallet.apl.core.transaction.messages.CCOrderPlacementAttachment;
+import com.apollocurrency.aplwallet.apl.core.transaction.messages.MonetarySystemCurrencyIssuanceAttachment;
+import com.apollocurrency.aplwallet.apl.core.transaction.messages.MSCurrencyTransferAttachment;
 import com.apollocurrency.aplwallet.apl.core.transaction.messages.MonetarySystemExchangeAttachment;
-import com.apollocurrency.aplwallet.apl.core.transaction.messages.MonetarySystemPublishExchangeOffer;
+import com.apollocurrency.aplwallet.apl.core.transaction.messages.MSPublishExchangeOfferAttachment;
 import com.apollocurrency.aplwallet.apl.core.transaction.messages.PrunableLoadingService;
 import com.apollocurrency.aplwallet.apl.crypto.Convert;
 import com.apollocurrency.aplwallet.apl.crypto.Crypto;
@@ -118,8 +118,8 @@ import org.json.simple.JSONObject;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import javax.enterprise.inject.Vetoed;
-import javax.enterprise.inject.spi.CDI;
+import jakarta.enterprise.inject.Vetoed;
+import jakarta.enterprise.inject.spi.CDI;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
@@ -148,6 +148,7 @@ public final class JSONData {
     private static FundingMonitorService fundingMonitorService = CDI.current().select(FundingMonitorService.class).get();
     private static PrunableLoadingService prunableLoadingService = CDI.current().select(PrunableLoadingService.class).get();
     private static TransactionJsonSerializer transactionJsonSerializer = CDI.current().select(TransactionJsonSerializer.class).get();
+    private static GenesisAccounts genesisAccounts = CDI.current().select(GenesisAccounts.class).get();
 
     private JSONData() {
     } // never
@@ -379,7 +380,7 @@ public final class JSONData {
 
     private static JSONObject expectedOrder(Transaction transaction) {
         JSONObject json = new JSONObject();
-        ColoredCoinsOrderPlacementAttachment attachment = (ColoredCoinsOrderPlacementAttachment) transaction.getAttachment();
+        CCOrderPlacementAttachment attachment = (CCOrderPlacementAttachment) transaction.getAttachment();
         json.put("order", transaction.getStringId());
         json.put("asset", Long.toUnsignedString(attachment.getAssetId()));
         putAccount(json, "account", transaction.getSenderId());
@@ -413,7 +414,7 @@ public final class JSONData {
 
     public static JSONObject expectedBuyOffer(Transaction transaction) {
         JSONObject json = expectedOffer(transaction);
-        MonetarySystemPublishExchangeOffer attachment = (MonetarySystemPublishExchangeOffer) transaction.getAttachment();
+        MSPublishExchangeOfferAttachment attachment = (MSPublishExchangeOfferAttachment) transaction.getAttachment();
         json.put("rateATM", String.valueOf(attachment.getBuyRateATM()));
         json.put("limit", String.valueOf(attachment.getTotalBuyLimit()));
         json.put("supply", String.valueOf(attachment.getInitialBuySupply()));
@@ -422,7 +423,7 @@ public final class JSONData {
 
     public static JSONObject expectedSellOffer(Transaction transaction) {
         JSONObject json = expectedOffer(transaction);
-        MonetarySystemPublishExchangeOffer attachment = (MonetarySystemPublishExchangeOffer) transaction.getAttachment();
+        MSPublishExchangeOfferAttachment attachment = (MSPublishExchangeOfferAttachment) transaction.getAttachment();
         json.put("rateATM", String.valueOf(attachment.getSellRateATM()));
         json.put("limit", String.valueOf(attachment.getTotalSellLimit()));
         json.put("supply", String.valueOf(attachment.getInitialSellSupply()));
@@ -430,7 +431,7 @@ public final class JSONData {
     }
 
     private static JSONObject expectedOffer(Transaction transaction) {
-        MonetarySystemPublishExchangeOffer attachment = (MonetarySystemPublishExchangeOffer) transaction.getAttachment();
+        MSPublishExchangeOfferAttachment attachment = (MSPublishExchangeOfferAttachment) transaction.getAttachment();
         JSONObject json = new JSONObject();
         json.put("offer", transaction.getStringId());
         putAccount(json, "account", transaction.getSenderId());
@@ -442,7 +443,7 @@ public final class JSONData {
 
     public static JSONObject genesisBalancesJson(int firstIndex, int lastIndex) {
         JSONObject result = new JSONObject();
-        List<Map.Entry<String, Long>> genesisBalances = GenesisAccounts.getGenesisBalances(firstIndex, lastIndex);
+        List<Map.Entry<String, Long>> genesisBalances = genesisAccounts.getGenesisBalances(firstIndex, lastIndex);
         JSONArray accountArray = new JSONArray();
         for (int i = 0; i < genesisBalances.size(); i++) {
             Map.Entry<String, Long> accountBalanceEntry = genesisBalances.get(i);
@@ -452,7 +453,7 @@ public final class JSONData {
             accountArray.add(accountBalanceJson);
         }
         result.put("accounts", accountArray);
-        result.put("total", GenesisAccounts.getGenesisBalancesNumber());
+        result.put("total", genesisAccounts.getGenesisBalancesNumber());
         return result;
     }
 
@@ -562,10 +563,6 @@ public final class JSONData {
         json.put("height", block.getHeight());
         putAccount(json, "generator", block.getGeneratorId());
         byte[] generatorPublicKey = block.getGeneratorPublicKey();
-        if (generatorPublicKey == null) {
-            generatorPublicKey = accountService.getPublicKeyByteArray(block.getGeneratorId());
-            block.setGeneratorPublicKey(generatorPublicKey);
-        }
         json.put("generatorPublicKey", Convert.toHexString(generatorPublicKey));
         json.put("timestamp", block.getTimestamp());
 
@@ -588,7 +585,7 @@ public final class JSONData {
         json.put("blockSignature", Convert.toHexString(block.getBlockSignature()));
         JSONArray transactions = new JSONArray();
         Long totalAmountATM = 0L;
-        for (Transaction transaction : blockchain.getOrLoadTransactions(block)) {
+        for (Transaction transaction : blockchain.loadBlockData(block).getTransactions()) {
             JSONObject transactionJson = transaction(true, transaction);
             Long amountATM = Long.parseLong((String) transactionJson.get("amountATM"));
             totalAmountATM += amountATM;
@@ -611,6 +608,17 @@ public final class JSONData {
                 }
             json.put("executedPhasedTransactions", phasedTransactions);
         }
+        JSONArray txErrorHashesArray = new JSONArray();
+        json.put("numberOfFailedTxs", block.getTxErrorHashes().size());
+        block.getTxErrorHashes().forEach(e-> {
+            JSONObject txErrorHash = new JSONObject();
+            txErrorHash.put("id", Long.toUnsignedString(e.getId()));
+            txErrorHash.put("errorHash", Convert.toHexString(e.getErrorHash()));
+            txErrorHash.put("error", e.getError());
+            txErrorHashesArray.add(txErrorHash);
+        });
+        json.put("txErrorHashes", txErrorHashesArray);
+
         return json;
     }
 
@@ -755,7 +763,7 @@ public final class JSONData {
                 json.put("decimals", currency.getDecimals());
             } else {
                 Transaction currencyIssuance = blockchain.getTransaction(voteWeighting.getHoldingId());
-                MonetarySystemCurrencyIssuance currencyIssuanceAttachment = (MonetarySystemCurrencyIssuance) currencyIssuance.getAttachment();
+                MonetarySystemCurrencyIssuanceAttachment currencyIssuanceAttachment = (MonetarySystemCurrencyIssuanceAttachment) currencyIssuance.getAttachment();
                 json.put("decimals", currencyIssuanceAttachment.getDecimals());
             }
         }
@@ -996,7 +1004,7 @@ public final class JSONData {
 
     public static JSONObject expectedAssetTransfer(Transaction transaction, boolean includeAssetInfo) {
         JSONObject json = new JSONObject();
-        ColoredCoinsAssetTransfer attachment = (ColoredCoinsAssetTransfer) transaction.getAttachment();
+        CCAssetTransferAttachment attachment = (CCAssetTransferAttachment) transaction.getAttachment();
         json.put("assetTransfer", transaction.getStringId());
         json.put("asset", Long.toUnsignedString(attachment.getAssetId()));
         putAccount(json, "sender", transaction.getSenderId());
@@ -1025,7 +1033,7 @@ public final class JSONData {
 
     public static JSONObject expectedAssetDelete(Transaction transaction, boolean includeAssetInfo) {
         JSONObject json = new JSONObject();
-        ColoredCoinsAssetDelete attachment = (ColoredCoinsAssetDelete) transaction.getAttachment();
+        CCAssetDeleteAttachment attachment = (CCAssetDeleteAttachment) transaction.getAttachment();
         json.put("assetDelete", transaction.getStringId());
         json.put("asset", Long.toUnsignedString(attachment.getAssetId()));
         putAccount(json, "account", transaction.getSenderId());
@@ -1068,7 +1076,7 @@ public final class JSONData {
 
     public static JSONObject expectedCurrencyTransfer(Transaction transaction, boolean includeCurrencyInfo) {
         JSONObject json = new JSONObject();
-        MonetarySystemCurrencyTransfer attachment = (MonetarySystemCurrencyTransfer) transaction.getAttachment();
+        MSCurrencyTransferAttachment attachment = (MSCurrencyTransferAttachment) transaction.getAttachment();
         json.put("transfer", transaction.getStringId());
         json.put("currency", Long.toUnsignedString(attachment.getCurrencyId()));
         putAccount(json, "sender", transaction.getSenderId());
@@ -1227,6 +1235,7 @@ public final class JSONData {
         json.put("confirmations", blockchain.getHeight() - transaction.getHeight());
         json.put("blockTimestamp", transaction.getBlockTimestamp());
         json.put("transactionIndex", transaction.getIndex());
+        json.put("errorMessage", transaction.getErrorMessage().orElse(null));
         return json;
     }
 

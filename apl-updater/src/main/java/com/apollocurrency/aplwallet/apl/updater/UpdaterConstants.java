@@ -6,7 +6,7 @@ package com.apollocurrency.aplwallet.apl.updater;
 
 import org.slf4j.Logger;
 
-import javax.enterprise.inject.Vetoed;
+import jakarta.enterprise.inject.Vetoed;
 import java.io.InputStream;
 import java.util.Properties;
 

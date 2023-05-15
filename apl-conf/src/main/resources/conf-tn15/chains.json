@@ -1,0 +1,66 @@
+[
+  {
+    "chainId": "00150000-cb84-4c31-9f7c-7af4c3c0080a",
+    "active": true,
+    "wellKnownPeers": [
+      "51.158.190.152",
+      "51.158.182.150",
+      "51.15.89.229",
+      "51.15.99.219",
+      "51.15.37.77",
+      "51.158.189.209"
+    ],
+    "name": "Apollo stage testnet",
+    "description": "Apollo pre-release test chain (staging), running on latest build being prepared to release",
+    "symbol": "Apollo",
+    "prefix": "APL",
+    "project": "Apollo",
+    "initialSupply": 30000000000,
+    "decimals": 8,
+    "featuresHeightRequirement": {
+      "dexReopenPendingOrdersHeight": 0,
+      "dexExpiredContractWithFinishedPhasingHeightAndStep3": 0,
+      "failedTransactionsAcceptanceHeight": 0,
+      "smartContractTransactionsHeight": 0
+    },
+    "blockchainProperties": [
+      {
+        "height": 0,
+        "maxNumberOfTransactions": 255,
+        "maxArbitraryMessageLength": 160,
+        "blockTime": 60,
+        "maxBlockTimeLimit": 67,
+        "minBlockTimeLimit": 53,
+        "maxBalance": 30000000000
+      },
+      {
+        "height": 1,
+        "maxNumberOfTransactions": 255,
+        "maxArbitraryMessageLength": 160,
+        "maxNumberOfChildAccounts": 10,
+        "blockTime": 2,
+        "maxBlockTimeLimit": 3,
+        "minBlockTimeLimit": 1,
+        "maxBalance": 30000000000,
+        "consensusSettings": {
+          "adaptiveForgingSettings": {
+            "enabled": "true",
+            "adaptiveBlockTime": 10
+          }
+        },
+        "shardingSettings": {
+          "enabled": true,
+          "frequency": 2000
+        },
+        "smcSettings": {
+          "masterAccountPublicKey": "dd8a4621988974e669d115b5e0d48234eed145ff2ac94ec1012805459470fe1e",
+          "fuelLimitMinValue": 10000000,
+          "fuelLimitMaxValue": 30000000000,
+          "fuelPriceMinValue": 10000,
+          "fuelPriceMaxValue": 100000000
+        }
+      }
+    ]
+  }
+]
+

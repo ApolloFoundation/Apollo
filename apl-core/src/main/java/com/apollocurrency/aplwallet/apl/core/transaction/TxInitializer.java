@@ -8,8 +8,8 @@ import com.apollocurrency.aplwallet.apl.core.transaction.messages.AppendixApplie
 import com.apollocurrency.aplwallet.apl.core.transaction.messages.AppendixValidatorRegistryInitializer;
 import com.apollocurrency.aplwallet.apl.core.transaction.messages.PrunableLoadersInitializer;
 
-import javax.inject.Inject;
-import javax.inject.Singleton;
+import jakarta.inject.Inject;
+import jakarta.inject.Singleton;
 
 @Singleton
 public class TxInitializer {

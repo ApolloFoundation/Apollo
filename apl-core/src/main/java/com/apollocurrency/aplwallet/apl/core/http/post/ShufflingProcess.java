@@ -33,8 +33,8 @@ import com.apollocurrency.aplwallet.apl.util.exception.AplException;
 import org.json.simple.JSONObject;
 import org.json.simple.JSONStreamAware;
 
-import javax.enterprise.inject.Vetoed;
-import javax.servlet.http.HttpServletRequest;
+import jakarta.enterprise.inject.Vetoed;
+import jakarta.servlet.http.HttpServletRequest;
 
 import static com.apollocurrency.aplwallet.apl.core.http.JSONResponses.INCORRECT_PUBLIC_KEY;
 
@@ -75,7 +75,7 @@ public final class ShufflingProcess extends CreateTransactionHandler {
 
         long accountId = HttpParameterParserUtil.getAccountId(req, this.vaultAccountName(), false);
         byte[] secretBytes = HttpParameterParserUtil.getSecretBytes(req, accountId, true);
-        byte[] recipientPublicKey = HttpParameterParserUtil.getPublicKey(req, "recipient");
+        byte[] recipientPublicKey = HttpParameterParserUtil.getPublicKey(req, "recipient", HttpParameterParserUtil.getAccountId(req, "recipientAccount", false));
         if (lookupAccountService().getAccount(recipientPublicKey) != null) {
             return INCORRECT_PUBLIC_KEY; // do not allow existing account to be used as recipient
         }

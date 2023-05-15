@@ -5,17 +5,19 @@
 package com.apollocurrency.aplwallet.apl.core.service.blockchain;
 
 import com.apollocurrency.aplwallet.apl.core.dao.appdata.ShardDao;
-import com.apollocurrency.aplwallet.apl.core.blockchain.Block;
-import com.apollocurrency.aplwallet.apl.core.blockchain.Transaction;
+import com.apollocurrency.aplwallet.apl.core.model.Block;
+import com.apollocurrency.aplwallet.apl.core.model.Transaction;
 import com.apollocurrency.aplwallet.apl.core.entity.state.account.Account;
 import com.apollocurrency.aplwallet.apl.core.entity.state.account.LedgerEvent;
 import com.apollocurrency.aplwallet.apl.core.service.state.account.AccountPublicKeyService;
 import com.apollocurrency.aplwallet.apl.core.service.state.account.AccountService;
 import com.apollocurrency.aplwallet.apl.util.Convert2;
+import com.apollocurrency.aplwallet.apl.util.annotation.FeeMarker;
+import com.apollocurrency.aplwallet.apl.util.annotation.TransactionFee;
 import lombok.extern.slf4j.Slf4j;
 
-import javax.inject.Inject;
-import javax.inject.Singleton;
+import jakarta.inject.Inject;
+import jakarta.inject.Singleton;
 
 @Slf4j
 @Singleton
@@ -39,7 +41,7 @@ public class BlockApplier {
         int height = block.getHeight();
         if (height > 3) {
             long[] backFees = new long[3];
-            for (Transaction transaction : blockchain.getOrLoadTransactions(block)) {
+            for (Transaction transaction : block.getTransactions()) {
                 long[] fees = transaction.getBackFees();
                 for (int i = 0; i < fees.length; i++) {
                     backFees[i] += fees[i];
@@ -77,8 +79,10 @@ public class BlockApplier {
         //fetch account after a possible change in previousGeneratorAccount
         Account account = accountService.createAccount(block.getGeneratorId());
         accountPublicKeyService.apply(account, block.getGeneratorPublicKey());
-        accountService.addToBalanceAndUnconfirmedBalanceATM(account, LedgerEvent.BLOCK_GENERATED, block.getId(), block.getTotalFeeATM() - totalBackFees);
-        accountService.addToForgedBalanceATM(account, block.getTotalFeeATM() - totalBackFees);
+        @TransactionFee(FeeMarker.FORGER_FEE)
+        long amountATM = block.getTotalFeeATM() - totalBackFees;
+        accountService.addToBalanceAndUnconfirmedBalanceATM(account, LedgerEvent.BLOCK_GENERATED, block.getId(), amountATM);
+        accountService.addToForgedBalanceATM(account, amountATM);
         log.debug("Transaction fee {} ATM awarded to forger {} at height {}",
             block.getTotalFeeATM() - totalBackFees,
             Convert2.rsAccount(account.getId()),

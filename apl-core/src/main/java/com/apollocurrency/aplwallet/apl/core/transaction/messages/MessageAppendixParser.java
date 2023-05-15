@@ -6,10 +6,10 @@ package com.apollocurrency.aplwallet.apl.core.transaction.messages;
 
 import org.json.simple.JSONObject;
 
-import javax.inject.Singleton;
+import jakarta.inject.Singleton;
 
 @Singleton
-public class MessageAppendixParser implements AppendixParser<MessageAppendix>{
+public class MessageAppendixParser implements AppendixParser<MessageAppendix> {
     @Override
     public MessageAppendix parse(JSONObject jsonData) {
         if (!Appendix.hasAppendix(MessageAppendix.appendixName, jsonData)) {

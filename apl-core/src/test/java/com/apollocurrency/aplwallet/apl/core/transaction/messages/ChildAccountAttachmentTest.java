@@ -16,6 +16,7 @@ import org.junit.jupiter.api.Test;
 import java.io.CharArrayWriter;
 import java.io.IOException;
 import java.nio.ByteBuffer;
+import java.nio.ByteOrder;
 import java.util.List;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
@@ -38,17 +39,18 @@ class ChildAccountAttachmentTest {
     void testParseFromBytes() throws AplException.NotValidException {
 
         ByteBuffer buffer = ByteBuffer.allocate(attachment.getFullSize());
+        buffer.order(ByteOrder.LITTLE_ENDIAN);
         attachment.putBytes(buffer);
         assertEquals(buffer.position(), attachment.getFullSize());
 
-        buffer.flip();
+        buffer.rewind();
         ChildAccountAttachment parsedFromBytes = new ChildAccountAttachment(buffer);
 
         assertEquals(attachment, parsedFromBytes);
     }
 
     @Test
-    void testParseFromJson() throws AplException.NotValidException, IOException, ParseException {
+    void testParseFromJson() throws IOException, ParseException {
 
         JSONObject json = attachment.getJSONObject();
         CharArrayWriter out = new CharArrayWriter();

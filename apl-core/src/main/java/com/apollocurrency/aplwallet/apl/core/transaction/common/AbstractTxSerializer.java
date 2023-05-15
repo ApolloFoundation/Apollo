@@ -4,7 +4,7 @@
 
 package com.apollocurrency.aplwallet.apl.core.transaction.common;
 
-import com.apollocurrency.aplwallet.apl.core.blockchain.Transaction;
+import com.apollocurrency.aplwallet.apl.core.model.Transaction;
 import com.apollocurrency.aplwallet.apl.util.io.ByteArrayStream;
 import com.apollocurrency.aplwallet.apl.util.io.JsonBuffer;
 import com.apollocurrency.aplwallet.apl.util.io.PayloadResult;
@@ -94,6 +94,7 @@ public abstract class AbstractTxSerializer implements TxSerializer {
         }
         json.put("ecBlockHeight", transaction.getECBlockHeight());
         json.put("ecBlockId", Long.toUnsignedString(transaction.getECBlockId()));
+        json.put("errorMessage", transaction.getErrorMessage().orElse(null));
         Signature signature = transaction.getSignature();
         if (signature != null) {
             json.put("signature", Convert.toHexString(signature.bytes()));

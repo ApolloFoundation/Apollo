@@ -30,7 +30,7 @@ class NtpTimeTest {
 
     @Test
     void getTimeTest() {
-        long freshTime = ntpTime.getTime();
+        long freshTime = ntpTime.currentTime();
         assertTrue(freshTime > currentTime);
         log.info("now : long = {} / formatted = {}", freshTime, dateFormat.format(freshTime));
     }

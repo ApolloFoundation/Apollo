@@ -25,6 +25,12 @@ public class GetMilestoneBlockIdsRequest extends BaseP2PRequest {
         super(REQUEST_TYPE, chainId);
     }
 
+    public GetMilestoneBlockIdsRequest(UUID chainId, String lastBlockId, String lastMilestoneBlockId) {
+        this(chainId);
+        this.lastBlockId = lastBlockId;
+        this.lastMilestoneBlockId = lastMilestoneBlockId;
+    }
+
     @Override
     public String toString() {
         return new StringJoiner(", ", GetMilestoneBlockIdsRequest.class.getSimpleName() + "[", "]")

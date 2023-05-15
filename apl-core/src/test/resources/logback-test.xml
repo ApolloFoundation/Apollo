@@ -57,6 +57,8 @@
               additivity="false">
         <appender-ref ref="STDOUT"/>
       </logger>
+      <logger name="com.apollocurrency.aplwallet.apl.core.service.state.smc" level="TRACE"/>
+      <logger name="com.apollocurrency.smc" level="TRACE"/>
     </else>
   </if>
 </configuration>

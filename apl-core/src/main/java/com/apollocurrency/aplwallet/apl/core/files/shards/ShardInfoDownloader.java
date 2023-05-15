@@ -20,7 +20,7 @@ import com.apollocurrency.aplwallet.apl.util.StringUtils;
 import lombok.Getter;
 import lombok.extern.slf4j.Slf4j;
 
-import javax.inject.Inject;
+import jakarta.inject.Inject;
 import java.security.MessageDigest;
 import java.util.ArrayList;
 import java.util.Collections;

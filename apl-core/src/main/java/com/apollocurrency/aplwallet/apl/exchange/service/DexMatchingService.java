@@ -5,8 +5,8 @@ import com.apollocurrency.aplwallet.apl.dex.core.model.DexOrderDBMatchingRequest
 import com.apollocurrency.aplwallet.apl.exchange.dao.DexOrderDao;
 import com.apollocurrency.aplwallet.apl.util.cdi.Transactional;
 
-import javax.inject.Inject;
-import javax.inject.Singleton;
+import jakarta.inject.Inject;
+import jakarta.inject.Singleton;
 import java.util.List;
 
 @Singleton

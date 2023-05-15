@@ -4,7 +4,7 @@
 
 package com.apollocurrency.aplwallet.apl.core.converter.db;
 
-import com.apollocurrency.aplwallet.apl.core.blockchain.Transaction;
+import com.apollocurrency.aplwallet.apl.core.model.Transaction;
 import com.apollocurrency.aplwallet.apl.core.entity.blockchain.TransactionEntity;
 import com.apollocurrency.aplwallet.apl.core.transaction.messages.Appendix;
 import com.apollocurrency.aplwallet.apl.core.transaction.messages.Prunable;
@@ -56,6 +56,7 @@ public class TransactionModelToEntityConverter implements Converter<Transaction,
             .hasPrunableMessage(model.hasPrunablePlainMessage())
             .hasPrunableEencryptedMessage(model.hasPrunableEncryptedMessage())
             .hasPrunableAttachment(model.getAttachment() instanceof Prunable)
+            .errorMessage(model.getErrorMessage().orElse(null))
 
             .build();
 

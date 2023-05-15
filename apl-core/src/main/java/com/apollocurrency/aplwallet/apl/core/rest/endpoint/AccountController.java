@@ -1,5 +1,5 @@
 /*
- * Copyright © 2018-2020 Apollo Foundation
+ * Copyright © 2018-2021 Apollo Foundation
  */
 
 package com.apollocurrency.aplwallet.apl.core.rest.endpoint;
@@ -11,7 +11,7 @@ import com.apollocurrency.aplwallet.api.dto.account.AccountCurrencyDTO;
 import com.apollocurrency.aplwallet.api.dto.account.AccountDTO;
 import com.apollocurrency.aplwallet.api.dto.account.AccountKeyDTO;
 import com.apollocurrency.aplwallet.api.dto.account.AccountsCountDto;
-import com.apollocurrency.aplwallet.api.dto.account.WalletKeysInfoDTO;
+import com.apollocurrency.aplwallet.api.dto.account.CurrenciesWalletsDTO;
 import com.apollocurrency.aplwallet.api.dto.auth.TwoFactorAuthParameters;
 import com.apollocurrency.aplwallet.api.response.AccountAssetsCountResponse;
 import com.apollocurrency.aplwallet.api.response.AccountAssetsResponse;
@@ -22,12 +22,12 @@ import com.apollocurrency.aplwallet.api.response.AccountCurrencyResponse;
 import com.apollocurrency.aplwallet.api.response.AccountCurrentAskOrderIdsResponse;
 import com.apollocurrency.aplwallet.api.response.AccountNotFoundResponse;
 import com.apollocurrency.aplwallet.api.response.BlocksResponse;
-import com.apollocurrency.aplwallet.apl.core.blockchain.Block;
 import com.apollocurrency.aplwallet.apl.core.entity.state.account.Account;
 import com.apollocurrency.aplwallet.apl.core.entity.state.account.AccountAsset;
 import com.apollocurrency.aplwallet.apl.core.entity.state.account.AccountCurrency;
 import com.apollocurrency.aplwallet.apl.core.entity.state.account.PublicKey;
 import com.apollocurrency.aplwallet.apl.core.entity.state.order.AskOrder;
+import com.apollocurrency.aplwallet.apl.core.model.Block;
 import com.apollocurrency.aplwallet.apl.core.rest.converter.Account2FAConverter;
 import com.apollocurrency.aplwallet.apl.core.rest.converter.Account2FADetailsConverter;
 import com.apollocurrency.aplwallet.apl.core.rest.converter.AccountAssetConverter;
@@ -51,7 +51,7 @@ import com.apollocurrency.aplwallet.apl.core.service.state.asset.AssetService;
 import com.apollocurrency.aplwallet.apl.core.service.state.currency.CurrencyService;
 import com.apollocurrency.aplwallet.apl.core.service.state.order.OrderService;
 import com.apollocurrency.aplwallet.apl.core.service.state.qualifier.AskOrderService;
-import com.apollocurrency.aplwallet.apl.core.transaction.messages.ColoredCoinsAskOrderPlacement;
+import com.apollocurrency.aplwallet.apl.core.transaction.messages.CCAskOrderPlacementAttachment;
 import com.apollocurrency.aplwallet.apl.crypto.Convert;
 import com.apollocurrency.aplwallet.apl.util.Constants;
 import com.apollocurrency.aplwallet.apl.util.Convert2;
@@ -82,21 +82,21 @@ import lombok.NoArgsConstructor;
 import lombok.Setter;
 import lombok.extern.slf4j.Slf4j;
 
-import javax.annotation.security.PermitAll;
-import javax.inject.Inject;
-import javax.validation.constraints.NotNull;
-import javax.ws.rs.BeanParam;
-import javax.ws.rs.Consumes;
-import javax.ws.rs.DefaultValue;
-import javax.ws.rs.FormParam;
-import javax.ws.rs.GET;
-import javax.ws.rs.POST;
-import javax.ws.rs.Path;
-import javax.ws.rs.Produces;
-import javax.ws.rs.QueryParam;
-import javax.ws.rs.core.Context;
-import javax.ws.rs.core.MediaType;
-import javax.ws.rs.core.Response;
+import jakarta.annotation.security.PermitAll;
+import jakarta.inject.Inject;
+import jakarta.validation.constraints.NotNull;
+import jakarta.ws.rs.BeanParam;
+import jakarta.ws.rs.Consumes;
+import jakarta.ws.rs.DefaultValue;
+import jakarta.ws.rs.FormParam;
+import jakarta.ws.rs.GET;
+import jakarta.ws.rs.POST;
+import jakarta.ws.rs.Path;
+import jakarta.ws.rs.Produces;
+import jakarta.ws.rs.QueryParam;
+import jakarta.ws.rs.core.Context;
+import jakarta.ws.rs.core.MediaType;
+import jakarta.ws.rs.core.Response;
 import java.util.List;
 import java.util.Objects;
 import java.util.stream.Collectors;
@@ -128,7 +128,7 @@ public class AccountController {
     private WalletKeysConverter walletKeysConverter;
     private Account2FADetailsConverter faDetailsConverter;
     private Account2FAConverter faConverter;
-    private OrderService<AskOrder, ColoredCoinsAskOrderPlacement> orderService;
+    private OrderService<AskOrder, CCAskOrderPlacementAttachment> orderService;
     private AccountStatisticsService accountStatisticsService;
     private AssetService assetService;
     private CurrencyService currencyService;
@@ -148,7 +148,7 @@ public class AccountController {
                              WalletKeysConverter walletKeysConverter,
                              Account2FADetailsConverter faDetailsConverter,
                              Account2FAConverter faConverter,
-                             @AskOrderService OrderService<AskOrder, ColoredCoinsAskOrderPlacement> orderService,
+                             @AskOrderService OrderService<AskOrder, CCAskOrderPlacementAttachment> orderService,
                              @Property(name = "apl.maxAPIRecords", defaultValue = "100") int maxAPIrecords,
                              AccountStatisticsService accountStatisticsService,
                              AssetService assetService,
@@ -173,7 +173,7 @@ public class AccountController {
         maxAPIFetchRecords = maxAPIrecords;
         this.accountStatisticsService = accountStatisticsService;
         this.assetService = assetService;
-        this.currencyService =  currencyService;
+        this.currencyService = currencyService;
         this.accountParametersParser = accountParametersParser;
         this.KMSService = KMSService;
     }
@@ -203,51 +203,42 @@ public class AccountController {
         @Parameter(description = "include effectiveBalanceAPL and guaranteedBalanceATM (optional)")
         @QueryParam("includeEffectiveBalance") @DefaultValue("false") boolean includeEffectiveBalance
     ) {
-
-        ResponseBuilder response = ResponseBuilder.startTiming();
-
-        long accountId = accountIdParameter.get();
-        Account account = accountService.getAccount(accountId);
-
-        if (account == null) {
-            AccountNotFoundResponse accountErrorResponse = new AccountNotFoundResponse(
-                ResponseBuilder.createErrorResponse(
-                    ApiErrors.UNKNOWN_VALUE,
-                    null,
-                    "account", accountId));
-            accountErrorResponse.setAccount(Long.toUnsignedString(accountId));
-            accountErrorResponse.setAccountRS(Convert2.rsAccount(accountId));
-            accountErrorResponse.set2FA(account2FAService.isEnabled2FA(accountId));
-            return response.error(accountErrorResponse).build();
-        }
-
-        if (account.getPublicKey() == null) {
-            PublicKey pKey = accountPublicKeyService.getPublicKey(account.getId());
-            account.setPublicKey(pKey);
-        }
-
-        AccountDTO dto = converter.convert(account);
-        if (includeEffectiveBalance) {
-            converter.addEffectiveBalances(dto, account);
-        }
-        if (includeLessors) {
-            List<Account> lessors = accountService.getLessors(account);
-            converter.addAccountLessors(dto, lessors, includeEffectiveBalance);
-        }
-        if (includeAssets) {
-            List<AccountAsset> assets = accountAssetService.getAssetsByAccount(account, 0, -1);
-            converter.addAccountAssets(dto, assets);
-        }
-        if (includeCurrencies) {
-            List<AccountCurrency> currencies = accountCurrencyService.getCurrenciesByAccount(account);
-            converter.addAccountCurrencies(dto, currencies);
-        }
-
-        return response.bind(dto).build();
+        return getAccountResponse(accountIdParameter, includeLessors, includeAssets, includeCurrencies, includeEffectiveBalance);
     }
 
-    @Path("/account")
+//    TODO Waiting for getAccount POST integrators usage response
+//    @Path("/account")
+//    @POST
+//    @Produces(MediaType.APPLICATION_JSON)
+//    @Consumes(MediaType.APPLICATION_FORM_URLENCODED)
+//    @Operation(
+//        summary = "Returns account information",
+//        description = "Returns account information by account id, same as GET /account",
+//        tags = {"accounts"},
+//        responses = {
+//            @ApiResponse(responseCode = "200", description = "Successful execution",
+//                content = @Content(mediaType = "application/json",
+//                    schema = @Schema(implementation = AccountDTO.class)))
+//        })
+//    @PermitAll
+//    public Response getAccountPost(
+//        @Parameter(description = "The account ID.", required = true, schema = @Schema(implementation = String.class))
+//        @FormParam("account") @NotNull AccountIdParameter accountIdParameter,
+//        @Parameter(description = "include additional lessors, lessorsRS and lessorsInfo (optional)")
+//        @FormParam("includeLessors") @DefaultValue("false") boolean includeLessors,
+//        @Parameter(description = "include additional assetBalances and unconfirmedAssetBalances (optional)")
+//        @FormParam("includeAssets") @DefaultValue("false") boolean includeAssets,
+//        @Parameter(description = "include accountCurrencies (optional)")
+//        @FormParam("includeCurrencies") @DefaultValue("false") boolean includeCurrencies,
+//        @Parameter(description = "include effectiveBalanceAPL and guaranteedBalanceATM (optional)")
+//        @FormParam("includeEffectiveBalance") @DefaultValue("false") boolean includeEffectiveBalance
+//    ) {
+//        return getAccountResponse(accountIdParameter, includeLessors, includeAssets, includeCurrencies, includeEffectiveBalance);
+//    }
+
+    //TODO Should without @Path("/account") after getAccount POST integrators usage response
     @POST
+    @Path("/account")
     @Produces(MediaType.TEXT_HTML)
     @Consumes(MediaType.APPLICATION_FORM_URLENCODED)
     @Operation(
@@ -258,7 +249,7 @@ public class AccountController {
         responses = {
             @ApiResponse(responseCode = "200", description = "Successful execution",
                 content = @Content(mediaType = "text/html",
-                    schema = @Schema(implementation = WalletKeysInfoDTO.class)))
+                    schema = @Schema(implementation = CurrenciesWalletsDTO.class)))
         })
     @PermitAll
     public Response generateAccount(@Parameter(description = "The passphrase") @FormParam("passphrase") String passphrase) {
@@ -271,7 +262,7 @@ public class AccountController {
             return response.error(ApiErrors.ACCOUNT_GENERATION_ERROR).build();
         }
 
-        WalletKeysInfoDTO dto = walletKeysConverter.convert(walletKeysInfo);
+        CurrenciesWalletsDTO dto = walletKeysConverter.convert(walletKeysInfo);
         if (StringUtils.isBlank(passphrase)) {
             dto.setPassphrase(walletKeysInfo.getPassphrase());
         }
@@ -458,7 +449,7 @@ public class AccountController {
         BlockConverter blockConverter = blockConverterCreator.create(includeTransaction, false);
         List<Block> blocks = accountService.getAccountBlocks(accountId, indexBeanParam.getFirstIndex(), indexBeanParam.getLastIndex(), timestamp);
         if (includeTransaction) {
-            blocks.forEach(block -> blockchain.getOrLoadTransactions(block));
+            blocks.forEach(block -> blockchain.loadBlockData(block));
         }
 
         BlocksResponse dto = new BlocksResponse();
@@ -526,7 +517,7 @@ public class AccountController {
         indexBeanParam.adjustIndexes(maxAPIFetchRecords);
 
         if (currencyId == null || currencyId.get() == 0) {
-            List<AccountCurrency> accountCurrencies = accountCurrencyService.getCurrenciesByAccount(
+            List<AccountCurrency> accountCurrencies = accountCurrencyService.getByAccount(
                 accountId, height, indexBeanParam.getFirstIndex(), indexBeanParam.getLastIndex());
             List<AccountCurrencyDTO> accountCurrencyDTOList = accountCurrencyConverter.convert(accountCurrencies);
             if (includeCurrencyInfo) {
@@ -785,5 +776,46 @@ public class AccountController {
         return response.bind(dto).build();
     }
 
+    private Response getAccountResponse(@QueryParam("account") @Parameter(description = "The account ID.", required = true, schema = @Schema(implementation = String.class)) @NotNull AccountIdParameter accountIdParameter, @DefaultValue("false") @QueryParam("includeLessors") @Parameter(description = "include additional lessors, lessorsRS and lessorsInfo (optional)") boolean includeLessors, @DefaultValue("false") @QueryParam("includeAssets") @Parameter(description = "include additional assetBalances and unconfirmedAssetBalances (optional)") boolean includeAssets, @DefaultValue("false") @QueryParam("includeCurrencies") @Parameter(description = "include accountCurrencies (optional)") boolean includeCurrencies, @DefaultValue("false") @QueryParam("includeEffectiveBalance") @Parameter(description = "include effectiveBalanceAPL and guaranteedBalanceATM (optional)") boolean includeEffectiveBalance) {
+        ResponseBuilder response = ResponseBuilder.startTiming();
 
+        long accountId = accountIdParameter.get();
+        Account account = accountService.getAccount(accountId);
+
+        if (account == null) {
+            AccountNotFoundResponse accountErrorResponse = new AccountNotFoundResponse(
+                ResponseBuilder.createErrorResponse(
+                    ApiErrors.UNKNOWN_VALUE,
+                    null,
+                    "account", accountId));
+            accountErrorResponse.setAccount(Long.toUnsignedString(accountId));
+            accountErrorResponse.setAccountRS(Convert2.rsAccount(accountId));
+            accountErrorResponse.set2FA(account2FAService.isEnabled2FA(accountId));
+            return response.error(accountErrorResponse).build();
+        }
+
+        if (account.getPublicKey() == null) {
+            PublicKey pKey = accountPublicKeyService.getPublicKey(account.getId());
+            account.setPublicKey(pKey);
+        }
+
+        AccountDTO dto = converter.convert(account);
+        if (includeEffectiveBalance) {
+            converter.addEffectiveBalances(dto, account);
+        }
+        if (includeLessors) {
+            List<Account> lessors = accountService.getLessors(account);
+            converter.addAccountLessors(dto, lessors, includeEffectiveBalance);
+        }
+        if (includeAssets) {
+            List<AccountAsset> assets = accountAssetService.getAssetsByAccount(account, 0, -1);
+            converter.addAccountAssets(dto, assets);
+        }
+        if (includeCurrencies) {
+            List<AccountCurrency> currencies = accountCurrencyService.getByAccount(account);
+            converter.addAccountCurrencies(dto, currencies);
+        }
+
+        return response.bind(dto).build();
+    }
 }

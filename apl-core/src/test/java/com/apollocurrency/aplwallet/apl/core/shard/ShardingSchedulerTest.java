@@ -5,12 +5,12 @@
 package com.apollocurrency.aplwallet.apl.core.shard;
 
 import com.apollocurrency.aplwallet.apl.core.app.observer.events.TrimConfigUpdated;
-import com.apollocurrency.aplwallet.apl.core.blockchain.Block;
 import com.apollocurrency.aplwallet.apl.core.chainid.BlockchainConfig;
 import com.apollocurrency.aplwallet.apl.core.chainid.HeightConfig;
 import com.apollocurrency.aplwallet.apl.core.config.TrimEventCommand;
 import com.apollocurrency.aplwallet.apl.core.entity.appdata.Shard;
 import com.apollocurrency.aplwallet.apl.core.entity.appdata.ShardState;
+import com.apollocurrency.aplwallet.apl.core.model.Block;
 import com.apollocurrency.aplwallet.apl.core.service.appdata.TimeService;
 import com.apollocurrency.aplwallet.apl.util.ThreadUtils;
 import lombok.extern.slf4j.Slf4j;
@@ -23,8 +23,8 @@ import org.mockito.invocation.InvocationOnMock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.mockito.stubbing.Answer;
 
-import javax.enterprise.event.Event;
-import javax.enterprise.util.AnnotationLiteral;
+import jakarta.enterprise.event.Event;
+import jakarta.enterprise.util.AnnotationLiteral;
 import java.util.List;
 import java.util.Random;
 import java.util.concurrent.CompletableFuture;
@@ -36,6 +36,7 @@ import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.Mockito.doAnswer;
 import static org.mockito.Mockito.doReturn;
+import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.lenient;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.times;
@@ -258,6 +259,53 @@ public class ShardingSchedulerTest {
             ThreadUtils.sleep(50);
         }
         verify(trimEvent, times(1)).fire(new TrimEventCommand(true, false));
+    }
+
+
+
+    @Test
+    void testInit_trySharding_unexpectedExceptionThrown() {
+        ShardSchedulingConfig schedulingConfig = new ShardSchedulingConfig(10, 20, false, 1000);
+        shardScheduler = new ShardingScheduler(trimEvent, shardService, blockchainConfig, schedulingConfig, timeService);
+        shardScheduler.setStandardShardDelay(0);
+        doReturn(trimEvent).when(trimEvent).select(new AnnotationLiteral<TrimConfigUpdated>() {});
+        doReturn(new Shard(1L, new byte[32], ShardState.FULL, 100, new byte[0], new long[3], new int[3], new int[3], new byte[32])).when(shardService).getLastShard();
+        List<HeightConfig> heightConfigs = List.of(mockHeightConfig(99, true, 200));
+        doReturn(heightConfigs).when(blockchainConfig).getAllActiveConfigsBetweenHeights(100, 500);
+        AtomicBoolean tryShardingFlag = new AtomicBoolean(false); // flag for triggering sharding
+        doAnswer(new Answer() {
+            volatile long i;
+            @Override
+            public Object answer(InvocationOnMock invocationOnMock) {
+                if (++i > 2 && !tryShardingFlag.get()) {
+                    return 19L;
+                }
+                return 20L;
+            }
+        }).when(timeService).systemTimeMillis();
+
+        shardScheduler.init(1500, 100);
+
+        List<ShardingScheduler.ShardScheduledRecord> scheduledRecords = List.of(
+            new ShardingScheduler.ShardScheduledRecord(0, 200, 1500, 20),
+            new ShardingScheduler.ShardScheduledRecord(0, 400, 1500, 20)
+        );
+        assertEquals(shardScheduler.scheduledShardings(), scheduledRecords);
+        assertTrue(shardScheduler.createShards());
+
+        // prepare for triggering trySharding, fatal error thrown
+        doThrow(new RuntimeException("Fatal sharding error")).when(shardService).tryCreateShardAsync(200, 1500);
+
+        // Start sharding, scheduled time has come
+        tryShardingFlag.set(true);
+
+        while (!shardScheduler.scheduledShardings().isEmpty()) {
+            ThreadUtils.sleep(50);
+        }
+        verify(trimEvent, times(1)).fire(new TrimEventCommand(true, false));
+        verify(shardService).tryCreateShardAsync(200, 1500);
+        verifyNoMoreInteractions(shardService);
+        assertFalse(shardScheduler.createShards(), "Sharding should be failed");
     }
 
     @Test

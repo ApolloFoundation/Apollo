@@ -1,7 +1,7 @@
 @echo off
 @REM common functions for Apollo scrtips
 @echo *********** APOLLO common **********
-set MIN_JAVA=110
+set MIN_JAVA=170
 set apl_bin=%~dp0
 call :getTop "%apl_bin%"
 goto cont1
@@ -23,7 +23,7 @@ PATH %JAVA_HOME%\bin\;%PATH%
 for /f tokens^=2-5^ delims^=.-_^" %%j in ('java -fullversion 2^>^&1') do set "java_ver=%%j%%k"
 
 if  %java_ver% LSS %MIN_JAVA% (
-   @echo WARNING! Java version is less then 11. Programs will not work!	
+   @echo WARNING! Java version is less then 17. Programs will not work!	
 ) else (
    @echo Java version is OK.	
 ) 

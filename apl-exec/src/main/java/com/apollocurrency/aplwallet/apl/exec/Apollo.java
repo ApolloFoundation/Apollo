@@ -9,7 +9,6 @@ import com.apollocurrency.aplwallet.apl.conf.ConfPlaceholder;
 import com.apollocurrency.aplwallet.apl.core.app.AplCoreRuntime;
 import com.apollocurrency.aplwallet.apl.core.chainid.BlockchainConfig;
 import com.apollocurrency.aplwallet.apl.core.chainid.BlockchainConfigUpdater;
-import com.apollocurrency.aplwallet.apl.core.db.DbConfig;
 import com.apollocurrency.aplwallet.apl.core.service.appdata.SecureStorageService;
 import com.apollocurrency.aplwallet.apl.core.utils.LegacyDbUtil;
 import com.apollocurrency.aplwallet.apl.udpater.intfce.UpdaterCore;
@@ -18,7 +17,8 @@ import com.apollocurrency.aplwallet.apl.util.Constants;
 import com.apollocurrency.aplwallet.apl.util.StringUtils;
 import com.apollocurrency.aplwallet.apl.util.cdi.AplContainer;
 import com.apollocurrency.aplwallet.apl.util.cdi.AplContainerBuilder;
-import com.apollocurrency.aplwallet.apl.util.cdi.transaction.JdbiTransactionalInterceptor;
+import com.apollocurrency.aplwallet.apl.util.db.MariaDbProcess;
+import com.apollocurrency.aplwallet.apl.core.db.JdbiTransactionalInterceptor;
 import com.apollocurrency.aplwallet.apl.util.env.EnvironmentVariables;
 import com.apollocurrency.aplwallet.apl.util.env.PosixExitCodes;
 import com.apollocurrency.aplwallet.apl.util.env.RuntimeEnvironment;
@@ -33,22 +33,17 @@ import com.apollocurrency.aplwallet.apl.util.env.dirprovider.ConfigDirProviderFa
 import com.apollocurrency.aplwallet.apl.util.env.dirprovider.DirProvider;
 import com.apollocurrency.aplwallet.apl.util.env.dirprovider.DirProviderFactory;
 import com.apollocurrency.aplwallet.apl.util.env.dirprovider.PredefinedDirLocations;
-import com.apollocurrency.aplwallet.apl.util.injectable.ChainsConfigHolder;
-import com.apollocurrency.aplwallet.apl.util.injectable.DbProperties;
 import com.apollocurrency.aplwallet.apl.util.injectable.PropertiesHolder;
 import com.beust.jcommander.JCommander;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import javax.enterprise.inject.spi.CDI;
+import jakarta.enterprise.inject.spi.CDI;
 import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.PrintWriter;
 import java.nio.file.Path;
 import java.nio.file.Paths;
-import java.sql.Connection;
-import java.sql.DriverManager;
-import java.sql.SQLException;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
@@ -60,14 +55,12 @@ import java.util.UUID;
  *
  * @author alukin@gmail.com
  */
-// @Singleton
 public class Apollo {
 
     //    System properties to load by PropertiesConfigLoader
     public static final String PID_FILE = "apl.pid";
     public static final String CMD_FILE = "apl.cmdline";
     public static final String APP_FILE = "apl.app";
-    public static final String APOLLO_MARIADB_INSTALL_DIR="apollo-mariadb";
     private static final List<String> SYSTEM_PROPERTY_NAMES = Arrays.asList(
         "socksProxyHost",
         "socksProxyPort",
@@ -176,40 +169,6 @@ public class Apollo {
         updaterCore.init(attachmentFilePath, debug);
     }
 
-    private static boolean checkDbWithJDBC(DbConfig conf){
-        boolean res = true;
-        DbProperties dbConfig = conf.getDbConfig();
-        String dbURL = dbConfig.formatJdbcUrlString(true);
-        Connection conn;
-        try {
-            conn = DriverManager.getConnection(dbURL);
-            if(!conn.isValid(1)){
-                res = false;
-            }
-        } catch (SQLException ex) {
-            res = false;
-        }
-
-        return res;
-    }
-
-    private static boolean checkOrRunDatabaseServer(DbConfig conf) {
-        boolean res = checkDbWithJDBC(conf);
-        //if we have connected to database URL from config, wha have nothing to do
-        if(!res){
-            // if we can not connect to database, we'll try start it
-            // from Apollo package. If it is first start, data base data dir
-            // will be initialized
-            Path dbDataDir = dirProvider.getDbDir();
-            Path dbInstalPath = DirProvider.getBinDir().getParent().resolve(APOLLO_MARIADB_INSTALL_DIR);
-            Path dbOutPath = Paths.get(new LogDirPropertyDefiner().getPropertyValue(), "maria_out.log");
-            log.info("Setting mariadb process out path: {}", dbOutPath);
-            mariaDbProcess = new MariaDbProcess(conf,dbInstalPath,dbDataDir, dbOutPath);
-            res = mariaDbProcess.startAndWaitWhenReady();
-        }
-        return res;
-    }
-
     /**
      * @param argv the command line arguments
      */
@@ -249,7 +208,7 @@ public class Apollo {
 //cheat classloader to get access to "conf" package resources
         ConfPlaceholder ph = new ConfPlaceholder();
 
-//--------------- config locading section -------------------------------------
+//--------------- config locating section -------------------------------------
 
 //load configuration files
         EnvironmentVariables envVars = new EnvironmentVariables(Constants.APPLICATION_DIR_NAME);
@@ -277,7 +236,7 @@ public class Apollo {
             Constants.APPLICATION_DIR_NAME + ".properties",
             SYSTEM_PROPERTY_NAMES);
 
-// load everuthing into applicationProperies. This is the place where all configuration
+// load everything into applicationProperties. This is the place where all configuration
 // is collected from configs, command line and environment variables
         Properties applicationProperties = propertiesLoader.load();
 
@@ -326,15 +285,6 @@ public class Apollo {
 // runtimeMode could be user or service. It is also different for Unix and Windows
         runtimeMode = RuntimeEnvironment.getInstance().getRuntimeMode();
         runtimeMode.init(); // instance is NOT PROXIED by CDI !!
-
-// check running or run data base server process.
-
-        DbConfig dbConfig = new DbConfig(new PropertiesHolder(applicationProperties), new ChainsConfigHolder(chains));
-        if(!checkOrRunDatabaseServer(dbConfig)){
-            System.err.println(" ERROR! MariaDB process is not running and can not be started from Apollo!");
-            System.err.println(" Please install apollo-mariadb package at the same directory level as apollo-blockchain package.");
-            System.exit(PosixExitCodes.EX_SOFTWARE.exitCode());
-        }
 
 //-------------- now bring CDI container up! -------------------------------------
 

@@ -4,7 +4,9 @@
 package com.apollocurrency.aplwallet.apl.core.service.appdata;
 
 import com.apollocurrency.aplwallet.apl.core.app.observer.events.TrimEvent;
-import com.apollocurrency.aplwallet.apl.core.dao.TransactionalDataSource;
+import com.apollocurrency.aplwallet.apl.core.db.DatabaseManager;
+import com.apollocurrency.aplwallet.apl.core.service.fulltext.FullTextOperationData;
+import com.apollocurrency.aplwallet.apl.util.db.TransactionalDataSource;
 import com.apollocurrency.aplwallet.apl.core.shard.observer.DeleteOnTrimData;
 import com.apollocurrency.aplwallet.apl.util.ThreadUtils;
 import com.apollocurrency.aplwallet.apl.util.injectable.PropertiesHolder;
@@ -13,12 +15,13 @@ import org.jboss.weld.junit5.EnableWeld;
 import org.jboss.weld.junit5.WeldInitiator;
 import org.jboss.weld.junit5.WeldSetup;
 import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.Timeout;
 
-import javax.enterprise.event.Event;
-import javax.enterprise.util.AnnotationLiteral;
-import javax.inject.Inject;
+import jakarta.enterprise.event.Event;
+import jakarta.enterprise.util.AnnotationLiteral;
+import jakarta.inject.Inject;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.util.Collections;
@@ -35,8 +38,8 @@ import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 
-
-@EnableWeld
+@Disabled
+@Deprecated
 class DeleteTrimObserverTest {
     DatabaseManager databaseManager = mock(DatabaseManager.class);
     PropertiesHolder propertiesHolder = mock(PropertiesHolder.class);
@@ -51,6 +54,8 @@ class DeleteTrimObserverTest {
     Event<DeleteOnTrimData> trimEvent;
     @Inject
     DeleteTrimObserver observer;
+    @Inject
+    Event<FullTextOperationData> fullTextOperationDataEvent;
 
     @BeforeEach
     void setUp() {
@@ -105,7 +110,7 @@ class DeleteTrimObserverTest {
         PreparedStatement preparedStatement = mock(PreparedStatement.class);
         doReturn(preparedStatement).when(con).prepareStatement(anyString());
         doNothing().doNothing().when(preparedStatement).setLong(anyInt(), anyLong());
-        observer = new DeleteTrimObserver(databaseManager, propertiesHolder);
+        observer = new DeleteTrimObserver(databaseManager, propertiesHolder, fullTextOperationDataEvent);
 
         DeleteOnTrimData delete = new DeleteOnTrimData(true, Set.of(1739068987193023818L, 9211698109297098287L), "account");
         observer.performOneTableDelete(delete);

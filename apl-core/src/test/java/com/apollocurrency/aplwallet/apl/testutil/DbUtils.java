@@ -4,12 +4,13 @@
 
 package com.apollocurrency.aplwallet.apl.testutil;
 
-import com.apollocurrency.aplwallet.apl.core.dao.TransactionalDataSource;
-import com.apollocurrency.aplwallet.apl.core.service.appdata.DatabaseManager;
+import com.apollocurrency.aplwallet.apl.core.db.DatabaseManager;
+import com.apollocurrency.aplwallet.apl.core.config.JdbiConfiguration;
 import com.apollocurrency.aplwallet.apl.extension.DbExtension;
+import com.apollocurrency.aplwallet.apl.util.cdi.transaction.JdbiHandleFactory;
+import com.apollocurrency.aplwallet.apl.util.db.TransactionalDataSource;
 
 import java.sql.Connection;
-import java.sql.SQLException;
 import java.util.function.Consumer;
 import java.util.function.Function;
 
@@ -27,9 +28,18 @@ public class DbUtils {
         try (Connection con = dataSource.begin()) { // start new transaction
             consumer.accept(con);
             dataSource.commit();
-        } catch (SQLException e) {
+        } catch (Throwable e) {
             dataSource.rollback();
             throw new RuntimeException(e);
+        }
+    }
+    public static void inTransactionAndRollback(TransactionalDataSource dataSource, Consumer<Connection> consumer) {
+        try (Connection con = dataSource.begin()) { // start new transaction
+            consumer.accept(con);
+        } catch (Throwable e) {
+            throw new RuntimeException(e);
+        } finally {
+            dataSource.rollback();
         }
     }
 
@@ -46,7 +56,7 @@ public class DbUtils {
             try (Connection con = dataSource.begin()) { // start new transaction
                 consumer.accept(con);
                 dataSource.commit();
-            } catch (SQLException e) {
+            } catch (Throwable e) {
                 dataSource.rollback();
                 throw new RuntimeException(e);
             }
@@ -54,7 +64,7 @@ public class DbUtils {
             try (Connection con = dataSource.getConnection()) { // take old transaction
                 consumer.accept(con);
                 dataSource.commit();
-            } catch (SQLException e) {
+            } catch (Throwable e) {
                 dataSource.rollback();
                 throw new RuntimeException(e);
             }
@@ -67,9 +77,15 @@ public class DbUtils {
             T res = function.apply(con);
             dataSource.commit();
             return res;
-        } catch (SQLException e) {
+        } catch (Throwable e) {
             dataSource.rollback();
             throw new RuntimeException(e);
         }
+    }
+
+    public static JdbiHandleFactory createJdbiHandleFactory(DatabaseManager databaseManager) {
+        JdbiConfiguration jdbiConfiguration = new JdbiConfiguration(databaseManager);
+        jdbiConfiguration.init();
+        return new JdbiHandleFactory(jdbiConfiguration.jdbi());
     }
 }

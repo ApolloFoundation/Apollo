@@ -20,20 +20,20 @@
 
 package com.apollocurrency.aplwallet.apl.core.http.post;
 
-import com.apollocurrency.aplwallet.apl.core.blockchain.Transaction;
+import com.apollocurrency.aplwallet.apl.core.exception.AplCoreLogicException;
 import com.apollocurrency.aplwallet.apl.core.http.APITag;
 import com.apollocurrency.aplwallet.apl.core.http.AbstractAPIRequestHandler;
 import com.apollocurrency.aplwallet.apl.core.http.HttpParameterParserUtil;
 import com.apollocurrency.aplwallet.apl.core.http.JSONData;
 import com.apollocurrency.aplwallet.apl.core.http.ParameterException;
+import com.apollocurrency.aplwallet.apl.core.model.Transaction;
 import com.apollocurrency.aplwallet.apl.crypto.Convert;
-import com.apollocurrency.aplwallet.apl.util.exception.AplException;
 import lombok.extern.slf4j.Slf4j;
 import org.json.simple.JSONObject;
 import org.json.simple.JSONStreamAware;
 
-import javax.enterprise.inject.Vetoed;
-import javax.servlet.http.HttpServletRequest;
+import jakarta.enterprise.inject.Vetoed;
+import jakarta.servlet.http.HttpServletRequest;
 
 /**
  * The purpose of broadcast transaction is to support client side signing of transactions.
@@ -41,9 +41,6 @@ import javax.servlet.http.HttpServletRequest;
  * In response the client receives the unsigned transaction JSON and transaction bytes.
  * <p>
  * The client then signs and submits the signed transaction using {@link BroadcastTransaction}
- * <p>
- * The default wallet implements this procedure in ars.server.js which you can use as reference.
- * <p>
  * {@link BroadcastTransaction} accepts the following parameters:<br>
  * transactionJSON - JSON representation of the signed transaction<br>
  * transactionBytes - row bytes composing the signed transaction bytes excluding the prunable appendages<br>
@@ -53,7 +50,7 @@ import javax.servlet.http.HttpServletRequest;
  * In case the client submits transactionBytes for a transaction containing prunable appendages, the client also needs
  * to submit the prunableAttachmentJSON parameter which includes the attachment JSON for the prunable appendages.<br>
  * <p>
- * Prunable appendages are classes implementing the {@link com.apollocurrency.aplwallet.apl} interface.
+ * Prunable appendages are classes implementing the {@link com.apollocurrency.aplwallet.apl.core.transaction.messages.Prunable} interface.
  */
 @Vetoed
 @Slf4j
@@ -76,7 +73,7 @@ public final class BroadcastTransaction extends AbstractAPIRequestHandler {
             lookupTransactionProcessor().broadcast(transaction);
             response.put("transaction", transaction.getStringId());
             response.put("fullHash", transaction.getFullHashString());
-        } catch (AplException.ValidationException | RuntimeException e) {
+        } catch (AplCoreLogicException e) {
             JSONData.putException(response, e, "Failed to broadcast transaction");
         }
         return response;

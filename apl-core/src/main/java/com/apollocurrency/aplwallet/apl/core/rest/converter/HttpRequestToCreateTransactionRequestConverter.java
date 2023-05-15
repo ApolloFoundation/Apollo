@@ -12,13 +12,13 @@ import com.apollocurrency.aplwallet.apl.core.service.state.account.AccountServic
 import com.apollocurrency.aplwallet.apl.core.transaction.messages.Attachment;
 import com.apollocurrency.aplwallet.apl.crypto.Convert;
 
-import javax.servlet.http.HttpServletRequest;
+import jakarta.servlet.http.HttpServletRequest;
 
 public class HttpRequestToCreateTransactionRequestConverter {
 
     public static CreateTransactionRequest convert(
         HttpServletRequest req, Account senderAccount, Account recipientAccount, long recipientId, long amountATM, long feeATM,
-        Attachment attachment, Boolean broadcast) throws ParameterException {
+        Attachment attachment, Boolean broadcast, Boolean validate) throws ParameterException {
 
         String passphrase = Convert.emptyToNull(HttpParameterParserUtil.getPassphrase(req, false));
         String secretPhrase = HttpParameterParserUtil.getSecretPhrase(req, false);
@@ -54,6 +54,7 @@ public class HttpRequestToCreateTransactionRequestConverter {
 
             .ecBlockHeight(HttpParameterParserUtil.getInt(req, "ecBlockHeight", 0, Integer.MAX_VALUE, false))
             .ecBlockId(Convert.parseUnsignedLong(req.getParameter("ecBlockId")))
+            .validate(!"false".equalsIgnoreCase(req.getParameter("validate")) && (validate != null ? validate : false) )
 
             .build();
 
@@ -61,18 +62,18 @@ public class HttpRequestToCreateTransactionRequestConverter {
     }
 
     public static CreateTransactionRequest convert(HttpServletRequest req, Account senderAccount, long recipientId, long amountATM,
-                                                   Attachment attachment, boolean broadcast,
+                                                   Attachment attachment, Boolean broadcast, Boolean validate,
                                                    AccountService accountService) throws ParameterException {
         Account recipient = null;
 
         if (recipientId != 0) {
             recipient = accountService.getAccount(recipientId);
         }
-        return convert(req, senderAccount, recipient, recipientId, amountATM, HttpParameterParserUtil.getFeeATM(req), attachment, broadcast);
+        return convert(req, senderAccount, recipient, recipientId, amountATM, HttpParameterParserUtil.getFeeATM(req), attachment, broadcast, validate);
     }
 
     public static CreateTransactionRequest convert(HttpServletRequest req, Account senderAccount, long recipientId, long amountATM,
-                                                   Attachment attachment, boolean broadcast, long feeATM) throws ParameterException {
-        return convert(req, senderAccount, null, recipientId, amountATM, feeATM, attachment, broadcast);
+                                                   Attachment attachment, Boolean broadcast, Boolean validate, long feeATM) throws ParameterException {
+        return convert(req, senderAccount, null, recipientId, amountATM, feeATM, attachment, broadcast, validate);
     }
 }

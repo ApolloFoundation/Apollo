@@ -22,7 +22,7 @@ package com.apollocurrency.aplwallet.apl.core.peer;
 
 import com.apollocurrency.aplwallet.api.p2p.PeerInfo;
 import com.apollocurrency.aplwallet.api.p2p.request.BaseP2PRequest;
-import com.apollocurrency.aplwallet.api.p2p.respons.BaseP2PResponse;
+import com.apollocurrency.aplwallet.api.p2p.response.BaseP2PResponse;
 import com.apollocurrency.aplwallet.apl.core.chainid.BlockchainConfig;
 import com.apollocurrency.aplwallet.apl.core.entity.state.account.Account;
 import com.apollocurrency.aplwallet.apl.core.http.API;
@@ -213,8 +213,8 @@ public final class PeerImpl implements Peer {
             peers.notifyListeners(this, PeersService.Event.CHANGED_ACTIVE_PEER);
         }
         log.debug("Peer={} {} oldState={} newState={}", this.getAnnouncedAddress(),
-            newState != PeerState.CONNECTED && oldState == PeerState.CONNECTED ? "was disconnected" : "",
-            oldState, newState);
+                newState != PeerState.CONNECTED && oldState == PeerState.CONNECTED ? "was disconnected" : "",
+                oldState, newState);
     }
 
     @Override
@@ -665,14 +665,14 @@ public final class PeerImpl implements Peer {
 
                 if (!setApplication(newPi.getApplication())) {
                     log.trace("Peer: {} has different Application value '{}', removing",
-                        getHostWithPort(), newPi.getApplication());
+                            getHostWithPort(), newPi.getApplication());
                     remove();
                     return false;
                 }
 
                 if (newPi.getChainId() == null || !targetChainId.equals(UUID.fromString(newPi.getChainId()))) {
                     log.trace("Peer: {} has different chainId: '{}', removing",
-                        getHostWithPort(), newPi.getChainId());
+                            getHostWithPort(), newPi.getChainId());
                     remove();
                     return false;
                 }
@@ -685,7 +685,7 @@ public final class PeerImpl implements Peer {
                 }
                 if (!analyzeHallmark(newPi.getHallmark())) {
                     log.debug("PEER-Connect host {}: version: {} hallmark failed, blacklisting",
-                        host, peerVersion);
+                            host, peerVersion);
                     blacklist("Bad hallmark");
                     return false;
                 }
@@ -715,7 +715,7 @@ public final class PeerImpl implements Peer {
                         }
                         if (!newPi.getAnnouncedAddress().equalsIgnoreCase(pi.getAnnouncedAddress())) {
                             log.debug("peer '{}' has new announced address '{}', old is '{}'",
-                                host, newPi.getAnnouncedAddress(), pi.getAnnouncedAddress());
+                                    host, newPi.getAnnouncedAddress(), pi.getAnnouncedAddress());
                             peers.setAnnouncedAddress(this, newPi.getAnnouncedAddress());
                             // force checking connectivity to new announced port
                             deactivate("Announced address change");
@@ -752,7 +752,7 @@ public final class PeerImpl implements Peer {
         int announcedPort = pa.getPort();
         if (hallmark != null && announcedPort != hallmark.getPort()) {
             log.debug("Announced port {} does not match hallmark {}, ignoring hallmark for {}",
-                announcedPort, hallmark.getPort(), host
+                    announcedPort, hallmark.getPort(), host
             );
             unsetHallmark();
             return false;

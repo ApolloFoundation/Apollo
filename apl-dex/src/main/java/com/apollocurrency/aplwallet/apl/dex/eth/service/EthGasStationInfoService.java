@@ -10,7 +10,7 @@ import com.apollocurrency.aplwallet.apl.dex.eth.model.EthStationGasInfo;
 import com.apollocurrency.aplwallet.apl.util.Constants;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
-import javax.inject.Singleton;
+import jakarta.inject.Singleton;
 import javax.net.ssl.HttpsURLConnection;
 import javax.net.ssl.SSLContext;
 import java.io.BufferedReader;

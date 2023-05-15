@@ -9,11 +9,11 @@ import org.flywaydb.core.api.output.MigrateResult;
 public class ShardAllScriptsDBUpdater implements DBUpdater {
 
     @Override
-    public void update(String url, String user, String password) {
+    public void update(MigrationParams migrationParams) {
         Flyway flyway =
             Flyway.configure()
-                .dataSource(url, user, password)
-                .locations("classpath:db/migration/shard")
+                .dataSource(migrationParams.getDbUrl(), migrationParams.getUser(), migrationParams.getPassword())
+                .locations("classpath:db/migration/" + migrationParams.getDbType() +"/shard")
                 .load();
 
         MigrateResult migrateResult = flyway.migrate();

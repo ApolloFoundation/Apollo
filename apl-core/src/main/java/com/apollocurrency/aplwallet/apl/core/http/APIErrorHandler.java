@@ -5,11 +5,12 @@
 package com.apollocurrency.aplwallet.apl.core.http;
 
 import org.apache.commons.io.IOUtils;
+import org.eclipse.jetty.server.Request;
 import org.eclipse.jetty.servlet.ErrorPageErrorHandler;
 
-import javax.servlet.ServletException;
-import javax.servlet.http.HttpServletRequest;
-import javax.servlet.http.HttpServletResponse;
+import jakarta.servlet.ServletException;
+import jakarta.servlet.http.HttpServletRequest;
+import jakarta.servlet.http.HttpServletResponse;
 import java.io.FileReader;
 import java.io.IOException;
 import java.io.PrintWriter;
@@ -19,7 +20,7 @@ public class APIErrorHandler extends ErrorPageErrorHandler {
 
 
     @Override
-    public void handle(String target, org.eclipse.jetty.server.Request baseRequest, HttpServletRequest request, HttpServletResponse response) throws IOException, ServletException {
+    public void handle(String target, Request baseRequest, HttpServletRequest request, HttpServletResponse response) throws IOException, ServletException {
         if (response.getStatus() == HttpURLConnection.HTTP_NOT_FOUND) {
             String apiResourceBase = API.findWebUiDir();
 //propertiesLoader.getStringProperty("apl.apiResourceBase");

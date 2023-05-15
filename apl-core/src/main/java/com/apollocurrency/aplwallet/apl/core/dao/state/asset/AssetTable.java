@@ -4,21 +4,19 @@
 
 package com.apollocurrency.aplwallet.apl.core.dao.state.asset;
 
-import com.apollocurrency.aplwallet.apl.core.dao.state.derived.SearchableTableInterface;
+import com.apollocurrency.aplwallet.apl.core.dao.state.derived.SearchableTableMarkerInterface;
 import com.apollocurrency.aplwallet.apl.core.dao.state.derived.VersionedDeletableEntityDbTable;
 import com.apollocurrency.aplwallet.apl.core.dao.state.keyfactory.DbKey;
 import com.apollocurrency.aplwallet.apl.core.dao.state.keyfactory.LongKeyFactory;
-import com.apollocurrency.aplwallet.apl.core.db.DbClause;
-import com.apollocurrency.aplwallet.apl.core.db.DbIterator;
+import com.apollocurrency.aplwallet.apl.core.service.fulltext.FullTextOperationData;
 import com.apollocurrency.aplwallet.apl.core.entity.state.asset.Asset;
-import com.apollocurrency.aplwallet.apl.core.service.appdata.DatabaseManager;
-import com.apollocurrency.aplwallet.apl.core.shard.observer.DeleteOnTrimData;
+import com.apollocurrency.aplwallet.apl.core.db.DatabaseManager;
 import com.apollocurrency.aplwallet.apl.util.annotation.DatabaseSpecificDml;
 import com.apollocurrency.aplwallet.apl.util.annotation.DmlMarker;
 
-import javax.enterprise.event.Event;
-import javax.inject.Inject;
-import javax.inject.Singleton;
+import jakarta.enterprise.event.Event;
+import jakarta.inject.Inject;
+import jakarta.inject.Singleton;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
@@ -27,7 +25,10 @@ import java.sql.Statement;
 
 @Singleton
 @DatabaseSpecificDml(DmlMarker.FULL_TEXT_SEARCH)
-public class AssetTable extends VersionedDeletableEntityDbTable<Asset> implements SearchableTableInterface<Asset> {
+public class AssetTable extends VersionedDeletableEntityDbTable<Asset> implements SearchableTableMarkerInterface<Asset> {
+
+    public static final String TABLE_NAME = "asset";
+    public static final String FULL_TEXT_SEARCH_COLUMNS = "name,description";
 
     public static final LongKeyFactory<Asset> assetDbKeyFactory = new LongKeyFactory<>("id") {
         @Override
@@ -41,9 +42,9 @@ public class AssetTable extends VersionedDeletableEntityDbTable<Asset> implement
 
     @Inject
     public AssetTable(DatabaseManager databaseManager,
-                      Event<DeleteOnTrimData> deleteOnTrimDataEvent) {
-        super("asset", assetDbKeyFactory, "name,description",
-                databaseManager, deleteOnTrimDataEvent);
+                      Event<FullTextOperationData> fullTextOperationDataEvent) {
+        super(TABLE_NAME, assetDbKeyFactory, FULL_TEXT_SEARCH_COLUMNS,
+                databaseManager, fullTextOperationDataEvent);
     }
 
     @Override
@@ -82,17 +83,5 @@ public class AssetTable extends VersionedDeletableEntityDbTable<Asset> implement
             }
         }
     }
-
-    @Override
-    public final DbIterator<Asset> search(String query, DbClause dbClause, int from, int to) {
-        throw new UnsupportedOperationException("Call service, should be implemented by service");
-    }
-
-    @Override
-    public final DbIterator<Asset> search(String query, DbClause dbClause, int from, int to, String sort) {
-        throw new UnsupportedOperationException("Call service, should be implemented by service");
-    }
-
-
 
 }

@@ -8,6 +8,7 @@ import com.apollocurrency.aplwallet.apl.crypto.Convert;
 import com.apollocurrency.aplwallet.apl.crypto.Crypto;
 import com.apollocurrency.aplwallet.apl.util.Constants;
 import com.apollocurrency.aplwallet.apl.util.exception.AplException;
+import lombok.ToString;
 import org.json.simple.JSONArray;
 import org.json.simple.JSONObject;
 
@@ -18,6 +19,7 @@ import java.util.List;
 /**
  * @author al
  */
+@ToString(callSuper = true)
 public final class ShufflingCancellationAttachment extends AbstractShufflingAttachment {
 
     final byte[][] blameData;

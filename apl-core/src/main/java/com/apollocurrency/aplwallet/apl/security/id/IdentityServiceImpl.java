@@ -23,8 +23,8 @@ import io.firstbridge.identity.handler.ThisActorIdHandler;
 import io.firstbridge.identity.handler.ThisActorIdHandlerImpl;
 import lombok.extern.slf4j.Slf4j;
 
-import javax.inject.Inject;
-import javax.inject.Singleton;
+import jakarta.inject.Inject;
+import jakarta.inject.Singleton;
 import java.io.IOException;
 import java.nio.file.Path;
 import java.security.PrivateKey;

@@ -4,28 +4,24 @@
 
 package com.apollocurrency.aplwallet.apl.core.dao.state.account;
 
+import com.apollocurrency.aplwallet.apl.core.app.observer.events.TrimEvent;
 import com.apollocurrency.aplwallet.apl.core.chainid.BlockchainConfig;
 import com.apollocurrency.aplwallet.apl.core.dao.DbContainerBaseTest;
 import com.apollocurrency.aplwallet.apl.core.entity.state.account.AccountGuaranteedBalance;
-import com.apollocurrency.aplwallet.apl.core.service.appdata.DatabaseManager;
-import com.apollocurrency.aplwallet.apl.core.service.fulltext.FullTextConfig;
-import com.apollocurrency.aplwallet.apl.core.service.fulltext.FullTextConfigImpl;
+import com.apollocurrency.aplwallet.apl.core.service.fulltext.FullTextOperationData;
 import com.apollocurrency.aplwallet.apl.data.AccountTestData;
 import com.apollocurrency.aplwallet.apl.data.DbTestData;
 import com.apollocurrency.aplwallet.apl.extension.DbExtension;
 import com.apollocurrency.aplwallet.apl.testutil.DbUtils;
 import com.apollocurrency.aplwallet.apl.util.injectable.PropertiesHolder;
 import lombok.extern.slf4j.Slf4j;
-import org.jboss.weld.junit.MockBean;
-import org.jboss.weld.junit5.EnableWeld;
-import org.jboss.weld.junit5.WeldInitiator;
-import org.jboss.weld.junit5.WeldSetup;
-import org.jdbi.v3.core.Jdbi;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.RegisterExtension;
 
-import javax.inject.Inject;
+import jakarta.enterprise.event.Event;
+import jakarta.enterprise.util.AnnotationLiteral;
 import java.sql.SQLException;
 import java.util.List;
 import java.util.Map;
@@ -33,36 +29,32 @@ import java.util.Map;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.mockito.Mockito.doReturn;
 import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.when;
 
 @Slf4j
 
 @Tag("slow")
-@EnableWeld
 class AccountGuaranteedBalanceTableTest extends DbContainerBaseTest {
 
     @RegisterExtension
     static DbExtension dbExtension = new DbExtension(mariaDBContainer, DbTestData.getInMemDbProps(), "db/acc-data.sql", "db/schema.sql");
-    @Inject
     AccountGuaranteedBalanceTable table;
     AccountTestData testData = new AccountTestData();
     private BlockchainConfig blockchainConfig = mock(BlockchainConfig.class);
     private PropertiesHolder propertiesHolder = mock(PropertiesHolder.class);
+    Event<FullTextOperationData> fullTextOperationDataEvent = mock(Event.class);
 
-    @WeldSetup
-    public WeldInitiator weld = WeldInitiator.from(
-        PropertiesHolder.class, AccountGuaranteedBalanceTable.class
-    )
-        .addBeans(MockBean.of(dbExtension.getDatabaseManager(), DatabaseManager.class))
-        .addBeans(MockBean.of(dbExtension.getDatabaseManager().getJdbi(), Jdbi.class))
-        .addBeans(MockBean.of(blockchainConfig, BlockchainConfig.class))
-        .addBeans(MockBean.of(propertiesHolder, PropertiesHolder.class))
-        .addBeans(MockBean.of(mock(FullTextConfig.class), FullTextConfig.class, FullTextConfigImpl.class))
-        .build();
+    @BeforeEach
+    void setUp() {
+        when(fullTextOperationDataEvent.select(new AnnotationLiteral<TrimEvent>() {})).thenReturn(fullTextOperationDataEvent);
+        table = new AccountGuaranteedBalanceTable(blockchainConfig, propertiesHolder, dbExtension.getDatabaseManager(), fullTextOperationDataEvent);
+    }
 
     @Test
     void trim() throws SQLException {
         doReturn(10).when(propertiesHolder).BATCH_COMMIT_SIZE();
-        table = new AccountGuaranteedBalanceTable(blockchainConfig, propertiesHolder, dbExtension.getDatabaseManager());
+        table = new AccountGuaranteedBalanceTable(blockchainConfig,
+            propertiesHolder, dbExtension.getDatabaseManager(), mock(Event.class));
 
         long sizeAll = table.getAllByDbId(0, Integer.MAX_VALUE, Long.MAX_VALUE).getValues().size();
         assertEquals(testData.ALL_BALANCES.size(), sizeAll);

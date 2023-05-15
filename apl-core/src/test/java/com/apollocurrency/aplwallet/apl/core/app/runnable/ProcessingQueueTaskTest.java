@@ -4,9 +4,10 @@
 
 package com.apollocurrency.aplwallet.apl.core.app.runnable;
 
-import com.apollocurrency.aplwallet.apl.core.blockchain.UnconfirmedTransaction;
-import com.apollocurrency.aplwallet.apl.core.dao.TransactionalDataSource;
-import com.apollocurrency.aplwallet.apl.core.service.appdata.DatabaseManager;
+import com.apollocurrency.aplwallet.apl.core.exception.AplUnacceptableTransactionValidationException;
+import com.apollocurrency.aplwallet.apl.core.model.UnconfirmedTransaction;
+import com.apollocurrency.aplwallet.apl.util.db.TransactionalDataSource;
+import com.apollocurrency.aplwallet.apl.core.db.DatabaseManager;
 import com.apollocurrency.aplwallet.apl.core.service.blockchain.MemPool;
 import com.apollocurrency.aplwallet.apl.core.service.blockchain.UnconfirmedTransactionProcessingService;
 import com.apollocurrency.aplwallet.apl.core.service.blockchain.UnconfirmedTxValidationResult;
@@ -21,9 +22,9 @@ import org.mockito.invocation.InvocationOnMock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.mockito.stubbing.Answer;
 
+import java.util.function.Function;
+
 import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.ArgumentMatchers.anyInt;
-import static org.mockito.ArgumentMatchers.anyLong;
 import static org.mockito.Mockito.doAnswer;
 import static org.mockito.Mockito.doReturn;
 import static org.mockito.Mockito.mock;
@@ -79,11 +80,11 @@ class ProcessingQueueTaskTest {
             @Override
             public Object answer(InvocationOnMock invocationOnMock) throws Throwable {
                 if (++i == 3) {
-                    throw new AplException.NotValidException("Test not valid tx");
+                    throw new AplUnacceptableTransactionValidationException("Test not valid tx", invocationOnMock.getArgument(0));
                 }
                 return null;
             }
-        }).when(validator).validateLightly(tx);
+        }).when(validator).validateSufficiently(tx);
         doReturn(tx).when(memPool).nextPendingProcessing();
         doAnswer(new Answer<UnconfirmedTxValidationResult>() {
             int iter;
@@ -106,12 +107,14 @@ class ProcessingQueueTaskTest {
                 return true;
             }
         }).when(memPool).addProcessed(tx);
+        doAnswer(invocation -> {
+            return ((Function) invocation.getArgument(0)).apply(20); // do call on the argument function
+        }).when(batchSizeCalculator).doTimedOp(any(Function.class));
 
         task.processBatch();
 
         verify(memPool, times(2)).addProcessed(tx);
-        verify(batchSizeCalculator).startTiming(anyLong(), anyInt());
-        verify(batchSizeCalculator).stopTiming(anyLong());
+        verify(batchSizeCalculator).doTimedOp(any(Function.class));
     }
 
     @Test

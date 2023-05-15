@@ -1,11 +1,11 @@
 /*
- * Copyright © 2018-2019 Apollo Foundation
+ * Copyright © 2018-2021 Apollo Foundation
  */
 
 package com.apollocurrency.aplwallet.apl.exchange.transaction;
 
 import com.apollocurrency.aplwallet.apl.core.chainid.BlockchainConfig;
-import com.apollocurrency.aplwallet.apl.core.blockchain.Transaction;
+import com.apollocurrency.aplwallet.apl.core.model.Transaction;
 import com.apollocurrency.aplwallet.apl.core.entity.state.account.Account;
 import com.apollocurrency.aplwallet.apl.core.entity.state.phasing.PhasingPollResult;
 import com.apollocurrency.aplwallet.apl.core.model.dex.DexOrder;
@@ -17,8 +17,8 @@ import com.apollocurrency.aplwallet.apl.core.transaction.TransactionTypes;
 import com.apollocurrency.aplwallet.apl.core.transaction.messages.AbstractAttachment;
 import com.apollocurrency.aplwallet.apl.core.transaction.messages.DexCloseOrderAttachment;
 import com.apollocurrency.aplwallet.apl.core.transaction.messages.DexControlOfFrozenMoneyAttachment;
-import com.apollocurrency.aplwallet.apl.core.transaction.types.dex.DexCloseOrderTransaction;
-import com.apollocurrency.aplwallet.apl.core.transaction.types.dex.DexTransferMoneyTransaction;
+import com.apollocurrency.aplwallet.apl.core.transaction.types.dex.DexCloseOrderTransactionType;
+import com.apollocurrency.aplwallet.apl.core.transaction.types.dex.DexTransferMoneyTransactionType;
 import com.apollocurrency.aplwallet.apl.dex.core.model.DexCurrency;
 import com.apollocurrency.aplwallet.apl.dex.core.model.ExchangeContractStatus;
 import com.apollocurrency.aplwallet.apl.dex.core.model.OrderStatus;
@@ -64,11 +64,11 @@ class DexCloseOrderTransactionTest {
     Blockchain blockchain;
     @Mock
     PhasingPollService phasingPollService;
-    DexCloseOrderTransaction transactionType;
+    DexCloseOrderTransactionType transactionType;
 
     @BeforeEach
     void setUp() {
-        transactionType = new DexCloseOrderTransaction(blockchainConfig, accountService, dexService, blockchain, phasingPollService);
+        transactionType = new DexCloseOrderTransactionType(blockchainConfig, accountService, dexService, blockchain, phasingPollService);
     }
 
     @Test
@@ -144,7 +144,7 @@ class DexCloseOrderTransactionTest {
         assertThrows(AplException.NotCurrentlyValidException.class, () -> transactionType.doStateDependentValidation(tx));
 
         Transaction transferTx = mock(Transaction.class);
-        doReturn(new DexTransferMoneyTransaction(blockchainConfig, accountService, dexService)).when(transferTx).getType();
+        doReturn(new DexTransferMoneyTransactionType(blockchainConfig, accountService, dexService)).when(transferTx).getType();
 
         doReturn(transferTx).when(blockchain).getTransaction(100);
         assertThrows(AplException.NotCurrentlyValidException.class, () -> transactionType.doStateDependentValidation(tx));
@@ -152,7 +152,7 @@ class DexCloseOrderTransactionTest {
         doReturn(transactionType).when(transferTx).getType();
         assertThrows(AplException.NotCurrentlyValidException.class, () -> transactionType.doStateDependentValidation(tx));
 
-        doReturn(new DexTransferMoneyTransaction(blockchainConfig, accountService, dexService)).when(transferTx).getType();
+        doReturn(new DexTransferMoneyTransactionType(blockchainConfig, accountService, dexService)).when(transferTx).getType();
         doReturn(1000L).when(transferTx).getSenderId();
         DexControlOfFrozenMoneyAttachment attachment = new DexControlOfFrozenMoneyAttachment(11L, 100000L);
         doReturn(attachment).when(transferTx).getAttachment();

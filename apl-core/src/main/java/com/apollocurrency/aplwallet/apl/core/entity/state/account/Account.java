@@ -47,24 +47,24 @@ public class Account extends VersionedDeletableEntity {
 
     private final long id;
     @Setter
-    private long parentId;
+    private volatile long parentId;
     @Setter
-    private boolean multiSig;
+    private volatile boolean multiSig;
     @Setter
-    private AddressScope addrScope;
+    private volatile AddressScope addrScope;
 
     @Setter
-    private PublicKey publicKey;
+    private volatile PublicKey publicKey;
     @Setter
-    private long balanceATM;
+    private volatile long balanceATM;
     @Setter
-    private long unconfirmedBalanceATM;
+    private volatile long unconfirmedBalanceATM;
 
-    private long forgedBalanceATM;
+    private volatile long forgedBalanceATM;
     @Setter
-    private long activeLesseeId;
+    private volatile long activeLesseeId;
     @Setter
-    private Set<AccountControlType> controls;
+    private volatile Set<AccountControlType> controls;
 
     public Account(long id, DbKey dbKey) {
         this(id, DEFAULT_HEIGHT);
@@ -114,10 +114,21 @@ public class Account extends VersionedDeletableEntity {
     }
 
     /**
+     * the number of transactions sent by the account
+     *
+     * @return the number of transactions sent by the account
+     */
+//    public BigInteger getNonce() {
+//        //TODO implement the persistent autoincremental counter without gaps
+//        return new BigInteger(1, Crypto.getSecureRandom().generateSeed(32));
+//    }
+
+    /**
      * Returns true if current account is a child account
+     *
      * @return true if current account is a child account, it means that {@code parentId != 0}
      */
-    public boolean isChild(){
+    public boolean isChild() {
         return !isParent();
     }
 
@@ -175,4 +186,16 @@ public class Account extends VersionedDeletableEntity {
         return true;
     }
 
+    @Override
+    public Account deepCopy() {
+        Account copy = (Account) super.deepCopy();
+        if (copy.getPublicKey() != null) {
+            copy.setPublicKey(copy.getPublicKey().deepCopy());
+        }
+        return copy;
+    }
+
+    public String balanceString() {
+        return "Account " + Long.toUnsignedString(id) + "[unconfirmed balance " + unconfirmedBalanceATM + ", confirmed balance " + balanceATM + "]";
+    }
 }

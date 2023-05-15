@@ -9,6 +9,7 @@ import com.apollocurrency.aplwallet.apl.dex.core.model.UserErrorMessage;
 import com.apollocurrency.aplwallet.apl.dex.eth.model.EthGasInfo;
 import com.apollocurrency.aplwallet.apl.dex.eth.model.EthWalletBalanceInfo;
 import com.apollocurrency.aplwallet.apl.dex.eth.utils.EthUtil;
+import com.apollocurrency.aplwallet.apl.dex.eth.web3j.ChainId;
 import com.apollocurrency.aplwallet.apl.util.Constants;
 import com.apollocurrency.aplwallet.apl.util.StringValidator;
 import com.apollocurrency.aplwallet.apl.util.injectable.PropertiesHolder;
@@ -42,9 +43,9 @@ import org.web3j.protocol.core.methods.response.EthSendTransaction;
 import org.web3j.protocol.core.methods.response.TransactionReceipt;
 import org.web3j.utils.Numeric;
 
-import javax.annotation.PostConstruct;
-import javax.inject.Inject;
-import javax.inject.Singleton;
+import jakarta.annotation.PostConstruct;
+import jakarta.inject.Inject;
+import jakarta.inject.Singleton;
 import java.io.IOException;
 import java.math.BigDecimal;
 import java.math.BigInteger;
@@ -65,13 +66,15 @@ public class EthereumWalletService {
     private final UserErrorMessageDao userErrorMessageDao;
     private final DexBeanProducer dexBeanProducer;
     private Web3j web3j;
+    private final ChainId chainId;
 
     @Inject
     public EthereumWalletService(PropertiesHolder propertiesHolder, DexEthService dexEthService, UserErrorMessageDao userErrorMessageDao,
-                                 DexBeanProducer dexBeanProducer) {
+                                 DexBeanProducer dexBeanProducer, ChainId chainId) {
         this.dexBeanProducer = dexBeanProducer;
         this.dexEthService = dexEthService;
         this.userErrorMessageDao = userErrorMessageDao;
+        this.chainId = chainId;
 
         this.PAX_CONTRACT_ADDRESS = propertiesHolder.getStringProperty("apl.eth.pax.contract.address");
     }
@@ -255,6 +258,7 @@ public class EthereumWalletService {
      */
     private String sendApproveTransaction(Credentials credentials, String spenderAddress, Long gasPrice, BigInteger value) {
         String tx = null;
+        chainId.validate();
         try {
             Function function = approve(spenderAddress, value);
             tx = execute(credentials, function, PAX_CONTRACT_ADDRESS, gasPrice);
@@ -328,6 +332,7 @@ public class EthereumWalletService {
      */
     public String transferEth(Credentials credentials, String toAddress, BigInteger amountWei, Long gasPrice) {
         // step 1: get the nonce (tx count for sending address)
+        chainId.validate();
         BigInteger nonce;
         try {
             nonce = getNonce(credentials.getAddress());
@@ -339,14 +344,14 @@ public class EthereumWalletService {
 
         RawTransaction rawTransaction = RawTransaction
             .createEtherTransaction(
-                nonce,
-                EthUtil.gweiToWei(gasPrice),
-                Constants.GAS_LIMIT_ETHER_TX,
-                toAddress,
-                amountWei
+                    nonce,
+                    EthUtil.gweiToWei(gasPrice),
+                    Constants.GAS_LIMIT_ETHER_TX,
+                    toAddress,
+                    amountWei
             );
 
-        byte[] signedMessage = TransactionEncoder.signMessage(rawTransaction, credentials);
+        byte[] signedMessage = TransactionEncoder.signMessage(rawTransaction, chainId.get(), credentials);
         String hexValue = Numeric.toHexString(signedMessage);
 
         EthSendTransaction ethSendTransaction;
@@ -371,6 +376,7 @@ public class EthereumWalletService {
      * @return String - transaction Hash.
      */
     private String transferERC20(String erc20Address, Credentials recipientCredentials, String toAddress, BigInteger amountWei, Long gasPrice) {
+        chainId.validate();
         Function function = transfer(toAddress, amountWei);
         String transactionHash;
         try {
@@ -390,9 +396,9 @@ public class EthereumWalletService {
         EthGetTransactionReceipt receipt;
         try {
             receipt = web3j
-                .ethGetTransactionReceipt(transactionHash)
-                .sendAsync()
-                .get();
+                    .ethGetTransactionReceipt(transactionHash)
+                    .sendAsync()
+                    .get();
         } catch (ExecutionException | InterruptedException e) {
             log.error(e.getMessage(), e);
             throw new DexException(e.getMessage(), e);
@@ -414,7 +420,7 @@ public class EthereumWalletService {
             contractToAddress,
             encodedFunction);
 
-        byte[] signedMessage = TransactionEncoder.signMessage(rawTransaction, credentials);
+        byte[] signedMessage = TransactionEncoder.signMessage(rawTransaction, chainId.get(), credentials);
         String hexValue = Numeric.toHexString(signedMessage);
 
         EthSendTransaction transactionResponse = web3j.ethSendRawTransaction(hexValue).sendAsync().get();
@@ -527,5 +533,4 @@ public class EthereumWalletService {
                 new TypeReference<Uint256>() {
                 }));
     }
-
 }

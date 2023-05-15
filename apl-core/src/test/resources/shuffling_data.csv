@@ -1,3 +1,3 @@
-shuffling_id(-5|19|0),account_id(-5|19|0),data(-1|-1|0),transaction_timestamp(4|10|0),height(4|10|0)
-100,105,'[\"ff112385a1f832bc\",\"ffffff\",\"1234567890\"]',150,1
-101,110,'[\"75849274935438\"]',250,5
+transaction_id  , shuffling_id,account_id,data,transaction_timestamp,height
+10              , 100,105,b'rO0ABXVyAANbW0JL/RkVZ2fbNwIAAHhwAAAAA3VyAAJbQqzzF/gGCFTgAgAAeHAAAAAI/xEjhaH4Mrx1cQB+AAIAAAAD////dXEAfgACAAAABRI0VniQ',150,1
+20              , 101,110,b'rO0ABXVyAANbW0JL/RkVZ2fbNwIAAHhwAAAAAXVyAAJbQqzzF/gGCFTgAgAAeHAAAAAHdYSSdJNUOA==',250,5

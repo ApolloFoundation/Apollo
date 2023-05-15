@@ -15,7 +15,7 @@ import com.apollocurrency.aplwallet.apl.dex.core.model.HeightDbIdRequest;
 import com.apollocurrency.aplwallet.apl.dex.core.model.OrderDbIdPaginationDbRequest;
 import com.apollocurrency.aplwallet.apl.dex.core.model.OrderType;
 import com.apollocurrency.aplwallet.apl.extension.DbExtension;
-import com.apollocurrency.aplwallet.apl.util.cdi.transaction.JdbiHandleFactory;
+import com.apollocurrency.aplwallet.apl.testutil.DbUtils;
 import com.apollocurrency.aplwallet.apl.util.cdi.transaction.JdbiTransactionalSqlObjectDaoProxyInvocationHandler;
 import lombok.extern.slf4j.Slf4j;
 import org.junit.jupiter.api.BeforeEach;
@@ -39,9 +39,7 @@ class DexOrderDaoTest extends DbContainerBaseTest {
 
     @BeforeEach
     void setUp() {
-        JdbiHandleFactory jdbiHandleFactory = new JdbiHandleFactory();
-        jdbiHandleFactory.setJdbi(extension.getDatabaseManager().getJdbi());
-        dexOrderDao = JdbiTransactionalSqlObjectDaoProxyInvocationHandler.createProxy(jdbiHandleFactory, DexOrderDao.class);
+        dexOrderDao = JdbiTransactionalSqlObjectDaoProxyInvocationHandler.createProxy(DbUtils.createJdbiHandleFactory(extension.getDatabaseManager()), DexOrderDao.class);
         td = new DexTestData();
     }
 

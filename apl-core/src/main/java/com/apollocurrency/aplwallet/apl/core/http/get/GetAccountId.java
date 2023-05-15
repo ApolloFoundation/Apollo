@@ -30,20 +30,20 @@ import com.apollocurrency.aplwallet.apl.crypto.Convert;
 import org.json.simple.JSONObject;
 import org.json.simple.JSONStreamAware;
 
-import javax.enterprise.inject.Vetoed;
-import javax.servlet.http.HttpServletRequest;
+import jakarta.enterprise.inject.Vetoed;
+import jakarta.servlet.http.HttpServletRequest;
 
 @Vetoed
 public final class GetAccountId extends AbstractAPIRequestHandler {
 
     public GetAccountId() {
-        super(new APITag[]{APITag.ACCOUNTS}, "secretPhrase", "publicKey");
+        super(new APITag[]{APITag.ACCOUNTS}, "secretPhrase", "publicKey", "passphrase", "account");
     }
 
     @Override
     public JSONStreamAware processRequest(HttpServletRequest req) throws ParameterException {
 
-        byte[] publicKey = HttpParameterParserUtil.getPublicKey(req);
+        byte[] publicKey = HttpParameterParserUtil.getPublicKey(req, HttpParameterParserUtil.getAccountId(req, false));
         long accountId = AccountService.getId(publicKey);
         JSONObject response = new JSONObject();
         JSONData.putAccount(response, "account", accountId);

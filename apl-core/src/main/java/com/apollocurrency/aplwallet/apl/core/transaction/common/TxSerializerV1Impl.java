@@ -5,7 +5,7 @@
 package com.apollocurrency.aplwallet.apl.core.transaction.common;
 
 import com.apollocurrency.aplwallet.apl.core.app.GenesisImporter;
-import com.apollocurrency.aplwallet.apl.core.blockchain.Transaction;
+import com.apollocurrency.aplwallet.apl.core.model.Transaction;
 import com.apollocurrency.aplwallet.apl.core.signature.Signature;
 import com.apollocurrency.aplwallet.apl.core.transaction.messages.Appendix;
 import com.apollocurrency.aplwallet.apl.util.io.WriteBuffer;
@@ -48,10 +48,9 @@ public class TxSerializerV1Impl extends AbstractTxSerializer {
             }
         }
 
-        buffer
-            .write(getTransactionFlags(transaction))
-            .write(transaction.getECBlockHeight())
-            .write(transaction.getECBlockId());
+        buffer.write(getTransactionFlags(transaction));
+        buffer.write(transaction.getECBlockHeight());
+        buffer.write(transaction.getECBlockId());
 
         for (Appendix appendage : transaction.getAppendages()) {
             appendage.putBytes(buffer);

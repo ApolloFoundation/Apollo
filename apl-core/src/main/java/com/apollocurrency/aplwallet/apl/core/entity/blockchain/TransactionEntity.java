@@ -47,19 +47,9 @@ public class TransactionEntity {
     private boolean hasPrunableMessage;
     private boolean hasPrunableEencryptedMessage;
     private boolean hasPrunableAttachment;
+    private String errorMessage;
 
     /* Serialized attachment and all appendages */
     private byte[] attachmentBytes;
-
-    /**
-     * Transaction V3 properties
-     */
-    /*
-    private String chainId;
-    private BigInteger nonce;
-    private BigInteger amount;
-    private BigInteger fuelLimit;
-    private BigInteger fuelPrice;
-     */
 
 }

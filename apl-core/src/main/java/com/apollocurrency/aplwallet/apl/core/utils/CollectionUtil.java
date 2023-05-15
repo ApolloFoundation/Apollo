@@ -4,10 +4,12 @@
 
 package com.apollocurrency.aplwallet.apl.core.utils;
 
-import com.apollocurrency.aplwallet.apl.core.db.DbIterator;
+
+import com.apollocurrency.aplwallet.apl.util.db.DbIterator;
 
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.function.Consumer;
@@ -42,11 +44,47 @@ public class CollectionUtil {
         }
     }
 
+    public static <T> Stream<T> limitStream(Stream<T> stream, int from, int to) {
+        int limit = to >=0 && to >= from && to < Integer.MAX_VALUE ? to - from + 1 : 0;
+        if (from > 0) {
+            stream = stream.skip(from);
+        }
+        if (limit > 0) {
+            stream = stream.limit(limit);
+        }
+        return stream;
+    }
+
     public static boolean isEmpty(Collection collection) {
         return collection == null || collection.size() == 0;
     }
 
     public static boolean isEmpty(Map map) {
         return map == null || map.isEmpty();
+    }
+
+    public static <T> DbIterator<T> toDbIterator(final Collection<T> data) {
+        final Iterator<T> iterator = data.iterator();
+        return new DbIterator<>(null, null, null) {
+            @Override
+            public boolean hasNext() {
+                return iterator.hasNext();
+            }
+
+            @Override
+            public T next() {
+                return iterator.next();
+            }
+
+            @Override
+            public void close() {
+
+            }
+
+            @Override
+            public Iterator<T> iterator() {
+                return iterator;
+            }
+        };
     }
 }

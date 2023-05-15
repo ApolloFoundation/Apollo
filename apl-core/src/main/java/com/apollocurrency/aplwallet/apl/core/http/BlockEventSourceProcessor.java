@@ -4,9 +4,9 @@
 
 package com.apollocurrency.aplwallet.apl.core.http;
 
-import com.apollocurrency.aplwallet.apl.core.db.DbIterator;
-import com.apollocurrency.aplwallet.apl.core.blockchain.Block;
-import com.apollocurrency.aplwallet.apl.core.blockchain.Transaction;
+import com.apollocurrency.aplwallet.apl.core.model.Block;
+import com.apollocurrency.aplwallet.apl.core.model.Sort;
+import com.apollocurrency.aplwallet.apl.core.model.Transaction;
 import com.apollocurrency.aplwallet.apl.core.entity.state.account.Account;
 import com.apollocurrency.aplwallet.apl.core.entity.state.account.AccountAsset;
 import com.apollocurrency.aplwallet.apl.core.entity.state.account.AccountCurrency;
@@ -24,12 +24,13 @@ import com.apollocurrency.aplwallet.apl.core.service.state.account.impl.AccountC
 import com.apollocurrency.aplwallet.apl.core.service.state.account.impl.AccountInfoServiceImpl;
 import com.apollocurrency.aplwallet.apl.core.service.state.account.impl.AccountServiceImpl;
 import com.apollocurrency.aplwallet.apl.crypto.Convert;
+import com.apollocurrency.aplwallet.apl.util.db.DbIterator;
 import org.json.simple.JSONArray;
 import org.json.simple.JSONObject;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import javax.enterprise.inject.spi.CDI;
+import jakarta.enterprise.inject.spi.CDI;
 import java.io.IOException;
 import java.util.List;
 import java.util.concurrent.TimeUnit;
@@ -80,7 +81,7 @@ public class BlockEventSourceProcessor implements Runnable {
         List<Transaction> list = blockchain.getTransactions(accountId,
             0, (byte) -1, (byte) -1, 0, false,
             false, false, 0, 9, false,
-            false, false);
+            false, false, false, false, Sort.desc());
         for (Transaction transaction : list) {
             transactionsArray.add(JSONData.transaction(false, transaction));
         }
@@ -100,7 +101,7 @@ public class BlockEventSourceProcessor implements Runnable {
         accountAssets.forEach(accountAsset -> assetJson.add(JSONData.accountAsset(accountAsset, false, true)));
 
         JSONArray currencyJSON = new JSONArray();
-        List<AccountCurrency> accountCurrencies = accountCurrencyService.getCurrenciesByAccount(accountId, -1, 0, 2);
+        List<AccountCurrency> accountCurrencies = accountCurrencyService.getByAccount(accountId, -1, 0, 2);
         accountCurrencies.forEach(accountCurrency -> currencyJSON.add(JSONData.accountCurrency(accountCurrency, false, true)));
 
         int messageCount = blockchain.getTransactionCount(accountId, (byte) 1, (byte) 0);

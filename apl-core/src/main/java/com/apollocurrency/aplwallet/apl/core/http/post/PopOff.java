@@ -20,7 +20,7 @@
 
 package com.apollocurrency.aplwallet.apl.core.http.post;
 
-import com.apollocurrency.aplwallet.apl.core.blockchain.Block;
+import com.apollocurrency.aplwallet.apl.core.model.Block;
 import com.apollocurrency.aplwallet.apl.core.http.APITag;
 import com.apollocurrency.aplwallet.apl.core.http.AbstractAPIRequestHandler;
 import com.apollocurrency.aplwallet.apl.core.http.JSONResponses;
@@ -29,8 +29,8 @@ import lombok.extern.slf4j.Slf4j;
 import org.json.simple.JSONObject;
 import org.json.simple.JSONStreamAware;
 
-import javax.enterprise.inject.Vetoed;
-import javax.servlet.http.HttpServletRequest;
+import jakarta.enterprise.inject.Vetoed;
+import jakarta.servlet.http.HttpServletRequest;
 import java.util.List;
 
 @Slf4j
@@ -83,9 +83,8 @@ public final class PopOff extends AbstractAPIRequestHandler {
         //blocks.forEach(block -> blocksJSON.add(JSONData.block(block, true, false)));
         JSONObject response = new JSONObject();
         //response.put("blocks", blocksJSON);
-        if (keepTransactions) {
-            blocks.forEach(block -> lookupTransactionProcessor().processLater(
-                blockchain.getOrLoadTransactions(block)));
+        if (keepTransactions) { // assume that popOff method call loaded block data (including transactions) fully
+            blocks.forEach(block -> lookupTransactionProcessor().processLater(block.getTransactions()));
         }
         return response;
     }

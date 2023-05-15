@@ -5,9 +5,9 @@
 package com.apollocurrency.aplwallet.apl.core.service.state.order;
 
 import com.apollocurrency.aplwallet.apl.core.dao.state.derived.VersionedDeletableEntityDbTable;
-import com.apollocurrency.aplwallet.apl.core.blockchain.Transaction;
+import com.apollocurrency.aplwallet.apl.core.model.Transaction;
 import com.apollocurrency.aplwallet.apl.core.entity.state.order.Order;
-import com.apollocurrency.aplwallet.apl.core.transaction.messages.ColoredCoinsOrderPlacementAttachment;
+import com.apollocurrency.aplwallet.apl.core.transaction.messages.CCOrderPlacementAttachment;
 import lombok.extern.slf4j.Slf4j;
 
 import java.util.stream.Stream;
@@ -15,7 +15,7 @@ import java.util.stream.Stream;
 /**
  * @author silaev-firstbridge on 4/8/2020
  */
-public interface OrderService<T extends Order, C extends ColoredCoinsOrderPlacementAttachment> {
+public interface OrderService<T extends Order, C extends CCOrderPlacementAttachment> {
     @Slf4j
     final class LogHolder {}
 
