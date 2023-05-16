@@ -13,7 +13,7 @@ public enum Status2FA {
     ALREADY_ENABLED,
     NOT_CONFIRMED;
 
-    public boolean isOK(){
+    public boolean isOK() {
         return this.equals(Status2FA.OK);
     }
 }

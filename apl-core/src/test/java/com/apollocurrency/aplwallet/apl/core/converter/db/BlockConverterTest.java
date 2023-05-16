@@ -4,9 +4,9 @@
 
 package com.apollocurrency.aplwallet.apl.core.converter.db;
 
-import com.apollocurrency.aplwallet.apl.core.entity.blockchain.Block;
+import com.apollocurrency.aplwallet.apl.core.model.Block;
 import com.apollocurrency.aplwallet.apl.core.entity.blockchain.BlockEntity;
-import com.apollocurrency.aplwallet.apl.core.entity.blockchain.Transaction;
+import com.apollocurrency.aplwallet.apl.core.model.Transaction;
 import com.apollocurrency.aplwallet.apl.crypto.Convert;
 import com.apollocurrency.aplwallet.apl.data.BlockTestData;
 import lombok.extern.slf4j.Slf4j;
@@ -31,13 +31,12 @@ class BlockConverterTest {
     void testModelToEntityToModelConverting() {
         //GIVEN
         Block block = td.BLOCK_1;
-        block.setGeneratorPublicKey(publicKey);
+        block.assignBlockData(block.getTransactions(), publicKey);
         List<Transaction> transactions = block.getTransactions();
         //WHEN
         BlockEntity entity = modelToEntityConverter.convert(block);
         Block model = entityToModelConverter.convert(entity);
-        model.setGeneratorPublicKey(publicKey);
-        model.setTransactions(transactions);
+        model.assignBlockData(transactions, publicKey);
         //THEN
         assertArrayEquals(block.getBytes(), model.getBytes());
     }

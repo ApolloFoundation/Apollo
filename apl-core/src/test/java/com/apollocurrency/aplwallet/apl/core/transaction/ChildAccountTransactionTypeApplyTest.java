@@ -4,23 +4,26 @@
 
 package com.apollocurrency.aplwallet.apl.core.transaction;
 
+import com.apollocurrency.aplwallet.apl.core.app.GenesisAccounts;
 import com.apollocurrency.aplwallet.apl.core.chainid.BlockchainConfig;
 import com.apollocurrency.aplwallet.apl.core.config.DaoConfig;
-import com.apollocurrency.aplwallet.apl.core.config.NtpTimeConfig;
+import com.apollocurrency.aplwallet.apl.core.config.JdbiConfiguration;
+import com.apollocurrency.aplwallet.apl.core.config.TimeConfig;
 import com.apollocurrency.aplwallet.apl.core.converter.db.PrunableTxRowMapper;
 import com.apollocurrency.aplwallet.apl.core.converter.db.TransactionEntityRowMapper;
-import com.apollocurrency.aplwallet.apl.core.converter.db.TransactionRowMapper;
+import com.apollocurrency.aplwallet.apl.core.converter.db.TransactionEntityToModelConverter;
 import com.apollocurrency.aplwallet.apl.core.converter.db.TxReceiptRowMapper;
 import com.apollocurrency.aplwallet.apl.core.dao.DbContainerBaseTest;
 import com.apollocurrency.aplwallet.apl.core.dao.appdata.impl.ReferencedTransactionDaoImpl;
 import com.apollocurrency.aplwallet.apl.core.dao.state.account.AccountGuaranteedBalanceTable;
 import com.apollocurrency.aplwallet.apl.core.dao.state.account.AccountTable;
+import com.apollocurrency.aplwallet.apl.core.dao.state.account.AccountTableInterface;
 import com.apollocurrency.aplwallet.apl.core.dao.state.publickey.PublicKeyTableProducer;
-import com.apollocurrency.aplwallet.apl.core.entity.blockchain.EcBlockData;
-import com.apollocurrency.aplwallet.apl.core.entity.blockchain.Transaction;
+import com.apollocurrency.aplwallet.apl.core.db.DatabaseManager;
 import com.apollocurrency.aplwallet.apl.core.entity.state.account.Account;
 import com.apollocurrency.aplwallet.apl.core.entity.state.account.PublicKey;
-import com.apollocurrency.aplwallet.apl.core.service.appdata.DatabaseManager;
+import com.apollocurrency.aplwallet.apl.core.model.EcBlockData;
+import com.apollocurrency.aplwallet.apl.core.model.Transaction;
 import com.apollocurrency.aplwallet.apl.core.service.appdata.GeneratorService;
 import com.apollocurrency.aplwallet.apl.core.service.appdata.TimeService;
 import com.apollocurrency.aplwallet.apl.core.service.appdata.impl.TimeServiceImpl;
@@ -30,9 +33,12 @@ import com.apollocurrency.aplwallet.apl.core.service.blockchain.BlockchainImpl;
 import com.apollocurrency.aplwallet.apl.core.service.blockchain.DefaultBlockValidator;
 import com.apollocurrency.aplwallet.apl.core.service.blockchain.GlobalSyncImpl;
 import com.apollocurrency.aplwallet.apl.core.service.blockchain.ReferencedTransactionService;
+import com.apollocurrency.aplwallet.apl.core.service.blockchain.TransactionBuilderFactory;
 import com.apollocurrency.aplwallet.apl.core.service.fulltext.FullTextConfigImpl;
+import com.apollocurrency.aplwallet.apl.core.service.state.BlockChainInfoServiceImpl;
 import com.apollocurrency.aplwallet.apl.core.service.state.DerivedDbTablesRegistryImpl;
 import com.apollocurrency.aplwallet.apl.core.service.state.PhasingPollService;
+import com.apollocurrency.aplwallet.apl.core.service.state.PhasingPollServiceImpl;
 import com.apollocurrency.aplwallet.apl.core.service.state.account.AccountControlPhasingService;
 import com.apollocurrency.aplwallet.apl.core.service.state.account.AccountPublicKeyService;
 import com.apollocurrency.aplwallet.apl.core.service.state.account.AccountService;
@@ -40,8 +46,6 @@ import com.apollocurrency.aplwallet.apl.core.service.state.account.PublicKeyDao;
 import com.apollocurrency.aplwallet.apl.core.service.state.account.impl.AccountControlPhasingServiceImpl;
 import com.apollocurrency.aplwallet.apl.core.service.state.account.impl.AccountPublicKeyServiceImpl;
 import com.apollocurrency.aplwallet.apl.core.service.state.account.impl.AccountServiceImpl;
-import com.apollocurrency.aplwallet.apl.core.service.state.impl.BlockChainInfoServiceImpl;
-import com.apollocurrency.aplwallet.apl.core.service.state.impl.PhasingPollServiceImpl;
 import com.apollocurrency.aplwallet.apl.core.transaction.messages.AppendixApplierRegistry;
 import com.apollocurrency.aplwallet.apl.core.transaction.messages.AppendixValidatorRegistry;
 import com.apollocurrency.aplwallet.apl.core.transaction.messages.PrunableLoadingService;
@@ -54,6 +58,7 @@ import com.apollocurrency.aplwallet.apl.util.Convert2;
 import com.apollocurrency.aplwallet.apl.util.NtpTime;
 import com.apollocurrency.aplwallet.apl.util.cache.InMemoryCacheManager;
 import com.apollocurrency.aplwallet.apl.util.cdi.transaction.JdbiHandleFactory;
+import com.apollocurrency.aplwallet.apl.util.env.config.Chain;
 import com.apollocurrency.aplwallet.apl.util.exception.AplException;
 import com.apollocurrency.aplwallet.apl.util.injectable.PropertiesHolder;
 import com.apollocurrency.aplwallet.apl.util.service.TaskDispatchManager;
@@ -61,7 +66,6 @@ import org.jboss.weld.junit.MockBean;
 import org.jboss.weld.junit5.EnableWeld;
 import org.jboss.weld.junit5.WeldInitiator;
 import org.jboss.weld.junit5.WeldSetup;
-import org.jdbi.v3.core.Jdbi;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
@@ -69,7 +73,8 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.junit.jupiter.api.extension.RegisterExtension;
 import org.mockito.junit.jupiter.MockitoExtension;
 
-import javax.inject.Inject;
+import jakarta.enterprise.event.Event;
+import jakarta.inject.Inject;
 import java.util.List;
 
 import static com.apollocurrency.aplwallet.apl.core.transaction.ChildAccountTestData.CHILD_1;
@@ -84,6 +89,7 @@ import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.Mockito.doReturn;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
@@ -102,36 +108,40 @@ class ChildAccountTransactionTypeApplyTest extends DbContainerBaseTest {
     PublicKeyDao publicKeyDao = mock(PublicKeyDao.class);
     PropertiesHolder propertiesHolder = mock(PropertiesHolder.class);
     BlockchainConfig blockchainConfig = mock(BlockchainConfig.class);
+    Chain chain = mock(Chain.class);
+
+    {
+        doReturn(chain).when(blockchainConfig).getChain();
+    }
+
     Blockchain blockchain = mock(Blockchain.class);
     FeeCalculator calculator = mock(FeeCalculator.class);
     AccountPublicKeyService accountPublicKeyService = mock(AccountPublicKeyService.class);
-    NtpTimeConfig ntpTimeConfig = new NtpTimeConfig();
-    TimeService timeService = new TimeServiceImpl(ntpTimeConfig.time());
+    TimeConfig config = new TimeConfig(false);
+    TimeService timeService = new TimeServiceImpl(config.timeSource());
     TransactionTestData td = new TransactionTestData();
 
 
     @WeldSetup
     WeldInitiator weldInitiator = WeldInitiator.from(
-        GlobalSyncImpl.class, DaoConfig.class,
-        AccountTable.class, AccountGuaranteedBalanceTable.class, PublicKeyTableProducer.class,
-        AccountServiceImpl.class, BlockChainInfoServiceImpl.class, AccountPublicKeyServiceImpl.class,
-        FullTextConfigImpl.class, DerivedDbTablesRegistryImpl.class, PropertiesHolder.class,
+        GlobalSyncImpl.class, DaoConfig.class, AccountGuaranteedBalanceTable.class, PublicKeyTableProducer.class,
+        AccountServiceImpl.class, GenesisAccounts.class, BlockChainInfoServiceImpl.class, AccountPublicKeyServiceImpl.class,
+        FullTextConfigImpl.class, DerivedDbTablesRegistryImpl.class,
         DefaultBlockValidator.class, ReferencedTransactionService.class,
         AppendixApplierRegistry.class,
         AppendixValidatorRegistry.class,
-        TransactionRowMapper.class, TransactionEntityRowMapper.class, TxReceiptRowMapper.class, PrunableTxRowMapper.class,
+        TransactionEntityRowMapper.class, TransactionEntityRowMapper.class, TxReceiptRowMapper.class, PrunableTxRowMapper.class,
+        TransactionEntityToModelConverter.class,
         ReferencedTransactionDaoImpl.class,
-        TransactionBuilder.class,
-        TransactionValidator.class, TransactionApplier.class
+        TransactionBuilderFactory.class,
+        TransactionValidator.class, TransactionApplier.class, JdbiHandleFactory.class, JdbiConfiguration.class
     )
         .addBeans(MockBean.of(extension.getDatabaseManager(), DatabaseManager.class))
-        .addBeans(MockBean.of(extension.getDatabaseManager().getJdbi(), Jdbi.class))
-        .addBeans(MockBean.of(extension.getDatabaseManager().getJdbiHandleFactory(), JdbiHandleFactory.class))
         .addBeans(MockBean.of(mock(InMemoryCacheManager.class), InMemoryCacheManager.class))
         .addBeans(MockBean.of(mock(TaskDispatchManager.class), TaskDispatchManager.class))
         .addBeans(MockBean.of(blockchainConfig, BlockchainConfig.class))
         .addBeans(MockBean.of(propertiesHolder, PropertiesHolder.class))
-        .addBeans(MockBean.of(ntpTimeConfig, NtpTimeConfig.class))
+        .addBeans(MockBean.of(timeService, TimeConfig.class))
         .addBeans(MockBean.of(timeService, TimeService.class))
         .addBeans(MockBean.of(mock(NtpTime.class), NtpTime.class))
         .addBeans(MockBean.of(mock(PhasingPollService.class), PhasingPollService.class, PhasingPollServiceImpl.class))
@@ -144,6 +154,7 @@ class ChildAccountTransactionTypeApplyTest extends DbContainerBaseTest {
         .addBeans(MockBean.of(blockchain, Blockchain.class, BlockchainImpl.class))
         .addBeans(MockBean.of(mock(AccountControlPhasingService.class), AccountControlPhasingService.class, AccountControlPhasingServiceImpl.class))
         .addBeans(MockBean.of(calculator, FeeCalculator.class))
+        .addBeans(MockBean.of(new AccountTable(extension.getDatabaseManager(), mock(Event.class)), AccountTableInterface.class))
         .build();
 
     @Inject
@@ -169,21 +180,14 @@ class ChildAccountTransactionTypeApplyTest extends DbContainerBaseTest {
     void applyAttachment() throws AplException.NotValidException {
         //GIVEN
         CreateChildTransactionType type = new CreateChildTransactionType(blockchainConfig, accountService, accountPublicKeyService, blockchain);
-        TransactionBuilder builder = new TransactionBuilder(new CachedTransactionTypeFactory(List.of(type)));
+        TransactionBuilderFactory builder = new TransactionBuilderFactory(new CachedTransactionTypeFactory(List.of(type)), blockchainConfig);
         byte[] tx = Convert.parseHexString(SIGNED_TX_1_HEX);
-        Transaction.Builder txBuilder = builder.newTransactionBuilder(tx);
-        Transaction newTx = txBuilder.build();
+        Transaction newTx = builder.newTransaction(tx);
 
         long senderId = AccountService.getId(newTx.getSenderPublicKey());
         when(publicKeyDao.searchAll(senderId)).thenReturn(new PublicKey(senderId, newTx.getSenderPublicKey(), newTx.getHeight()));
 
         assertNotNull(newTx);
-
-        byte[] txBytes = newTx.getCopyTxBytes();
-        byte[] txUnsignedBytes = newTx.getUnsignedBytes();
-
-        String txStr = Convert.toHexString(txBytes);
-        String txUnsignedStr = Convert.toHexString(txUnsignedBytes);
 
         //WHEN
         DbUtils.inTransaction(extension, connection -> txApplier.apply(newTx));

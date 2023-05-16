@@ -88,4 +88,12 @@ public interface FullTextSearchService {
      */
     void createSearchIndex(final Connection con, String table, final String fullTextSearchColumns)
         throws SQLException;
+
+    /**
+     * @return false when full text search is not available, otherwise true
+     */
+    boolean enabled();
+
+    boolean isIndexFolderEmpty();
+
 }

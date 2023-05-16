@@ -5,7 +5,7 @@
 package com.apollocurrency.aplwallet.apl.core.entity.appdata.funding;
 
 
-import com.apollocurrency.aplwallet.apl.core.monetary.HoldingType;
+import com.apollocurrency.aplwallet.apl.core.model.HoldingType;
 import com.apollocurrency.aplwallet.apl.crypto.Crypto;
 import com.apollocurrency.aplwallet.apl.util.Convert2;
 import lombok.Getter;

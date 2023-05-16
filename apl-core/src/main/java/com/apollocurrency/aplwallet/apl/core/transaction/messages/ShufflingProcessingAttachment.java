@@ -7,6 +7,7 @@ import com.apollocurrency.aplwallet.apl.core.transaction.TransactionTypes;
 import com.apollocurrency.aplwallet.apl.core.transaction.types.shuffling.ShufflingProcessingTransactionType;
 import com.apollocurrency.aplwallet.apl.crypto.Convert;
 import com.apollocurrency.aplwallet.apl.crypto.Crypto;
+import lombok.ToString;
 import org.json.simple.JSONArray;
 import org.json.simple.JSONObject;
 
@@ -18,6 +19,7 @@ import java.util.List;
 /**
  * @author al
  */
+@ToString(callSuper = true)
 public final class ShufflingProcessingAttachment extends AbstractShufflingAttachment implements Prunable {
 
     private static final byte[] emptyDataHash = Crypto.sha256().digest();

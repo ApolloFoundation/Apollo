@@ -7,8 +7,8 @@ package com.apollocurrency.aplwallet.apl.core.app.runnable;
 import com.apollocurrency.aplwallet.api.p2p.request.BaseP2PRequest;
 import com.apollocurrency.aplwallet.api.p2p.request.GetTransactionsRequest;
 import com.apollocurrency.aplwallet.apl.core.chainid.BlockchainConfig;
-import com.apollocurrency.aplwallet.apl.core.entity.blockchain.BlockchainProcessorState;
-import com.apollocurrency.aplwallet.apl.core.entity.blockchain.Transaction;
+import com.apollocurrency.aplwallet.apl.core.model.BlockchainProcessorState;
+import com.apollocurrency.aplwallet.apl.core.model.Transaction;
 import com.apollocurrency.aplwallet.apl.core.peer.Peer;
 import com.apollocurrency.aplwallet.apl.core.peer.PeerNotConnectedException;
 import com.apollocurrency.aplwallet.apl.core.peer.PeerState;
@@ -20,7 +20,6 @@ import lombok.extern.slf4j.Slf4j;
 import org.json.simple.JSONArray;
 import org.json.simple.JSONObject;
 
-import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.Iterator;
 import java.util.List;
@@ -92,12 +91,12 @@ public class RestorePrunableDataTask implements Runnable {
                 //
                 // Get the pruned transactions from the archive peer
                 //
-                List<String> requestList = new ArrayList<>();
+                Set<Long> requestList = new HashSet<>();
                 synchronized (prunableTransactions) {
                     Iterator<Long> it = processing.iterator();
                     while (it.hasNext()) {
                         long id = it.next();
-                        requestList.add(Long.toUnsignedString(id));
+                        requestList.add(id);
                         it.remove();
                         if (requestList.size() == 100)
                             break;

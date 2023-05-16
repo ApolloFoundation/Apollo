@@ -29,28 +29,28 @@ import com.apollocurrency.aplwallet.apl.core.service.state.order.impl.AskOrderSe
 import com.apollocurrency.aplwallet.apl.core.service.state.qualifier.AskOrderService;
 import com.apollocurrency.aplwallet.apl.core.transaction.messages.Attachment;
 import com.apollocurrency.aplwallet.apl.core.transaction.messages.ColoredCoinsAskOrderCancellation;
-import com.apollocurrency.aplwallet.apl.core.transaction.messages.ColoredCoinsAskOrderPlacement;
+import com.apollocurrency.aplwallet.apl.core.transaction.messages.CCAskOrderPlacementAttachment;
 import com.apollocurrency.aplwallet.apl.util.exception.AplException;
 import org.json.simple.JSONStreamAware;
 
-import javax.enterprise.inject.Vetoed;
-import javax.enterprise.inject.spi.CDI;
-import javax.servlet.http.HttpServletRequest;
+import jakarta.enterprise.inject.Vetoed;
+import jakarta.enterprise.inject.spi.CDI;
+import jakarta.servlet.http.HttpServletRequest;
 
 import static com.apollocurrency.aplwallet.apl.core.http.JSONResponses.UNKNOWN_ORDER;
 
 @Vetoed
-public final class CancelAskOrder extends CreateTransaction {
-    private OrderService<AskOrder, ColoredCoinsAskOrderPlacement> askOrderService;
+public final class CancelAskOrder extends CreateTransactionHandler {
+    private OrderService<AskOrder, CCAskOrderPlacementAttachment> askOrderService;
 
     public CancelAskOrder() {
         super(new APITag[]{APITag.AE, APITag.CREATE_TRANSACTION}, "order");
     }
 
-    private OrderService<AskOrder, ColoredCoinsAskOrderPlacement> lookupAskOrderService() {
+    private OrderService<AskOrder, CCAskOrderPlacementAttachment> lookupAskOrderService() {
         if (askOrderService == null) {
             this.askOrderService = CDI.current().select(
-                AskOrderServiceImpl.class,
+                    AskOrderServiceImpl.class,
                 AskOrderService.Literal.INSTANCE
             ).get();
         }

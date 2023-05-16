@@ -6,16 +6,17 @@
 package com.apollocurrency.aplwallet.apl.core.service.blockchain;
 
 import com.apollocurrency.aplwallet.apl.core.chainid.BlockchainConfig;
-import com.apollocurrency.aplwallet.apl.core.entity.blockchain.Block;
+import com.apollocurrency.aplwallet.apl.core.model.Block;
 import com.apollocurrency.aplwallet.apl.core.entity.state.account.Account;
 import com.apollocurrency.aplwallet.apl.core.service.appdata.GeneratorService;
 import com.apollocurrency.aplwallet.apl.core.service.state.account.AccountPublicKeyService;
 import com.apollocurrency.aplwallet.apl.core.service.state.account.AccountService;
 import com.apollocurrency.aplwallet.apl.crypto.Crypto;
+import com.apollocurrency.aplwallet.apl.crypto.AplIdGenerator;
 import com.apollocurrency.aplwallet.apl.util.Constants;
 import org.slf4j.Logger;
 
-import javax.inject.Inject;
+import jakarta.inject.Inject;
 import java.math.BigInteger;
 import java.security.MessageDigest;
 import java.util.Arrays;
@@ -28,7 +29,7 @@ public abstract class AbstractBlockValidator implements BlockValidator {
     protected BlockchainConfig blockchainConfig;
     protected Blockchain blockchain;
     protected AccountService accountService;
-    private static GeneratorService generatorService;
+    private final GeneratorService generatorService;
     protected final BlockSerializer blockSerializer;
     protected final AccountPublicKeyService accountPublicKeyService;
 
@@ -76,13 +77,14 @@ public abstract class AbstractBlockValidator implements BlockValidator {
             Account generatorAccount = accountService.getAccount(block.getGeneratorId());
             long generatorBalance = generatorAccount == null ? 0 : accountService.getEffectiveBalanceAPL(generatorAccount, blockchain.getHeight(), true);
             throw new BlockchainProcessor.BlockNotAcceptedException(
-                "Generation signature verification failed, effective balance " + generatorBalance, blockSerializer.getJSONObject(block));
+                "Generation signature verification failed, effective balance " + generatorBalance  + ", generator: " + Long.toUnsignedString(block.getGeneratorId()), blockSerializer.getJSONObject(block));
         }
 
-        if (blockchain.getBlockTransactionCount(block.getId()) > blockchainConfig.getCurrentConfig().getMaxNumberOfTransactions()) {
+        int txCount = block.getTransactions().size();
+        if (txCount > blockchainConfig.getCurrentConfig().getMaxNumberOfTransactions()) {
             throw new BlockchainProcessor.BlockNotAcceptedException(
                 "Invalid block transaction count "
-                + blockchain.getBlockTransactionCount(block.getId()), blockSerializer.getJSONObject(block));
+                + txCount, blockSerializer.getJSONObject(block));
         }
         if (block.getPayloadLength() > blockchainConfig.getCurrentConfig().getMaxPayloadLength() || block.getPayloadLength() < 0) {
             throw new BlockchainProcessor.BlockNotAcceptedException(
@@ -125,11 +127,6 @@ public abstract class AbstractBlockValidator implements BlockValidator {
 
             MessageDigest digest = Crypto.sha256();
             digest.update(previousBlock.getGenerationSignature());
-            byte[] generatorPublicKey = block.getGeneratorPublicKey();
-            if (generatorPublicKey == null) {
-                generatorPublicKey = accountService.getPublicKeyByteArray(block.getGeneratorId());
-                block.setGeneratorPublicKey(generatorPublicKey);
-            }
             byte[] generationSignatureHash = digest.digest(block.getGeneratorPublicKey());
             if (!Arrays.equals(block.getGenerationSignature(), generationSignatureHash)) {
                 LOG.warn("Account: {} Effective ballance: {},  gen. signature: {}, calculated: {}, blockchain.height: {}, verification failed",
@@ -137,9 +134,7 @@ public abstract class AbstractBlockValidator implements BlockValidator {
                 return false;
             }
 
-            BigInteger hit = new BigInteger(1, new byte[]{generationSignatureHash[7], generationSignatureHash[6],
-                generationSignatureHash[5], generationSignatureHash[4], generationSignatureHash[3],
-                generationSignatureHash[2], generationSignatureHash[1], generationSignatureHash[0]});
+            BigInteger hit = AplIdGenerator.BLOCK.getIdByHash(generationSignatureHash);
 
             boolean ret = generatorService.verifyHit(
                 hit, BigInteger.valueOf(effectiveBalance), previousBlock,

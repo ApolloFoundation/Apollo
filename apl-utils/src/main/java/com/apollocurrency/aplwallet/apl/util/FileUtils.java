@@ -5,7 +5,6 @@ package com.apollocurrency.aplwallet.apl.util;
 
 import org.slf4j.Logger;
 
-import javax.enterprise.inject.Vetoed;
 import java.io.File;
 import java.io.IOException;
 import java.net.URL;
@@ -24,7 +23,6 @@ import java.util.stream.Stream;
 
 import static org.slf4j.LoggerFactory.getLogger;
 
-@Vetoed
 public class FileUtils {
 
     private static final Logger log = getLogger(FileUtils.class);

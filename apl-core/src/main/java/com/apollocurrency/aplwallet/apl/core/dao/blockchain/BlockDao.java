@@ -4,8 +4,8 @@
 
 package com.apollocurrency.aplwallet.apl.core.dao.blockchain;
 
-import com.apollocurrency.aplwallet.apl.core.dao.TransactionalDataSource;
 import com.apollocurrency.aplwallet.apl.core.entity.blockchain.BlockEntity;
+import com.apollocurrency.aplwallet.apl.util.db.TransactionalDataSource;
 
 import java.sql.Connection;
 import java.sql.PreparedStatement;
@@ -67,4 +67,6 @@ public interface BlockDao {
     BlockEntity deleteBlocksFrom(long blockId);
 
     void deleteAll();
+
+    List<BlockEntity> getBlocksAfter(int height, int limit);
 }

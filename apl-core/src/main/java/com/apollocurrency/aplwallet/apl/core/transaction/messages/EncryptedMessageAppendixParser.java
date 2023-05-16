@@ -6,7 +6,7 @@ package com.apollocurrency.aplwallet.apl.core.transaction.messages;
 
 import org.json.simple.JSONObject;
 
-import javax.inject.Singleton;
+import jakarta.inject.Singleton;
 import java.util.Map;
 
 @Singleton
@@ -16,7 +16,7 @@ public class EncryptedMessageAppendixParser implements AppendixParser<EncryptedM
         if (!Appendix.hasAppendix(EncryptedMessageAppendix.appendixName, jsonData)) {
             return null;
         }
-        if (((Map<?,?>) jsonData.get("encryptedMessage")).get("data") == null) {
+        if (((Map<?, ?>) jsonData.get("encryptedMessage")).get("data") == null) {
             throw new RuntimeException("Unencrypted message is not supported");
         }
         return new EncryptedMessageAppendix(jsonData);

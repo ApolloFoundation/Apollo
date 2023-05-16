@@ -5,8 +5,11 @@
 package com.apollocurrency.aplwallet.apl.core.http;
 
 import com.apollocurrency.aplwallet.api.v2.AccountApi;
+import com.apollocurrency.aplwallet.api.v2.CurrenciesApi;
+import com.apollocurrency.aplwallet.api.v2.FailedTxsApi;
 import com.apollocurrency.aplwallet.api.v2.InfoApi;
 import com.apollocurrency.aplwallet.api.v2.OperationApi;
+import com.apollocurrency.aplwallet.api.v2.SmcApi;
 import com.apollocurrency.aplwallet.api.v2.StateApi;
 import com.apollocurrency.aplwallet.api.v2.TransactionApi;
 import com.apollocurrency.aplwallet.apl.core.rest.endpoint.AccountControlController;
@@ -32,8 +35,8 @@ import com.apollocurrency.aplwallet.apl.core.rest.endpoint.UtilsController;
 import com.apollocurrency.aplwallet.apl.exchange.service.DexMatcherServiceImpl;
 import io.swagger.v3.jaxrs2.integration.resources.OpenApiResource;
 
-import javax.ws.rs.ApplicationPath;
-import javax.ws.rs.core.Application;
+import jakarta.ws.rs.ApplicationPath;
+import jakarta.ws.rs.core.Application;
 import java.util.HashSet;
 import java.util.Set;
 
@@ -79,6 +82,9 @@ public class RestEasyApplication extends Application {
         set.add(OperationApi.class);
         set.add(StateApi.class);
         set.add(TransactionApi.class);
+        set.add(SmcApi.class);
+        set.add(CurrenciesApi.class);
+        set.add(FailedTxsApi.class);
         //API V2 Services
 
         //swagger openapi endpoint

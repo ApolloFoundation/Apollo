@@ -22,18 +22,18 @@ package com.apollocurrency.aplwallet.apl.core.dao.blockchain;
 
 import com.apollocurrency.aplwallet.apl.core.app.BlockNotFoundException;
 import com.apollocurrency.aplwallet.apl.core.converter.db.BlockEntityRowMapper;
-import com.apollocurrency.aplwallet.apl.core.dao.TransactionalDataSource;
-import com.apollocurrency.aplwallet.apl.core.db.DbUtils;
+import com.apollocurrency.aplwallet.apl.util.db.TransactionalDataSource;
+import com.apollocurrency.aplwallet.apl.util.db.DbUtils;
 import com.apollocurrency.aplwallet.apl.core.entity.blockchain.BlockEntity;
-import com.apollocurrency.aplwallet.apl.core.service.appdata.DatabaseManager;
+import com.apollocurrency.aplwallet.apl.core.db.DatabaseManager;
 import com.apollocurrency.aplwallet.apl.util.annotation.DatabaseSpecificDml;
 import com.apollocurrency.aplwallet.apl.util.annotation.DmlMarker;
 import com.apollocurrency.aplwallet.apl.util.cdi.Transactional;
 import com.apollocurrency.aplwallet.apl.util.exception.AplException;
 import org.slf4j.Logger;
 
-import javax.inject.Inject;
-import javax.inject.Singleton;
+import jakarta.inject.Inject;
+import jakarta.inject.Singleton;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
@@ -50,6 +50,7 @@ import static org.slf4j.LoggerFactory.getLogger;
 @Singleton
 public class BlockDaoImpl implements BlockDao {
     private static final Logger LOG = getLogger(BlockDaoImpl.class);
+    static final String SELECT_ALL_AFTER_HEIGHT_QUERY = "SELECT * FROM block WHERE height > ? ORDER BY height LIMIT ?";
 
     private final BlockEntityRowMapper entityRowMapper;
     private final DatabaseManager databaseManager;
@@ -232,7 +233,7 @@ public class BlockDaoImpl implements BlockDao {
 
     @Override
     public List<BlockEntity> getBlocks(TransactionalDataSource dataSource, int from, int to, int timestamp) {
-        LOG.debug("start getBlocks DbIter( from={}, to={}, timestamp={} )...", from, to, timestamp);
+        LOG.trace("start getBlocks DbIter( from={}, to={}, timestamp={} )...", from, to, timestamp);
         if (dataSource == null) {
             dataSource = databaseManager.getDataSource();
         }
@@ -586,5 +587,24 @@ public class BlockDaoImpl implements BlockDao {
             dataSource.rollback(false);
             throw new RuntimeException(e.toString(), e);
         }
+    }
+
+    @Override
+    public List<BlockEntity> getBlocksAfter(int height, int limit) {
+        List<BlockEntity> resultList = new ArrayList<>();
+        try (Connection con = databaseManager.getDataSource().getConnection();
+            PreparedStatement pstmt = con.prepareStatement(SELECT_ALL_AFTER_HEIGHT_QUERY)) {
+            pstmt.setLong(1, height);
+            pstmt.setInt(2, limit);
+            try (ResultSet rs = pstmt.executeQuery()) {
+                while (rs.next()) {
+                    BlockEntity block = entityRowMapper.map(rs, null);
+                    resultList.add(block);
+                }
+            }
+        } catch (SQLException e) {
+            throw new RuntimeException(e.toString(), e);
+        }
+        return resultList;
     }
 }

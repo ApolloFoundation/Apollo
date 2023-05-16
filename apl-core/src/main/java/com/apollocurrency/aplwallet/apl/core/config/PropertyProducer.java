@@ -8,13 +8,12 @@ import com.apollocurrency.aplwallet.apl.util.StringUtils;
 import com.apollocurrency.aplwallet.apl.util.cdi.config.Property;
 import com.apollocurrency.aplwallet.apl.util.injectable.PropertiesHolder;
 
-import javax.enterprise.inject.Produces;
-import javax.enterprise.inject.spi.Annotated;
-import javax.enterprise.inject.spi.InjectionPoint;
-import javax.inject.Inject;
+import jakarta.enterprise.inject.Produces;
+import jakarta.enterprise.inject.spi.Annotated;
+import jakarta.enterprise.inject.spi.InjectionPoint;
+import jakarta.inject.Inject;
 import java.util.Arrays;
 import java.util.List;
-import java.util.Random;
 
 public class PropertyProducer {
     private PropertiesHolder propertiesHolder;
@@ -75,11 +74,6 @@ public class PropertyProducer {
         } else {
             return propertiesHolder.getStringListProperty((getKey(ip)));
         }
-    }
-
-    @Produces
-    public Random produceRandom() {
-        return new Random();
     }
 
     private String getKey(final InjectionPoint ip) {

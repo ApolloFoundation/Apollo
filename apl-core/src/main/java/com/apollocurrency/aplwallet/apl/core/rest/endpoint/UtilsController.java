@@ -7,6 +7,7 @@ package com.apollocurrency.aplwallet.apl.core.rest.endpoint;
 import ch.qos.logback.classic.Level;
 import ch.qos.logback.classic.Logger;
 import ch.qos.logback.classic.LoggerContext;
+import com.apollocurrency.aplwallet.api.dto.BaseDTO;
 import com.apollocurrency.aplwallet.api.dto.utils.DetectMimeTypeDto;
 import com.apollocurrency.aplwallet.api.dto.utils.FullHashToIdDto;
 import com.apollocurrency.aplwallet.api.dto.utils.HashDto;
@@ -18,12 +19,16 @@ import com.apollocurrency.aplwallet.api.dto.utils.SetLogLevelDTO;
 import com.apollocurrency.aplwallet.api.request.DecodeQRCodeRequestForm;
 import com.apollocurrency.aplwallet.api.request.DetectMimeTypeUploadForm;
 import com.apollocurrency.aplwallet.apl.core.chainid.BlockchainConfig;
+import com.apollocurrency.aplwallet.apl.core.db.DatabaseManager;
 import com.apollocurrency.aplwallet.apl.core.rest.utils.RestParametersParser;
+import com.apollocurrency.aplwallet.apl.core.service.fulltext.FullTextSearchService;
 import com.apollocurrency.aplwallet.apl.crypto.Convert;
 import com.apollocurrency.aplwallet.apl.crypto.HashFunction;
 import com.apollocurrency.aplwallet.apl.util.Convert2;
 import com.apollocurrency.aplwallet.apl.util.Search;
 import com.apollocurrency.aplwallet.apl.util.builder.ResponseBuilder;
+import com.apollocurrency.aplwallet.apl.util.db.DbTransactionHelper;
+import com.apollocurrency.aplwallet.apl.util.db.TransactionalDataSource;
 import com.apollocurrency.aplwallet.apl.util.exception.ApiErrors;
 import com.apollocurrency.aplwallet.apl.util.exception.RestParameterException;
 import com.google.zxing.BarcodeFormat;
@@ -61,31 +66,32 @@ import org.jboss.resteasy.plugins.providers.multipart.InputPart;
 import org.jboss.resteasy.plugins.providers.multipart.MultipartFormDataInput;
 import org.slf4j.LoggerFactory;
 
-import javax.annotation.security.PermitAll;
-import javax.annotation.security.RolesAllowed;
+import jakarta.annotation.security.PermitAll;
+import jakarta.annotation.security.RolesAllowed;
 import javax.imageio.ImageIO;
-import javax.inject.Inject;
-import javax.inject.Singleton;
-import javax.validation.Valid;
-import javax.validation.constraints.NotBlank;
-import javax.validation.constraints.NotEmpty;
-import javax.ws.rs.Consumes;
-import javax.ws.rs.DefaultValue;
-import javax.ws.rs.FormParam;
-import javax.ws.rs.GET;
-import javax.ws.rs.POST;
-import javax.ws.rs.Path;
-import javax.ws.rs.Produces;
-import javax.ws.rs.QueryParam;
-import javax.ws.rs.core.MediaType;
-import javax.ws.rs.core.MultivaluedMap;
-import javax.ws.rs.core.Response;
+import jakarta.inject.Inject;
+import jakarta.inject.Singleton;
+import jakarta.validation.Valid;
+import jakarta.validation.constraints.NotBlank;
+import jakarta.validation.constraints.NotEmpty;
+import jakarta.ws.rs.Consumes;
+import jakarta.ws.rs.DefaultValue;
+import jakarta.ws.rs.FormParam;
+import jakarta.ws.rs.GET;
+import jakarta.ws.rs.POST;
+import jakarta.ws.rs.Path;
+import jakarta.ws.rs.Produces;
+import jakarta.ws.rs.QueryParam;
+import jakarta.ws.rs.core.MediaType;
+import jakarta.ws.rs.core.MultivaluedMap;
+import jakarta.ws.rs.core.Response;
 import java.awt.image.BufferedImage;
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.math.BigInteger;
+import java.sql.Connection;
 import java.util.Arrays;
 import java.util.Base64;
 import java.util.EnumSet;
@@ -106,10 +112,16 @@ import java.util.Objects;
 public class UtilsController {
 
     private BlockchainConfig blockchainConfig;
+    private DatabaseManager databaseManager;
+    private FullTextSearchService fullTextSearchService;
 
     @Inject
-    public UtilsController(BlockchainConfig blockchainConfig) {
+    public UtilsController(BlockchainConfig blockchainConfig,
+                           DatabaseManager databaseManage,
+                           FullTextSearchService fullTextSearchService) {
         this.blockchainConfig = Objects.requireNonNull(blockchainConfig);
+        this.databaseManager = Objects.requireNonNull(databaseManage);
+        this.fullTextSearchService = Objects.requireNonNull(fullTextSearchService);
     }
 
     @Path("/qrcode/encoding")
@@ -354,7 +366,7 @@ public class UtilsController {
         long longId = 0;
         FullHashToIdDto dto = new FullHashToIdDto();
         try {
-            longId = Convert.fullHashToId(Convert.parseHexString(fullHash));
+            longId = Convert.transactionFullHashToId(Convert.parseHexString(fullHash));
             dto.longId = String.valueOf(longId);
             dto.stringId = Long.toUnsignedString(longId);
         } catch (NumberFormatException e) {
@@ -529,8 +541,8 @@ public class UtilsController {
             dto.hash = Convert.toHexString(hashAlgorithm.hash(secretAsByteArray));
             log.debug("hashByAlgorithm result: {}", dto);
         } catch (RuntimeException e) {
-            String errorMessage = String.format("Error hashing by an algorithm = '%s', value = '%s'",
-                hashAlgorithm, secret);
+            String errorMessage = String.format("Error hashing by an algorithm = '%s', value = '%s', ex = %s",
+                hashAlgorithm, secret, e.getMessage());
             log.warn(errorMessage, e);
             return response.error(ApiErrors.INCORRECT_PARAM_VALUE, errorMessage).build();
         }
@@ -577,6 +589,36 @@ public class UtilsController {
         }
         log.debug("setLoggingLevel result : {}", dto);
         return response.bind(dto).build();
+    }
+
+    @Path("/fts/reindex")
+    @POST
+    @Operation(
+        summary = "Start reindexing Full Test Search data",
+        description = "Do reindex all data stored in database putting it into FTS index",
+        security = @SecurityRequirement(name = "admin_api_key"),
+        tags = {"utility"},
+        responses = {
+            @ApiResponse(responseCode = "200", description = "Successful execution",
+                content = @Content(mediaType = "application/json"))
+        }
+    )
+    @RolesAllowed("admin")
+    public Response reindexFullTextSearch() {
+        ResponseBuilder response = ResponseBuilder.startTiming();
+        log.debug("Started reindexFullTextSearch");
+        TransactionalDataSource dataSource = databaseManager.getDataSource();
+        DbTransactionHelper.executeInTransaction(dataSource, () -> {
+            try (Connection con = dataSource.getConnection()) {
+                // recreate Lucene search indexes
+                this.fullTextSearchService.reindexAll(con);
+                log.debug("reindexFullTextSearch result : OK");
+            } catch (Exception e) {
+                String error = "Error on FTS Reindexing";
+                log.error(error, e);
+            }
+        });
+        return response.bind(new BaseDTO()).build();
     }
 
 }

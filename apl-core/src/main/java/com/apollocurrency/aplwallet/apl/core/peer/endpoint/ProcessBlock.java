@@ -21,7 +21,7 @@
 package com.apollocurrency.aplwallet.apl.core.peer.endpoint;
 
 
-import com.apollocurrency.aplwallet.apl.core.entity.blockchain.Block;
+import com.apollocurrency.aplwallet.apl.core.model.Block;
 import com.apollocurrency.aplwallet.apl.core.peer.Peer;
 import com.apollocurrency.aplwallet.apl.crypto.Convert;
 import com.apollocurrency.aplwallet.apl.util.JSON;
@@ -31,7 +31,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.json.simple.JSONObject;
 import org.json.simple.JSONStreamAware;
 
-import javax.inject.Singleton;
+import jakarta.inject.Singleton;
 
 @Slf4j
 @NoArgsConstructor

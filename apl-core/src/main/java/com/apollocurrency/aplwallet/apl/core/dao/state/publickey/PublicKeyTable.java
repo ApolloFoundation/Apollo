@@ -8,26 +8,22 @@ import com.apollocurrency.aplwallet.apl.core.dao.state.derived.EntityDbTableInte
 import com.apollocurrency.aplwallet.apl.core.dao.state.keyfactory.DbKey;
 import com.apollocurrency.aplwallet.apl.core.dao.state.keyfactory.LongKey;
 import com.apollocurrency.aplwallet.apl.core.dao.state.keyfactory.LongKeyFactory;
-import com.apollocurrency.aplwallet.apl.core.db.DbUtils;
+import com.apollocurrency.aplwallet.apl.core.service.fulltext.FullTextOperationData;
+import com.apollocurrency.aplwallet.apl.util.db.DbUtils;
 import com.apollocurrency.aplwallet.apl.core.entity.state.account.PublicKey;
-import com.apollocurrency.aplwallet.apl.core.service.appdata.DatabaseManager;
-import com.apollocurrency.aplwallet.apl.core.service.state.DerivedTablesRegistry;
-import com.apollocurrency.aplwallet.apl.core.shard.observer.DeleteOnTrimData;
+import com.apollocurrency.aplwallet.apl.core.db.DatabaseManager;
 import com.apollocurrency.aplwallet.apl.util.annotation.DatabaseSpecificDml;
 import com.apollocurrency.aplwallet.apl.util.annotation.DmlMarker;
 
-import javax.enterprise.event.Event;
-import javax.inject.Inject;
-import javax.inject.Singleton;
+import jakarta.enterprise.event.Event;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 
 /**
- * @author al
+ *  Uses external weld initialization through {@link PublicKeyTableProducer}
  */
-@Singleton
 public class PublicKeyTable extends EntityDbTable<PublicKey> implements EntityDbTableInterface<PublicKey> {
 
     private static final LongKeyFactory<PublicKey> KEY_FACTORY = new LongKeyFactory<>("account_id") {
@@ -40,11 +36,10 @@ public class PublicKeyTable extends EntityDbTable<PublicKey> implements EntityDb
         }
     };
 
-    @Inject
-    public PublicKeyTable(DerivedTablesRegistry derivedDbTablesRegistry,
-                          DatabaseManager databaseManager,
-                          Event<DeleteOnTrimData> deleteOnTrimDataEvent) {
-        super("public_key", KEY_FACTORY, true, null, derivedDbTablesRegistry, databaseManager, null, deleteOnTrimDataEvent);
+    public PublicKeyTable(DatabaseManager databaseManager,
+                          Event<FullTextOperationData> fullTextOperationDataEvent) {
+        super("public_key", KEY_FACTORY, true, null,
+            databaseManager, fullTextOperationDataEvent);
     }
 
     public DbKey newKey(long id) {
@@ -71,10 +66,5 @@ public class PublicKeyTable extends EntityDbTable<PublicKey> implements EntityDb
             pstmt.setInt(++i, publicKey.getHeight());
             pstmt.executeUpdate();
         }
-    }
-
-    public void init() {
-        // that is needed for 'manual' derived table registration
-        super.init();
     }
 }

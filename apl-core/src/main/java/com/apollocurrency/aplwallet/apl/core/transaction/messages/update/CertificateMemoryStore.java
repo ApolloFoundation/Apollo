@@ -5,9 +5,9 @@ import com.apollocurrency.aplwallet.apl.util.cdi.config.Property;
 import io.firstbridge.cryptolib.CryptoFactory;
 import lombok.extern.slf4j.Slf4j;
 
-import javax.annotation.PostConstruct;
-import javax.inject.Inject;
-import javax.inject.Singleton;
+import jakarta.annotation.PostConstruct;
+import jakarta.inject.Inject;
+import jakarta.inject.Singleton;
 import java.io.IOException;
 import java.math.BigInteger;
 import java.net.MalformedURLException;

@@ -29,19 +29,19 @@ import com.apollocurrency.aplwallet.apl.core.transaction.messages.TaggedDataExte
 import com.apollocurrency.aplwallet.apl.util.exception.AplException;
 import org.json.simple.JSONStreamAware;
 
-import javax.enterprise.inject.Vetoed;
-import javax.enterprise.inject.spi.CDI;
-import javax.servlet.http.HttpServletRequest;
+import jakarta.enterprise.inject.Vetoed;
+import jakarta.enterprise.inject.spi.CDI;
+import jakarta.servlet.http.HttpServletRequest;
 
 import static com.apollocurrency.aplwallet.apl.core.http.JSONResponses.UNKNOWN_TRANSACTION;
 
 @Vetoed
-public final class ExtendTaggedData extends CreateTransaction {
+public final class ExtendTaggedData extends CreateTransactionHandler {
     private TaggedDataService taggedDataService = CDI.current().select(TaggedDataService.class).get();
 
     public ExtendTaggedData() {
         super("file", new APITag[]{APITag.DATA, APITag.CREATE_TRANSACTION}, "transaction",
-            "name", "description", "tags", "type", "channel", "isText", "filename", "data");
+                "name", "description", "tags", "type", "channel", "isText", "filename", "data");
     }
 
     @Override

@@ -10,15 +10,14 @@ import com.apollocurrency.aplwallet.apl.core.dao.state.keyfactory.DbKey;
 import com.apollocurrency.aplwallet.apl.core.dao.state.keyfactory.LongKey;
 import com.apollocurrency.aplwallet.apl.core.dao.state.keyfactory.LongKeyFactory;
 import com.apollocurrency.aplwallet.apl.core.entity.state.tagged.TaggedDataTimestamp;
-import com.apollocurrency.aplwallet.apl.core.service.appdata.DatabaseManager;
-import com.apollocurrency.aplwallet.apl.core.service.state.DerivedTablesRegistry;
-import com.apollocurrency.aplwallet.apl.core.shard.observer.DeleteOnTrimData;
+import com.apollocurrency.aplwallet.apl.core.db.DatabaseManager;
+import com.apollocurrency.aplwallet.apl.core.service.fulltext.FullTextOperationData;
 import com.apollocurrency.aplwallet.apl.util.annotation.DatabaseSpecificDml;
 import com.apollocurrency.aplwallet.apl.util.annotation.DmlMarker;
 
-import javax.enterprise.event.Event;
-import javax.inject.Inject;
-import javax.inject.Singleton;
+import jakarta.enterprise.event.Event;
+import jakarta.inject.Inject;
+import jakarta.inject.Singleton;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
@@ -41,10 +40,10 @@ public class TaggedDataTimestampDao extends EntityDbTable<TaggedDataTimestamp> {
     private final TagDataTimestampMapper MAPPER = new TagDataTimestampMapper();
 
     @Inject
-    public TaggedDataTimestampDao(DerivedTablesRegistry derivedDbTablesRegistry,
-                                  DatabaseManager databaseManager,
-                                  Event<DeleteOnTrimData> deleteOnTrimDataEvent) {
-        super(TABLE_NAME, timestampKeyFactory, true, null, derivedDbTablesRegistry, databaseManager, null, deleteOnTrimDataEvent);
+    public TaggedDataTimestampDao(DatabaseManager databaseManager,
+                                  Event<FullTextOperationData> fullTextOperationDataEvent) {
+        super(TABLE_NAME, timestampKeyFactory, true, null,
+            databaseManager, fullTextOperationDataEvent);
     }
 
     public DbKey newDbKey(TaggedDataTimestamp dataTimestamp) {

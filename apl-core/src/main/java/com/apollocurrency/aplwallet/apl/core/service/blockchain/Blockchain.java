@@ -20,13 +20,13 @@
 
 package com.apollocurrency.aplwallet.apl.core.service.blockchain;
 
-import com.apollocurrency.aplwallet.apl.core.dao.TransactionalDataSource;
-import com.apollocurrency.aplwallet.apl.core.entity.blockchain.Block;
-import com.apollocurrency.aplwallet.apl.core.entity.blockchain.BlockEntity;
-import com.apollocurrency.aplwallet.apl.core.entity.blockchain.EcBlockData;
-import com.apollocurrency.aplwallet.apl.core.entity.blockchain.Transaction;
+import com.apollocurrency.aplwallet.apl.core.model.Block;
+import com.apollocurrency.aplwallet.apl.core.model.EcBlockData;
+import com.apollocurrency.aplwallet.apl.core.model.Sort;
+import com.apollocurrency.aplwallet.apl.core.model.Transaction;
 import com.apollocurrency.aplwallet.apl.core.model.TransactionDbInfo;
 import com.apollocurrency.aplwallet.apl.core.transaction.PrunableTransaction;
+import com.apollocurrency.aplwallet.apl.util.db.TransactionalDataSource;
 
 import java.util.List;
 import java.util.Set;
@@ -76,9 +76,7 @@ public interface Blockchain {
 
     Block findFirstBlock();
 
-    Block loadBlockData(BlockEntity blockEntity);
-
-    List<Block> loadBlockData(List<BlockEntity> blocks);
+    Block loadBlockData(Block block);
 
     @Deprecated
     List<Block> getBlocksByAccount(long accountId, int from, int to, int timestamp);
@@ -89,7 +87,7 @@ public interface Blockchain {
 
     void saveBlock(Block block);
 
-    List<Transaction> getOrLoadTransactions(Block parentBlock);
+    void updateTransaction(Transaction transaction);
 
     void commit(Block block);
 
@@ -162,7 +160,8 @@ public interface Blockchain {
 
     List<Transaction> getTransactions(long accountId, int numberOfConfirmations, byte type, byte subtype,
                                       int blockTimestamp, boolean withMessage, boolean phasedOnly, boolean nonPhasedOnly,
-                                      int from, int to, boolean includeExpiredPrunable, boolean executedOnly, boolean includePrivate);
+                                      int from, int to, boolean includeExpiredPrunable, boolean executedOnly,
+                                      boolean includePrivate, boolean failedOnly, boolean nonFailedOnly, Sort sort);
 
     List<Transaction> getBlockTransactions(long blockId);
 
@@ -187,4 +186,8 @@ public interface Blockchain {
     boolean isExpired(Transaction tx);
 
     List<Transaction> loadPrunables(List<Transaction> transactions);
+
+    List<Block> getBlocksAfter(int height, int limit);
+
+    List<Transaction> getTransactionsByIds(Set<Long> ids);
 }

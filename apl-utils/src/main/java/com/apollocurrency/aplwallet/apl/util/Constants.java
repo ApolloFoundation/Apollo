@@ -15,7 +15,7 @@
  */
 
  /*
- * Copyright © 2018 Apollo Foundation
+ * Copyright © 2018-2021 Apollo Foundation
  */
 package com.apollocurrency.aplwallet.apl.util;
 
@@ -24,7 +24,7 @@ import java.math.BigInteger;
 
 public final class Constants {
 
-    public static final Version VERSION = new Version("1.48.2");
+    public static final Version VERSION = new Version("2.0.1");
 
     public static final String APPLICATION = "Apollo";
     public static final String APPLICATION_DIR_NAME = "apl-blockchain";
@@ -172,10 +172,11 @@ public final class Constants {
     public static final int DEX_GRAPH_INTERVAL_HOUR = 60 * 60;
     public static final int DEX_GRAPH_INTERVAL_DAY = 60 * 60 * 24;
     public static final int HEALTH_CHECK_INTERVAL = 30 * 1000; //milliseconds
+    public static final int MEMPOOL_CHECK_INTERVAL = 10 * 1000; //milliseconds
     public static String ETH_DEFAULT_ADDRESS = "0x0000000000000000000000000000000000000000";
     //DEX
     public static String ETH_STATION_GAS_INFO_URL = "https://www.ethgasstation.info/json/ethgasAPI.json";
-    public static String ETH_CHAIN_GAS_INFO_URL = "https://www.etherchain.org/api/gasPriceOracle";
+    public static String ETH_CHAIN_GAS_INFO_URL = "https://www.etherchain.org/api/gasnow";
     public static String ETH_GAS_INFO_URL = "https://ethgasstation.info/json/ethgasAPI.json";
     public static BigInteger ETH_MAX_POS_INT = new BigInteger("7fffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff", 16);
     //TODO calculate this value on the future.

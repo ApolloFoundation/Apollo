@@ -2,18 +2,23 @@ package com.apollocurrency.aplwallet.apl.dex.eth.service;
 
 import com.apollocurrency.aplwallet.apl.util.StringUtils;
 import com.apollocurrency.aplwallet.apl.util.injectable.PropertiesHolder;
+import lombok.extern.slf4j.Slf4j;
+import okhttp3.OkHttpClient;
+import okhttp3.logging.HttpLoggingInterceptor;
 import org.web3j.protocol.Web3j;
 import org.web3j.protocol.http.HttpService;
 import org.web3j.tx.response.PollingTransactionReceiptProcessor;
 import org.web3j.tx.response.TransactionReceiptProcessor;
 
-import javax.inject.Inject;
-import javax.inject.Singleton;
+import jakarta.inject.Inject;
+import jakarta.inject.Singleton;
+import java.util.concurrent.TimeUnit;
 
 import static org.web3j.protocol.core.JsonRpc2_0Web3j.DEFAULT_BLOCK_TIME;
 import static org.web3j.tx.TransactionManager.DEFAULT_POLLING_ATTEMPTS_PER_TX_HASH;
 
 @Singleton
+@Slf4j
 public class DexBeanProducer {
     private final PropertiesHolder propertiesHolder;
     private volatile Web3j web3j;
@@ -37,11 +42,26 @@ public class DexBeanProducer {
                         fullUrl = fullUrl.concat(":" + ethNodePort);
                     }
 
-                    web3j = Web3j.build(new HttpService(fullUrl));
+                    HttpService httpService = new HttpService(fullUrl, createHttpClient());
+                    web3j = Web3j.build(httpService);
                 }
             }
         }
         return web3j;
+    }
+
+    private OkHttpClient createHttpClient() {
+
+        OkHttpClient.Builder builder = new OkHttpClient.Builder()
+            .writeTimeout(30_000, TimeUnit.MILLISECONDS)
+            .readTimeout(30_000, TimeUnit.MILLISECONDS)
+            .connectTimeout(30_000, TimeUnit.MILLISECONDS);
+        if (log.isDebugEnabled()) {
+            HttpLoggingInterceptor loggingInterceptor = new HttpLoggingInterceptor(log::debug);
+            loggingInterceptor.setLevel(HttpLoggingInterceptor.Level.BODY);
+            builder.addInterceptor(loggingInterceptor);
+        }
+        return builder.build();
     }
 
     public TransactionReceiptProcessor receiptProcessor() {

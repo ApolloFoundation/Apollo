@@ -5,9 +5,10 @@ package com.apollocurrency.aplwallet.apl.core.peer;
 
 import com.apollocurrency.aplwallet.api.p2p.request.AddPeersRequest;
 import com.apollocurrency.aplwallet.api.p2p.request.GetPeersRequest;
-import com.apollocurrency.aplwallet.api.p2p.respons.GetPeersResponse;
+import com.apollocurrency.aplwallet.api.p2p.response.GetPeersResponse;
 import com.apollocurrency.aplwallet.apl.core.peer.parser.GetPeersResponseParser;
 import com.apollocurrency.aplwallet.apl.core.service.appdata.TimeService;
+import lombok.extern.slf4j.Slf4j;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -22,17 +23,25 @@ import java.util.UUID;
 /**
  * @author alukin@gmail.com
  */
+@Slf4j
 class GetMorePeersThread implements Runnable {
     private static final Logger LOG = LoggerFactory.getLogger(GetMorePeersThread.class);
     private final TimeService timeService;
     private final PeersService peersService;
     private final GetPeersRequest getPeersRequest;
     private volatile boolean updatedPeer;
+    private final PeerDb peerDb;
 
 
     public GetMorePeersThread(TimeService timeService, PeersService peersService) {
         this.timeService = timeService;
         this.peersService = peersService;
+        this.peerDb = peersService.getPeerDb();
+        if (this.peerDb == null) {
+            String error = "ERROR, the peerDb instance was not initialized inside peerService";
+            log.error(error);
+            throw new RuntimeException(error);
+        }
         getPeersRequest = new GetPeersRequest(peersService.blockchainConfig.getChain().getChainId());
     }
 
@@ -114,7 +123,7 @@ class GetMorePeersThread implements Runnable {
         //
         // Load the current database entries and map announced address to database entry
         //
-        List<PeerDb.Entry> oldPeers = PeerDb.loadPeers();
+        List<PeerDb.Entry> oldPeers = this.peerDb.loadPeers();
         Map<String, PeerDb.Entry> oldMap = new HashMap<>(oldPeers.size());
         oldPeers.forEach((entry) -> oldMap.put(entry.getAddress(), entry));
         //
@@ -158,8 +167,8 @@ class GetMorePeersThread implements Runnable {
         //
 
         try {
-            PeerDb.deletePeers(toDelete);
-            PeerDb.updatePeers(toUpdate);
+            this.peerDb.deletePeers(toDelete);
+            this.peerDb.updatePeers(toUpdate);
         } catch (Exception e) {
             throw e;
         }

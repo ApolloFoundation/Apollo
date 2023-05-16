@@ -15,7 +15,7 @@
  */
 
 /*
- * Copyright © 2018-2019 Apollo Foundation
+ * Copyright © 2018-2021 Apollo Foundation
  */
 
 package com.apollocurrency.aplwallet.apl.core.http.post;
@@ -25,17 +25,15 @@ import com.apollocurrency.aplwallet.apl.core.entity.state.asset.Asset;
 import com.apollocurrency.aplwallet.apl.core.http.APITag;
 import com.apollocurrency.aplwallet.apl.core.http.HttpParameterParserUtil;
 import com.apollocurrency.aplwallet.apl.core.transaction.messages.Attachment;
-import com.apollocurrency.aplwallet.apl.core.transaction.messages.ColoredCoinsBidOrderPlacement;
+import com.apollocurrency.aplwallet.apl.core.transaction.messages.CCBidOrderPlacementAttachment;
 import com.apollocurrency.aplwallet.apl.util.exception.AplException;
 import org.json.simple.JSONStreamAware;
 
-import javax.enterprise.inject.Vetoed;
-import javax.servlet.http.HttpServletRequest;
-
-import static com.apollocurrency.aplwallet.apl.core.http.JSONResponses.NOT_ENOUGH_APL;
+import jakarta.enterprise.inject.Vetoed;
+import jakarta.servlet.http.HttpServletRequest;
 
 @Vetoed
-public final class PlaceBidOrder extends CreateTransaction {
+public final class PlaceBidOrder extends CreateTransactionHandler {
 
     public PlaceBidOrder() {
         super(new APITag[]{APITag.AE, APITag.CREATE_TRANSACTION}, "asset", "quantityATU", "priceATM");
@@ -49,12 +47,7 @@ public final class PlaceBidOrder extends CreateTransaction {
         long quantityATU = HttpParameterParserUtil.getQuantityATU(req);
         Account account = HttpParameterParserUtil.getSenderAccount(req);
 
-        Attachment attachment = new ColoredCoinsBidOrderPlacement(asset.getId(), quantityATU, priceATM);
-        try {
-            return createTransaction(req, account, attachment);
-        } catch (AplException.InsufficientBalanceException e) {
-            return NOT_ENOUGH_APL;
-        }
+        Attachment attachment = new CCBidOrderPlacementAttachment(asset.getId(), quantityATU, priceATM);
+        return createTransaction(req, account, attachment);
     }
-
 }

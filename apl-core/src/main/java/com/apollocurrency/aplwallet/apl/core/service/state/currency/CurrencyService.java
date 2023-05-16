@@ -1,15 +1,15 @@
 package com.apollocurrency.aplwallet.apl.core.service.state.currency;
 
-import com.apollocurrency.aplwallet.apl.core.db.DbIterator;
-import com.apollocurrency.aplwallet.apl.core.entity.blockchain.Transaction;
+import com.apollocurrency.aplwallet.apl.core.model.Transaction;
 import com.apollocurrency.aplwallet.apl.core.entity.state.account.Account;
 import com.apollocurrency.aplwallet.apl.core.entity.state.account.LedgerEvent;
 import com.apollocurrency.aplwallet.apl.core.entity.state.currency.Currency;
 import com.apollocurrency.aplwallet.apl.core.entity.state.currency.CurrencySupply;
 import com.apollocurrency.aplwallet.apl.core.entity.state.currency.CurrencyTransfer;
 import com.apollocurrency.aplwallet.apl.core.entity.state.exchange.Exchange;
-import com.apollocurrency.aplwallet.apl.core.transaction.messages.MonetarySystemCurrencyIssuance;
+import com.apollocurrency.aplwallet.apl.core.transaction.messages.MonetarySystemCurrencyIssuanceAttachment;
 import com.apollocurrency.aplwallet.apl.core.transaction.messages.MonetarySystemCurrencyMinting;
+import com.apollocurrency.aplwallet.apl.util.db.DbIterator;
 import com.apollocurrency.aplwallet.apl.util.exception.AplException;
 
 import java.util.stream.Stream;
@@ -47,7 +47,7 @@ public interface CurrencyService {
     Stream<Currency> getIssuedCurrenciesByHeightStream(int height, int from, int to);
 
     void addCurrency(LedgerEvent event, long eventId, Transaction transaction, Account senderAccount,
-                     MonetarySystemCurrencyIssuance attachment);
+                     MonetarySystemCurrencyIssuanceAttachment attachment);
 
     void increaseReserve(LedgerEvent event, long eventId, Account account, long currencyId, long amountPerUnitATM);
 
@@ -80,15 +80,17 @@ public interface CurrencyService {
 
     void delete(Currency currency, LedgerEvent event, long eventId, Account senderAccount);
 
+    void burn(long currencyId, Account senderAccount, long units, long eventId);
+
     void validate(Currency currency, Transaction transaction) throws AplException.ValidationException;
 
     void validate(int type, Transaction transaction) throws AplException.ValidationException;
 
     void validate(Currency currency, int type, Transaction transaction) throws AplException.ValidationException;
 
-    void validateCurrencyNamingStateIndependent(MonetarySystemCurrencyIssuance attachment) throws AplException.ValidationException;
+    void validateCurrencyNamingStateIndependent(MonetarySystemCurrencyIssuanceAttachment attachment) throws AplException.ValidationException;
 
-    void validateCurrencyNamingStateDependent(long issuerAccountId, MonetarySystemCurrencyIssuance attachment) throws AplException.ValidationException;
+    void validateCurrencyNamingStateDependent(long issuerAccountId, MonetarySystemCurrencyIssuanceAttachment attachment) throws AplException.ValidationException;
 
     void mintCurrency(LedgerEvent event, long eventId, Account account,
                       MonetarySystemCurrencyMinting attachment);

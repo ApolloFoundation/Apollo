@@ -3,10 +3,10 @@ package com.apollocurrency.aplwallet.apl.core.rest.exception;
 import com.apollocurrency.aplwallet.api.response.ResponseBase;
 import com.apollocurrency.aplwallet.apl.core.http.ParameterException;
 
-import javax.ws.rs.core.MediaType;
-import javax.ws.rs.core.Response;
-import javax.ws.rs.ext.ExceptionMapper;
-import javax.ws.rs.ext.Provider;
+import jakarta.ws.rs.core.MediaType;
+import jakarta.ws.rs.core.Response;
+import jakarta.ws.rs.ext.ExceptionMapper;
+import jakarta.ws.rs.ext.Provider;
 import java.io.IOException;
 import java.io.StringWriter;
 

@@ -1,13 +1,12 @@
 /*
- *  Copyright © 2018-2020 Apollo Foundation
+ *  Copyright © 2018-2021 Apollo Foundation
  */
 package com.apollocurrency.aplwallet.apl.core.transaction.types.update;
 
+import com.apollocurrency.aplwallet.apl.core.model.Transaction;
 import com.apollocurrency.aplwallet.apl.core.chainid.BlockchainConfig;
-import com.apollocurrency.aplwallet.apl.core.entity.blockchain.Transaction;
 import com.apollocurrency.aplwallet.apl.core.entity.state.account.Account;
 import com.apollocurrency.aplwallet.apl.core.service.state.account.AccountService;
-import com.apollocurrency.aplwallet.apl.core.transaction.Fee;
 import com.apollocurrency.aplwallet.apl.core.transaction.TransactionType;
 import com.apollocurrency.aplwallet.apl.core.transaction.TransactionTypes;
 import com.apollocurrency.aplwallet.apl.core.transaction.messages.update.UpdateAttachment;
@@ -17,12 +16,9 @@ import com.apollocurrency.aplwallet.apl.util.exception.AplException;
 
 public abstract class UpdateTransactionType extends TransactionType {
 
-    private final Fee UPDATE_FEE = new Fee.ConstantFee(getBlockchainConfig().getOneAPL());
-
     public UpdateTransactionType(BlockchainConfig blockchainConfig, AccountService accountService) {
         super(blockchainConfig, accountService);
     }
-
 
     public static boolean isUpdate(TransactionType transactionType) {
         return transactionType.getSpec().getType() == TransactionTypes.TYPE_UPDATE;
@@ -64,10 +60,4 @@ public abstract class UpdateTransactionType extends TransactionType {
     @Override
     public void applyAttachment(Transaction transaction, Account senderAccount, Account recipientAccount) {
     }
-
-    @Override
-    public Fee getBaselineFee(Transaction transaction) {
-        return UPDATE_FEE;
-    }
-
 }

@@ -5,7 +5,7 @@
 package com.apollocurrency.aplwallet.apl.core.transaction.types.payment;
 
 import com.apollocurrency.aplwallet.apl.core.chainid.BlockchainConfig;
-import com.apollocurrency.aplwallet.apl.core.entity.blockchain.Transaction;
+import com.apollocurrency.aplwallet.apl.core.model.Transaction;
 import com.apollocurrency.aplwallet.apl.core.entity.state.account.LedgerEvent;
 import com.apollocurrency.aplwallet.apl.core.service.state.account.AccountService;
 import com.apollocurrency.aplwallet.apl.core.transaction.TransactionTypes;
@@ -14,8 +14,8 @@ import com.apollocurrency.aplwallet.apl.core.transaction.messages.EmptyAttachmen
 import com.apollocurrency.aplwallet.apl.util.exception.AplException;
 import org.json.simple.JSONObject;
 
-import javax.inject.Inject;
-import javax.inject.Singleton;
+import jakarta.inject.Inject;
+import jakarta.inject.Singleton;
 import java.nio.ByteBuffer;
 
 @Singleton
@@ -29,7 +29,6 @@ public class OrdinaryPaymentTransactionType extends PaymentTransactionType {
     public TransactionTypes.TransactionTypeSpec getSpec() {
         return TransactionTypes.TransactionTypeSpec.ORDINARY_PAYMENT;
     }
-
 
     @Override
     public final LedgerEvent getLedgerEvent() {
@@ -52,13 +51,6 @@ public class OrdinaryPaymentTransactionType extends PaymentTransactionType {
     }
 
     @Override
-    public void doStateDependentValidation(Transaction transaction) throws AplException.ValidationException {
-    }
-
-    @Override
-    public void doStateIndependentValidation(Transaction transaction) throws AplException.ValidationException {
-        if (transaction.getAmountATM() <= 0 || transaction.getAmountATM() >= getBlockchainConfig().getCurrentConfig().getMaxBalanceATM()) {
-            throw new AplException.NotValidException("Invalid ordinary payment");
-        }
+    protected void doStateDependentValidation(Transaction transaction) throws AplException.ValidationException {
     }
 }

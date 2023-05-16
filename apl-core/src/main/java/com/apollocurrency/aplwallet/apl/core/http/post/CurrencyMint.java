@@ -30,8 +30,8 @@ import com.apollocurrency.aplwallet.apl.core.transaction.messages.MonetarySystem
 import com.apollocurrency.aplwallet.apl.util.exception.AplException;
 import org.json.simple.JSONStreamAware;
 
-import javax.enterprise.inject.Vetoed;
-import javax.servlet.http.HttpServletRequest;
+import jakarta.enterprise.inject.Vetoed;
+import jakarta.servlet.http.HttpServletRequest;
 
 /**
  * Generate new currency units
@@ -53,7 +53,7 @@ import javax.servlet.http.HttpServletRequest;
  * by following the procedure used in {@link com.apollocurrency.aplwallet.apl.core.app.mint.CurrencyMint#mintCurrency}<br>
  */
 @Vetoed
-public final class CurrencyMint extends CreateTransaction {
+public final class CurrencyMint extends CreateTransactionHandler {
 
     public CurrencyMint() {
         super(new APITag[]{APITag.MS, APITag.CREATE_TRANSACTION}, "currency", "nonce", "units", "counter");

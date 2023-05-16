@@ -11,10 +11,13 @@ import com.apollocurrency.aplwallet.api.response.AccountControlPhasingResponse;
 import com.apollocurrency.aplwallet.api.response.LeaseBalanceResponse;
 import com.apollocurrency.aplwallet.apl.core.app.VoteWeighting;
 import com.apollocurrency.aplwallet.apl.core.chainid.BlockchainConfig;
-import com.apollocurrency.aplwallet.apl.core.entity.blockchain.Transaction;
+import com.apollocurrency.aplwallet.apl.core.model.Transaction;
 import com.apollocurrency.aplwallet.apl.core.entity.state.account.Account;
 import com.apollocurrency.aplwallet.apl.core.entity.state.account.AccountControlPhasing;
 import com.apollocurrency.aplwallet.apl.core.http.ParameterException;
+import com.apollocurrency.aplwallet.apl.core.rest.converter.UnconfirmedTransactionConverterCreator;
+import com.apollocurrency.aplwallet.apl.util.io.PayloadResult;
+import com.apollocurrency.aplwallet.apl.util.io.Result;
 import com.apollocurrency.aplwallet.apl.core.model.CreateTransactionRequest;
 import com.apollocurrency.aplwallet.apl.core.model.PhasingParams;
 import com.apollocurrency.aplwallet.apl.core.rest.TransactionCreator;
@@ -25,6 +28,8 @@ import com.apollocurrency.aplwallet.apl.core.rest.filters.Secured2FA;
 import com.apollocurrency.aplwallet.apl.core.rest.parameter.AccountIdParameter;
 import com.apollocurrency.aplwallet.apl.core.service.state.account.AccountControlPhasingService;
 import com.apollocurrency.aplwallet.apl.core.service.state.account.AccountService;
+import com.apollocurrency.aplwallet.apl.core.transaction.TransactionWrapperHelper;
+import com.apollocurrency.aplwallet.apl.core.transaction.common.TxBContext;
 import com.apollocurrency.aplwallet.apl.core.transaction.messages.AccountControlEffectiveBalanceLeasing;
 import com.apollocurrency.aplwallet.apl.core.transaction.messages.Attachment;
 import com.apollocurrency.aplwallet.apl.core.transaction.messages.SetPhasingOnly;
@@ -47,25 +52,25 @@ import io.swagger.v3.oas.annotations.security.SecurityScheme;
 import lombok.NoArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 
-import javax.annotation.security.PermitAll;
-import javax.inject.Inject;
-import javax.servlet.http.HttpServletRequest;
-import javax.validation.constraints.Max;
-import javax.validation.constraints.Min;
-import javax.validation.constraints.NotNull;
-import javax.validation.constraints.Positive;
-import javax.ws.rs.BeanParam;
-import javax.ws.rs.Consumes;
-import javax.ws.rs.DefaultValue;
-import javax.ws.rs.FormParam;
-import javax.ws.rs.GET;
-import javax.ws.rs.POST;
-import javax.ws.rs.Path;
-import javax.ws.rs.Produces;
-import javax.ws.rs.QueryParam;
-import javax.ws.rs.core.Context;
-import javax.ws.rs.core.MediaType;
-import javax.ws.rs.core.Response;
+import jakarta.annotation.security.PermitAll;
+import jakarta.inject.Inject;
+import jakarta.servlet.http.HttpServletRequest;
+import jakarta.validation.constraints.Max;
+import jakarta.validation.constraints.Min;
+import jakarta.validation.constraints.NotNull;
+import jakarta.validation.constraints.Positive;
+import jakarta.ws.rs.BeanParam;
+import jakarta.ws.rs.Consumes;
+import jakarta.ws.rs.DefaultValue;
+import jakarta.ws.rs.FormParam;
+import jakarta.ws.rs.GET;
+import jakarta.ws.rs.POST;
+import jakarta.ws.rs.Path;
+import jakarta.ws.rs.Produces;
+import jakarta.ws.rs.QueryParam;
+import jakarta.ws.rs.core.Context;
+import jakarta.ws.rs.core.MediaType;
+import jakarta.ws.rs.core.Response;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -82,6 +87,7 @@ public class AccountControlController {
     private UnconfirmedTransactionConverter unconfirmedTransactionConverter;
     private TransactionCreator txCreator;
     private AccountService accountService;
+    private TxBContext txBContext;
 
     public static int maxAPIFetchRecords;
 
@@ -91,13 +97,14 @@ public class AccountControlController {
         BlockchainConfig blockchainConfig,
         TransactionCreator txCreator,
         AccountService accountService,
-        UnconfirmedTransactionConverter unconfirmedTransactionConverter,
+        UnconfirmedTransactionConverterCreator unconfirmedTransactionConverterCreator,
         @Property(name = "apl.maxAPIRecords", defaultValue = "100") int maxAPIrecords) {
         this.accountControlPhasingService = accountControlPhasingService;
         this.blockchainConfig = blockchainConfig;
         this.txCreator = txCreator;
-        this.unconfirmedTransactionConverter = unconfirmedTransactionConverter;
+        this.unconfirmedTransactionConverter = unconfirmedTransactionConverterCreator.create(true);
         this.accountService = accountService;
+        this.txBContext = TxBContext.newInstance(blockchainConfig.getChain());
         maxAPIFetchRecords = maxAPIrecords;
     }
 
@@ -299,8 +306,7 @@ public class AccountControlController {
 
         SetPhasingOnly attachment = new SetPhasingOnly(phasingParams, maxFees, controlMinDuration.shortValue(), controlMaxDuration.shortValue());
         CreateTransactionRequest txRequest = HttpRequestToCreateTransactionRequestConverter.convert(
-            servletRequest, senderAccount, 0, 0, attachment,
-            broadcast != null ? broadcast : false, feeATM != null ? feeATM : blockchainConfig.getOneAPL());
+            servletRequest, senderAccount, 0, 0, attachment, true, true, feeATM != null ? feeATM : blockchainConfig.getOneAPL());
         log.trace("txRequest = {}", txRequest);
 
         Transaction transaction = txCreator.createTransactionThrowingException(txRequest);
@@ -322,7 +328,7 @@ public class AccountControlController {
         tags = {"accounts"})
     @ApiResponse(description = "Transaction in json format", content = @Content(schema = @Schema(implementation = LeaseBalanceResponse.class)))
     @PermitAll
-    @Secured2FA
+    @Secured2FA("sender")
     public Response leaseBalance(
         @Parameter(required = true) @Schema(description = "Leasing period, min/default = 1440, max = 65535 blocks", implementation = Integer.class)
             @FormParam("period") @NotNull @Min(1440)  @Max(65535) Integer period,
@@ -425,19 +431,27 @@ public class AccountControlController {
         Attachment attachment = new AccountControlEffectiveBalanceLeasing(period);
 
         CreateTransactionRequest txRequest = HttpRequestToCreateTransactionRequestConverter.convert(
-            servletRequest, senderAccount, recipientAccount, recipientAccountId, 0, feeATM, attachment, broadcast);
+            servletRequest, senderAccount, recipientAccount, recipientAccountId, 0, feeATM, attachment, broadcast, true);
         log.trace("txRequest = {}", txRequest);
 
         Transaction transaction = txCreator.createTransactionThrowingException(txRequest);
         log.trace("leaseBalance transaction = {}", transaction);
+
+        Result unsignedTxBytes = PayloadResult.createLittleEndianByteArrayResult();
+        txBContext.createSerializer(transaction.getVersion())
+            .serialize(TransactionWrapperHelper.createUnsignedTransaction(transaction), unsignedTxBytes);
+
+        Result signedTxBytes = PayloadResult.createLittleEndianByteArrayResult();
+        txBContext.createSerializer(transaction.getVersion()).serialize(transaction, signedTxBytes);
+
         UnconfirmedTransactionDTO txDto = unconfirmedTransactionConverter.convert(transaction);
         log.trace("leaseBalance txDto = {}", txDto);
         LeaseBalanceResponse leaseBalanceResponse = new LeaseBalanceResponse();
         leaseBalanceResponse.setTransactionJSON(txDto);
-        leaseBalanceResponse.setUnsignedTransactionBytes(Convert.toHexString(transaction.getUnsignedBytes()));
+        leaseBalanceResponse.setUnsignedTransactionBytes(Convert.toHexString(unsignedTxBytes.array()));
         leaseBalanceResponse.setTransaction(transaction.getStringId());
         leaseBalanceResponse.setFullHash(transaction.getFullHashString());
-        leaseBalanceResponse.setTransactionBytes(Convert.toHexString(transaction.getCopyTxBytes()));
+        leaseBalanceResponse.setTransactionBytes(Convert.toHexString(signedTxBytes.array()));
         leaseBalanceResponse.setBroadcasted(txRequest.isBroadcast());
 
         log.trace("DONE leaseBalance, response = {}", leaseBalanceResponse);

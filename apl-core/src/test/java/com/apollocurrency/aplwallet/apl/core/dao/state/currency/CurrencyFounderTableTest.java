@@ -6,8 +6,8 @@ package com.apollocurrency.aplwallet.apl.core.dao.state.currency;
 
 import com.apollocurrency.aplwallet.apl.core.chainid.BlockchainConfig;
 import com.apollocurrency.aplwallet.apl.core.dao.DbContainerBaseTest;
+import com.apollocurrency.aplwallet.apl.core.db.DatabaseManager;
 import com.apollocurrency.aplwallet.apl.core.entity.state.currency.CurrencyFounder;
-import com.apollocurrency.aplwallet.apl.core.service.appdata.DatabaseManager;
 import com.apollocurrency.aplwallet.apl.core.service.blockchain.Blockchain;
 import com.apollocurrency.aplwallet.apl.core.service.blockchain.BlockchainImpl;
 import com.apollocurrency.aplwallet.apl.core.service.blockchain.BlockchainProcessor;
@@ -27,13 +27,12 @@ import org.jboss.weld.junit.MockBean;
 import org.jboss.weld.junit5.EnableWeld;
 import org.jboss.weld.junit5.WeldInitiator;
 import org.jboss.weld.junit5.WeldSetup;
-import org.jdbi.v3.core.Jdbi;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.RegisterExtension;
 
-import javax.inject.Inject;
+import jakarta.inject.Inject;
 import java.sql.SQLException;
 import java.util.List;
 
@@ -62,7 +61,6 @@ class CurrencyFounderTableTest extends DbContainerBaseTest {
         PropertiesHolder.class, EntityProducer.class, CurrencyFounderTable.class
     )
         .addBeans(MockBean.of(dbExtension.getDatabaseManager(), DatabaseManager.class))
-        .addBeans(MockBean.of(dbExtension.getDatabaseManager().getJdbi(), Jdbi.class))
         .addBeans(MockBean.of(blockchainConfig, BlockchainConfig.class))
         .addBeans(MockBean.of(blockchain, Blockchain.class, BlockchainImpl.class))
 
@@ -107,7 +105,7 @@ class CurrencyFounderTableTest extends DbContainerBaseTest {
         doReturn(1440).when(blockchainConfig).getGuaranteedBalanceConfirmations();
         int all = table.getRowCount();
         assertEquals(8, all);
-        DbUtils.inTransaction(dbExtension, (con) -> table.trim(100000, true));
+        DbUtils.inTransaction(dbExtension, (con) -> table.trim(100000));
 
         all = table.getRowCount();
         assertEquals(3, all);

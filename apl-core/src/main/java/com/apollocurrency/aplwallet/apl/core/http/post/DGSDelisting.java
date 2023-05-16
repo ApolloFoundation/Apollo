@@ -26,18 +26,18 @@ import com.apollocurrency.aplwallet.apl.core.http.APITag;
 import com.apollocurrency.aplwallet.apl.core.http.HttpParameterParserUtil;
 import com.apollocurrency.aplwallet.apl.core.service.state.DGSService;
 import com.apollocurrency.aplwallet.apl.core.transaction.messages.Attachment;
-import com.apollocurrency.aplwallet.apl.core.transaction.messages.DigitalGoodsDelisting;
+import com.apollocurrency.aplwallet.apl.core.transaction.messages.DGSDelistingAttachment;
 import com.apollocurrency.aplwallet.apl.util.exception.AplException;
 import org.json.simple.JSONStreamAware;
 
-import javax.enterprise.inject.Vetoed;
-import javax.enterprise.inject.spi.CDI;
-import javax.servlet.http.HttpServletRequest;
+import jakarta.enterprise.inject.Vetoed;
+import jakarta.enterprise.inject.spi.CDI;
+import jakarta.servlet.http.HttpServletRequest;
 
 import static com.apollocurrency.aplwallet.apl.core.http.JSONResponses.UNKNOWN_GOODS;
 
 @Vetoed
-public final class DGSDelisting extends CreateTransaction {
+public final class DGSDelisting extends CreateTransactionHandler {
 
     private DGSService service = CDI.current().select(DGSService.class).get();
 
@@ -52,7 +52,7 @@ public final class DGSDelisting extends CreateTransaction {
         if (goods.isDelisted() || goods.getSellerId() != account.getId()) {
             return UNKNOWN_GOODS;
         }
-        Attachment attachment = new DigitalGoodsDelisting(goods.getId());
+        Attachment attachment = new DGSDelistingAttachment(goods.getId());
         return createTransaction(req, account, attachment);
     }
 

@@ -1,10 +1,10 @@
 /*
- *  Copyright © 2018-2020 Apollo Foundation
+ *  Copyright © 2018-2021 Apollo Foundation
  */
 package com.apollocurrency.aplwallet.apl.core.transaction.types.ms;
 
 import com.apollocurrency.aplwallet.apl.core.chainid.BlockchainConfig;
-import com.apollocurrency.aplwallet.apl.core.entity.blockchain.Transaction;
+import com.apollocurrency.aplwallet.apl.core.model.Transaction;
 import com.apollocurrency.aplwallet.apl.core.entity.state.account.Account;
 import com.apollocurrency.aplwallet.apl.core.entity.state.account.LedgerEvent;
 import com.apollocurrency.aplwallet.apl.core.entity.state.currency.Currency;
@@ -15,18 +15,20 @@ import com.apollocurrency.aplwallet.apl.core.service.state.currency.CurrencyServ
 import com.apollocurrency.aplwallet.apl.core.transaction.Fee;
 import com.apollocurrency.aplwallet.apl.core.transaction.TransactionType;
 import com.apollocurrency.aplwallet.apl.core.transaction.TransactionTypes;
-import com.apollocurrency.aplwallet.apl.core.transaction.messages.MonetarySystemCurrencyIssuance;
+import com.apollocurrency.aplwallet.apl.core.transaction.messages.MonetarySystemCurrencyIssuanceAttachment;
 import com.apollocurrency.aplwallet.apl.util.exception.AplException;
 import org.json.simple.JSONObject;
 
-import javax.inject.Inject;
-import javax.inject.Singleton;
+import jakarta.inject.Inject;
+import jakarta.inject.Singleton;
+import java.math.BigDecimal;
 import java.nio.ByteBuffer;
 import java.util.Map;
 
 @Singleton
-public class MSCurrencyIssuanceTransactionType extends MonetarySystemTransactionType {
+public class MSCurrencyIssuanceTransactionType extends MSTransactionType {
 
+    public static final BigDecimal[] DEFAULT_FEES = {BigDecimal.valueOf(40), BigDecimal.valueOf(1000), BigDecimal.valueOf(25000)};
     private final Fee FIVE_LETTER_CURRENCY_ISSUANCE_FEE = new Fee.ConstantFee(Math.multiplyExact(40, getBlockchainConfig().getOneAPL()));
     private final Fee FOUR_LETTER_CURRENCY_ISSUANCE_FEE = new Fee.ConstantFee(Math.multiplyExact(1000, getBlockchainConfig().getOneAPL()));
     private final Fee THREE_LETTER_CURRENCY_ISSUANCE_FEE = new Fee.ConstantFee(Math.multiplyExact(25000, getBlockchainConfig().getOneAPL()));
@@ -58,12 +60,13 @@ public class MSCurrencyIssuanceTransactionType extends MonetarySystemTransaction
 
     @Override
     public Fee getBaselineFee(Transaction transaction) {
-        MonetarySystemCurrencyIssuance attachment = (MonetarySystemCurrencyIssuance) transaction.getAttachment();
+        BigDecimal[] additionalFees = getBlockchainConfig().getCurrentConfig().getAdditionalFees(getSpec(), DEFAULT_FEES);
+        MonetarySystemCurrencyIssuanceAttachment attachment = (MonetarySystemCurrencyIssuanceAttachment) transaction.getAttachment();
         int minLength = Math.min(attachment.getCode().length(), attachment.getName().length());
         Currency oldCurrency;
         int oldMinLength = Integer.MAX_VALUE;
         if ((oldCurrency = currencyService.getCurrencyByCode(attachment.getCode())) != null) {
-            oldMinLength = Math.min(oldMinLength, Math.min(oldCurrency.getCode().length(), oldCurrency.getName().length()));
+            oldMinLength = Math.min(oldCurrency.getCode().length(), oldCurrency.getName().length());
         }
         if ((oldCurrency = currencyService.getCurrencyByCode(attachment.getName())) != null) {
             oldMinLength = Math.min(oldMinLength, Math.min(oldCurrency.getCode().length(), oldCurrency.getName().length()));
@@ -74,19 +77,21 @@ public class MSCurrencyIssuanceTransactionType extends MonetarySystemTransaction
         if ((oldCurrency = currencyService.getCurrencyByName(attachment.getCode())) != null) {
             oldMinLength = Math.min(oldMinLength, Math.min(oldCurrency.getCode().length(), oldCurrency.getName().length()));
         }
+        Fee.ConstantFee fiveLetterFee = new Fee.ConstantFee(additionalFees[0].multiply(BigDecimal.valueOf(getBlockchainConfig().getOneAPL())).longValueExact());
         if (minLength >= oldMinLength) {
-            return FIVE_LETTER_CURRENCY_ISSUANCE_FEE;
+            return fiveLetterFee;
         }
+        Fee.ConstantFee threeLettersFee = new Fee.ConstantFee(additionalFees[2].multiply(BigDecimal.valueOf(getBlockchainConfig().getOneAPL())).longValueExact());
         switch (minLength) {
             case 3:
-                return THREE_LETTER_CURRENCY_ISSUANCE_FEE;
+                return threeLettersFee;
             case 4:
-                return FOUR_LETTER_CURRENCY_ISSUANCE_FEE;
+                return new Fee.ConstantFee(additionalFees[1].multiply(BigDecimal.valueOf(getBlockchainConfig().getOneAPL())).longValueExact());
             case 5:
-                return FIVE_LETTER_CURRENCY_ISSUANCE_FEE;
+                return fiveLetterFee;
             default:
                 // never, invalid code length will be checked and caught later
-                return THREE_LETTER_CURRENCY_ISSUANCE_FEE;
+                return threeLettersFee;
         }
     }
 
@@ -97,18 +102,18 @@ public class MSCurrencyIssuanceTransactionType extends MonetarySystemTransaction
     }
 
     @Override
-    public MonetarySystemCurrencyIssuance parseAttachment(ByteBuffer buffer) throws AplException.NotValidException {
-        return new MonetarySystemCurrencyIssuance(buffer);
+    public MonetarySystemCurrencyIssuanceAttachment parseAttachment(ByteBuffer buffer) throws AplException.NotValidException {
+        return new MonetarySystemCurrencyIssuanceAttachment(buffer);
     }
 
     @Override
-    public MonetarySystemCurrencyIssuance parseAttachment(JSONObject attachmentData) throws AplException.NotValidException {
-        return new MonetarySystemCurrencyIssuance(attachmentData);
+    public MonetarySystemCurrencyIssuanceAttachment parseAttachment(JSONObject attachmentData) throws AplException.NotValidException {
+        return new MonetarySystemCurrencyIssuanceAttachment(attachmentData);
     }
 
     @Override
     public boolean isDuplicate(Transaction transaction, Map<TransactionTypes.TransactionTypeSpec, Map<String, Integer>> duplicates) {
-        MonetarySystemCurrencyIssuance attachment = (MonetarySystemCurrencyIssuance) transaction.getAttachment();
+        MonetarySystemCurrencyIssuanceAttachment attachment = (MonetarySystemCurrencyIssuanceAttachment) transaction.getAttachment();
         String nameLower = attachment.getName().toLowerCase();
         String codeLower = attachment.getCode().toLowerCase();
         boolean isDuplicate = TransactionType.isDuplicate(TransactionTypes.TransactionTypeSpec.MS_CURRENCY_ISSUANCE, nameLower, duplicates, true);
@@ -125,13 +130,13 @@ public class MSCurrencyIssuanceTransactionType extends MonetarySystemTransaction
 
     @Override
     public void doStateDependentValidation(Transaction transaction) throws AplException.ValidationException {
-        MonetarySystemCurrencyIssuance attachment = (MonetarySystemCurrencyIssuance) transaction.getAttachment();
+        MonetarySystemCurrencyIssuanceAttachment attachment = (MonetarySystemCurrencyIssuanceAttachment) transaction.getAttachment();
         currencyService.validateCurrencyNamingStateDependent(transaction.getSenderId(), attachment);
     }
 
     @Override
     public void doStateIndependentValidation(Transaction transaction) throws AplException.ValidationException {
-        MonetarySystemCurrencyIssuance attachment = (MonetarySystemCurrencyIssuance) transaction.getAttachment();
+        MonetarySystemCurrencyIssuanceAttachment attachment = (MonetarySystemCurrencyIssuanceAttachment) transaction.getAttachment();
         if (attachment.getMaxSupply() > Math.multiplyExact(getBlockchainConfig().getInitialSupply(), getBlockchainConfig().getOneAPL())
             || attachment.getMaxSupply() <= 0 || attachment.getInitialSupply() < 0
             || attachment.getInitialSupply() > attachment.getMaxSupply()
@@ -165,7 +170,7 @@ public class MSCurrencyIssuanceTransactionType extends MonetarySystemTransaction
 
     @Override
     public void applyAttachment(Transaction transaction, Account senderAccount, Account recipientAccount) {
-        MonetarySystemCurrencyIssuance attachment = (MonetarySystemCurrencyIssuance) transaction.getAttachment();
+        MonetarySystemCurrencyIssuanceAttachment attachment = (MonetarySystemCurrencyIssuanceAttachment) transaction.getAttachment();
         long transactionId = transaction.getId();
         currencyService.addCurrency(getLedgerEvent(), transactionId, transaction, senderAccount, attachment);
         accountCurrencyService.addToCurrencyAndUnconfirmedCurrencyUnits(senderAccount, getLedgerEvent(), transactionId, transactionId, attachment.getInitialSupply());

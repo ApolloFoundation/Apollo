@@ -5,12 +5,12 @@
 package com.apollocurrency.aplwallet.apl.core.app;
 
 import com.apollocurrency.aplwallet.api.dto.DurableTaskInfo;
+import com.apollocurrency.aplwallet.apl.core.model.Block;
+import com.apollocurrency.aplwallet.apl.core.model.BlockImpl;
 import com.apollocurrency.aplwallet.apl.core.chainid.BlockchainConfig;
 import com.apollocurrency.aplwallet.apl.core.chainid.BlockchainConfigUpdater;
 import com.apollocurrency.aplwallet.apl.core.dao.state.account.AccountGuaranteedBalanceTable;
-import com.apollocurrency.aplwallet.apl.core.dao.state.account.AccountTable;
-import com.apollocurrency.aplwallet.apl.core.entity.blockchain.Block;
-import com.apollocurrency.aplwallet.apl.core.entity.blockchain.BlockImpl;
+import com.apollocurrency.aplwallet.apl.core.dao.state.account.AccountTableInterface;
 import com.apollocurrency.aplwallet.apl.core.entity.state.account.Account;
 import com.apollocurrency.aplwallet.apl.core.service.state.account.AccountPublicKeyService;
 import com.apollocurrency.aplwallet.apl.core.service.state.account.AccountService;
@@ -28,8 +28,8 @@ import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.tuple.Pair;
 
-import javax.inject.Inject;
-import javax.inject.Singleton;
+import jakarta.inject.Inject;
+import jakarta.inject.Singleton;
 import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
@@ -46,7 +46,6 @@ import java.util.Objects;
 import java.util.Optional;
 import java.util.PriorityQueue;
 import java.util.Queue;
-import java.util.stream.Collectors;
 
 @Slf4j
 @Singleton
@@ -82,7 +81,7 @@ public class GenesisImporter {
     private String genesisTaskId;
     private byte[] computedDigest;
     private final AccountGuaranteedBalanceTable accountGuaranteedBalanceTable;
-    private final AccountTable accountTable;
+    private final AccountTableInterface accountTable;
     private final ResourceLocator resourceLocator;
 
     @Inject
@@ -91,7 +90,7 @@ public class GenesisImporter {
         BlockchainConfigUpdater blockchainConfigUpdater,
         AplAppStatus aplAppStatus,
         AccountGuaranteedBalanceTable accountGuaranteedBalanceTable,
-        AccountTable accountTable,
+        AccountTableInterface accountTable,
         ApplicationJsonFactory jsonFactory,
         PropertiesHolder propertiesHolder,
         AccountService accountService,
@@ -108,9 +107,9 @@ public class GenesisImporter {
         this.accountPublicKeyService = Objects.requireNonNull(accountPublicKeyService, "accountPublicKeyService is NULL");
         Objects.requireNonNull(propertiesHolder, "propertiesHolder is NULL");
         this.publicKeyNumberTotal =
-            propertiesHolder.getIntProperty(PUBLIC_KEY_NUMBER_TOTAL_PROPERTY_NAME);
+            propertiesHolder.getIntProperty(PUBLIC_KEY_NUMBER_TOTAL_PROPERTY_NAME, 230730);
         this.balanceNumberTotal =
-            propertiesHolder.getIntProperty(BALANCE_NUMBER_TOTAL_PROPERTY_NAME);
+            propertiesHolder.getIntProperty(BALANCE_NUMBER_TOTAL_PROPERTY_NAME, 84832);
         this.accountGuaranteedBalanceTable = Objects.requireNonNull(accountGuaranteedBalanceTable, "accountGuaranteedBalanceTable is NULL");
         this.accountTable = Objects.requireNonNull(accountTable, "accountTable is NULL");
         this.resourceLocator = Objects.requireNonNull(resourceLocator);
@@ -133,6 +132,14 @@ public class GenesisImporter {
         }
         //TODO Move it somewhere
         Convert2.init(blockchainConfig.getAccountPrefix(), EPOCH_BEGINNING);
+    }
+
+    public byte[] getCreatorPublicKey() {
+        return CREATOR_PUBLIC_KEY;
+    }
+
+    public byte[] getComputedDigest() {
+        return computedDigest;
     }
 
     public void loadGenesisDataFromIS(InputStream is) {
@@ -343,7 +350,6 @@ public class GenesisImporter {
         } catch (GenesisImportException e) {
             throw new RuntimeException(e);
         }
-
         return count;
     }
 
@@ -404,7 +410,6 @@ public class GenesisImporter {
             count,
             (System.currentTimeMillis() - start) / 1000, totalAmount
         );
-
         try {
             validateBalanceNumber(count);
         } catch (GenesisImportException e) {
@@ -424,9 +429,7 @@ public class GenesisImporter {
         final int balanceNumber = sortedEntries.size();
         validateBalanceNumber(balanceNumber);
 
-        return sortedEntries.stream()
-            .skip(1) //skip first account to collect only genesis accounts
-            .collect(Collectors.toList());
+        return new ArrayList<>(sortedEntries);
     }
 
     private Queue<Map.Entry<String, Long>> loadGenesisAccountsFromIS(InputStream is) throws GenesisImportException {
@@ -490,13 +493,5 @@ public class GenesisImporter {
                 )
             );
         }
-    }
-
-    public byte[] getCreatorPublicKey() {
-        return CREATOR_PUBLIC_KEY;
-    }
-
-    public byte[] getComputedDigest() {
-        return computedDigest;
     }
 }

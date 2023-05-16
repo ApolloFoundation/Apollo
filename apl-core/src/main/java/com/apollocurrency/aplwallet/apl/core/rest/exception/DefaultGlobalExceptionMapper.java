@@ -8,9 +8,9 @@ import com.apollocurrency.aplwallet.apl.util.builder.ResponseBuilder;
 import com.apollocurrency.aplwallet.apl.util.exception.ApiErrors;
 import lombok.extern.slf4j.Slf4j;
 
-import javax.ws.rs.core.Response;
-import javax.ws.rs.ext.ExceptionMapper;
-import javax.ws.rs.ext.Provider;
+import jakarta.ws.rs.core.Response;
+import jakarta.ws.rs.ext.ExceptionMapper;
+import jakarta.ws.rs.ext.Provider;
 
 @Slf4j
 @Provider
@@ -20,7 +20,7 @@ public class DefaultGlobalExceptionMapper implements ExceptionMapper<Exception> 
         String stacktrace = ThreadUtils.getStackTraceSilently(exception);
         String message = exception.getMessage();
         log.debug("GlobalErrorHandler error = {}", message);
-        if (exception instanceof javax.ws.rs.NotFoundException) {
+        if (exception instanceof jakarta.ws.rs.NotFoundException) {
             log.warn("REST API NotFoundException", exception);
             return ResponseBuilder.apiError(ApiErrors.REST_API_SERVER_ERROR, message).build();
         }

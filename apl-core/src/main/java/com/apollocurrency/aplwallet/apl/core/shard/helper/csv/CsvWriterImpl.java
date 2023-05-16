@@ -4,7 +4,7 @@
 
 package com.apollocurrency.aplwallet.apl.core.shard.helper.csv;
 
-import com.apollocurrency.aplwallet.apl.core.db.DbUtils;
+import com.apollocurrency.aplwallet.apl.util.db.DbUtils;
 import com.apollocurrency.aplwallet.apl.core.shard.helper.CsvExportData;
 import com.apollocurrency.aplwallet.apl.core.shard.helper.jdbc.ColumnMetaData;
 import com.apollocurrency.aplwallet.apl.core.shard.model.ArrayColumn;
@@ -164,8 +164,8 @@ public class CsvWriterImpl extends CsvAbstractBase implements CsvWriter {
     @Override
     public CsvExportData write(Connection conn, String outputFileName, String sql, String charset) throws SQLException {
         CsvExportData exportData;
-        try (Statement stat = conn.createStatement()) {
-            ResultSet rs = stat.executeQuery(sql);
+        try (Statement stat = conn.createStatement();
+             ResultSet rs = stat.executeQuery(sql)) {
             exportData = write(outputFileName, rs);
         }
         return exportData;
@@ -241,12 +241,6 @@ public class CsvWriterImpl extends CsvAbstractBase implements CsvWriter {
                     } else {
                         lastRow.put(rs.getMetaData().getColumnName(i + 1), rs.getObject(i + 1));
                         switch (columnsMetaData[i].getSqlTypeInt()) {
-                            case Types.BLOB:
-                                o = rs.getBlob(i + 1);
-                                if (o == null) {
-                                    o = nullString;
-                                }
-                                break;
                             case Types.BIGINT:
                             case Types.BIT:
                             case Types.BOOLEAN:
@@ -305,6 +299,7 @@ public class CsvWriterImpl extends CsvAbstractBase implements CsvWriter {
                                 break;
                             case Types.VARBINARY:
                             case Types.BINARY:
+                            case Types.BLOB:
                                 o = rs.getBytes(i + 1);
                                 if (o != null) {
                                     o = translator.translate((byte[]) o);
@@ -426,15 +421,9 @@ public class CsvWriterImpl extends CsvAbstractBase implements CsvWriter {
                 if (fieldDelimiter != 0) {
                     outputBuffer.append(fieldDelimiter);
                 }
-                // writing 'header columns' row into output file
-                if ((!Character.isLetterOrDigit(fieldTypeSeparatorStart) && !Character.isSpaceChar(fieldTypeSeparatorStart))
-                    && (!Character.isLetterOrDigit(fieldTypeSeparatorEnd) && !Character.isSpaceChar(fieldTypeSeparatorEnd))) {
-                    // write 'complex' csv Header columns as COLUMN_NAME_1(TYPE_1|PRECISION_1|SCALE_1),COLUMN_NAME_2(TYPE_2|PRECISION_2|SCALE_2)
-                    outputBuffer.append(columnsMetaData[i].toString());
-                } else {
-                    // write simple header columns as : COLUMN_NAME_1,COLUMN_NAME_2
-                    outputBuffer.append(s);
-                }
+                // write simple header columns as : COLUMN_NAME_1,COLUMN_NAME_2
+                outputBuffer.append(s.toLowerCase());
+
                 if (fieldDelimiter != 0) {
                     outputBuffer.append(fieldDelimiter);
                 }

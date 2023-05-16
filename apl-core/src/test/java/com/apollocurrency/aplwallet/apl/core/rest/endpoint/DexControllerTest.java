@@ -9,6 +9,7 @@ import com.apollocurrency.aplwallet.apl.dex.eth.service.DexEthService;
 import com.apollocurrency.aplwallet.apl.dex.eth.service.EthereumWalletService;
 import com.apollocurrency.aplwallet.apl.exchange.service.DexOrderTransactionCreator;
 import com.apollocurrency.aplwallet.apl.exchange.service.DexService;
+import com.apollocurrency.aplwallet.apl.util.Convert2;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.jboss.resteasy.mock.MockDispatcherFactory;
@@ -21,7 +22,7 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
-import javax.ws.rs.core.MediaType;
+import jakarta.ws.rs.core.MediaType;
 import java.io.IOException;
 import java.net.URISyntaxException;
 import java.util.List;
@@ -52,6 +53,7 @@ public class DexControllerTest {
         DexController dexController = new DexController(service, dexOrderTransactionCreator, timeService, dexEthService, walletService);
         dispatcher.getRegistry().addSingletonResource(dexController);
         td = new DexTestData();
+        Convert2.init("APL", 0);
     }
 
     @Test

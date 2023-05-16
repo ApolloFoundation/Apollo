@@ -1,18 +1,25 @@
 /*
- *  Copyright © 2018-2019 Apollo Foundation
+ *  Copyright © 2018-2022 Apollo Foundation
  */
 
 package com.apollocurrency.aplwallet.apl.data;
 
+import com.apollocurrency.aplwallet.apl.extension.DbExtension;
+import com.apollocurrency.aplwallet.apl.testutil.DbManipulator;
 import com.apollocurrency.aplwallet.apl.util.injectable.DbProperties;
+import com.apollocurrency.aplwallet.apl.util.injectable.PropertiesHolder;
+import lombok.AccessLevel;
+import lombok.NoArgsConstructor;
 import org.testcontainers.containers.GenericContainer;
 import org.testcontainers.containers.MariaDBContainer;
 
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.util.Properties;
 import java.util.Random;
 import java.util.UUID;
 
+@NoArgsConstructor(access = AccessLevel.PRIVATE)
 public class DbTestData {
     private static final Random random = new Random();
     private static final DbProperties DB_PROPERTIES = DbProperties.builder()
@@ -27,11 +34,11 @@ public class DbTestData {
         .loginTimeout(2)
         .maxMemoryRows(100000)
         .defaultLockTimeout(1)
-        .maxConnections(55)
         .build();
 
     public static DbProperties getInMemDbProps() {
-        return getDbUrlProps();
+        DbProperties dbUrlProps = getDbUrlProps();
+        return dbUrlProps;
     }
 
     public static DbProperties getDbUrlProps() {
@@ -48,7 +55,7 @@ public class DbTestData {
     }
 
     public static DbProperties getDbFileProperties(GenericContainer jdbcDatabaseContainer) {
-        DbProperties dbProperties = DB_PROPERTIES.deepCopy();
+        DbProperties dbProperties = getDbUrlProps();
         dbProperties.setDbUsername(((MariaDBContainer) jdbcDatabaseContainer).getUsername());
         if (((MariaDBContainer) jdbcDatabaseContainer).getPassword() != null && !((MariaDBContainer) jdbcDatabaseContainer).getPassword().isEmpty()) {
             dbProperties.setDbPassword(((MariaDBContainer) jdbcDatabaseContainer).getPassword());
@@ -59,10 +66,21 @@ public class DbTestData {
 //        dbProperties.setDatabasePort(3306); // docker container default for quick test only
         dbProperties.setDatabaseHost(jdbcDatabaseContainer.getHost());
         dbProperties.setDbName(((MariaDBContainer<?>) jdbcDatabaseContainer).getDatabaseName());
+        dbProperties.setSystemDbUrl(dbProperties.formatJdbcUrlString(true));
         return dbProperties;
     }
 
     public static DbProperties getDbFilePropertiesByPath(Path dbPath) {
         return DB_PROPERTIES.deepCopy();
+    }
+
+    public static DbExtension getSmcDbExtension(GenericContainer mariaDBContainer, String schemaScript, String dataScript) {
+        var prop = new Properties();
+        prop.put(DbManipulator.DB_POPULATOR_STRING_TOKENIZER_DELIM, "#");
+
+        return new DbExtension(mariaDBContainer, DbTestData.getInMemDbProps(),
+            new PropertiesHolder(prop),
+            schemaScript,
+            dataScript);
     }
 }

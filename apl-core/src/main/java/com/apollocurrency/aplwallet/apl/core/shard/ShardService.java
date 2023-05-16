@@ -6,21 +6,18 @@ package com.apollocurrency.aplwallet.apl.core.shard;
 
 
 import com.apollocurrency.aplwallet.apl.core.app.AplAppStatus;
-import com.apollocurrency.aplwallet.apl.core.app.observer.events.TrimConfigUpdated;
 import com.apollocurrency.aplwallet.apl.core.chainid.BlockchainConfig;
-import com.apollocurrency.aplwallet.apl.core.config.TrimConfig;
 import com.apollocurrency.aplwallet.apl.core.dao.appdata.ShardDao;
 import com.apollocurrency.aplwallet.apl.core.dao.appdata.ShardRecoveryDao;
 import com.apollocurrency.aplwallet.apl.core.entity.appdata.Shard;
 import com.apollocurrency.aplwallet.apl.core.entity.appdata.ShardRecovery;
-import com.apollocurrency.aplwallet.apl.core.service.appdata.DatabaseManager;
+import com.apollocurrency.aplwallet.apl.core.db.DatabaseManager;
 import com.apollocurrency.aplwallet.apl.core.service.appdata.TrimService;
 import com.apollocurrency.aplwallet.apl.core.service.blockchain.Blockchain;
 import com.apollocurrency.aplwallet.apl.core.service.blockchain.BlockchainProcessor;
 import com.apollocurrency.aplwallet.apl.core.service.blockchain.GlobalSync;
 import com.apollocurrency.aplwallet.apl.core.utils.RuntimeUtils;
 import com.apollocurrency.aplwallet.apl.util.FileUtils;
-import com.apollocurrency.aplwallet.apl.util.ThreadUtils;
 import com.apollocurrency.aplwallet.apl.util.Zip;
 import com.apollocurrency.aplwallet.apl.util.cdi.Transactional;
 import com.apollocurrency.aplwallet.apl.util.env.dirprovider.DirProvider;
@@ -28,10 +25,10 @@ import com.apollocurrency.aplwallet.apl.util.injectable.DbProperties;
 import com.apollocurrency.aplwallet.apl.util.injectable.PropertiesHolder;
 import lombok.extern.slf4j.Slf4j;
 
-import javax.enterprise.event.Event;
-import javax.enterprise.util.AnnotationLiteral;
-import javax.inject.Inject;
-import javax.inject.Singleton;
+import jakarta.enterprise.event.Event;
+import jakarta.inject.Inject;
+import jakarta.inject.Singleton;
+import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.List;
 import java.util.Objects;
@@ -53,7 +50,6 @@ public class ShardService {
     private final ShardMigrationExecutor shardMigrationExecutor;
     private final AplAppStatus aplAppStatus;
     private final PropertiesHolder propertiesHolder;
-    private final Event<TrimConfig> trimEvent;
     private final Event<DbHotSwapConfig> dbEvent;
     private final TrimService trimService;
     private final GlobalSync globalSync;
@@ -65,7 +61,7 @@ public class ShardService {
                         DirProvider dirProvider, Zip zip, DatabaseManager databaseManager,
                         BlockchainConfig blockchainConfig, ShardRecoveryDao shardRecoveryDao,
                         ShardMigrationExecutor shardMigrationExecutor, AplAppStatus aplAppStatus,
-                        PropertiesHolder propertiesHolder, Event<TrimConfig> trimEvent, GlobalSync globalSync,
+                        PropertiesHolder propertiesHolder, GlobalSync globalSync,
                         TrimService trimService, Event<DbHotSwapConfig> dbEvent) {
         this.shardDao = shardDao;
         this.blockchainProcessor = blockchainProcessor;
@@ -78,7 +74,6 @@ public class ShardService {
         this.shardMigrationExecutor = shardMigrationExecutor;
         this.aplAppStatus = aplAppStatus;
         this.propertiesHolder = propertiesHolder;
-        this.trimEvent = trimEvent;
         this.trimService = trimService;
         this.dbEvent = dbEvent;
         this.globalSync = globalSync;
@@ -96,12 +91,6 @@ public class ShardService {
         return shardDao.getAllShard();
     }
 
-    private void updateTrimConfig(boolean enableTrim, boolean clearQueue) {
-        trimEvent.select(new AnnotationLiteral<TrimConfigUpdated>() {
-        }).fire(new TrimConfig(enableTrim, clearQueue));
-
-    }
-
     public boolean isSharding() {
         return isSharding;
     }
@@ -114,54 +103,55 @@ public class ShardService {
 
         Path dbDir = dirProvider.getDbDir();
         Path backupZip = dbDir.resolve(String.format(ShardConstants.DB_BACKUP_FORMAT, new ShardNameHelper().getShardNameByShardId(shardId, blockchainConfig.getChain().getChainId())));
-        if (isSharding) {
-            if (shardingProcess != null) {
-                log.info("Stopping sharding process...");
-                shardingProcess.cancel(true);
-            } else {
-                log.info("Unable to stop sharding process. Try again later");
-                return false;
+        boolean backupExists = Files.exists(backupZip);
+        if (backupExists) {
+            if (isSharding) {
+                if (shardingProcess != null) {
+                    log.info("Stopping sharding process...");
+                    shardingProcess.cancel(true);
+                } else {
+                    log.info("Unable to stop sharding process. Try again later");
+                    return false;
+                }
             }
-        }
 
-        updateTrimConfig(false, true);
-        blockchainProcessor.suspendBlockchainDownloading();
-        try {
-            log.debug("Waiting finish of last trim");
-            while (trimService.isTrimming()) {
-                ThreadUtils.sleep(100);
-            }
-            globalSync.writeLock();
+            blockchainProcessor.suspendBlockchainDownloading();
             try {
+                trimService.waitTrimming();
+                globalSync.writeLock();
+                try {
 
-                databaseManager.setAvailable(false);
-                dbEvent.fire(new DbHotSwapConfig(shardId));
-                databaseManager.shutdown();
-                FileUtils.deleteFilesByFilter(dirProvider.getDbDir(), (p) -> {
-                    Path fileName = p.getFileName();
-                    int shardIndex = fileName.toString().indexOf("_shard_");
-                    if ((fileName.toString().endsWith(DbProperties.DB_EXTENSION) || fileName.toString().endsWith("trace.db"))
-                        && shardIndex != -1) {
-                        String idString = fileName.toString().substring(shardIndex + 7);
-                        String id = idString.substring(0, idString.indexOf("-"));
-                        long fileShardId = Long.parseLong(id);
-                        return fileShardId >= shardId;
-                    } else {
-                        return false;
-                    }
-                });
-                zip.extract(backupZip.toAbsolutePath().toString(), dbDir.toAbsolutePath().toString(), true);
-                databaseManager.setAvailable(true);
-                databaseManager.getDataSource(); // force init
-                blockchain.update();
-                recoverSharding();
-                return true;
+                    databaseManager.setAvailable(false);
+                    dbEvent.fire(new DbHotSwapConfig(shardId));
+                    databaseManager.shutdown();
+                    FileUtils.deleteFilesByFilter(dirProvider.getDbDir(), (p) -> {
+                        Path fileName = p.getFileName();
+                        int shardIndex = fileName.toString().indexOf("-shard-");
+                        if ((fileName.toString().endsWith(DbProperties.DB_EXTENSION) || fileName.toString().endsWith("trace.db"))
+                            && shardIndex != -1) {
+                            String idString = fileName.toString().substring(shardIndex + 7);
+                            String id = idString.substring(0, idString.indexOf("-"));
+                            long fileShardId = Long.parseLong(id);
+                            return fileShardId >= shardId;
+                        } else {
+                            return false;
+                        }
+                    });
+                    zip.extract(backupZip.toAbsolutePath().toString(), dbDir.toAbsolutePath().toString(), true);
+                    databaseManager.setAvailable(true);
+                    databaseManager.getDataSource(); // force init
+                    blockchain.update();
+                    recoverSharding();
+                    return true;
+                } finally {
+                    globalSync.writeUnlock();
+                }
             } finally {
-                globalSync.writeUnlock();
+                blockchainProcessor.resumeBlockchainDownloading();
             }
-        } finally {
-            blockchainProcessor.resumeBlockchainDownloading();
-            updateTrimConfig(true, false);
+        } else {
+            log.debug("Backup before shard {} does not exist", shardId);
+            return false;
         }
     }
 
@@ -242,14 +232,13 @@ public class ShardService {
 
     public CompletableFuture<MigrateState> tryCreateShardAsync(int newShardBlockHeight, int currentBlockchainHeight) {
         CompletableFuture<MigrateState> newShardingProcess = null;
-        log.debug(">> tryCreateShardAsync, scanning ? = {}, !isSharding={},\nCurrent config = {}",
-            !blockchainProcessor.isScanning(), !isSharding, blockchainConfig.getCurrentConfig());
+        log.debug(">> tryCreateShardAsync, scanning = {}, isSharding={},\nCurrent config = {}",
+            blockchainProcessor.isScanning(), isSharding, blockchainConfig.getCurrentConfig());
         if (!blockchainProcessor.isScanning()) {
             if (!isSharding) {
                 Shard lastShard = shardDao.getLastShard();
                 if (lastShard == null || newShardBlockHeight > lastShard.getShardHeight()) {
                     isSharding = true;
-                    updateTrimConfig(false, false);
                     // quick create records for new Shard and Recovery process for later use
                     long nextShardId = shardDao.getNextShardId();
                     log.debug("Prepare for next sharding = '{}' at currentBlockchainHeight = '{}', newShardBlockHeight = '{}'",
@@ -259,7 +248,6 @@ public class ShardService {
                     this.shardingProcess = CompletableFuture.supplyAsync(() -> performSharding(newShardBlockHeight, nextShardId, MigrateState.INIT));
                     this.shardingProcess.handle((result, ex) -> {
                         blockchain.setShardInitialBlock(blockchain.findFirstBlock());
-                        updateTrimConfig(true, false);
                         isSharding = false;
                         return result;
                     });

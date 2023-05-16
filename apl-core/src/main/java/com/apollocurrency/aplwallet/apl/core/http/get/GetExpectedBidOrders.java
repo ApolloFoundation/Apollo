@@ -20,21 +20,21 @@
 
 package com.apollocurrency.aplwallet.apl.core.http.get;
 
-import com.apollocurrency.aplwallet.apl.core.entity.blockchain.Transaction;
+import com.apollocurrency.aplwallet.apl.core.model.Transaction;
 import com.apollocurrency.aplwallet.apl.core.http.APITag;
 import com.apollocurrency.aplwallet.apl.core.http.AbstractAPIRequestHandler;
 import com.apollocurrency.aplwallet.apl.core.http.HttpParameterParserUtil;
 import com.apollocurrency.aplwallet.apl.core.http.JSONData;
 import com.apollocurrency.aplwallet.apl.core.transaction.TransactionTypes;
-import com.apollocurrency.aplwallet.apl.core.transaction.messages.ColoredCoinsOrderPlacementAttachment;
+import com.apollocurrency.aplwallet.apl.core.transaction.messages.CCOrderPlacementAttachment;
 import com.apollocurrency.aplwallet.apl.util.Filter;
 import com.apollocurrency.aplwallet.apl.util.exception.AplException;
 import org.json.simple.JSONArray;
 import org.json.simple.JSONObject;
 import org.json.simple.JSONStreamAware;
 
-import javax.enterprise.inject.Vetoed;
-import javax.servlet.http.HttpServletRequest;
+import jakarta.enterprise.inject.Vetoed;
+import jakarta.servlet.http.HttpServletRequest;
 import java.util.Collections;
 import java.util.Comparator;
 import java.util.List;
@@ -43,8 +43,8 @@ import java.util.List;
 public final class GetExpectedBidOrders extends AbstractAPIRequestHandler {
 
     private final Comparator<Transaction> priceComparator = (o1, o2) -> {
-        ColoredCoinsOrderPlacementAttachment a1 = (ColoredCoinsOrderPlacementAttachment) o1.getAttachment();
-        ColoredCoinsOrderPlacementAttachment a2 = (ColoredCoinsOrderPlacementAttachment) o2.getAttachment();
+        CCOrderPlacementAttachment a1 = (CCOrderPlacementAttachment) o1.getAttachment();
+        CCOrderPlacementAttachment a2 = (CCOrderPlacementAttachment) o2.getAttachment();
         return Long.compare(a2.getPriceATM(), a1.getPriceATM());
     };
 
@@ -61,7 +61,7 @@ public final class GetExpectedBidOrders extends AbstractAPIRequestHandler {
             if (transaction.isNotOfType(TransactionTypes.TransactionTypeSpec.CC_BID_ORDER_PLACEMENT)) {
                 return false;
             }
-            ColoredCoinsOrderPlacementAttachment attachment = (ColoredCoinsOrderPlacementAttachment) transaction.getAttachment();
+            CCOrderPlacementAttachment attachment = (CCOrderPlacementAttachment) transaction.getAttachment();
             return assetId == 0 || attachment.getAssetId() == assetId;
         };
 

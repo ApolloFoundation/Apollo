@@ -8,9 +8,9 @@ import com.apollocurrency.aplwallet.apl.core.service.blockchain.Blockchain;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
 
-import javax.inject.Inject;
-import javax.validation.ConstraintValidator;
-import javax.validation.ConstraintValidatorContext;
+import jakarta.inject.Inject;
+import jakarta.validation.ConstraintValidator;
+import jakarta.validation.ConstraintValidatorContext;
 import java.util.Objects;
 
 @NoArgsConstructor
@@ -31,7 +31,7 @@ public class BlockchainHeightValidator implements ConstraintValidator<ValidBlock
 
     @Override
     public boolean isValid(Integer value, ConstraintValidatorContext constraintValidatorContext) {
-        boolean result = null == value || value == -1 || 0 < value && value <= blockchain.getHeight();
+        boolean result = null == value || (value >= -1 && value <= blockchain.getHeight()); // -1 is special value
         if (!result) {
             constraintValidatorContext.disableDefaultConstraintViolation();
             constraintValidatorContext.buildConstraintViolationWithTemplate(

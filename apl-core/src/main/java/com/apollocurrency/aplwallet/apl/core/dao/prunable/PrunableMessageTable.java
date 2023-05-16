@@ -10,20 +10,18 @@ import com.apollocurrency.aplwallet.apl.core.dao.state.derived.PrunableDbTable;
 import com.apollocurrency.aplwallet.apl.core.dao.state.keyfactory.DbKey;
 import com.apollocurrency.aplwallet.apl.core.dao.state.keyfactory.LongKey;
 import com.apollocurrency.aplwallet.apl.core.dao.state.keyfactory.LongKeyFactory;
-import com.apollocurrency.aplwallet.apl.core.db.DbUtils;
+import com.apollocurrency.aplwallet.apl.core.service.fulltext.FullTextOperationData;
+import com.apollocurrency.aplwallet.apl.util.db.DbUtils;
 import com.apollocurrency.aplwallet.apl.core.entity.prunable.PrunableMessage;
-import com.apollocurrency.aplwallet.apl.core.service.appdata.DatabaseManager;
-import com.apollocurrency.aplwallet.apl.core.service.fulltext.FullTextConfig;
-import com.apollocurrency.aplwallet.apl.core.service.state.DerivedTablesRegistry;
-import com.apollocurrency.aplwallet.apl.core.shard.observer.DeleteOnTrimData;
+import com.apollocurrency.aplwallet.apl.core.db.DatabaseManager;
 import com.apollocurrency.aplwallet.apl.core.utils.CollectionUtil;
 import com.apollocurrency.aplwallet.apl.util.annotation.DatabaseSpecificDml;
 import com.apollocurrency.aplwallet.apl.util.annotation.DmlMarker;
 import com.apollocurrency.aplwallet.apl.util.injectable.PropertiesHolder;
 
-import javax.enterprise.event.Event;
-import javax.inject.Inject;
-import javax.inject.Singleton;
+import jakarta.enterprise.event.Event;
+import jakarta.inject.Inject;
+import jakarta.inject.Singleton;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
@@ -47,14 +45,12 @@ public class PrunableMessageTable extends PrunableDbTable<PrunableMessage> {
     private static final PrunableMessageMapper MAPPER = new PrunableMessageMapper(KEY_FACTORY);
 
     @Inject
-    public PrunableMessageTable(DerivedTablesRegistry derivedDbTablesRegistry,
-                                DatabaseManager databaseManager,
-                                FullTextConfig fullTextConfig,
+    public PrunableMessageTable(DatabaseManager databaseManager,
                                 BlockchainConfig blockchainConfig,
                                 PropertiesHolder propertiesHolder,
-                                Event<DeleteOnTrimData> deleteOnTrimDataEvent) {
+                                Event<FullTextOperationData> fullTextOperationDataEvent) {
         super(TABLE_NAME, KEY_FACTORY, false, null,
-            derivedDbTablesRegistry, databaseManager, fullTextConfig, blockchainConfig, propertiesHolder, deleteOnTrimDataEvent);
+            databaseManager, blockchainConfig, propertiesHolder, fullTextOperationDataEvent);
     }
 
     @Override

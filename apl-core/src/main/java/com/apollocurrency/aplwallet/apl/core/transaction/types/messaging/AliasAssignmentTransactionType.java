@@ -1,11 +1,11 @@
 /*
- *  Copyright © 2018-2020 Apollo Foundation
+ *  Copyright © 2018-2021 Apollo Foundation
  */
 
 package com.apollocurrency.aplwallet.apl.core.transaction.types.messaging;
 
+import com.apollocurrency.aplwallet.apl.core.model.Transaction;
 import com.apollocurrency.aplwallet.apl.core.chainid.BlockchainConfig;
-import com.apollocurrency.aplwallet.apl.core.entity.blockchain.Transaction;
 import com.apollocurrency.aplwallet.apl.core.entity.state.account.Account;
 import com.apollocurrency.aplwallet.apl.core.entity.state.account.LedgerEvent;
 import com.apollocurrency.aplwallet.apl.core.entity.state.alias.Alias;
@@ -13,25 +13,19 @@ import com.apollocurrency.aplwallet.apl.core.service.state.AliasService;
 import com.apollocurrency.aplwallet.apl.core.service.state.account.AccountService;
 import com.apollocurrency.aplwallet.apl.core.transaction.Fee;
 import com.apollocurrency.aplwallet.apl.core.transaction.TransactionTypes;
-import com.apollocurrency.aplwallet.apl.core.transaction.messages.Appendix;
 import com.apollocurrency.aplwallet.apl.core.transaction.messages.MessagingAliasAssignment;
 import com.apollocurrency.aplwallet.apl.util.Constants;
 import com.apollocurrency.aplwallet.apl.util.exception.AplException;
 import org.json.simple.JSONObject;
 
-import javax.inject.Inject;
-import javax.inject.Singleton;
+import jakarta.inject.Inject;
+import jakarta.inject.Singleton;
+import java.math.BigDecimal;
 import java.nio.ByteBuffer;
 import java.util.Map;
 @Singleton
 public class AliasAssignmentTransactionType extends MessagingTransactionType {
-    private final Fee ALIAS_FEE = new Fee.SizeBasedFee(2 * getBlockchainConfig().getOneAPL(), Math.multiplyExact(2, getBlockchainConfig().getOneAPL()), 32) {
-        @Override
-        public int getSize(Transaction transaction, Appendix appendage) {
-            MessagingAliasAssignment attachment = (MessagingAliasAssignment) transaction.getAttachment();
-            return attachment.getAliasName().length() + attachment.getAliasURI().length();
-        }
-    };
+
     private final AliasService aliasService;
 
     @Inject
@@ -57,7 +51,10 @@ public class AliasAssignmentTransactionType extends MessagingTransactionType {
 
     @Override
     public Fee getBaselineFee(Transaction transaction) {
-        return ALIAS_FEE;
+        return getFeeFactory().createSizeBased(BigDecimal.valueOf(2), BigDecimal.valueOf(2), (tx, appendage) -> {
+            MessagingAliasAssignment attachment = (MessagingAliasAssignment) tx.getAttachment();
+            return attachment.getAliasName().length() + attachment.getAliasURI().length();
+        });
     }
 
     @Override

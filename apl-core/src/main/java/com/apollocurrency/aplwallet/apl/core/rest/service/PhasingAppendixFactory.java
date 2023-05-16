@@ -8,13 +8,16 @@ import com.apollocurrency.aplwallet.apl.core.transaction.messages.PhasingAppendi
 import com.apollocurrency.aplwallet.apl.core.transaction.messages.PhasingAppendixV2;
 import org.json.simple.JSONObject;
 
-import javax.inject.Singleton;
+import jakarta.inject.Singleton;
 import java.nio.ByteBuffer;
 
 @Singleton
 public class PhasingAppendixFactory {
 
     public static PhasingAppendix build(ByteBuffer buffer) {
+        if (buffer == null) {
+            return null;
+        }
         byte version = buffer.get();
 
         switch (version) {

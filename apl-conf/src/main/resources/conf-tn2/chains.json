@@ -19,8 +19,11 @@
     "initialSupply": 30000000000,
     "decimals": 8,
     "featuresHeightRequirement": {
-      "dexReopenPendingOrdersHeight": 300000,
-      "dexExpiredContractWithFinishedPhasingHeightAndStep3": 750000
+      "dexReopenPendingOrdersHeight": 0,
+      "dexExpiredContractWithFinishedPhasingHeightAndStep3": 0,
+      "failedTransactionsAcceptanceHeight": 0,
+      "transactionV2Height": 0,
+      "smartContractTransactionsHeight": 0
     },
     "blockchainProperties": [
       {
@@ -36,6 +39,7 @@
         "height": 1,
         "maxNumberOfTransactions": 255,
         "maxArbitraryMessageLength": 160,
+        "maxNumberOfChildAccounts": 10,
         "blockTime": 2,
         "maxBlockTimeLimit": 3,
         "minBlockTimeLimit": 1,
@@ -48,11 +52,42 @@
         },
         "shardingSettings": {
           "enabled": true,
-          "frequency": 400000
+          "frequency": 250000
+        },
+        "smcSettings": {
+          "masterAccountPublicKey": "f9c6cd2cebff46137f3ea611683026b94f4bd1b39abbab480478e10766b2c608",
+          "fuelLimitMinValue": 10000000,
+          "fuelLimitMaxValue": 30000000000,
+          "fuelPriceMinValue": 10000,
+          "fuelPriceMaxValue": 100000000
+        },
+        "transactionFeeSettings": {
+          "feeRates": [
+            {
+              "type": 1,
+              "subType": 1,
+              "baseFee": "1000"
+            },
+            {
+              "type": 1,
+              "subType": 6,
+              "baseFee": "5"
+            },
+            {
+              "type": 1,
+              "subType": 7,
+              "baseFee": "5"
+            },
+            {
+              "type": 1,
+              "subType": 8,
+              "baseFee": "5"
+            }
+          ]
         }
       },
       {
-        "height": 452000,
+        "height": 1250000,
         "maxNumberOfTransactions": 255,
         "maxArbitraryMessageLength": 160,
         "maxNumberOfChildAccounts": 10,
@@ -68,7 +103,38 @@
         },
         "shardingSettings": {
           "enabled": true,
-          "frequency": 2000
+          "frequency": 50000
+        },
+        "smcSettings": {
+          "masterAccountPublicKey": "f9c6cd2cebff46137f3ea611683026b94f4bd1b39abbab480478e10766b2c608",
+          "fuelLimitMinValue": 10000000,
+          "fuelLimitMaxValue": 30000000000,
+          "fuelPriceMinValue": 10000,
+          "fuelPriceMaxValue": 100000000
+        },
+        "transactionFeeSettings": {
+          "feeRates": [
+            {
+              "type": 1,
+              "subType": 1,
+              "baseFee": "1000"
+            },
+            {
+              "type": 1,
+              "subType": 6,
+              "baseFee": "5"
+            },
+            {
+              "type": 1,
+              "subType": 7,
+              "baseFee": "5"
+            },
+            {
+              "type": 1,
+              "subType": 8,
+              "baseFee": "5"
+            }
+          ]
         }
       }
     ]

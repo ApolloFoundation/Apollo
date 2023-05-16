@@ -4,10 +4,12 @@
 
 package com.apollocurrency.aplwallet.apl.core.peer.parser;
 
-import com.apollocurrency.aplwallet.api.p2p.respons.GetMilestoneBlockIdsResponse;
+import com.apollocurrency.aplwallet.api.p2p.response.GetMilestoneBlockIdsResponse;
 import com.apollocurrency.aplwallet.apl.util.JSON;
+import lombok.EqualsAndHashCode;
 import org.json.simple.JSONObject;
 
+@EqualsAndHashCode
 public class GetMilestoneBlockIdsResponseParser implements JsonReqRespParser<GetMilestoneBlockIdsResponse> {
     @Override
     public GetMilestoneBlockIdsResponse parse(JSONObject json) {

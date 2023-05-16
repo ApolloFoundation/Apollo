@@ -1,25 +1,26 @@
 package com.apollocurrency.aplwallet.apl.util.cdi.transaction;
 
+import lombok.extern.slf4j.Slf4j;
+import org.jdbi.v3.core.CloseException;
 import org.jdbi.v3.core.Handle;
 import org.jdbi.v3.core.Jdbi;
-import org.slf4j.Logger;
-
-import javax.inject.Singleton;
-
-import static org.slf4j.LoggerFactory.getLogger;
+import org.jdbi.v3.core.transaction.TransactionException;
 
 /**
  * Holds opened connection {@link Handle} for current thread.
  */
-@Singleton
+@Slf4j
 public class JdbiHandleFactory {
-    private static final Logger log = getLogger(JdbiHandleFactory.class);
 
     private final static ThreadLocal<Handle> currentHandleThreadLocal = new ThreadLocal<>();
 
     private volatile Jdbi jdbi;
 
     public void setJdbi(Jdbi jdbi) {
+        this.jdbi = jdbi;
+    }
+
+    public JdbiHandleFactory(Jdbi jdbi) {
         this.jdbi = jdbi;
     }
 
@@ -78,7 +79,7 @@ public class JdbiHandleFactory {
         }
     }
 
-    protected boolean currentHandleOpened() {
+    public boolean currentHandleOpened() {
         return getCurrentHandle() != null;
     }
 
@@ -94,8 +95,16 @@ public class JdbiHandleFactory {
 
     public void close() {
         Handle handle = requireOpenHandle("close");
-        handle.close();
-        currentHandleThreadLocal.remove();
+        try {
+            handle.close();
+        } catch (CloseException e) {
+            log.error("Error during closing active handle", e);
+        } catch (TransactionException e) {
+            log.error("Fatal error, transaction is active and not committed/rolled back. Will rollback it entirely: {}", e.getMessage());
+            throw new IllegalStateException("Transaction is not finished before close", e);
+        } finally {
+            currentHandleThreadLocal.remove();
+        }
     }
 
 }

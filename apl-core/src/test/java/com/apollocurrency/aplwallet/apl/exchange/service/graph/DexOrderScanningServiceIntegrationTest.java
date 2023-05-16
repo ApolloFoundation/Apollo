@@ -4,7 +4,7 @@ import com.apollocurrency.aplwallet.apl.core.app.GenesisImporter;
 import com.apollocurrency.aplwallet.apl.core.app.observer.events.BlockEvent;
 import com.apollocurrency.aplwallet.apl.core.app.observer.events.BlockEventBinding;
 import com.apollocurrency.aplwallet.apl.core.app.observer.events.BlockEventType;
-import com.apollocurrency.aplwallet.apl.core.entity.blockchain.Block;
+import com.apollocurrency.aplwallet.apl.core.model.Block;
 import com.apollocurrency.aplwallet.apl.core.service.blockchain.Blockchain;
 import com.apollocurrency.aplwallet.apl.dex.core.model.DexCurrency;
 import com.apollocurrency.aplwallet.apl.dex.core.model.OrderScan;
@@ -22,9 +22,9 @@ import org.jboss.weld.junit5.WeldSetup;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
 
-import javax.enterprise.event.Event;
-import javax.enterprise.util.AnnotationLiteral;
-import javax.inject.Inject;
+import jakarta.enterprise.event.Event;
+import jakarta.enterprise.util.AnnotationLiteral;
+import jakarta.inject.Inject;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.atomic.AtomicInteger;
 
@@ -55,11 +55,11 @@ class DexOrderScanningServiceIntegrationTest {
         .addBeans(
             MockBean.of(orderDao, DexOrderDao.class)
             , MockBean.of(scanPerformer, ScanPerformer.class)
-            , MockBean.of(orderScanDao, OrderScanDao.class)
-            , MockBean.of(blockchain, Blockchain.class)
-            , MockBean.of(dispatchManager, TaskDispatchManager.class)
-            , MockBean.of(candlestickDao, DexCandlestickDao.class))
-        .build();
+                , MockBean.of(orderScanDao, OrderScanDao.class)
+                , MockBean.of(blockchain, Blockchain.class)
+                , MockBean.of(dispatchManager, TaskDispatchManager.class)
+                , MockBean.of(candlestickDao, DexCandlestickDao.class))
+            .build();
 
     {
         doReturn(mock(TaskDispatcher.class)).when(dispatchManager).newScheduledDispatcher(SERVICE_NAME);

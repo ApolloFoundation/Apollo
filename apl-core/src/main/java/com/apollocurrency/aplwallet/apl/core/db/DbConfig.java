@@ -1,5 +1,5 @@
 /*
- * Copyright © 2018 Apollo Foundation
+ *  Copyright © 2018-2021 Apollo Foundation
  */
 
 package com.apollocurrency.aplwallet.apl.core.db;
@@ -11,15 +11,16 @@ import com.apollocurrency.aplwallet.apl.util.injectable.ChainsConfigHolder;
 import com.apollocurrency.aplwallet.apl.util.injectable.DbProperties;
 import com.apollocurrency.aplwallet.apl.util.injectable.PropertiesHolder;
 
-import javax.enterprise.inject.Produces;
-import javax.inject.Inject;
-import javax.inject.Singleton;
+import jakarta.enterprise.inject.Produces;
+import jakarta.inject.Inject;
+import jakarta.inject.Singleton;
 import java.util.UUID;
+
 
 @Singleton
 public class DbConfig {
-    private PropertiesHolder propertiesHolder;
-    private ChainsConfigHolder chainsConfigHolder;
+    private final PropertiesHolder propertiesHolder;
+    private final ChainsConfigHolder chainsConfigHolder;
 
     @Inject
     public DbConfig(PropertiesHolder propertiesHolder, ChainsConfigHolder chainsConfigHolder) {
@@ -35,6 +36,7 @@ public class DbConfig {
 
         return DbProperties.builder()
             .dbType(propertiesHolder.getStringProperty("apl.dbType"))
+            .dbUrl(propertiesHolder.getStringProperty("apl.dbUrl"))
             .dbDir(dp != null ? dp.getDbDir().toAbsolutePath().toString() : "./unit-test-db") // for unit tests
             .dbName(dbName.concat("_".concat(chainId.toString().substring(0, 6))))
             .chainId(chainId)

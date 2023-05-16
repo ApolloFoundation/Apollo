@@ -21,8 +21,8 @@ import com.apollocurrency.aplwallet.vault.model.WalletKeysInfo;
 import com.apollocurrency.aplwallet.vault.util.AccountHelper;
 import lombok.extern.slf4j.Slf4j;
 
-import javax.inject.Inject;
-import javax.inject.Singleton;
+import jakarta.inject.Inject;
+import jakarta.inject.Singleton;
 
 /**
  * This class is just static helper for 2FA.
@@ -202,7 +202,7 @@ public class Account2FAService {
     }
 
     public WalletKeysInfo generateUserWallet(String passphrase, byte[] secretApl) throws RestParameterException {
-        if (passphrase == null) {
+        if (StringUtils.isBlank(passphrase)) {
             passphrase = passphraseGenerator.generate();
         }
 

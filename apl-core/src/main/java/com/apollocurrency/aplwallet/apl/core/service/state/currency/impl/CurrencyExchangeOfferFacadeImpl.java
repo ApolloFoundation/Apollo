@@ -4,9 +4,7 @@
 
 package com.apollocurrency.aplwallet.apl.core.service.state.currency.impl;
 
-import com.apollocurrency.aplwallet.apl.core.db.DbClause;
-import com.apollocurrency.aplwallet.apl.core.db.DbIterator;
-import com.apollocurrency.aplwallet.apl.core.entity.blockchain.Transaction;
+import com.apollocurrency.aplwallet.apl.core.model.Transaction;
 import com.apollocurrency.aplwallet.apl.core.entity.state.account.Account;
 import com.apollocurrency.aplwallet.apl.core.entity.state.account.LedgerEvent;
 import com.apollocurrency.aplwallet.apl.core.entity.state.currency.AvailableOffers;
@@ -20,12 +18,14 @@ import com.apollocurrency.aplwallet.apl.core.service.state.currency.CurrencyBuyO
 import com.apollocurrency.aplwallet.apl.core.service.state.currency.CurrencyExchangeOfferFacade;
 import com.apollocurrency.aplwallet.apl.core.service.state.currency.CurrencySellOfferService;
 import com.apollocurrency.aplwallet.apl.core.service.state.exchange.ExchangeService;
-import com.apollocurrency.aplwallet.apl.core.transaction.messages.MonetarySystemPublishExchangeOffer;
+import com.apollocurrency.aplwallet.apl.core.transaction.messages.MSPublishExchangeOfferAttachment;
 import com.apollocurrency.aplwallet.apl.util.ThreadUtils;
+import com.apollocurrency.aplwallet.apl.util.db.DbClause;
+import com.apollocurrency.aplwallet.apl.util.db.DbIterator;
 import lombok.extern.slf4j.Slf4j;
 
-import javax.inject.Inject;
-import javax.inject.Singleton;
+import jakarta.inject.Inject;
+import jakarta.inject.Singleton;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -59,7 +59,7 @@ public class CurrencyExchangeOfferFacadeImpl implements CurrencyExchangeOfferFac
     }
 
     @Override
-    public void publishOffer(Transaction transaction, MonetarySystemPublishExchangeOffer attachment) {
+    public void publishOffer(Transaction transaction, MSPublishExchangeOfferAttachment attachment) {
         CurrencyBuyOffer previousOffer = currencyBuyOfferService.getOffer(attachment.getCurrencyId(), transaction.getSenderId());
         if (previousOffer != null) {
             this.removeOffer(LedgerEvent.CURRENCY_OFFER_REPLACED, previousOffer);

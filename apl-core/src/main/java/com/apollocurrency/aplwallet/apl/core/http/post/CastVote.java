@@ -31,14 +31,14 @@ import com.apollocurrency.aplwallet.apl.util.Constants;
 import com.apollocurrency.aplwallet.apl.util.exception.AplException;
 import org.json.simple.JSONStreamAware;
 
-import javax.enterprise.inject.Vetoed;
-import javax.servlet.http.HttpServletRequest;
+import jakarta.enterprise.inject.Vetoed;
+import jakarta.servlet.http.HttpServletRequest;
 
 import static com.apollocurrency.aplwallet.apl.core.http.JSONResponses.INCORRECT_VOTE;
 import static com.apollocurrency.aplwallet.apl.core.http.JSONResponses.POLL_FINISHED;
 
 @Vetoed
-public final class CastVote extends CreateTransaction {
+public final class CastVote extends CreateTransactionHandler {
 
     public CastVote() {
         super(new APITag[]{APITag.VS, APITag.CREATE_TRANSACTION}, "poll", "vote00", "vote01", "vote02");

@@ -20,6 +20,7 @@
 
 package com.apollocurrency.aplwallet.apl.core.http.post;
 
+import com.apollocurrency.aplwallet.apl.core.entity.appdata.ScanEntity;
 import com.apollocurrency.aplwallet.apl.core.http.APITag;
 import com.apollocurrency.aplwallet.apl.core.http.AbstractAPIRequestHandler;
 import com.apollocurrency.aplwallet.apl.core.http.JSONData;
@@ -27,8 +28,8 @@ import com.apollocurrency.aplwallet.apl.core.http.JSONResponses;
 import org.json.simple.JSONObject;
 import org.json.simple.JSONStreamAware;
 
-import javax.enterprise.inject.Vetoed;
-import javax.servlet.http.HttpServletRequest;
+import jakarta.enterprise.inject.Vetoed;
+import jakarta.servlet.http.HttpServletRequest;
 
 @Vetoed
 public final class Scan extends AbstractAPIRequestHandler {
@@ -56,13 +57,15 @@ public final class Scan extends AbstractAPIRequestHandler {
             lookupBlockchainProcessor();
             try {
                 blockchainProcessor.suspendBlockchainDownloading();
+                ScanEntity scanEntity = new ScanEntity(validate, 0, false);
                 if (numBlocks > 0) {
-                    blockchainProcessor.scan(lookupBlockchain().getHeight() - numBlocks + 1, validate);
+                    scanEntity.setFromHeight(lookupBlockchain().getHeight() - numBlocks + 1);
                 } else if (height >= 0) {
-                    blockchainProcessor.scan(height, validate);
+                    scanEntity.setFromHeight(height);
                 } else {
                     return JSONResponses.missing("numBlocks", "height");
                 }
+                blockchainProcessor.scan(scanEntity);
             } finally {
                 blockchainProcessor.resumeBlockchainDownloading();
             }

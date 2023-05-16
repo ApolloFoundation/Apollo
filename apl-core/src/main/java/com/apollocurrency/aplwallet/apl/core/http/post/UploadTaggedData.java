@@ -27,11 +27,11 @@ import com.apollocurrency.aplwallet.apl.core.transaction.messages.TaggedDataUplo
 import com.apollocurrency.aplwallet.apl.util.exception.AplException;
 import org.json.simple.JSONStreamAware;
 
-import javax.enterprise.inject.Vetoed;
-import javax.servlet.http.HttpServletRequest;
+import jakarta.enterprise.inject.Vetoed;
+import jakarta.servlet.http.HttpServletRequest;
 
 @Vetoed
-public final class UploadTaggedData extends CreateTransaction {
+public final class UploadTaggedData extends CreateTransactionHandler {
 
     public UploadTaggedData() {
         super("file", new APITag[]{APITag.DATA, APITag.CREATE_TRANSACTION},

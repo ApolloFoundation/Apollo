@@ -30,8 +30,8 @@ import com.apollocurrency.aplwallet.apl.util.Constants;
 import com.apollocurrency.aplwallet.apl.util.exception.AplException;
 import org.json.simple.JSONStreamAware;
 
-import javax.enterprise.inject.Vetoed;
-import javax.servlet.http.HttpServletRequest;
+import jakarta.enterprise.inject.Vetoed;
+import jakarta.servlet.http.HttpServletRequest;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -43,15 +43,15 @@ import static com.apollocurrency.aplwallet.apl.core.http.JSONResponses.MISSING_D
 import static com.apollocurrency.aplwallet.apl.core.http.JSONResponses.MISSING_NAME;
 
 @Vetoed
-public final class CreatePoll extends CreateTransaction {
+public final class CreatePoll extends CreateTransactionHandler {
 
     public CreatePoll() {
         super(new APITag[]{APITag.VS, APITag.CREATE_TRANSACTION},
-            "name", "description", "finishHeight", "votingModel",
-            "minNumberOfOptions", "maxNumberOfOptions",
-            "minRangeValue", "maxRangeValue",
-            "minBalance", "minBalanceModel", "holding",
-            "option00", "option01", "option02");
+                "name", "description", "finishHeight", "votingModel",
+                "minNumberOfOptions", "maxNumberOfOptions",
+                "minRangeValue", "maxRangeValue",
+                "minBalance", "minBalanceModel", "holding",
+                "option00", "option01", "option02");
     }
 
     @Override

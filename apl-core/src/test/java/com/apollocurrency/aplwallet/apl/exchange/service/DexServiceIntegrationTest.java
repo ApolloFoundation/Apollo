@@ -5,10 +5,11 @@
 package com.apollocurrency.aplwallet.apl.exchange.service;
 
 import com.apollocurrency.aplwallet.apl.core.app.observer.events.TxEventType;
+import com.apollocurrency.aplwallet.apl.core.model.Transaction;
+import com.apollocurrency.aplwallet.apl.core.service.blockchain.TransactionBuilderFactory;
 import com.apollocurrency.aplwallet.apl.core.chainid.BlockchainConfig;
-import com.apollocurrency.aplwallet.apl.core.converter.db.TransactionRowMapper;
+import com.apollocurrency.aplwallet.apl.core.converter.db.TransactionEntityRowMapper;
 import com.apollocurrency.aplwallet.apl.core.dao.state.phasing.PhasingApprovedResultTable;
-import com.apollocurrency.aplwallet.apl.core.entity.blockchain.Transaction;
 import com.apollocurrency.aplwallet.apl.core.entity.state.phasing.PhasingApprovalResult;
 import com.apollocurrency.aplwallet.apl.core.entity.state.phasing.PhasingVote;
 import com.apollocurrency.aplwallet.apl.core.service.appdata.SecureStorageService;
@@ -19,12 +20,12 @@ import com.apollocurrency.aplwallet.apl.core.service.blockchain.TransactionProce
 import com.apollocurrency.aplwallet.apl.core.service.state.PhasingPollService;
 import com.apollocurrency.aplwallet.apl.core.service.state.account.AccountService;
 import com.apollocurrency.aplwallet.apl.core.service.state.account.impl.AccountServiceImpl;
-import com.apollocurrency.aplwallet.apl.core.transaction.TransactionBuilder;
-import com.apollocurrency.aplwallet.apl.core.transaction.TransactionSerializerImpl;
+import com.apollocurrency.aplwallet.apl.core.transaction.MandatoryTransactionService;
+import com.apollocurrency.aplwallet.apl.core.transaction.TransactionJsonSerializerImpl;
 import com.apollocurrency.aplwallet.apl.core.transaction.TransactionTypeFactory;
 import com.apollocurrency.aplwallet.apl.core.transaction.messages.DexControlOfFrozenMoneyAttachment;
 import com.apollocurrency.aplwallet.apl.core.transaction.messages.PrunableLoadingService;
-import com.apollocurrency.aplwallet.apl.core.transaction.types.dex.DexTransferMoneyTransaction;
+import com.apollocurrency.aplwallet.apl.core.transaction.types.dex.DexTransferMoneyTransactionType;
 import com.apollocurrency.aplwallet.apl.core.transaction.types.payment.OrdinaryPaymentTransactionType;
 import com.apollocurrency.aplwallet.apl.data.TransactionTestData;
 import com.apollocurrency.aplwallet.apl.dex.config.DexConfig;
@@ -36,6 +37,7 @@ import com.apollocurrency.aplwallet.apl.exchange.dao.DexOrderDao;
 import com.apollocurrency.aplwallet.apl.exchange.dao.DexOrderTable;
 import com.apollocurrency.aplwallet.apl.exchange.dao.MandatoryTransactionDao;
 import com.apollocurrency.aplwallet.apl.testutil.WeldUtils;
+import com.apollocurrency.aplwallet.apl.util.env.config.Chain;
 import com.apollocurrency.aplwallet.vault.service.KMSService;
 import com.apollocurrency.aplwallet.vault.service.auth.Account2FAService;
 import com.google.common.cache.CacheBuilder;
@@ -47,10 +49,10 @@ import org.jboss.weld.junit5.WeldInitiator;
 import org.jboss.weld.junit5.WeldSetup;
 import org.junit.jupiter.api.Test;
 
-import javax.enterprise.event.Event;
-import javax.enterprise.inject.Produces;
-import javax.inject.Inject;
-import javax.inject.Singleton;
+import jakarta.enterprise.event.Event;
+import jakarta.enterprise.inject.Produces;
+import jakarta.inject.Inject;
+import jakarta.inject.Singleton;
 import java.util.List;
 
 import static org.mockito.Mockito.doReturn;
@@ -61,29 +63,39 @@ import static org.mockito.Mockito.verifyNoInteractions;
 @EnableWeld
 class DexServiceIntegrationTest {
     TransactionTestData td = new TransactionTestData();
+
+    BlockchainConfig blockchainConfig = mock(BlockchainConfig.class);
+    Chain chain = mock(Chain.class);
+
+    {
+        doReturn(chain).when(blockchainConfig).getChain();
+    }
+
     @WeldSetup
-    WeldInitiator weld = WeldUtils.from(List.of(TransactionRowMapper.class,
-        TransactionBuilder.class,TransactionSerializerImpl.class,
-        DexService.class, CacheProducer.class),
+    WeldInitiator weld = WeldUtils.from(
+        List.of(TransactionEntityRowMapper.class, TransactionBuilderFactory.class, TransactionJsonSerializerImpl.class,
+            DexService.class, CacheProducer.class),
         List.of(EthereumWalletService.class,
-        DexOrderDao.class,
-        DexOrderTable.class,
-        TransactionProcessor.class,
-        DexSmartContractService.class,
-        SecureStorageService.class,
+            DexOrderDao.class,
+            DexOrderTable.class,
+            TransactionProcessor.class,
+            DexSmartContractService.class,
+            SecureStorageService.class,
             DexContractTable.class,
             MandatoryTransactionDao.class,
+            MandatoryTransactionService.class,
             DexOrderTransactionCreator.class,
             TimeService.class,
             DexContractDao.class,
             Blockchain.class,
             IDexMatcherInterface.class,
             PhasingApprovedResultTable.class,
-            BlockchainConfig.class,
             DexConfig.class,
             KMSService.class,
             BlockchainImpl.class,
-            Account2FAService.class))
+            Account2FAService.class)
+    )
+        .addBeans(MockBean.of(blockchainConfig, BlockchainConfig.class))
         .addBeans(MockBean.of(mock(PhasingPollService.class), PhasingPollService.class))
         .addBeans(MockBean.of(mock(AccountService.class), AccountService.class, AccountServiceImpl.class))
         .addBeans(MockBean.of(mock(PrunableLoadingService.class), PrunableLoadingService.class))
@@ -103,7 +115,7 @@ class DexServiceIntegrationTest {
         doReturn(List.of(new PhasingVote(null, 500, 1, 100, 20), new PhasingVote(null, 499, 1, 200, 30))).when(phasingPollService).getVotes(1);
         Transaction phasedTx = mock(Transaction.class);
         doReturn(1L).when(phasedTx).getId();
-        doReturn(new DexTransferMoneyTransaction(mock(BlockchainConfig.class), mock(AccountService.class), dexService)).when(phasedTx).getType();
+        doReturn(new DexTransferMoneyTransactionType(mock(BlockchainConfig.class), mock(AccountService.class), dexService)).when(phasedTx).getType();
         DexControlOfFrozenMoneyAttachment attachment = new DexControlOfFrozenMoneyAttachment(100L, 200L);
         doReturn(attachment).when(phasedTx).getAttachment();
         txEvent.select(TxEventType.literal(TxEventType.RELEASE_PHASED_TRANSACTION)).fire(phasedTx);

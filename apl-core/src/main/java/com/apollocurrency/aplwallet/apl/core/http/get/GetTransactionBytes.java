@@ -20,17 +20,20 @@
 
 package com.apollocurrency.aplwallet.apl.core.http.get;
 
-import com.apollocurrency.aplwallet.apl.core.entity.blockchain.Transaction;
+import com.apollocurrency.aplwallet.apl.core.model.Transaction;
 import com.apollocurrency.aplwallet.apl.core.http.APITag;
 import com.apollocurrency.aplwallet.apl.core.http.AbstractAPIRequestHandler;
 import com.apollocurrency.aplwallet.apl.core.http.JSONData;
+import com.apollocurrency.aplwallet.apl.util.io.PayloadResult;
+import com.apollocurrency.aplwallet.apl.util.io.Result;
 import com.apollocurrency.aplwallet.apl.core.service.blockchain.Blockchain;
+import com.apollocurrency.aplwallet.apl.core.transaction.TransactionWrapperHelper;
 import com.apollocurrency.aplwallet.apl.crypto.Convert;
 import org.json.simple.JSONObject;
 import org.json.simple.JSONStreamAware;
 
-import javax.enterprise.inject.Vetoed;
-import javax.servlet.http.HttpServletRequest;
+import jakarta.enterprise.inject.Vetoed;
+import jakarta.servlet.http.HttpServletRequest;
 
 import static com.apollocurrency.aplwallet.apl.core.http.JSONResponses.INCORRECT_TRANSACTION;
 import static com.apollocurrency.aplwallet.apl.core.http.JSONResponses.MISSING_TRANSACTION;
@@ -61,17 +64,25 @@ public final class GetTransactionBytes extends AbstractAPIRequestHandler {
 
         Blockchain blockchain = lookupBlockchain();
         transaction = blockchain.getTransaction(transactionId);
+
+        Result unsignedTxBytes = PayloadResult.createLittleEndianByteArrayResult();
+        txBContext.createSerializer(transaction.getVersion())
+            .serialize(TransactionWrapperHelper.createUnsignedTransaction(transaction), unsignedTxBytes);
+
+        Result signedTxBytes = PayloadResult.createLittleEndianByteArrayResult();
+        txBContext.createSerializer(transaction.getVersion()).serialize(transaction, signedTxBytes);
+
         JSONObject response = new JSONObject();
         if (transaction == null) {
-            transaction = lookupMemPool().getUnconfirmedTransaction(transactionId);
+            transaction = lookupMemPool().get(transactionId);
             if (transaction == null) {
                 return UNKNOWN_TRANSACTION;
             }
         } else {
             response.put("confirmations", blockchain.getHeight() - transaction.getHeight());
         }
-        response.put("transactionBytes", Convert.toHexString(transaction.getCopyTxBytes()));
-        response.put("unsignedTransactionBytes", Convert.toHexString(transaction.getUnsignedBytes()));
+        response.put("transactionBytes", Convert.toHexString(signedTxBytes.array()));
+        response.put("unsignedTransactionBytes", Convert.toHexString(unsignedTxBytes.array()));
         JSONData.putPrunableAttachment(response, transaction);
         return response;
 

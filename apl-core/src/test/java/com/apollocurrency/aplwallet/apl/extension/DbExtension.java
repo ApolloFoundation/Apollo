@@ -1,11 +1,10 @@
 /*
- *  Copyright © 2018-2019 Apollo Foundation
+ *  Copyright © 2018-2022 Apollo Foundation
  */
 
 package com.apollocurrency.aplwallet.apl.extension;
 
-import com.apollocurrency.aplwallet.apl.core.dao.TransactionalDataSource;
-import com.apollocurrency.aplwallet.apl.core.service.appdata.DatabaseManager;
+import com.apollocurrency.aplwallet.apl.core.db.DatabaseManager;
 import com.apollocurrency.aplwallet.apl.core.service.fulltext.FullTextSearchService;
 import com.apollocurrency.aplwallet.apl.core.service.fulltext.FullTextSearchServiceImpl;
 import com.apollocurrency.aplwallet.apl.core.service.fulltext.LuceneFullTextSearchEngine;
@@ -13,6 +12,7 @@ import com.apollocurrency.aplwallet.apl.data.DbTestData;
 import com.apollocurrency.aplwallet.apl.testutil.DbManipulator;
 import com.apollocurrency.aplwallet.apl.testutil.DbUtils;
 import com.apollocurrency.aplwallet.apl.util.NtpTime;
+import com.apollocurrency.aplwallet.apl.util.db.TransactionalDataSource;
 import com.apollocurrency.aplwallet.apl.util.injectable.DbProperties;
 import com.apollocurrency.aplwallet.apl.util.injectable.PropertiesHolder;
 import lombok.extern.slf4j.Slf4j;
@@ -35,6 +35,7 @@ import java.util.Map;
 
 import static org.mockito.Mockito.mock;
 
+//TODO Repair DbExtension to maintain the AfterEachCallback + nonstatic usage
 @Slf4j
 public class DbExtension implements BeforeEachCallback, /*AfterEachCallback,*/ AfterAllCallback, BeforeAllCallback {
     private DbManipulator manipulator;
@@ -44,8 +45,7 @@ public class DbExtension implements BeforeEachCallback, /*AfterEachCallback,*/ A
     private Path indexDir;
     private LuceneFullTextSearchEngine luceneFullTextSearchEngine;
 
-    public DbExtension(GenericContainer jdbcDatabaseContainer,
-                       DbProperties dbProperties,
+    public DbExtension(GenericContainer jdbcDatabaseContainer, DbProperties dbProperties,
                        PropertiesHolder propertiesHolder,
                        String schemaScriptPath,
                        String dataScriptPath) {
@@ -63,6 +63,7 @@ public class DbExtension implements BeforeEachCallback, /*AfterEachCallback,*/ A
         log.trace("Host: {}", jdbcDatabaseContainer.getHost());
         dbProperties.setDatabaseHost(jdbcDatabaseContainer.getHost());
         dbProperties.setDbName(((MariaDBContainer<?>) jdbcDatabaseContainer).getDatabaseName());
+        dbProperties.setSystemDbUrl(dbProperties.formatJdbcUrlString(true));
 
 //        log.trace("DockerDaemonInfo: {}", jdbcDatabaseContainer.getDockerDaemonInfo());
         log.trace("DockerImageName: {}", jdbcDatabaseContainer.getDockerImageName());
@@ -85,6 +86,10 @@ public class DbExtension implements BeforeEachCallback, /*AfterEachCallback,*/ A
         this(jdbcDatabaseContainer, properties, null, schemaScriptPath, dataScriptPath);
     }
 
+    public DbExtension(GenericContainer jdbcDatabaseContainer, DbProperties properties, String dataScriptPath) {
+        this(jdbcDatabaseContainer, properties, null, null, dataScriptPath);
+    }
+
     public DbExtension(GenericContainer jdbcDatabaseContainer, Map<String, List<String>> tableWithColumns) {
         this(jdbcDatabaseContainer);
         if (!tableWithColumns.isEmpty()) {
@@ -94,7 +99,7 @@ public class DbExtension implements BeforeEachCallback, /*AfterEachCallback,*/ A
     }
 
     public DbExtension(GenericContainer jdbcDatabaseContainer) {
-        this(jdbcDatabaseContainer, DbTestData.getInMemDbProps(), null, null, null);
+        this(jdbcDatabaseContainer, DbTestData.getDbFileProperties(jdbcDatabaseContainer), null, null, null);
     }
 
     public FullTextSearchService getFullTextSearchService() {
@@ -103,15 +108,13 @@ public class DbExtension implements BeforeEachCallback, /*AfterEachCallback,*/ A
 
     @Override
     public void beforeEach(ExtensionContext context) {
-        if (context != null && context.getTags().contains("skip-fts-init")) {
-            // skip init for some tests
-            if (fullTextSearchService == null) {
-                initFtl();
-            }
-        } else {
+        if (context == null || !context.getTags().contains("skip-fts-init")) {
             if (fullTextSearchService != null) {
                 initFtl();
             }
+        }
+        if (!staticInit) {
+            cleanAndPopulateDb();
         }
     }
 
@@ -126,6 +129,7 @@ public class DbExtension implements BeforeEachCallback, /*AfterEachCallback,*/ A
         if (fullTextSearchService != null) {
             initFtl();
         }
+        staticInit = true;
     }
 
     public void cleanAndPopulateDb() {

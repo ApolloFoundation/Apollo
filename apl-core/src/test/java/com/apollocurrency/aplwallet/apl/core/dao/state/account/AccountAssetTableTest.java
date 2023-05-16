@@ -6,8 +6,9 @@ package com.apollocurrency.aplwallet.apl.core.dao.state.account;
 
 import com.apollocurrency.aplwallet.apl.core.chainid.BlockchainConfig;
 import com.apollocurrency.aplwallet.apl.core.dao.DbContainerBaseTest;
+import com.apollocurrency.aplwallet.apl.core.db.DatabaseManager;
+import com.apollocurrency.aplwallet.apl.core.config.JdbiConfiguration;
 import com.apollocurrency.aplwallet.apl.core.entity.state.account.AccountAsset;
-import com.apollocurrency.aplwallet.apl.core.service.appdata.DatabaseManager;
 import com.apollocurrency.aplwallet.apl.core.service.blockchain.Blockchain;
 import com.apollocurrency.aplwallet.apl.core.service.blockchain.BlockchainImpl;
 import com.apollocurrency.aplwallet.apl.core.service.blockchain.BlockchainProcessor;
@@ -20,20 +21,20 @@ import com.apollocurrency.aplwallet.apl.data.AccountTestData;
 import com.apollocurrency.aplwallet.apl.data.DbTestData;
 import com.apollocurrency.aplwallet.apl.extension.DbExtension;
 import com.apollocurrency.aplwallet.apl.testutil.DbUtils;
+import com.apollocurrency.aplwallet.apl.util.cdi.transaction.JdbiHandleFactory;
 import com.apollocurrency.aplwallet.apl.util.injectable.PropertiesHolder;
 import lombok.extern.slf4j.Slf4j;
 import org.jboss.weld.junit.MockBean;
 import org.jboss.weld.junit5.EnableWeld;
 import org.jboss.weld.junit5.WeldInitiator;
 import org.jboss.weld.junit5.WeldSetup;
-import org.jdbi.v3.core.Jdbi;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.RegisterExtension;
 
-import javax.inject.Inject;
+import jakarta.inject.Inject;
 import java.sql.SQLException;
 import java.util.Comparator;
 import java.util.List;
@@ -67,10 +68,9 @@ class AccountAssetTableTest extends DbContainerBaseTest {
     private BlockchainProcessor blockchainProcessor = mock(BlockchainProcessor.class);
     @WeldSetup
     public WeldInitiator weld = WeldInitiator.from(
-        PropertiesHolder.class, AccountAssetTable.class
+        PropertiesHolder.class, AccountAssetTable.class, JdbiHandleFactory.class, JdbiConfiguration.class
     )
         .addBeans(MockBean.of(dbExtension.getDatabaseManager(), DatabaseManager.class))
-        .addBeans(MockBean.of(dbExtension.getDatabaseManager().getJdbi(), Jdbi.class))
         .addBeans(MockBean.of(blockchainConfig, BlockchainConfig.class))
         .addBeans(MockBean.of(blockchain, Blockchain.class, BlockchainImpl.class))
         .addBeans(MockBean.of(blockchainProcessor, BlockchainProcessor.class, BlockchainProcessorImpl.class))
@@ -193,7 +193,7 @@ class AccountAssetTableTest extends DbContainerBaseTest {
     @Test
     void testTrimDeletedRecord() {
         int rowCount = table.getRowCount();
-        DbUtils.inTransaction(dbExtension, (con) -> table.trim(Integer.MAX_VALUE, true));
+        DbUtils.inTransaction(dbExtension, (con) -> table.trim(Integer.MAX_VALUE));
         assertEquals(rowCount, table.getRowCount());
 
         td.ACC_ASSET_2.setHeight(td.ACC_ASSET_2.getHeight() + 1);
@@ -202,11 +202,11 @@ class AccountAssetTableTest extends DbContainerBaseTest {
         assertEquals(rowCount + 1, table.getRowCount());
         assertNull(table.get(td.ACC_ASSET_2.getDbKey()));
 
-        DbUtils.inTransaction(dbExtension, (con) -> table.trim(td.ACC_ASSET_2.getHeight(), true));
+        DbUtils.inTransaction(dbExtension, (con) -> table.trim(td.ACC_ASSET_2.getHeight()));
 
         assertEquals(rowCount + 1, table.getRowCount());
 
-        DbUtils.inTransaction(dbExtension, (con) -> table.trim(td.ACC_ASSET_2.getHeight() + 1, true));
+        DbUtils.inTransaction(dbExtension, (con) -> table.trim(td.ACC_ASSET_2.getHeight() + 1));
         assertEquals(rowCount - 1, table.getRowCount());
         assertNull(table.get(td.ACC_ASSET_2.getDbKey()));
     }
@@ -289,7 +289,7 @@ class AccountAssetTableTest extends DbContainerBaseTest {
 
         AccountAsset deleted = table.get(td.ACC_ASSET_14.getDbKey());
         assertNull(deleted);
-        DbUtils.inTransaction(dbExtension, (con) -> table.trim(td.ACC_ASSET_14.getHeight(), true)); // try trim inside a gap of deleted records
+        DbUtils.inTransaction(dbExtension, (con) -> table.trim(td.ACC_ASSET_14.getHeight())); // try trim inside a gap of deleted records
 
 
         List<AccountAsset> existing = table.getAllByDbId(0, Integer.MAX_VALUE, Long.MAX_VALUE).getValues();

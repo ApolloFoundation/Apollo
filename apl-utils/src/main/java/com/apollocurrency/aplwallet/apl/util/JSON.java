@@ -23,6 +23,8 @@ package com.apollocurrency.aplwallet.apl.util;
 import com.fasterxml.jackson.core.util.DefaultPrettyPrinter;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.ObjectWriter;
+import com.fasterxml.jackson.databind.module.SimpleModule;
+import com.fasterxml.jackson.databind.ser.std.ToStringSerializer;
 import org.json.simple.JSONAware;
 import org.json.simple.JSONObject;
 import org.json.simple.JSONStreamAware;
@@ -32,6 +34,8 @@ import java.io.FileWriter;
 import java.io.IOException;
 import java.io.StringWriter;
 import java.io.Writer;
+import java.math.BigDecimal;
+import java.math.BigInteger;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.StandardOpenOption;
@@ -56,6 +60,10 @@ public final class JSON {
 
     static {
         MAPPER.configure(FAIL_ON_UNKNOWN_PROPERTIES, false);
+        SimpleModule module = new SimpleModule();
+        module.addSerializer(BigInteger.class, new ToStringSerializer());
+        module.addSerializer(BigDecimal.class, new ToStringSerializer());
+        MAPPER.registerModule(module);
     }
 
     private JSON() {
@@ -322,5 +330,9 @@ public final class JSON {
         ObjectMapper mapper = JSON.getMapper();
         ObjectWriter writer = mapper.writer(new DefaultPrettyPrinter());
         writer.writeValue(file, object);
+    }
+
+    public static <T> JSONStreamAware objectToJson(T obj) {
+        return out -> getMapper().writeValue(out, obj);
     }
 }

@@ -27,15 +27,15 @@ import com.apollocurrency.aplwallet.apl.core.http.APITag;
 import com.apollocurrency.aplwallet.apl.core.http.HttpParameterParserUtil;
 import com.apollocurrency.aplwallet.apl.core.http.JSONResponses;
 import com.apollocurrency.aplwallet.apl.core.transaction.messages.Attachment;
-import com.apollocurrency.aplwallet.apl.core.transaction.messages.MonetarySystemCurrencyIssuance;
+import com.apollocurrency.aplwallet.apl.core.transaction.messages.MonetarySystemCurrencyIssuanceAttachment;
 import com.apollocurrency.aplwallet.apl.crypto.Convert;
 import com.apollocurrency.aplwallet.apl.util.Constants;
 import com.apollocurrency.aplwallet.apl.util.exception.AplException;
 import org.json.simple.JSONStreamAware;
 
-import javax.enterprise.inject.Vetoed;
-import javax.enterprise.inject.spi.CDI;
-import javax.servlet.http.HttpServletRequest;
+import jakarta.enterprise.inject.Vetoed;
+import jakarta.enterprise.inject.spi.CDI;
+import jakarta.servlet.http.HttpServletRequest;
 
 /**
  * Issue a currency on the APL blockchain
@@ -92,12 +92,12 @@ import javax.servlet.http.HttpServletRequest;
  * @see com.apollocurrency.aplwallet.apl.crypto.HashFunction
  */
 @Vetoed
-public final class IssueCurrency extends CreateTransaction {
+public final class IssueCurrency extends CreateTransactionHandler {
 
     public IssueCurrency() {
         super(new APITag[]{APITag.MS, APITag.CREATE_TRANSACTION},
-            "name", "code", "description", "type", "initialSupply", "reserveSupply", "maxSupply", "issuanceHeight", "minReservePerUnitATM",
-            "minDifficulty", "maxDifficulty", "ruleset", "algorithm", "decimals");
+                "name", "code", "description", "type", "initialSupply", "reserveSupply", "maxSupply", "issuanceHeight", "minReservePerUnitATM",
+                "minDifficulty", "maxDifficulty", "ruleset", "algorithm", "decimals");
     }
 
     @Override
@@ -151,7 +151,7 @@ public final class IssueCurrency extends CreateTransaction {
         byte algorithm = HttpParameterParserUtil.getByte(req, "algorithm", (byte) 0, Byte.MAX_VALUE, false);
         byte decimals = HttpParameterParserUtil.getByte(req, "decimals", (byte) 0, Byte.MAX_VALUE, false);
         Account account = HttpParameterParserUtil.getSenderAccount(req);
-        Attachment attachment = new MonetarySystemCurrencyIssuance(name, code, description, (byte) type, initialSupply,
+        Attachment attachment = new MonetarySystemCurrencyIssuanceAttachment(name, code, description, (byte) type, initialSupply,
             reserveSupply, maxSupply, issuanceHeight, minReservePerUnit, minDifficulty, maxDifficulty, ruleset, algorithm, decimals);
 
         return createTransaction(req, account, attachment);

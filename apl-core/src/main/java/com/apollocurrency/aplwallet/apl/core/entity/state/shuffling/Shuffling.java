@@ -20,18 +20,22 @@
 
 package com.apollocurrency.aplwallet.apl.core.entity.state.shuffling;
 
+import com.apollocurrency.aplwallet.apl.core.model.Transaction;
 import com.apollocurrency.aplwallet.apl.core.dao.state.keyfactory.DbKey;
 import com.apollocurrency.aplwallet.apl.core.dao.state.shuffling.ShufflingTable;
-import com.apollocurrency.aplwallet.apl.core.db.DbUtils;
-import com.apollocurrency.aplwallet.apl.core.entity.blockchain.Transaction;
 import com.apollocurrency.aplwallet.apl.core.entity.state.derived.VersionedDeletableEntity;
-import com.apollocurrency.aplwallet.apl.core.monetary.HoldingType;
-import com.apollocurrency.aplwallet.apl.core.transaction.messages.ShufflingCreation;
+import com.apollocurrency.aplwallet.apl.core.model.HoldingType;
+import com.apollocurrency.aplwallet.apl.core.transaction.messages.ShufflingCreationAttachment;
 import com.apollocurrency.aplwallet.apl.crypto.Convert;
+import com.apollocurrency.aplwallet.apl.util.db.DbUtils;
+import lombok.EqualsAndHashCode;
 
 import java.sql.ResultSet;
 import java.sql.SQLException;
+import java.util.Arrays;
+import java.util.stream.Collectors;
 
+@EqualsAndHashCode(callSuper = true)
 public final class Shuffling extends VersionedDeletableEntity {
 
     private final long id;
@@ -46,7 +50,7 @@ public final class Shuffling extends VersionedDeletableEntity {
     private long assigneeAccountId;
     private byte[][] recipientPublicKeys;
 
-    public Shuffling(Transaction transaction, ShufflingCreation attachment, int height) {
+    public Shuffling(Transaction transaction, ShufflingCreationAttachment attachment, int height) {
         super(null, height);
         this.id = transaction.getId();
         this.holdingId = attachment.getHoldingId();
@@ -77,6 +81,21 @@ public final class Shuffling extends VersionedDeletableEntity {
         this.assigneeAccountId = rs.getLong("assignee_account_id");
         this.recipientPublicKeys = DbUtils.get2dByteArray(rs, "recipient_public_keys", Convert.EMPTY_BYTES);
         this.registrantCount = rs.getByte("registrant_count");
+    }
+
+    public Shuffling(Long dbId, long id, long holdingId, HoldingType holdingType, long issuerId, long amount, byte participantCount, short blocksRemaining, byte registrantCount, ShufflingStage stage, long assigneeAccountId, byte[][] recipientPublicKeys, Integer height) {
+        super(dbId, height);
+        this.id = id;
+        this.holdingId = holdingId;
+        this.holdingType = holdingType;
+        this.issuerId = issuerId;
+        this.amount = amount;
+        this.participantCount = participantCount;
+        this.blocksRemaining = blocksRemaining;
+        this.registrantCount = registrantCount;
+        this.stage = stage;
+        this.assigneeAccountId = assigneeAccountId;
+        this.recipientPublicKeys = recipientPublicKeys;
     }
 
     public long getId() {
@@ -150,5 +169,30 @@ public final class Shuffling extends VersionedDeletableEntity {
 
     public void setRegistrantCount(byte registrantCount) {
         this.registrantCount = registrantCount;
+    }
+
+    public Shuffling deepCopy() {
+        return (Shuffling) super.deepCopy();
+    }
+
+    @Override
+    public String toString() {
+        return "Shuffling{" +
+            "id=" + id +
+            ", holdingId=" + holdingId +
+            ", holdingType=" + holdingType +
+            ", issuerId=" + issuerId +
+            ", amount=" + amount +
+            ", participantCount=" + participantCount +
+            ", blocksRemaining=" + blocksRemaining +
+            ", registrantCount=" + registrantCount +
+            ", stage=" + stage +
+            ", assigneeAccountId=" + assigneeAccountId +
+            ", recipientPublicKeys=" + Arrays.stream(recipientPublicKeys).map(Convert::toHexString).collect(Collectors.joining(",")) +
+            ", deleted=" + isDeleted() +
+            ", latest=" + isLatest() +
+            ", dbId=" + getDbId() +
+            ", height=" + getHeight() +
+            '}';
     }
 }

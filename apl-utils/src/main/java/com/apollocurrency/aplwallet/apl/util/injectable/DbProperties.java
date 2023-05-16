@@ -8,15 +8,15 @@ import lombok.Builder;
 import lombok.Data;
 import lombok.ToString;
 
-import javax.enterprise.inject.Vetoed;
 import java.util.Optional;
 import java.util.UUID;
 
-@Vetoed
 @ToString
 @Builder
 @Data
 public class DbProperties implements Cloneable {
+    private static final String fullUrlString = "jdbc:%s://%s:%d/%s?user=%s&password=%s%s";
+    private static final String passwordlessUrlString = "jdbc:%s://%s:%d/%s?user=%s%s"; // skip password for 'password less mode' (in docker container)
     //TODO APL-1714
     @Deprecated
     public static final String DB_EXTENSION = "mv.db";
@@ -61,5 +61,53 @@ public class DbProperties implements Cloneable {
         } catch (CloneNotSupportedException e) {
             throw new RuntimeException(e);
         }
+    }
+
+    public String formatJdbcUrlString(boolean isSystemDb) {
+        String finalDbUrl;
+        String fullUrlString = "jdbc:%s://%s:%d/%s?user=%s&password=%s%s";
+        String passwordlessUrlString = "jdbc:%s://%s:%d/%s?user=%s%s"; // skip password for 'password less mode' (in docker container)
+        String tempDbName = getDbName();
+        if (isSystemDb) {
+            tempDbName = "testdb".equalsIgnoreCase(getDbName()) ? getDbName() : DbProperties.DB_SYSTEM_NAME;
+        }
+        if (getDbPassword() != null && !getDbPassword().isEmpty()) {
+            finalDbUrl = String.format(
+                fullUrlString,
+                getDbType(),
+                getDatabaseHost(),
+                getDatabasePort(),
+                tempDbName,
+                getDbUsername() != null ? getDbUsername() : "",
+                getDbPassword(),
+                getDbParams() != null ? getDbParams() : ""
+            );
+        } else {
+            // skip password for 'password less mode' (in docker container)
+            finalDbUrl = String.format(
+                passwordlessUrlString,
+                getDbType(),
+                getDatabaseHost(),
+                getDatabasePort(),
+                tempDbName,
+                getDbUsername() != null ? getDbUsername() : "",
+                getDbParams() != null ? getDbParams() : ""
+            );
+        }
+        return finalDbUrl;
+    }
+
+
+    public String formatEmbeddedJdbcUrlString() {
+        String finalDbUrl;
+        String embeddedUrlTemplate = "jdbc:%s:%s/%s;%s";
+        finalDbUrl = String.format(
+            embeddedUrlTemplate,
+            getDbType(),
+            getDbDir(),
+            getDbName(),
+            getDbParams() != null ? getDbParams() : ""
+        );
+        return finalDbUrl;
     }
 }

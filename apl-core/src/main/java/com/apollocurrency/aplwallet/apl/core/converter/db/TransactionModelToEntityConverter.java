@@ -4,7 +4,7 @@
 
 package com.apollocurrency.aplwallet.apl.core.converter.db;
 
-import com.apollocurrency.aplwallet.apl.core.entity.blockchain.Transaction;
+import com.apollocurrency.aplwallet.apl.core.model.Transaction;
 import com.apollocurrency.aplwallet.apl.core.entity.blockchain.TransactionEntity;
 import com.apollocurrency.aplwallet.apl.core.transaction.messages.Appendix;
 import com.apollocurrency.aplwallet.apl.core.transaction.messages.Prunable;
@@ -30,6 +30,7 @@ public class TransactionModelToEntityConverter implements Converter<Transaction,
             .version(model.getVersion())
             .type(model.getType().getSpec().getType())
             .subtype(model.getType().getSpec().getSubtype())
+            .id(model.getId())
             .timestamp(model.getTimestamp())
             .deadline(model.getDeadline())
             .amountATM(model.getAmountATM())
@@ -40,13 +41,11 @@ public class TransactionModelToEntityConverter implements Converter<Transaction,
             .signatureBytes(model.getSignature().bytes())
             .blockId(model.getBlockId())
             .height(model.getHeight())
-            .id(model.getId())
             .senderId(model.getSenderId())
             .recipientId(model.getRecipientId())
             .blockTimestamp(model.getBlockTimestamp())
             .fullHash(model.getFullHash())
             .index(model.getIndex())
-            .dbId(model.getDbId())
             .senderPublicKey(model.getSenderPublicKey())
 
             .hasMessage(model.getMessage() != null)
@@ -57,6 +56,7 @@ public class TransactionModelToEntityConverter implements Converter<Transaction,
             .hasPrunableMessage(model.hasPrunablePlainMessage())
             .hasPrunableEencryptedMessage(model.hasPrunableEncryptedMessage())
             .hasPrunableAttachment(model.getAttachment() instanceof Prunable)
+            .errorMessage(model.getErrorMessage().orElse(null))
 
             .build();
 

@@ -19,17 +19,17 @@ import com.apollocurrency.aplwallet.apl.util.env.OS;
 import com.apollocurrency.aplwallet.apl.util.exception.AplException;
 import org.json.simple.JSONStreamAware;
 
-import javax.enterprise.inject.Vetoed;
-import javax.servlet.http.HttpServletRequest;
+import jakarta.enterprise.inject.Vetoed;
+import jakarta.servlet.http.HttpServletRequest;
 
 @Vetoed
 @Deprecated
-public final class SendUpdateTransaction extends CreateTransaction {
+public final class SendUpdateTransaction extends CreateTransactionHandler {
 
     public SendUpdateTransaction() {
         super(new APITag[]{APITag.UPDATE, APITag.CREATE_TRANSACTION}, "architecture", "platform", "hash", "version", "urlFirstPart",
-            "urlSecondPart",
-            "level");
+                "urlSecondPart",
+                "level");
     }
 
     @Override

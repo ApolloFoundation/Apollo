@@ -10,6 +10,7 @@ import org.json.simple.JSONObject;
 public interface AppendixParser<T extends Appendix> {
     /**
      * Try to parse appendix of {@link T} type if any from attachment json data
+     *
      * @param jsonData attachment json data, which contains different appendices and transaction type-specific attachment
      * @return {@link T} typed appendix when it was found and correctly parsed, otherwise return null
      */

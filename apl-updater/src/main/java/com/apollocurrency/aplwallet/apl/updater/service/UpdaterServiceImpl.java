@@ -4,7 +4,7 @@
 
 package com.apollocurrency.aplwallet.apl.updater.service;
 
-import com.apollocurrency.aplwallet.apl.core.entity.blockchain.Transaction;
+import com.apollocurrency.aplwallet.apl.core.model.Transaction;
 import com.apollocurrency.aplwallet.apl.udpater.intfce.DownloadInfo;
 import com.apollocurrency.aplwallet.apl.updater.AuthorityChecker;
 import com.apollocurrency.aplwallet.apl.updater.AuthorityCheckerImpl;
@@ -21,7 +21,7 @@ import com.apollocurrency.aplwallet.apl.updater.downloader.Downloader;
 import com.apollocurrency.aplwallet.apl.updater.downloader.DownloaderImpl;
 import com.apollocurrency.aplwallet.apl.updater.repository.UpdaterRepository;
 
-import javax.inject.Inject;
+import jakarta.inject.Inject;
 import java.io.IOException;
 import java.nio.file.Path;
 import java.util.regex.Pattern;

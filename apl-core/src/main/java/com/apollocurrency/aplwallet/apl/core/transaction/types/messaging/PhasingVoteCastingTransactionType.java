@@ -6,7 +6,7 @@ package com.apollocurrency.aplwallet.apl.core.transaction.types.messaging;
 
 import com.apollocurrency.aplwallet.apl.core.app.VoteWeighting;
 import com.apollocurrency.aplwallet.apl.core.chainid.BlockchainConfig;
-import com.apollocurrency.aplwallet.apl.core.entity.blockchain.Transaction;
+import com.apollocurrency.aplwallet.apl.core.model.Transaction;
 import com.apollocurrency.aplwallet.apl.core.entity.state.account.Account;
 import com.apollocurrency.aplwallet.apl.core.entity.state.account.LedgerEvent;
 import com.apollocurrency.aplwallet.apl.core.entity.state.phasing.PhasingPoll;
@@ -22,18 +22,14 @@ import com.apollocurrency.aplwallet.apl.util.Constants;
 import com.apollocurrency.aplwallet.apl.util.exception.AplException;
 import org.json.simple.JSONObject;
 
-import javax.inject.Inject;
-import javax.inject.Singleton;
+import jakarta.inject.Inject;
+import jakarta.inject.Singleton;
+import java.math.BigDecimal;
 import java.nio.ByteBuffer;
 import java.util.Arrays;
 import java.util.List;
 @Singleton
 public class PhasingVoteCastingTransactionType extends MessagingTransactionType {
-    private final Fee PHASING_VOTE_FEE = (transaction, appendage) -> {
-        MessagingPhasingVoteCasting attachment = (MessagingPhasingVoteCasting) transaction.getAttachment();
-        return Math.multiplyExact(attachment.getTransactionFullHashes().size(), getBlockchainConfig().getOneAPL());
-    };
-
     private final PhasingPollService phasingPollService;
     private final TransactionValidator transactionValidator;
 
@@ -62,7 +58,10 @@ public class PhasingVoteCastingTransactionType extends MessagingTransactionType 
 
     @Override
     public Fee getBaselineFee(Transaction transaction) {
-        return PHASING_VOTE_FEE;
+        return getFeeFactory().createSizeBased(BigDecimal.ONE, BigDecimal.ONE, (tx, app)-> {
+            MessagingPhasingVoteCasting attachment = (MessagingPhasingVoteCasting) tx.getAttachment();
+            return attachment.getTransactionFullHashes().size();
+        }, 1);
     }
 
     @Override
@@ -89,7 +88,7 @@ public class PhasingVoteCastingTransactionType extends MessagingTransactionType 
         List<byte[]> hashes = attachment.getTransactionFullHashes();
         long voterId = transaction.getSenderId();
         for (byte[] hash : hashes) {
-            long phasedTransactionId = Convert.fullHashToId(hash);
+            long phasedTransactionId = Convert.transactionFullHashToId(hash);
             PhasingPollResult result = phasingPollService.getResult(phasedTransactionId);
             if (result != null) {
                 throw new AplException.NotCurrentlyValidException("Phasing poll " + phasedTransactionId + " is already finished");
@@ -150,7 +149,7 @@ public class PhasingVoteCastingTransactionType extends MessagingTransactionType 
             throw new AplException.NotValidException("No more than " + Constants.MAX_PHASING_VOTE_TRANSACTIONS + " votes allowed for two-phased multi-voting");
         }
         for (byte[] hash : hashes) {
-            long phasedTransactionId = Convert.fullHashToId(hash);
+            long phasedTransactionId = Convert.transactionFullHashToId(hash);
             if (phasedTransactionId == 0) {
                 throw new AplException.NotValidException("Invalid phased transactionFullHash " + Convert.toHexString(hash));
             }
@@ -162,7 +161,7 @@ public class PhasingVoteCastingTransactionType extends MessagingTransactionType 
         MessagingPhasingVoteCasting attachment = (MessagingPhasingVoteCasting) transaction.getAttachment();
         List<byte[]> hashes = attachment.getTransactionFullHashes();
         for (byte[] hash : hashes) {
-            phasingPollService.addVote(transaction, senderAccount, Convert.fullHashToId(hash));
+            phasingPollService.addVote(transaction, senderAccount, Convert.transactionFullHashToId(hash));
         }
     }
 

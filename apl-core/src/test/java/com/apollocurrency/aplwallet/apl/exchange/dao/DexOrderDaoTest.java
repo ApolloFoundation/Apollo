@@ -15,7 +15,7 @@ import com.apollocurrency.aplwallet.apl.dex.core.model.HeightDbIdRequest;
 import com.apollocurrency.aplwallet.apl.dex.core.model.OrderDbIdPaginationDbRequest;
 import com.apollocurrency.aplwallet.apl.dex.core.model.OrderType;
 import com.apollocurrency.aplwallet.apl.extension.DbExtension;
-import com.apollocurrency.aplwallet.apl.util.cdi.transaction.JdbiHandleFactory;
+import com.apollocurrency.aplwallet.apl.testutil.DbUtils;
 import com.apollocurrency.aplwallet.apl.util.cdi.transaction.JdbiTransactionalSqlObjectDaoProxyInvocationHandler;
 import lombok.extern.slf4j.Slf4j;
 import org.junit.jupiter.api.BeforeEach;
@@ -39,9 +39,7 @@ class DexOrderDaoTest extends DbContainerBaseTest {
 
     @BeforeEach
     void setUp() {
-        JdbiHandleFactory jdbiHandleFactory = new JdbiHandleFactory();
-        jdbiHandleFactory.setJdbi(extension.getDatabaseManager().getJdbi());
-        dexOrderDao = JdbiTransactionalSqlObjectDaoProxyInvocationHandler.createProxy(jdbiHandleFactory, DexOrderDao.class);
+        dexOrderDao = JdbiTransactionalSqlObjectDaoProxyInvocationHandler.createProxy(DbUtils.createJdbiHandleFactory(extension.getDatabaseManager()), DexOrderDao.class);
         td = new DexTestData();
     }
 
@@ -52,6 +50,35 @@ class DexOrderDaoTest extends DbContainerBaseTest {
             DexOrderSortBy.PAIR_RATE, DBSortOrder.DESC);
 
         assertEquals(List.of(td.ORDER_SPA_2, td.ORDER_SEA_7, td.ORDER_SEA_3), orders); // sorted by pair rate desc
+    }
+
+    @Test
+    void testGetOrdersWithoutOffset() {
+        List<DexOrder> orders = dexOrderDao.getOrders(
+            DexOrderDBRequest.builder().limit(2).build(),
+            DexOrderSortBy.DB_ID, DBSortOrder.ASC);
+
+        assertEquals(List.of(td.ORDER_BEA_1, td.ORDER_SPA_2), orders); // sorted by pair rate desc
+    }
+
+    @Test
+    void testGetOrdersWithoutLimitAndOffset() {
+        List<DexOrder> orders = dexOrderDao.getOrders(
+            DexOrderDBRequest.builder().build(),
+            DexOrderSortBy.DB_ID, DBSortOrder.ASC);
+
+        assertEquals(List.of(
+            td.ORDER_BEA_1,
+            td.ORDER_SPA_2,
+            td.ORDER_BPB_1,
+            td.ORDER_SEA_3,
+            td.ORDER_BEA_4,
+            td.ORDER_BPA_5,
+            td.ORDER_BEA_6,
+            td.ORDER_BPB_2,
+            td.ORDER_SEA_7,
+            td.ORDER_BEA_8
+        ), orders); // sorted by pair rate desc
     }
 
     @Test

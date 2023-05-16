@@ -4,6 +4,8 @@
 package com.apollocurrency.aplwallet.apl.core.transaction.messages;
 
 import com.apollocurrency.aplwallet.apl.crypto.Convert;
+import lombok.EqualsAndHashCode;
+import lombok.ToString;
 import org.json.simple.JSONObject;
 
 import java.nio.ByteBuffer;
@@ -11,6 +13,8 @@ import java.nio.ByteBuffer;
 /**
  * @author al
  */
+@EqualsAndHashCode(callSuper = true)
+@ToString
 public abstract class MonetarySystemExchangeAttachment extends AbstractAttachment implements MonetarySystemAttachment {
 
     final long currencyId;

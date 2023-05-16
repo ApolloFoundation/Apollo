@@ -6,7 +6,7 @@ package com.apollocurrency.aplwallet.apl.core.transaction.messages;
 
 import org.json.simple.JSONObject;
 
-import javax.inject.Singleton;
+import jakarta.inject.Singleton;
 import java.util.Map;
 
 @Singleton
@@ -16,7 +16,7 @@ public class PrunableEncryptedMessageAppendixParser implements AppendixParser<Pr
         if (!Appendix.hasAppendix(PrunableEncryptedMessageAppendix.APPENDIX_NAME, jsonData)) {
             return null;
         }
-        Map<?,?> encryptedMessageJSON = (Map<?,?>) jsonData.get("encryptedMessage");
+        Map<?, ?> encryptedMessageJSON = (Map<?, ?>) jsonData.get("encryptedMessage");
         if (encryptedMessageJSON != null && encryptedMessageJSON.get("data") == null) {
             throw new RuntimeException("Unencrypted prunable message is not supported");
         }

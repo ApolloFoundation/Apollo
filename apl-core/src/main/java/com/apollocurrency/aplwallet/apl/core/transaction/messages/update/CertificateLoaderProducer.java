@@ -6,8 +6,8 @@ package com.apollocurrency.aplwallet.apl.core.transaction.messages.update;
 
 import com.apollocurrency.aplwallet.apl.util.Constants;
 
-import javax.enterprise.inject.Produces;
-import javax.inject.Singleton;
+import jakarta.enterprise.inject.Produces;
+import jakarta.inject.Singleton;
 
 @Singleton
 public class CertificateLoaderProducer {

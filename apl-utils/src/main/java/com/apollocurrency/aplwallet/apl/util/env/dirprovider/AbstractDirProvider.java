@@ -5,9 +5,9 @@
 package com.apollocurrency.aplwallet.apl.util.env.dirprovider;
 
 import com.apollocurrency.aplwallet.apl.util.StringValidator;
+import jakarta.enterprise.inject.Produces;
+import jakarta.inject.Named;
 
-import javax.enterprise.inject.Produces;
-import javax.inject.Named;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.Objects;
@@ -77,7 +77,7 @@ public abstract class AbstractDirProvider implements DirProvider {
     @Override
     public Path getDbDir() {
         return dbDir == null
-            ? Paths.get(baseDir, applicationName + "-db", (chainId))
+            ? Paths.get(baseDir, applicationName + "-db")
             : dbDir;
     }
 

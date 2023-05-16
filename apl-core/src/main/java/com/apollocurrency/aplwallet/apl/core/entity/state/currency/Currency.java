@@ -6,19 +6,17 @@ package com.apollocurrency.aplwallet.apl.core.entity.state.currency;
 
 import com.apollocurrency.aplwallet.apl.core.dao.state.currency.CurrencyTable;
 import com.apollocurrency.aplwallet.apl.core.dao.state.keyfactory.DbKey;
-import com.apollocurrency.aplwallet.apl.core.entity.blockchain.Transaction;
+import com.apollocurrency.aplwallet.apl.core.model.Transaction;
 import com.apollocurrency.aplwallet.apl.core.entity.state.derived.VersionedDeletableEntity;
-import com.apollocurrency.aplwallet.apl.core.transaction.messages.MonetarySystemCurrencyIssuance;
+import com.apollocurrency.aplwallet.apl.core.transaction.messages.MonetarySystemCurrencyIssuanceAttachment;
 import lombok.Getter;
 import lombok.Setter;
-import lombok.ToString;
 
 import java.sql.ResultSet;
 import java.sql.SQLException;
 
 @Getter
 @Setter
-@ToString(callSuper = true)
 public class Currency extends VersionedDeletableEntity {
 
     private long id;
@@ -41,7 +39,7 @@ public class Currency extends VersionedDeletableEntity {
     private byte decimals;
     private CurrencySupply currencySupply;
 
-    public Currency(Transaction transaction, MonetarySystemCurrencyIssuance attachment, int height) {
+    public Currency(Transaction transaction, MonetarySystemCurrencyIssuanceAttachment attachment, int height) {
         super(null, height);
         this.id = transaction.getId();
         super.setDbKey(CurrencyTable.currencyDbKeyFactory.newKey(this.id));
@@ -118,6 +116,36 @@ public class Currency extends VersionedDeletableEntity {
 
     public boolean is(CurrencyType type) {
         return (this.type & type.getCode()) != 0;
+    }
+
+    @Override
+    public String toString() {
+        return "Currency{" +
+            "id=" + id +
+            ", accountId=" + accountId +
+            ", name='" + name + '\'' +
+            ", nameLower='" + nameLower + '\'' +
+            ", code='" + code + '\'' +
+            ", description='" + description + '\'' +
+            ", type=" + type +
+            ", initialSupply=" + initialSupply +
+            ", reserveSupply=" + reserveSupply +
+            ", maxSupply=" + maxSupply +
+            ", creationHeight=" + creationHeight +
+            ", issuanceHeight=" + issuanceHeight +
+            ", minReservePerUnitATM=" + minReservePerUnitATM +
+            ", minDifficulty=" + minDifficulty +
+            ", maxDifficulty=" + maxDifficulty +
+            ", ruleset=" + ruleset +
+            ", algorithm=" + algorithm +
+            ", decimals=" + decimals +
+            ", currencySupply=" + currencySupply +
+            ", deleted=" + isDeleted() +
+            ", latest=" + isLatest() +
+            ", dbKey=" + getDbKey() +
+            ", dbId=" + getDbId() +
+            ", height=" + getHeight() +
+            '}';
     }
 
 }

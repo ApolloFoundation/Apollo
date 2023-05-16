@@ -1,11 +1,15 @@
 package com.apollocurrency.aplwallet.apl.dex.eth.model;
 
 import com.apollocurrency.aplwallet.api.dto.EthGasInfoDto;
+import com.apollocurrency.aplwallet.apl.dex.eth.utils.EthUtil;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
+
+import java.math.BigDecimal;
+import java.util.Map;
 
 @Data
 @JsonIgnoreProperties(ignoreUnknown = true)
@@ -13,17 +17,17 @@ import lombok.NoArgsConstructor;
 @NoArgsConstructor
 public class EthChainGasInfoImpl implements EthGasInfo {
     /**
-     * wei
+     * Gwei
      */
-    private Double fastSpeedPrice;
+    private Long fastSpeedPrice;
     /**
-     * wei
+     * Gwei
      */
-    private Double averageSpeedPrice;
+    private Long averageSpeedPrice;
     /**
-     * wei
+     * Gwei
      */
-    private Double safeLowSpeedPrice;
+    private Long safeLowSpeedPrice;
 
 
     public EthGasInfoDto toDto() {
@@ -35,39 +39,11 @@ public class EthChainGasInfoImpl implements EthGasInfo {
         return ethGasInfoDto;
     }
 
-    /**
-     * Gwei
-     */
-    public Long getFastSpeedPrice() {
-        return Double.valueOf(fastSpeedPrice).longValue();
-    }
-
-    @JsonProperty("fast")
-    public void setFastSpeedPrice(Double fastSpeedPrice) {
-        this.fastSpeedPrice = fastSpeedPrice;
-    }
-
-    /**
-     * Gwei
-     */
-    public Long getAverageSpeedPrice() {
-        return Double.valueOf(averageSpeedPrice).longValue();
-    }
-
-    @JsonProperty("standard")
-    public void setAverageSpeedPrice(Double averageSpeedPrice) {
-        this.averageSpeedPrice = averageSpeedPrice;
-    }
-
-    /**
-     * Gwei
-     */
-    public Long getSafeLowSpeedPrice() {
-        return Double.valueOf(safeLowSpeedPrice).longValue();
-    }
-
-    @JsonProperty("safeLow")
-    public void setSafeLowSpeedPrice(Double safeLowSpeedPrice) {
-        this.safeLowSpeedPrice = safeLowSpeedPrice;
+    @JsonProperty("data")
+    public void setData(Map<String, Object> data) {
+        // received data in wei
+        this.fastSpeedPrice = EthUtil.weiToGwei(BigDecimal.valueOf((Long) data.get("fast"))).toBigInteger().longValueExact();
+        this.averageSpeedPrice = EthUtil.weiToGwei(BigDecimal.valueOf((Long) data.get("standard"))).toBigInteger().longValueExact();
+        this.safeLowSpeedPrice = EthUtil.weiToGwei(BigDecimal.valueOf((Long) data.get("slow"))).toBigInteger().longValueExact();
     }
 }

@@ -5,15 +5,17 @@
 package com.apollocurrency.aplwallet.apl.core.db;
 
 import com.apollocurrency.aplwallet.apl.core.dao.DBContainerRootTest;
-import com.apollocurrency.aplwallet.apl.core.dao.TransactionalDataSource;
-import com.apollocurrency.aplwallet.apl.core.service.appdata.impl.DatabaseManagerImpl;
 import com.apollocurrency.aplwallet.apl.core.shard.ShardManagement;
 import com.apollocurrency.aplwallet.apl.data.DbTestData;
 import com.apollocurrency.aplwallet.apl.db.updater.ShardAllScriptsDBUpdater;
 import com.apollocurrency.aplwallet.apl.db.updater.ShardInitDBUpdater;
+import com.apollocurrency.aplwallet.apl.extension.TemporaryFolderExtension;
 import com.apollocurrency.aplwallet.apl.testutil.DbPopulator;
 import com.apollocurrency.aplwallet.apl.util.ThreadUtils;
-import com.apollocurrency.aplwallet.apl.util.cdi.transaction.JdbiHandleFactory;
+import com.apollocurrency.aplwallet.apl.util.db.DatabaseAdministratorFactoryImpl;
+import com.apollocurrency.aplwallet.apl.util.db.SelfInitializableDataSourceCreator;
+import com.apollocurrency.aplwallet.apl.util.db.TransactionalDataSource;
+import com.apollocurrency.aplwallet.apl.util.env.dirprovider.DirProvider;
 import com.apollocurrency.aplwallet.apl.util.injectable.DbProperties;
 import com.apollocurrency.aplwallet.apl.util.injectable.PropertiesHolder;
 import lombok.extern.slf4j.Slf4j;
@@ -21,6 +23,10 @@ import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
+import org.junit.jupiter.api.extension.RegisterExtension;
+import org.mockito.Mock;
+import org.mockito.junit.jupiter.MockitoExtension;
 
 import java.io.IOException;
 import java.sql.Connection;
@@ -29,6 +35,7 @@ import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.Comparator;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Set;
@@ -49,16 +56,21 @@ import static org.mockito.Mockito.verify;
 
 @Slf4j
 @Tag("slow")
+@ExtendWith(MockitoExtension.class)
 class DatabaseManagerTest extends DBContainerRootTest {
     private static PropertiesHolder propertiesHolder = new PropertiesHolder();
     private DbProperties baseDbProperties;
     private DatabaseManagerImpl databaseManager;
+    @RegisterExtension
+    TemporaryFolderExtension tempFolder = new TemporaryFolderExtension();
+    @Mock
+    DirProvider dirProvider;
 
     @BeforeEach
     public void setUp() throws IOException {
         baseDbProperties = DbTestData.getDbFileProperties(mariaDBContainer);
         baseDbProperties.setDbParams("&TC_DAEMON=true&TC_REUSABLE=true");
-        databaseManager = new DatabaseManagerImpl(baseDbProperties, propertiesHolder, new JdbiHandleFactory());
+        databaseManager = new DatabaseManagerImpl(baseDbProperties, new SelfInitializableDataSourceCreator(new DatabaseAdministratorFactoryImpl(dirProvider), propertiesHolder));
         DbPopulator dbPopulator = new DbPopulator(null, "db/db-manager-data.sql");
         dbPopulator.initDb(databaseManager.getDataSource());
         dbPopulator.populateDb(databaseManager.getDataSource());
@@ -74,7 +86,6 @@ class DatabaseManagerTest extends DBContainerRootTest {
 
     @Test
     void init() {
-        assertNotNull(databaseManager.getJdbi());
         TransactionalDataSource dataSource = databaseManager.getDataSource();
         assertNotNull(dataSource);
     }
@@ -82,7 +93,6 @@ class DatabaseManagerTest extends DBContainerRootTest {
 
     @Test
     void createShardInitTableSchemaVersion() throws Exception {
-        assertNotNull(databaseManager.getJdbi());
         TransactionalDataSource dataSource = databaseManager.getDataSource();
         assertNotNull(dataSource);
         TransactionalDataSource newShardDb = ((ShardManagement) databaseManager).createOrUpdateShard(1L, new ShardInitDBUpdater());
@@ -276,4 +286,34 @@ class DatabaseManagerTest extends DBContainerRootTest {
 
     }
 
+    @Test
+    void getSortedDatasources_ASC() {
+        Iterator<TransactionalDataSource> iterator = databaseManager.getAllSortedDataSourcesIterator(Comparator.naturalOrder());
+        List<TransactionalDataSource> dataSources = new ArrayList<>();
+        while (iterator.hasNext()) {
+            dataSources.add(iterator.next());
+        }
+        assertEquals(3, dataSources.size());
+        assertFalse(dataSources.get(0).getDbIdentity().isEmpty());
+        assertEquals("apl_blockchain_b5d7b6_shard_2", dataSources.get(0).getDbIdentity().get());
+        assertFalse(dataSources.get(1).getDbIdentity().isEmpty());
+        assertEquals("apl_blockchain_b5d7b6_shard_3", dataSources.get(1).getDbIdentity().get());
+        assertTrue(dataSources.get(2).getDbIdentity().isEmpty()); // main data source
+    }
+
+    @Test
+    void getSortedDatasources_DESC() {
+        Iterator<TransactionalDataSource> iterator = databaseManager.getAllSortedDataSourcesIterator(Comparator.reverseOrder());
+        List<TransactionalDataSource> dataSources = new ArrayList<>();
+        while (iterator.hasNext()) {
+            dataSources.add(iterator.next());
+        }
+        assertEquals(3, dataSources.size());
+        assertTrue(dataSources.get(0).getDbIdentity().isEmpty()); // main data source
+        assertFalse(dataSources.get(1).getDbIdentity().isEmpty());
+        assertEquals("apl_blockchain_b5d7b6_shard_3", dataSources.get(1).getDbIdentity().get());
+        assertFalse(dataSources.get(2).getDbIdentity().isEmpty());
+        assertEquals("apl_blockchain_b5d7b6_shard_2", dataSources.get(2).getDbIdentity().get());
+
+    }
 }

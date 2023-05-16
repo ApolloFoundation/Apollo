@@ -20,20 +20,21 @@
 
 package com.apollocurrency.aplwallet.apl.core.http.post;
 
-import com.apollocurrency.aplwallet.apl.core.entity.blockchain.Transaction;
-import com.apollocurrency.aplwallet.apl.core.entity.blockchain.UnconfirmedTransaction;
+import com.apollocurrency.aplwallet.apl.core.model.Transaction;
+import com.apollocurrency.aplwallet.apl.core.model.UnconfirmedTransaction;
 import com.apollocurrency.aplwallet.apl.core.http.APITag;
 import com.apollocurrency.aplwallet.apl.core.http.AbstractAPIRequestHandler;
 import com.apollocurrency.aplwallet.apl.core.http.HttpParameterParserUtil;
 import com.apollocurrency.aplwallet.apl.core.http.JSONData;
 import com.apollocurrency.aplwallet.apl.core.http.ParameterException;
+import com.apollocurrency.aplwallet.apl.core.service.blockchain.UnconfirmedTransactionCreator;
 import com.apollocurrency.aplwallet.apl.crypto.Convert;
-import com.apollocurrency.aplwallet.apl.util.exception.AplException;
 import org.json.simple.JSONObject;
 import org.json.simple.JSONStreamAware;
 
-import javax.enterprise.inject.Vetoed;
-import javax.servlet.http.HttpServletRequest;
+import jakarta.enterprise.inject.Vetoed;
+import jakarta.enterprise.inject.spi.CDI;
+import jakarta.servlet.http.HttpServletRequest;
 import java.util.Collections;
 
 /**
@@ -43,7 +44,7 @@ import java.util.Collections;
  * Unlike {@link BroadcastTransaction}, does not validate the transaction and requires adminPassword parameter to avoid
  * abuses. Also does not re-broadcast the transaction and does not store it as unconfirmed transaction.
  * <p>
- * Clients first submit their transaction using {@link CreateTransaction} without providing the secret phrase.<br>
+ * Clients first submit their transaction using {@link CreateTransactionHandler} without providing the secret phrase.<br>
  * In response the client receives the unsigned transaction JSON and transaction bytes.
  * <p>
  * The client then signs and submits the signed transaction using {@link SendTransaction}
@@ -64,8 +65,17 @@ import java.util.Collections;
 @Vetoed
 public final class SendTransaction extends AbstractAPIRequestHandler {
 
+    private UnconfirmedTransactionCreator unconfirmedTransactionCreator;
+
     public SendTransaction() {
         super(new APITag[]{APITag.TRANSACTIONS}, "transactionJSON", "transactionBytes", "prunableAttachmentJSON");
+    }
+
+    protected UnconfirmedTransactionCreator lookupUnconfirmedTransactionCreator() {
+        if (unconfirmedTransactionCreator == null) {
+            unconfirmedTransactionCreator = CDI.current().select(UnconfirmedTransactionCreator.class).get();
+        }
+        return unconfirmedTransactionCreator;
     }
 
     @Override
@@ -77,12 +87,14 @@ public final class SendTransaction extends AbstractAPIRequestHandler {
 
         JSONObject response = new JSONObject();
         try {
-            Transaction.Builder builder = HttpParameterParserUtil.parseTransaction(transactionJSON, transactionBytes, prunableAttachmentJSON);
-            UnconfirmedTransaction transaction = new UnconfirmedTransaction(builder.build(), timeService.systemTimeMillis());
+            Transaction tx = HttpParameterParserUtil.parseTransaction(transactionJSON, transactionBytes, prunableAttachmentJSON);
+
+            UnconfirmedTransaction transaction = lookupUnconfirmedTransactionCreator().from(tx, timeService.systemTimeMillis());
+
             lookupPeersService().sendToSomePeers(Collections.singletonList(transaction));
             response.put("transaction", transaction.getStringId());
             response.put("fullHash", transaction.getFullHashString());
-        } catch (AplException.NotValidException | RuntimeException e) {
+        } catch (RuntimeException e) {
             JSONData.putException(response, e, "Failed to broadcast transaction");
         }
         return response;

@@ -23,16 +23,15 @@ package com.apollocurrency.aplwallet.apl.core.dao.state;
 import com.apollocurrency.aplwallet.apl.core.dao.state.derived.EntityDbTable;
 import com.apollocurrency.aplwallet.apl.core.dao.state.keyfactory.DbKey;
 import com.apollocurrency.aplwallet.apl.core.dao.state.keyfactory.LinkKeyFactory;
-import com.apollocurrency.aplwallet.apl.core.db.DbIterator;
-import com.apollocurrency.aplwallet.apl.core.db.DbUtils;
+import com.apollocurrency.aplwallet.apl.core.service.fulltext.FullTextOperationData;
+import com.apollocurrency.aplwallet.apl.util.db.DbIterator;
+import com.apollocurrency.aplwallet.apl.util.db.DbUtils;
 import com.apollocurrency.aplwallet.apl.core.entity.state.Trade;
-import com.apollocurrency.aplwallet.apl.core.service.appdata.DatabaseManager;
-import com.apollocurrency.aplwallet.apl.core.service.state.DerivedTablesRegistry;
-import com.apollocurrency.aplwallet.apl.core.shard.observer.DeleteOnTrimData;
+import com.apollocurrency.aplwallet.apl.core.db.DatabaseManager;
 
-import javax.enterprise.event.Event;
-import javax.inject.Inject;
-import javax.inject.Singleton;
+import jakarta.enterprise.event.Event;
+import jakarta.inject.Inject;
+import jakarta.inject.Singleton;
 import javax.sql.DataSource;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
@@ -54,11 +53,10 @@ public class TradeTable extends EntityDbTable<Trade> {
     };
 
     @Inject
-    public TradeTable(DerivedTablesRegistry derivedDbTablesRegistry,
-                      DatabaseManager databaseManager,
-                      Event<DeleteOnTrimData> deleteOnTrimDataEvent) {
+    public TradeTable(DatabaseManager databaseManager,
+                      Event<FullTextOperationData> fullTextOperationDataEvent) {
         super("trade", TRADE_DB_KEY_FACTORY, false, null,
-            derivedDbTablesRegistry, databaseManager, null, deleteOnTrimDataEvent);
+                databaseManager, fullTextOperationDataEvent);
     }
 
     public void save(final Connection con, final Trade trade) throws SQLException {

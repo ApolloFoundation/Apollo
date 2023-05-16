@@ -43,7 +43,7 @@ public class ChildAccountAttachment extends AbstractAttachment {
     public ChildAccountAttachment(JSONObject attachmentData) {
         super(attachmentData);
         this.addressScope = AddressScope.from(((Number) attachmentData.get("addressScope")).intValue());
-        this.childCount = (short) (((Number) attachmentData.get("childCount")).intValue());
+        this.childCount = (((Number) attachmentData.get("childCount")).shortValue());
         childPublicKey = new LinkedList<>();
         List<?> keys = (List<?>) attachmentData.get("childPublicKeys");
         for (Object publicKey : keys) {
@@ -65,7 +65,6 @@ public class ChildAccountAttachment extends AbstractAttachment {
     }
 
     private void putDataBytes(ByteBuffer buffer) {
-        buffer.order(ByteOrder.LITTLE_ENDIAN);
         buffer.put(addressScope.getCode());
         buffer.putShort(childCount);
         childPublicKey.forEach(buffer::put);

@@ -21,8 +21,9 @@
 package com.apollocurrency.aplwallet.apl.core.http;
 
 import com.apollocurrency.aplwallet.api.dto.auth.TwoFactorAuthParameters;
+import com.apollocurrency.aplwallet.apl.core.model.Transaction;
+import com.apollocurrency.aplwallet.apl.core.service.blockchain.TransactionBuilderFactory;
 import com.apollocurrency.aplwallet.apl.core.chainid.BlockchainConfig;
-import com.apollocurrency.aplwallet.apl.core.entity.blockchain.Transaction;
 import com.apollocurrency.aplwallet.apl.core.entity.state.account.Account;
 import com.apollocurrency.aplwallet.apl.core.entity.state.alias.Alias;
 import com.apollocurrency.aplwallet.apl.core.entity.state.asset.Asset;
@@ -35,7 +36,7 @@ import com.apollocurrency.aplwallet.apl.core.entity.state.dgs.DGSPurchase;
 import com.apollocurrency.aplwallet.apl.core.entity.state.poll.Poll;
 import com.apollocurrency.aplwallet.apl.core.entity.state.shuffling.Shuffling;
 import com.apollocurrency.aplwallet.apl.core.model.PhasingParams;
-import com.apollocurrency.aplwallet.apl.core.monetary.HoldingType;
+import com.apollocurrency.aplwallet.apl.core.model.HoldingType;
 import com.apollocurrency.aplwallet.apl.core.rest.utils.RestParametersParser;
 import com.apollocurrency.aplwallet.apl.core.service.appdata.TimeService;
 import com.apollocurrency.aplwallet.apl.core.service.blockchain.Blockchain;
@@ -48,7 +49,6 @@ import com.apollocurrency.aplwallet.apl.core.service.state.account.AccountServic
 import com.apollocurrency.aplwallet.apl.core.service.state.asset.AssetService;
 import com.apollocurrency.aplwallet.apl.core.service.state.currency.CurrencyExchangeOfferFacade;
 import com.apollocurrency.aplwallet.apl.core.service.state.currency.CurrencyService;
-import com.apollocurrency.aplwallet.apl.core.transaction.TransactionBuilder;
 import com.apollocurrency.aplwallet.apl.core.transaction.messages.Appendix;
 import com.apollocurrency.aplwallet.apl.core.transaction.messages.EncryptToSelfMessageAppendix;
 import com.apollocurrency.aplwallet.apl.core.transaction.messages.EncryptedMessageAppendix;
@@ -72,10 +72,10 @@ import org.json.simple.JSONValue;
 import org.json.simple.parser.ParseException;
 import org.slf4j.Logger;
 
-import javax.enterprise.inject.spi.CDI;
-import javax.servlet.ServletException;
-import javax.servlet.http.HttpServletRequest;
-import javax.servlet.http.Part;
+import jakarta.enterprise.inject.spi.CDI;
+import jakarta.servlet.ServletException;
+import jakarta.servlet.http.HttpServletRequest;
+import jakarta.servlet.http.Part;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
@@ -135,7 +135,7 @@ public final class HttpParameterParserUtil {
     protected static AdminPasswordVerifier apw;
     protected static ElGamalEncryptor elGamal;
     protected static TimeService timeService;
-    private static AliasService ALIAS_SERVICE;// = CDI.current().select(AliasService.class).get();
+    private static AliasService aliasService;// = CDI.current().select(AliasService.class).get();
     private static BlockchainConfig blockchainConfig;
     private static Blockchain blockchain;
     private static AccountService accountService;
@@ -145,7 +145,7 @@ public final class HttpParameterParserUtil {
     private static CurrencyExchangeOfferFacade currencyExchangeOfferFacade;
     private static CurrencyService currencyService;
     private static ShufflingService shufflingService;
-    private static TransactionBuilder transactionBuilder;
+    private static TransactionBuilderFactory transactionBuilderFactory;
     private static KMSService KMSService;
 
     private HttpParameterParserUtil() {
@@ -565,14 +565,6 @@ public final class HttpParameterParserUtil {
         return lookupElGamalEncryptor().elGamalDecrypt(secretPhrase);
     }
 
-    public static byte[] getPublicKey(HttpServletRequest req) throws ParameterException {
-        return getPublicKey(req, null);
-    }
-
-    public static byte[] getPublicKey(HttpServletRequest req, String prefix) throws ParameterException {
-        return getPublicKey(req, prefix, 0);
-    }
-
     public static byte[] getPublicKey(HttpServletRequest req, long accountId) throws ParameterException {
         return getPublicKey(req, null, accountId);
     }
@@ -585,23 +577,29 @@ public final class HttpParameterParserUtil {
         String secretPhraseParam = prefix == null ? "secretPhrase" : (prefix + "SecretPhrase");
         String publicKeyParam = prefix == null ? "publicKey" : (prefix + "PublicKey");
         String passphraseParam = prefix == null ? "passphrase" : (prefix + "Passphrase");
+        String accountIdParam = prefix == null ? "account" : (prefix + "Account");
         String secretPhrase = getSecretPhrase(req, secretPhraseParam, false);
         if (secretPhrase == null) {
             try {
                 byte[] publicKey = Convert.parseHexString(Convert.emptyToNull(req.getParameter(publicKeyParam)));
                 if (publicKey == null) {
                     String passphrase = Convert.emptyToNull(HttpParameterParserUtil.getPassphrase(req, passphraseParam, false));
-                    if (accountId == 0 || passphrase == null) {
+                    if (passphrase == null) {
                         if (isMandatory) {
                             throw new ParameterException(missing(secretPhraseParam, publicKeyParam, passphraseParam));
                         }
+                    } else if (accountId == 0) {
+                        if (isMandatory) {
+                            throw new ParameterException(missing(accountIdParam));
+                        }
                     } else {
                         byte[] secretBytes = lookupAccountKMSv1().getAplSecretBytes(accountId, passphrase);
-
+                        if (secretBytes == null) {
+                            throw new ParameterException(incorrect("account id or passphrase"));
+                        }
                         return Crypto.getPublicKey(Crypto.getKeySeed(secretBytes));
                     }
                 } else {
-
                     if (!Crypto.isCanonicalPublicKey(publicKey)) {
                         if (isMandatory) {
                             throw new ParameterException(incorrect(publicKeyParam));
@@ -811,7 +809,7 @@ public final class HttpParameterParserUtil {
             throw new ParameterException(missing("query", "tag"));
         }
         if (!tags.isEmpty()) {
-            StringJoiner stringJoiner = new StringJoiner(" AND TAGS:", "TAGS:", "");
+            StringJoiner stringJoiner = new StringJoiner(" AND tags:", "tags:", "");
             for (String tag : Search.parseTags(tags, 0, Integer.MAX_VALUE, Integer.MAX_VALUE)) {
                 stringJoiner.add(tag);
             }
@@ -820,7 +818,7 @@ public final class HttpParameterParserUtil {
         return query;
     }
 
-    public static Transaction.Builder parseTransaction(String transactionJSON, String transactionBytes, String prunableAttachmentJSON) throws ParameterException {
+    public static Transaction parseTransaction(String transactionJSON, String transactionBytes, String prunableAttachmentJSON) throws ParameterException {
         if (transactionBytes == null && transactionJSON == null) {
             throw new ParameterException(MISSING_TRANSACTION_BYTES_OR_JSON);
         }
@@ -833,7 +831,7 @@ public final class HttpParameterParserUtil {
         if (transactionJSON != null) {
             try {
                 JSONObject json = (JSONObject) JSONValue.parseWithException(transactionJSON);
-                return lookupTransactionBuilder().newTransactionBuilder(json);
+                return lookupTransactionBuilderFactory().newTransaction(json);
             } catch (AplException.ValidationException | RuntimeException | ParseException e) {
                 LOG.debug(e.getMessage(), e);
                 JSONObject response = new JSONObject();
@@ -844,7 +842,7 @@ public final class HttpParameterParserUtil {
             try {
                 byte[] bytes = Convert.parseHexString(transactionBytes);
                 JSONObject prunableAttachments = prunableAttachmentJSON == null ? null : (JSONObject) JSONValue.parseWithException(prunableAttachmentJSON);
-                return lookupTransactionBuilder().newTransactionBuilder(bytes, prunableAttachments);
+                return lookupTransactionBuilderFactory().newTransaction(bytes, prunableAttachments);
             } catch (AplException.ValidationException | RuntimeException | ParseException e) {
                 LOG.debug(e.getMessage(), e);
                 JSONObject response = new JSONObject();
@@ -1155,11 +1153,29 @@ public final class HttpParameterParserUtil {
 
     }
 
+    public static void resetCDIComponents() {
+        apw = null;
+        elGamal = null;
+        timeService = null;
+        aliasService = null;
+        blockchainConfig = null;
+        blockchain = null;
+        accountService = null;
+        accountPublicKeyService = null;
+        assetService = null;
+        POLL_SERVICE = null;
+        currencyExchangeOfferFacade = null;
+        currencyService = null;
+        shufflingService = null;
+        transactionBuilderFactory = null;
+        KMSService = null;
+    }
+
     private static AliasService lookupAliasService() {
-        if (ALIAS_SERVICE == null) {
-            ALIAS_SERVICE = CDI.current().select(AliasService.class).get();
+        if (aliasService == null) {
+            aliasService = CDI.current().select(AliasService.class).get();
         }
-        return ALIAS_SERVICE;
+        return aliasService;
     }
 
     private static AdminPasswordVerifier lookupAdminPasswordVerifier() {
@@ -1239,11 +1255,11 @@ public final class HttpParameterParserUtil {
         return shufflingService;
     }
 
-    private static TransactionBuilder lookupTransactionBuilder() {
-        if (transactionBuilder == null) {
-            transactionBuilder = CDI.current().select(TransactionBuilder.class).get();
+    private static TransactionBuilderFactory lookupTransactionBuilderFactory() {
+        if (transactionBuilderFactory == null) {
+            transactionBuilderFactory = CDI.current().select(TransactionBuilderFactory.class).get();
         }
-        return transactionBuilder;
+        return transactionBuilderFactory;
     }
 
     private static KMSService lookupAccountKMSv1() {

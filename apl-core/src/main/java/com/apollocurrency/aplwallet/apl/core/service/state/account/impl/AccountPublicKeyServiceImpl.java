@@ -11,11 +11,13 @@ import com.apollocurrency.aplwallet.apl.core.service.state.account.AccountPublic
 import com.apollocurrency.aplwallet.apl.core.service.state.account.AccountService;
 import com.apollocurrency.aplwallet.apl.core.service.state.account.PublicKeyDao;
 import com.apollocurrency.aplwallet.apl.core.utils.EncryptedDataUtil;
+import com.apollocurrency.aplwallet.apl.crypto.Convert;
 import com.apollocurrency.aplwallet.apl.crypto.EncryptedData;
 import lombok.extern.slf4j.Slf4j;
 
-import javax.inject.Inject;
-import javax.inject.Singleton;
+import jakarta.enterprise.event.Event;
+import jakarta.inject.Inject;
+import jakarta.inject.Singleton;
 import java.util.Arrays;
 import java.util.List;
 
@@ -27,11 +29,13 @@ import java.util.List;
 public class AccountPublicKeyServiceImpl implements AccountPublicKeyService {
     private final BlockChainInfoService blockChainInfoService;
     private final PublicKeyDao publicKeyDao;
+    private final Event<PublicKey> publicKeyEvent;
 
     @Inject
-    public AccountPublicKeyServiceImpl(BlockChainInfoService blockChainInfoService, PublicKeyDao publicKeyDao) {
+    public AccountPublicKeyServiceImpl(BlockChainInfoService blockChainInfoService, PublicKeyDao publicKeyDao, Event<PublicKey> publicKeyEvent) {
         this.blockChainInfoService = blockChainInfoService;
         this.publicKeyDao = publicKeyDao;
+        this.publicKeyEvent = publicKeyEvent;
     }
 
     @Override
@@ -141,6 +145,8 @@ public class AccountPublicKeyServiceImpl implements AccountPublicKeyService {
         //Such cases happens, because of air drop was on accounts id.
         if (publicKey.getPublicKey() == null) {
             publicKey.setPublicKey(key);
+            log.info("Assign public key for account {}, key {}, height {}", Long.toUnsignedString(account.getId()), Convert.toHexString(key),
+                blockChainInfoService.getHeight());
             insertPublicKey(publicKey, isGenesis);
         } else if (!Arrays.equals(publicKey.getPublicKey(), key)) {
             throw new IllegalStateException("Public key mismatch");
@@ -149,7 +155,10 @@ public class AccountPublicKeyServiceImpl implements AccountPublicKeyService {
                 insertPublicKey(publicKey, isGenesis);
             }
         }
+        // here we should update account cache by (only public key updated)
+        // to ensure that pubic key will be present, when account retrieved from cache
         account.setPublicKey(publicKey);
+        publicKeyEvent.fire(publicKey);
     }
 
     @Override
@@ -168,6 +177,7 @@ public class AccountPublicKeyServiceImpl implements AccountPublicKeyService {
 
     @Override
     public PublicKey insertPublicKey(PublicKey publicKey, boolean isGenesis) {
+        publicKey.setHeight(blockChainInfoService.getHeight());
         if (isGenesis) {
             publicKeyDao.insertGenesis(publicKey);
         } else {

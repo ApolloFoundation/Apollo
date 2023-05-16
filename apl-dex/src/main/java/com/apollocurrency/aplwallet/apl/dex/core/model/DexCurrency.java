@@ -1,5 +1,5 @@
 /*
- * Copyright © 2018-2019 Apollo Foundation
+ * Copyright © 2018-2021 Apollo Foundation
  */
 package com.apollocurrency.aplwallet.apl.dex.core.model;
 
@@ -35,6 +35,15 @@ public enum DexCurrency {
         }
 
         return DexCurrency.values()[ordinal];
+    }
+
+
+    public static DexCurrency getTypeThrowing(int ordinal) {
+        DexCurrency type = getType(ordinal);
+        if (type == null) {
+            throw new IllegalArgumentException("No DexCurrency found by ordinal " + ordinal);
+        }
+        return type;
     }
 
     /**

@@ -26,14 +26,13 @@ public class ProcessLaterTransactionsThread implements Runnable {
     @Override
     public void run() {
         try {
-            batchSizeCalculator.startTiming(System.currentTimeMillis(), batchSizeCalculator.currentBatchSize());
-            try {
-                processor.processDelayedTxs(batchSizeCalculator.currentBatchSize());
-            } catch (Exception e) {
-                log.info("Error processing unconfirmed transactions", e);
-            } finally {
-                batchSizeCalculator.stopTiming(System.currentTimeMillis());
-            }
+            batchSizeCalculator.doTimedOp(batchSize -> {
+                try {
+                    processor.processDelayedTxs(batchSize);
+                } catch (Exception e) {
+                    log.info("Error processing unconfirmed transactions", e);
+                }
+            });
         } catch (Throwable t) {
             log.error("CRITICAL ERROR. PLEASE REPORT TO THE DEVELOPERS.\n" + t.toString());
             t.printStackTrace();

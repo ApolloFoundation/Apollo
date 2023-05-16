@@ -4,7 +4,7 @@
 
 package com.apollocurrency.aplwallet.apl.core.shard;
 
-import javax.enterprise.inject.Vetoed;
+import jakarta.enterprise.inject.Vetoed;
 
 @Vetoed
 public class ShardConstants {

@@ -31,7 +31,7 @@ import org.json.simple.JSONArray;
 import org.json.simple.JSONObject;
 import org.json.simple.JSONStreamAware;
 
-import javax.servlet.http.HttpServletRequest;
+import jakarta.servlet.http.HttpServletRequest;
 import java.util.List;
 
 @Deprecated
@@ -59,7 +59,7 @@ public final class GetAccountCurrencies extends AbstractAPIRequestHandler {
 
         if (currencyId == 0) {
             JSONObject response = new JSONObject();
-            List<AccountCurrency> accountCurrencies = lookupAccountCurrencyService().getCurrenciesByAccount(accountId, height, 0, -1);
+            List<AccountCurrency> accountCurrencies = lookupAccountCurrencyService().getByAccount(accountId, height, 0, -1);
             JSONArray currencyJSON = new JSONArray();
             accountCurrencies.forEach(accountCurrency -> currencyJSON.add(JSONData.accountCurrency(accountCurrency, false, includeCurrencyInfo)));
             response.put("accountCurrencies", currencyJSON);

@@ -6,16 +6,20 @@ package com.apollocurrency.aplwallet.apl.core.chainid;
 
 import com.apollocurrency.aplwallet.apl.util.env.config.BlockchainProperties;
 import com.apollocurrency.aplwallet.apl.util.env.config.Chain;
+import com.apollocurrency.aplwallet.apl.util.env.config.FeaturesHeightRequirement;
 import com.apollocurrency.aplwallet.apl.util.injectable.PropertiesHolder;
 import lombok.extern.slf4j.Slf4j;
 
-import javax.inject.Singleton;
+import jakarta.enterprise.inject.Vetoed;
+import java.util.ArrayList;
 import java.util.Comparator;
+import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
 import java.util.TreeMap;
+import java.util.TreeSet;
 import java.util.function.Function;
 import java.util.function.Predicate;
 import java.util.stream.Collectors;
@@ -25,7 +29,7 @@ import java.util.stream.Collectors;
  */
 
 @Slf4j
-@Singleton
+@Vetoed
 public class BlockchainConfig {
     static final int DEFAULT_MIN_PRUNABLE_LIFETIME = 14 * 1440 * 60; // two weeks in seconds
 
@@ -39,10 +43,8 @@ public class BlockchainConfig {
     private long shufflingDepositAtm;
     private int guaranteedBalanceConfirmations;
     private volatile HeightConfig currentConfig;
-    private volatile Optional<HeightConfig> previousConfig = Optional.empty(); // keep a previous config for easy access
     private Chain chain;
     private TreeMap<Integer, HeightConfig> heightConfigMap = new TreeMap<>();
-    private volatile boolean isJustUpdated = false;
 
     public BlockchainConfig() {
     }
@@ -65,7 +67,7 @@ public class BlockchainConfig {
             .sorted(Comparator.comparing(HeightConfig::getHeight))
             .collect(Collectors.toMap(HeightConfig::getHeight, Function.identity(), (old, newv)-> newv, TreeMap::new));
         currentConfig = heightConfigMap.get(0);
-        log.debug("Switch to chain {} - {}. ChainId - {}", chain.getName(), chain.getDescription(), chain.getChainId());
+        log.info("Switch to chain {} - {}. ChainId - {}", chain.getName(), chain.getDescription(), chain.getChainId());
     }
 
     public HeightConfig getConfigAtHeight(int targetHeight) {
@@ -106,35 +108,6 @@ public class BlockchainConfig {
         }
         log.trace("getPreviousConfigByHeight, targetHeight = '{}' RESULT = {}\n", targetHeight, result);
         return result;
-    }
-
-    public static Predicate<Integer> previousConfig(Integer height) {
-        return targetHeight -> targetHeight < height;
-    }
-
-    private void setFields(Chain chain, int minPrunableLifetime, int maxPrunableLifetime) {
-        this.chain = chain;
-        // These fields could be static constants but some of them should be scaled by blockTime
-        // Block time scaling should be implemented in future
-        this.leasingDelay = 1440;
-        this.minPrunableLifetime = minPrunableLifetime > 0 ? minPrunableLifetime : DEFAULT_MIN_PRUNABLE_LIFETIME;
-        this.shufflingProcessingDeadline = (short) 100;
-        this.lastKnownBlock = 0;
-        this.unconfirmedPoolDepositAtm = Math.multiplyExact(100, chain.getOneAPL());
-        this.shufflingDepositAtm = Math.multiplyExact(1000, chain.getOneAPL());
-        this.guaranteedBalanceConfirmations = 1440;
-        this.enablePruning = maxPrunableLifetime >= 0;
-        this.maxPrunableLifetime = enablePruning ? Math.max(maxPrunableLifetime, this.minPrunableLifetime) : Integer.MAX_VALUE;
-    }
-
-    void updateChain(Chain chain, PropertiesHolder holder) {
-        int maxPrunableLifetime = holder.getIntProperty("apl.maxPrunableLifetime");
-        int minPrunableLifetime = holder.getIntProperty("apl.minPrunableLifetime");
-        updateChain(chain, minPrunableLifetime, maxPrunableLifetime);
-    }
-
-    void updateChain(Chain chain) {
-        updateChain(chain, 0, 0);
     }
 
     public String getProjectName() {
@@ -197,6 +170,14 @@ public class BlockchainConfig {
         return maxPrunableLifetime;
     }
 
+    public boolean isCurrencyIssuanceHeight(int height) {
+        return chain.getCurrencyIssuanceHeights() != null && chain.getCurrencyIssuanceHeights().contains(height);
+    }
+
+    public boolean isTotalAmountOverflowTx(long id) {
+        return chain.getTotalAmountOverflowTxs() != null && chain.getTotalAmountOverflowTxs().contains(Long.toUnsignedString(id));
+    }
+
     public Integer getDexPendingOrdersReopeningHeight() {
         if (chain.getFeaturesHeightRequirement() != null) {
             return chain.getFeaturesHeightRequirement().getDexReopenPendingOrdersHeight();
@@ -221,6 +202,36 @@ public class BlockchainConfig {
         }
     }
 
+    public boolean isFailedTransactionsAcceptanceActiveAtHeight(int height) {
+        Optional<Integer> activationHeightOpt = getFailedTransactionsAcceptanceActivationHeight();
+        return activationHeightOpt.isPresent() && height >= activationHeightOpt.get();
+    }
+
+    public Optional<Integer> getFailedTransactionsAcceptanceActivationHeight() {
+        FeaturesHeightRequirement heightRequirement = chain.getFeaturesHeightRequirement();
+        if (heightRequirement != null) {
+            Integer activationHeight = heightRequirement.getFailedTransactionsAcceptanceHeight();
+            return Optional.ofNullable(activationHeight);
+        } else {
+            return Optional.empty();
+        }
+    }
+
+    public boolean isSmcTransactionsActiveAtHeight(int height) {
+        Optional<Integer> activationHeightOpt = getSmartContractTransactionsHeight();
+        return activationHeightOpt.isPresent() && height >= activationHeightOpt.get();
+    }
+
+    public Optional<Integer> getSmartContractTransactionsHeight() {
+        FeaturesHeightRequirement heightRequirement = chain.getFeaturesHeightRequirement();
+        if (heightRequirement != null) {
+            Integer activationHeight = heightRequirement.getSmartContractTransactionsHeight();
+            return Optional.ofNullable(activationHeight);
+        } else {
+            return Optional.empty();
+        }
+    }
+
     public boolean isTransactionV2ActiveAtHeight(int height) {
         if (getTransactionV2Height().isPresent()) {
             return height >= getTransactionV2Height().get();
@@ -238,34 +249,66 @@ public class BlockchainConfig {
      * @param currentConfig configuration to be assigned as current
      */
     public void setCurrentConfig(HeightConfig currentConfig) {
-        this.previousConfig = Optional.ofNullable(this.currentConfig);
         this.currentConfig = currentConfig;
-        this.isJustUpdated = true; // setup flag to catch chains.json config change on APPLY_BLOCK
     }
 
     public Chain getChain() {
         return chain;
     }
 
-    public Optional<HeightConfig> getPreviousConfig() {
-        return previousConfig;
-    }
-
-    public void setPreviousConfig(Optional<HeightConfig> previousConfig) {
-        this.previousConfig = previousConfig;
-    }
-
     /**
-     * Flag to catch configuration changing
-     * // TODO: YL after separating 'shard' and 'trim' logic, we can remove 'isJustUpdated() + resetJustUpdated()' usage
-     *
-     * @return if config was recently updated to new height
+     * @param fromHeight height from which height configs should be fetched (inclusive)
+     * @param toHeight height to which height configs should be fetched (exclusive)
+     * @return ordered list of height configs (from lover height to higher) between given heights
      */
-    public boolean isJustUpdated() {
-        return isJustUpdated;
+    public List<HeightConfig> getAllActiveConfigsBetweenHeights(int fromHeight, int toHeight) {
+        if (fromHeight >= toHeight) {
+            throw new IllegalArgumentException("fromHeight should be lesser than toHeight, given: fromHeight=" + fromHeight + ", toHeight=" + toHeight);
+        }
+        HeightConfig configAtHeight = null;
+        if (fromHeight - 1 > 0) {
+            configAtHeight = getConfigAtHeight(fromHeight - 1); // active config at the beginning of [fromHeight; toHeight] range
+        }
+
+        ArrayList<HeightConfig> heightConfigs = new ArrayList<>(heightConfigMap
+            .entrySet()
+            .stream()
+            .filter(e -> e.getKey() >= fromHeight && e.getKey() < toHeight)
+            .map(Map.Entry::getValue)
+            .collect(Collectors.toCollection(() -> new TreeSet<>(Comparator.comparing(HeightConfig::getHeight)))));
+        if (configAtHeight != null) {
+            heightConfigs.add(0, configAtHeight);
+        }
+        return heightConfigs;
+
     }
 
-    public void resetJustUpdated() {
-        this.isJustUpdated = false; // reset flag
+    void updateChain(Chain chain, PropertiesHolder holder) {
+        int maxPrunableLifetime = holder.getIntProperty("apl.maxPrunableLifetime");
+        int minPrunableLifetime = holder.getIntProperty("apl.minPrunableLifetime");
+        updateChain(chain, minPrunableLifetime, maxPrunableLifetime);
+    }
+
+    void updateChain(Chain chain) {
+        updateChain(chain, 0, 0);
+    }
+
+    private static Predicate<Integer> previousConfig(Integer height) {
+        return targetHeight -> targetHeight < height;
+    }
+
+    private void setFields(Chain chain, int minPrunableLifetime, int maxPrunableLifetime) {
+        this.chain = chain;
+        // These fields could be static constants but some of them should be scaled by blockTime
+        // Block time scaling should be implemented in future
+        this.leasingDelay = 1440;
+        this.minPrunableLifetime = minPrunableLifetime > 0 ? minPrunableLifetime : DEFAULT_MIN_PRUNABLE_LIFETIME;
+        this.shufflingProcessingDeadline = (short) 100;
+        this.lastKnownBlock = 0;
+        this.unconfirmedPoolDepositAtm = Math.multiplyExact(100, chain.getOneAPL());
+        this.shufflingDepositAtm = Math.multiplyExact(1000, chain.getOneAPL());
+        this.guaranteedBalanceConfirmations = 1440;
+        this.enablePruning = maxPrunableLifetime >= 0;
+        this.maxPrunableLifetime = enablePruning ? Math.max(maxPrunableLifetime, this.minPrunableLifetime) : Integer.MAX_VALUE;
     }
 }

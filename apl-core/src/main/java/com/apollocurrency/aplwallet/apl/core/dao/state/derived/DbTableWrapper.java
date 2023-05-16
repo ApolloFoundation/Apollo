@@ -5,8 +5,8 @@
 package com.apollocurrency.aplwallet.apl.core.dao.state.derived;
 
 import com.apollocurrency.aplwallet.apl.core.dao.state.keyfactory.DbKey;
-import com.apollocurrency.aplwallet.apl.core.db.DbClause;
-import com.apollocurrency.aplwallet.apl.core.db.DbIterator;
+import com.apollocurrency.aplwallet.apl.util.db.DbClause;
+import com.apollocurrency.aplwallet.apl.util.db.DbIterator;
 import com.apollocurrency.aplwallet.apl.core.entity.state.derived.DerivedEntity;
 import lombok.extern.slf4j.Slf4j;
 
@@ -158,11 +158,6 @@ public class DbTableWrapper<T extends DerivedEntity> implements EntityDbTableInt
     @Override
     public void trim(int height) {
         table.trim(height);
-    }
-
-    @Override
-    public void trim(int height, boolean isSharding) {
-        table.trim(height, isSharding);
     }
 
     @Override

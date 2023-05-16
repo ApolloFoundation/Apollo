@@ -38,7 +38,7 @@ public final class MessagingVoteCasting extends AbstractAttachment {
         List<?> vote = (List<?>) attachmentData.get("vote");
         pollVote = new byte[vote.size()];
         for (int i = 0; i < pollVote.length; i++) {
-            pollVote[i] = ((Long) vote.get(i)).byteValue();
+            pollVote[i] = ((Number) vote.get(i)).byteValue();
         }
     }
 

@@ -27,11 +27,11 @@ import com.apollocurrency.aplwallet.apl.core.transaction.messages.Attachment;
 import com.apollocurrency.aplwallet.apl.util.exception.AplException;
 import org.json.simple.JSONStreamAware;
 
-import javax.enterprise.inject.Vetoed;
-import javax.servlet.http.HttpServletRequest;
+import jakarta.enterprise.inject.Vetoed;
+import jakarta.servlet.http.HttpServletRequest;
 
 @Vetoed
-public final class SendMessage extends CreateTransaction {
+public final class SendMessage extends CreateTransactionHandler {
 
     public SendMessage() {
         super(new APITag[]{APITag.MESSAGES, APITag.CREATE_TRANSACTION}, "recipient");

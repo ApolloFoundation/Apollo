@@ -15,7 +15,7 @@
  */
 
 /*
- * Copyright © 2018-2019 Apollo Foundation
+ * Copyright © 2018-2021 Apollo Foundation
  */
 
 package com.apollocurrency.aplwallet.apl.core.http.post;
@@ -29,28 +29,28 @@ import com.apollocurrency.aplwallet.apl.core.service.state.order.impl.BidOrderSe
 import com.apollocurrency.aplwallet.apl.core.service.state.qualifier.BidOrderService;
 import com.apollocurrency.aplwallet.apl.core.transaction.messages.Attachment;
 import com.apollocurrency.aplwallet.apl.core.transaction.messages.ColoredCoinsBidOrderCancellation;
-import com.apollocurrency.aplwallet.apl.core.transaction.messages.ColoredCoinsBidOrderPlacement;
+import com.apollocurrency.aplwallet.apl.core.transaction.messages.CCBidOrderPlacementAttachment;
 import com.apollocurrency.aplwallet.apl.util.exception.AplException;
 import org.json.simple.JSONStreamAware;
 
-import javax.enterprise.inject.Vetoed;
-import javax.enterprise.inject.spi.CDI;
-import javax.servlet.http.HttpServletRequest;
+import jakarta.enterprise.inject.Vetoed;
+import jakarta.enterprise.inject.spi.CDI;
+import jakarta.servlet.http.HttpServletRequest;
 
 import static com.apollocurrency.aplwallet.apl.core.http.JSONResponses.UNKNOWN_ORDER;
 
 @Vetoed
-public final class CancelBidOrder extends CreateTransaction {
-    private OrderService<BidOrder, ColoredCoinsBidOrderPlacement> bidOrderService;
+public final class CancelBidOrder extends CreateTransactionHandler {
+    private OrderService<BidOrder, CCBidOrderPlacementAttachment> bidOrderService;
 
     public CancelBidOrder() {
         super(new APITag[]{APITag.AE, APITag.CREATE_TRANSACTION}, "order");
     }
 
-    private OrderService<BidOrder, ColoredCoinsBidOrderPlacement> lookupBidOrderService() {
+    private OrderService<BidOrder, CCBidOrderPlacementAttachment> lookupBidOrderService() {
         if (bidOrderService == null) {
             this.bidOrderService = CDI.current().select(
-                BidOrderServiceImpl.class,
+                    BidOrderServiceImpl.class,
                 BidOrderService.Literal.INSTANCE
             ).get();
         }

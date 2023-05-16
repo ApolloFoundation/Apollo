@@ -11,6 +11,7 @@ import com.apollocurrency.aplwallet.apl.data.DexTradingTestData;
 import com.apollocurrency.aplwallet.apl.dex.core.model.DexCandlestick;
 import com.apollocurrency.aplwallet.apl.dex.core.model.DexCurrency;
 import com.apollocurrency.aplwallet.apl.extension.DbExtension;
+import com.apollocurrency.aplwallet.apl.testutil.DbUtils;
 import com.apollocurrency.aplwallet.apl.util.cdi.transaction.JdbiTransactionalSqlObjectDaoProxyInvocationHandler;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
@@ -35,8 +36,7 @@ class DexCandlestickDaoTest extends DbContainerBaseTest {
 
     @BeforeEach
     void setUp() {
-        dao = JdbiTransactionalSqlObjectDaoProxyInvocationHandler.createProxy(
-            extension.getDatabaseManager().getJdbiHandleFactory(), DexCandlestickDao.class);
+        dao = JdbiTransactionalSqlObjectDaoProxyInvocationHandler.createProxy(DbUtils.createJdbiHandleFactory(extension.getDatabaseManager()), DexCandlestickDao.class);
         td = new DexTradingTestData();
     }
 

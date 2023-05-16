@@ -10,9 +10,9 @@ import com.apollocurrency.aplwallet.api.p2p.ShardingInfo;
 import com.apollocurrency.aplwallet.api.p2p.request.FileChunkRequest;
 import com.apollocurrency.aplwallet.api.p2p.request.FileDownloadInfoRequest;
 import com.apollocurrency.aplwallet.api.p2p.request.ShardingInfoRequest;
-import com.apollocurrency.aplwallet.api.p2p.respons.FileChunkResponse;
-import com.apollocurrency.aplwallet.api.p2p.respons.FileDownloadInfoResponse;
-import com.apollocurrency.aplwallet.api.p2p.respons.ShardingInfoResponse;
+import com.apollocurrency.aplwallet.api.p2p.response.FileChunkResponse;
+import com.apollocurrency.aplwallet.api.p2p.response.FileDownloadInfoResponse;
+import com.apollocurrency.aplwallet.api.p2p.response.ShardingInfoResponse;
 import com.apollocurrency.aplwallet.apl.core.peer.parser.FileChunkResponseParser;
 import com.apollocurrency.aplwallet.apl.core.peer.parser.FileDownloadInfoResponseParser;
 import com.apollocurrency.aplwallet.apl.core.peer.parser.ShardingInfoResponseParser;
@@ -21,7 +21,7 @@ import com.fasterxml.jackson.datatype.jsonorg.JsonOrgModule;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import javax.enterprise.inject.Vetoed;
+import jakarta.enterprise.inject.Vetoed;
 import java.util.Objects;
 import java.util.UUID;
 

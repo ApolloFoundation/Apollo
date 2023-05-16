@@ -4,21 +4,21 @@
 
 package com.apollocurrency.aplwallet.apl.core.service.state.currency.impl;
 
+import com.apollocurrency.aplwallet.apl.core.model.Transaction;
 import com.apollocurrency.aplwallet.apl.core.converter.rest.IteratorToStreamConverter;
 import com.apollocurrency.aplwallet.apl.core.dao.state.currency.CurrencySellOfferTable;
-import com.apollocurrency.aplwallet.apl.core.db.DbClause;
-import com.apollocurrency.aplwallet.apl.core.db.DbIterator;
-import com.apollocurrency.aplwallet.apl.core.entity.blockchain.Transaction;
 import com.apollocurrency.aplwallet.apl.core.entity.state.account.Account;
 import com.apollocurrency.aplwallet.apl.core.entity.state.currency.Currency;
 import com.apollocurrency.aplwallet.apl.core.entity.state.currency.CurrencySellOffer;
 import com.apollocurrency.aplwallet.apl.core.service.state.BlockChainInfoService;
 import com.apollocurrency.aplwallet.apl.core.service.state.currency.CurrencySellOfferService;
-import com.apollocurrency.aplwallet.apl.core.transaction.messages.MonetarySystemPublishExchangeOffer;
+import com.apollocurrency.aplwallet.apl.core.transaction.messages.MSPublishExchangeOfferAttachment;
+import com.apollocurrency.aplwallet.apl.util.db.DbClause;
+import com.apollocurrency.aplwallet.apl.util.db.DbIterator;
 import lombok.extern.slf4j.Slf4j;
 
-import javax.inject.Inject;
-import javax.inject.Singleton;
+import jakarta.inject.Inject;
+import jakarta.inject.Singleton;
 import java.util.stream.Stream;
 
 import static com.apollocurrency.aplwallet.apl.core.service.state.currency.impl.CurrencyExchangeOfferFacadeImpl.availableOnlyDbClause;
@@ -160,7 +160,7 @@ public class CurrencySellOfferServiceImpl implements CurrencySellOfferService {
     }
 
     @Override
-    public void addOffer(Transaction transaction, MonetarySystemPublishExchangeOffer attachment) {
+    public void addOffer(Transaction transaction, MSPublishExchangeOfferAttachment attachment) {
         CurrencySellOffer currencyBuyOffer = new CurrencySellOffer(transaction, attachment, blockChainInfoService.getHeight());
         currencySellOfferTable.insert(currencyBuyOffer);
     }

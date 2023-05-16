@@ -25,17 +25,15 @@ import com.apollocurrency.aplwallet.apl.core.entity.state.asset.Asset;
 import com.apollocurrency.aplwallet.apl.core.http.APITag;
 import com.apollocurrency.aplwallet.apl.core.http.HttpParameterParserUtil;
 import com.apollocurrency.aplwallet.apl.core.transaction.messages.Attachment;
-import com.apollocurrency.aplwallet.apl.core.transaction.messages.ColoredCoinsAssetTransfer;
+import com.apollocurrency.aplwallet.apl.core.transaction.messages.CCAssetTransferAttachment;
 import com.apollocurrency.aplwallet.apl.util.exception.AplException;
 import org.json.simple.JSONStreamAware;
 
-import javax.enterprise.inject.Vetoed;
-import javax.servlet.http.HttpServletRequest;
-
-import static com.apollocurrency.aplwallet.apl.core.http.JSONResponses.NOT_ENOUGH_ASSETS;
+import jakarta.enterprise.inject.Vetoed;
+import jakarta.servlet.http.HttpServletRequest;
 
 @Vetoed
-public final class TransferAsset extends CreateTransaction {
+public final class TransferAsset extends CreateTransactionHandler {
 
     public TransferAsset() {
         super(new APITag[]{APITag.AE, APITag.CREATE_TRANSACTION}, "recipient", "asset", "quantityATU");
@@ -50,12 +48,8 @@ public final class TransferAsset extends CreateTransaction {
         long quantityATU = HttpParameterParserUtil.getQuantityATU(req);
         Account account = HttpParameterParserUtil.getSenderAccount(req);
 
-        Attachment attachment = new ColoredCoinsAssetTransfer(asset.getId(), quantityATU);
-        try {
-            return createTransaction(req, account, recipient, 0, attachment);
-        } catch (AplException.InsufficientBalanceException e) {
-            return NOT_ENOUGH_ASSETS;
-        }
+        Attachment attachment = new CCAssetTransferAttachment(asset.getId(), quantityATU);
+        return createTransaction(req, account, recipient, 0, attachment);
     }
 
 }

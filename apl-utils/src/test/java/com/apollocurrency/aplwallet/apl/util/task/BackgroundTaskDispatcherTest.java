@@ -1,5 +1,6 @@
 package com.apollocurrency.aplwallet.apl.util.task;
 
+import com.apollocurrency.aplwallet.apl.util.ThreadUtils;
 import lombok.extern.slf4j.Slf4j;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
@@ -11,10 +12,12 @@ import org.junit.jupiter.api.parallel.ExecutionMode;
 import org.mockito.junit.jupiter.MockitoExtension;
 
 import java.util.concurrent.RejectedExecutionException;
+import java.util.concurrent.atomic.AtomicInteger;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.junit.jupiter.api.Assertions.fail;
 import static org.mockito.Mockito.atLeast;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.verify;
@@ -71,16 +74,17 @@ class BackgroundTaskDispatcherTest {
         verify(runnable, atLeast(9)).run();
     }
 
+    // TODO Update synchronization mechanism to guarantee suspension after taskDispatcher.suspend() in constant time
     @Test
     void scheduleAtFixedRate_withSuspending() throws InterruptedException {
 
         taskDispatcher = TaskDispatcherFactory.newScheduledDispatcher("TestThreadInfoSuspending");
         //task.setTask(runnable);
-        final Count count = new Count(0);
+        final AtomicInteger count = new AtomicInteger();
         task = Task.builder()
             .name("task-1")
             .task(() -> {
-                count.inc();
+                count.incrementAndGet();
                 log.debug("task-body: task running");
             })
             .initialDelay(0)
@@ -93,18 +97,35 @@ class BackgroundTaskDispatcherTest {
         Thread.sleep(SLEEP_DELAY);
         log.debug("Suspend dispatcher");
         taskDispatcher.suspend();
-        int val1 = count.value;
+        waitEndOfTasksScheduling(count);
+        int val1 = count.get();
         Thread.sleep(SLEEP_DELAY);
         log.debug("Resume dispatcher");
-        int val2 = count.value;
+        int val2 = count.get();
         taskDispatcher.resume();
         Thread.sleep(SLEEP_DELAY);
-        int val3 = count.value;
+        int val3 = count.get();
         taskDispatcher.shutdown();
 
         assertTrue(val1 > 0);
         assertEquals(val1, val2);
         assertTrue(val3 > val2);
+    }
+
+    private void waitEndOfTasksScheduling(AtomicInteger count) {
+        int waitAttempts = 100;
+        int currentOps = count.get();
+        while (true) { // wait until the last scheduled operation ending
+            ThreadUtils.sleep(30);
+            if (currentOps == count.get()) {
+                break;
+            } else {
+                waitAttempts--;
+            }
+            if (waitAttempts < 0) {
+                fail("taskDispatcher.suspend is not working, task continue to run");
+            }
+        }
     }
 
     @Test

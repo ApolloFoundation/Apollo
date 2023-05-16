@@ -26,23 +26,23 @@ import com.apollocurrency.aplwallet.apl.core.entity.state.account.AccountControl
 import com.apollocurrency.aplwallet.apl.core.http.APITag;
 import com.apollocurrency.aplwallet.apl.core.http.HttpParameterParserUtil;
 import com.apollocurrency.aplwallet.apl.core.http.JSONResponses;
-import com.apollocurrency.aplwallet.apl.core.monetary.HoldingType;
+import com.apollocurrency.aplwallet.apl.core.model.HoldingType;
 import com.apollocurrency.aplwallet.apl.core.transaction.messages.Attachment;
-import com.apollocurrency.aplwallet.apl.core.transaction.messages.ShufflingCreation;
+import com.apollocurrency.aplwallet.apl.core.transaction.messages.ShufflingCreationAttachment;
 import com.apollocurrency.aplwallet.apl.util.Constants;
 import com.apollocurrency.aplwallet.apl.util.exception.AplException;
 import org.json.simple.JSONStreamAware;
 
-import javax.enterprise.inject.Vetoed;
-import javax.enterprise.inject.spi.CDI;
-import javax.servlet.http.HttpServletRequest;
+import jakarta.enterprise.inject.Vetoed;
+import jakarta.enterprise.inject.spi.CDI;
+import jakarta.servlet.http.HttpServletRequest;
 
 @Vetoed
-public final class ShufflingCreate extends CreateTransaction {
+public final class ShufflingCreate extends CreateTransactionHandler {
 
     public ShufflingCreate() {
         super(new APITag[]{APITag.SHUFFLING, APITag.CREATE_TRANSACTION},
-            "holding", "holdingType", "amount", "participantCount", "registrationPeriod");
+                "holding", "holdingType", "amount", "participantCount", "registrationPeriod");
     }
 
     @Override
@@ -58,15 +58,11 @@ public final class ShufflingCreate extends CreateTransaction {
         byte participantCount = HttpParameterParserUtil.getByte(req, "participantCount", Constants.MIN_NUMBER_OF_SHUFFLING_PARTICIPANTS,
             Constants.MAX_NUMBER_OF_SHUFFLING_PARTICIPANTS, true);
         short registrationPeriod = (short) HttpParameterParserUtil.getInt(req, "registrationPeriod", 0, Constants.MAX_SHUFFLING_REGISTRATION_PERIOD, true);
-        Attachment attachment = new ShufflingCreation(holdingId, holdingType, amount, participantCount, registrationPeriod);
+        Attachment attachment = new ShufflingCreationAttachment(holdingId, holdingType, amount, participantCount, registrationPeriod);
         Account account = HttpParameterParserUtil.getSenderAccount(req);
         if (account.getControls().contains(AccountControlType.PHASING_ONLY)) {
             return JSONResponses.error("Accounts under phasing only control cannot start a shuffling");
         }
-        try {
-            return createTransaction(req, account, attachment);
-        } catch (AplException.InsufficientBalanceException e) {
-            return JSONResponses.notEnoughHolding(holdingType);
-        }
+        return createTransaction(req, account, attachment);
     }
 }

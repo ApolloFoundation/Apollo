@@ -20,13 +20,13 @@
 
 package com.apollocurrency.aplwallet.apl.core.peer;
 
-import com.apollocurrency.aplwallet.apl.core.dao.TransactionalDataSource;
-import com.apollocurrency.aplwallet.apl.core.service.appdata.DatabaseManager;
+import com.apollocurrency.aplwallet.apl.core.db.DatabaseManager;
 import com.apollocurrency.aplwallet.apl.util.annotation.DatabaseSpecificDml;
 import com.apollocurrency.aplwallet.apl.util.annotation.DmlMarker;
+import com.apollocurrency.aplwallet.apl.util.db.TransactionalDataSource;
 
-import javax.inject.Inject;
-import javax.inject.Singleton;
+import jakarta.inject.Inject;
+import jakarta.inject.Singleton;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
@@ -38,14 +38,14 @@ import java.util.List;
 @Singleton
 public class PeerDb {
 
-    private static DatabaseManager databaseManager;
+    private final DatabaseManager databaseManager;
 
     @Inject
     public PeerDb(DatabaseManager databaseManagerParam) {
         databaseManager = databaseManagerParam;
     }
 
-    static List<Entry> loadPeers() {
+    public List<Entry> loadPeers() {
         List<Entry> peers = new ArrayList<>();
         TransactionalDataSource dataSource = databaseManager.getDataSource();
         try (Connection con = dataSource.getConnection();
@@ -60,7 +60,7 @@ public class PeerDb {
         return peers;
     }
 
-    public static void deletePeer(Entry peer) {
+    public void deletePeer(Entry peer) {
         TransactionalDataSource dataSource = databaseManager.getDataSource();
         try (Connection con = dataSource.getConnection()) {
             PreparedStatement pstmt = con.prepareStatement("DELETE FROM peer WHERE address = ?");
@@ -71,7 +71,7 @@ public class PeerDb {
         }
     }
 
-    static void deletePeers(Collection<Entry> peers) {
+    public void deletePeers(Collection<Entry> peers) {
         TransactionalDataSource dataSource = databaseManager.getDataSource();
         try (Connection con = dataSource.getConnection();
              PreparedStatement pstmt = con.prepareStatement("DELETE FROM peer WHERE address = ?")) {
@@ -84,7 +84,7 @@ public class PeerDb {
         }
     }
 
-    static void updatePeers(Collection<Entry> peers) {
+    public void updatePeers(Collection<Entry> peers) {
         TransactionalDataSource dataSource = databaseManager.getDataSource();
         dataSource.begin();
         try (Connection con = dataSource.getConnection();
@@ -108,7 +108,7 @@ public class PeerDb {
         }
     }
 
-    static void updatePeer(PeerImpl peer) {
+    public void updatePeer(PeerImpl peer) {
         TransactionalDataSource dataSource = databaseManager.getDataSource();
         dataSource.begin();
         try (Connection con = dataSource.getConnection();

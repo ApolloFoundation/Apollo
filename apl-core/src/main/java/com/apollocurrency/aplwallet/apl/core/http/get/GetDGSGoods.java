@@ -20,9 +20,6 @@
 
 package com.apollocurrency.aplwallet.apl.core.http.get;
 
-import com.apollocurrency.aplwallet.apl.core.db.DbIterator;
-import com.apollocurrency.aplwallet.apl.core.db.DbUtils;
-import com.apollocurrency.aplwallet.apl.core.db.FilteringIterator;
 import com.apollocurrency.aplwallet.apl.core.entity.state.dgs.DGSGoods;
 import com.apollocurrency.aplwallet.apl.core.http.APITag;
 import com.apollocurrency.aplwallet.apl.core.http.AbstractAPIRequestHandler;
@@ -30,14 +27,16 @@ import com.apollocurrency.aplwallet.apl.core.http.HttpParameterParserUtil;
 import com.apollocurrency.aplwallet.apl.core.http.JSONData;
 import com.apollocurrency.aplwallet.apl.core.service.state.DGSService;
 import com.apollocurrency.aplwallet.apl.util.Filter;
+import com.apollocurrency.aplwallet.apl.util.db.DbUtils;
 import com.apollocurrency.aplwallet.apl.util.exception.AplException;
 import org.json.simple.JSONArray;
 import org.json.simple.JSONObject;
 import org.json.simple.JSONStreamAware;
 
-import javax.enterprise.inject.Vetoed;
-import javax.enterprise.inject.spi.CDI;
-import javax.servlet.http.HttpServletRequest;
+import jakarta.enterprise.inject.Vetoed;
+import jakarta.enterprise.inject.spi.CDI;
+import jakarta.servlet.http.HttpServletRequest;
+import java.util.List;
 
 @Vetoed
 public final class GetDGSGoods extends AbstractAPIRequestHandler {
@@ -63,27 +62,21 @@ public final class GetDGSGoods extends AbstractAPIRequestHandler {
 
         Filter<DGSGoods> filter = hideDelisted ? goods -> !goods.isDelisted() : goods -> true;
 
-        FilteringIterator<DGSGoods> iterator = null;
-        try {
-            DbIterator<DGSGoods> goods;
-            if (sellerId == 0) {
-                if (inStockOnly) {
-                    goods = service.getGoodsInStock(0, -1);
-                } else {
-                    goods = service.getAllGoods(0, -1);
-                }
+        List<DGSGoods> goods;
+        if (sellerId == 0) {
+            if (inStockOnly) {
+                goods = service.getGoodsInStock(0, -1);
             } else {
-                goods = service.getSellerGoods(sellerId, inStockOnly, 0, -1);
+                goods = service.getAllGoods(0, -1);
             }
-            iterator = new FilteringIterator<>(goods, filter, firstIndex, lastIndex);
-            while (iterator.hasNext()) {
-                DGSGoods good = iterator.next();
-                goodsJSON.add(JSONData.goods(good, includeCounts));
-            }
-        } finally {
-            DbUtils.close(iterator);
+        } else {
+            goods = service.getSellerGoods(sellerId, inStockOnly, 0, -1);
         }
-
+        goods.stream()
+            .filter(filter)
+            .skip(firstIndex)
+            .limit(DbUtils.calculateLimit(firstIndex, lastIndex))
+            .forEach(e -> goodsJSON.add(JSONData.goods(e, includeCounts)));
         return response;
     }
 

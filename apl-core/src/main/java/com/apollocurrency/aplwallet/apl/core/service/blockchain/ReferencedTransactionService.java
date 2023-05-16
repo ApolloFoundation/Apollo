@@ -5,31 +5,31 @@
 package com.apollocurrency.aplwallet.apl.core.service.blockchain;
 
 import com.apollocurrency.aplwallet.apl.core.chainid.BlockchainConfig;
+import com.apollocurrency.aplwallet.apl.core.converter.db.TransactionEntityToModelConverter;
 import com.apollocurrency.aplwallet.apl.core.dao.appdata.ReferencedTransactionDao;
-import com.apollocurrency.aplwallet.apl.core.dao.appdata.TransactionIndexDao;
-import com.apollocurrency.aplwallet.apl.core.entity.blockchain.Transaction;
+import com.apollocurrency.aplwallet.apl.core.model.Transaction;
 import com.apollocurrency.aplwallet.apl.crypto.Convert;
 
-import javax.inject.Inject;
-import javax.inject.Singleton;
+import jakarta.inject.Inject;
+import jakarta.inject.Singleton;
 import java.util.List;
 import java.util.Optional;
 
 @Singleton
 public class ReferencedTransactionService {
     private static final int DEFAULT_MAX_REFERENCED_TRANSACTIONS = 9;
-    private ReferencedTransactionDao referencedTransactionDao;
-    private TransactionIndexDao transactionIndexDao;
-    private Blockchain blockchain;
-    private BlockchainConfig blockchainConfig;
-    private int maxReferencedTransactions;
+    private final ReferencedTransactionDao referencedTransactionDao;
+    private final TransactionEntityToModelConverter toModelConverter;
+    private final Blockchain blockchain;
+    private final BlockchainConfig blockchainConfig;
+    private final int maxReferencedTransactions;
 
 
     public ReferencedTransactionService(
-        ReferencedTransactionDao referencedTransactionDao, TransactionIndexDao transactionIndexDao,
+        ReferencedTransactionDao referencedTransactionDao, TransactionEntityToModelConverter toModelConverter,
         Blockchain blockchain, BlockchainConfig blockchainConfig, int maxReferencedTransactions) {
         this.referencedTransactionDao = referencedTransactionDao;
-        this.transactionIndexDao = transactionIndexDao;
+        this.toModelConverter = toModelConverter;
         this.blockchain = blockchain;
         this.blockchainConfig = blockchainConfig;
         this.maxReferencedTransactions = maxReferencedTransactions;
@@ -37,9 +37,9 @@ public class ReferencedTransactionService {
 
     @Inject
     public ReferencedTransactionService(
-        ReferencedTransactionDao referencedTransactionDao, TransactionIndexDao transactionIndexDao,
+        ReferencedTransactionDao referencedTransactionDao, TransactionEntityToModelConverter toModelConverter,
         Blockchain blockchain, BlockchainConfig blockchainConfig) {
-        this(referencedTransactionDao, transactionIndexDao, blockchain, blockchainConfig, DEFAULT_MAX_REFERENCED_TRANSACTIONS);
+        this(referencedTransactionDao, toModelConverter, blockchain, blockchainConfig, DEFAULT_MAX_REFERENCED_TRANSACTIONS);
     }
 
     public boolean hasAllReferencedTransactions(Transaction transaction, int height) {
@@ -54,13 +54,13 @@ public class ReferencedTransactionService {
                 || height - referencedTransactionHeight > blockchainConfig.getCurrentConfig().getReferencedTransactionHeightSpan()) {
                 return false;
             }
-            hash = getReferencedFullHash(Convert.fullHashToId(hash));
+            hash = getReferencedFullHash(Convert.transactionFullHashToId(hash));
         }
         return true;
     }
 
     public List<Transaction> getReferencingTransactions(long transactionId, int from, Integer limit) {
-        return referencedTransactionDao.getReferencingTransactions(transactionId, from, limit);
+        return toModelConverter.convert(referencedTransactionDao.getReferencingTransactions(transactionId, from, limit));
     }
 
 

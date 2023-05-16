@@ -20,6 +20,8 @@
     "decimals": 8,
     "genesisLocation": "conf/data/genesisAccounts-testnet.json",
     "featuresHeightRequirement": {},
+    "currencyIssuanceHeights": [102,103,105],
+    "totalAmountOverflowTxs": ["1000", "18446744073709551615"],
     "blockchainProperties": [
       {
         "height": 0,
@@ -86,17 +88,21 @@
             {
               "type": 0,
               "subType": 0,
-              "rate": 0
+              "rate": 22,
+              "baseFee": "10"
             },
             {
               "type": 0,
               "subType": 1,
-              "rate": 0
+              "rate": 0,
+              "sizeFee": "22.1111",
+              "additionalFees": ["1.2", "2.3222", "1.111"]
             },
             {
               "type": 1,
               "subType": 1,
-              "rate": 0
+              "rate": 100,
+              "additionalFees": []
             }
           ]
         }

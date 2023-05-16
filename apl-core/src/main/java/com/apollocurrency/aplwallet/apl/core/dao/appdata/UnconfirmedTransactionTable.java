@@ -1,30 +1,25 @@
 /*
- * Copyright (c)  2018-2020. Apollo Foundation.
+ * Copyright (c)  2018-2021. Apollo Foundation.
  */
 
 package com.apollocurrency.aplwallet.apl.core.dao.appdata;
 
+import com.apollocurrency.aplwallet.apl.core.converter.db.UnconfirmedTransactionEntityRowMapper;
 import com.apollocurrency.aplwallet.apl.core.converter.rest.IteratorToStreamConverter;
-import com.apollocurrency.aplwallet.apl.core.dao.TransactionalDataSource;
 import com.apollocurrency.aplwallet.apl.core.dao.state.derived.EntityDbTable;
 import com.apollocurrency.aplwallet.apl.core.dao.state.keyfactory.DbKey;
+import com.apollocurrency.aplwallet.apl.core.dao.state.keyfactory.LongKey;
 import com.apollocurrency.aplwallet.apl.core.dao.state.keyfactory.LongKeyFactory;
-import com.apollocurrency.aplwallet.apl.core.db.DbClause;
-import com.apollocurrency.aplwallet.apl.core.entity.blockchain.Transaction;
-import com.apollocurrency.aplwallet.apl.core.entity.blockchain.UnconfirmedTransaction;
-import com.apollocurrency.aplwallet.apl.core.service.appdata.DatabaseManager;
-import com.apollocurrency.aplwallet.apl.core.service.state.DerivedTablesRegistry;
-import com.apollocurrency.aplwallet.apl.core.shard.observer.DeleteOnTrimData;
-import com.apollocurrency.aplwallet.apl.core.transaction.TransactionBuilder;
-import com.apollocurrency.aplwallet.apl.core.transaction.TransactionSerializer;
-import com.apollocurrency.aplwallet.apl.util.exception.AplException;
+import com.apollocurrency.aplwallet.apl.core.db.DatabaseManager;
+import com.apollocurrency.aplwallet.apl.core.entity.blockchain.UnconfirmedTransactionEntity;
+import com.apollocurrency.aplwallet.apl.core.service.fulltext.FullTextOperationData;
+import com.apollocurrency.aplwallet.apl.util.db.DbClause;
+import com.apollocurrency.aplwallet.apl.util.db.TransactionalDataSource;
 import lombok.extern.slf4j.Slf4j;
-import org.json.simple.JSONObject;
-import org.json.simple.JSONValue;
 
-import javax.enterprise.event.Event;
-import javax.inject.Inject;
-import javax.inject.Singleton;
+import jakarta.enterprise.event.Event;
+import jakarta.inject.Inject;
+import jakarta.inject.Singleton;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
@@ -36,66 +31,54 @@ import java.util.stream.Stream;
 
 @Slf4j
 @Singleton
-public class UnconfirmedTransactionTable extends EntityDbTable<UnconfirmedTransaction> {
+public class UnconfirmedTransactionTable extends EntityDbTable<UnconfirmedTransactionEntity> {
 
-    private final LongKeyFactory<UnconfirmedTransaction> transactionKeyFactory;
-    private final TransactionBuilder transactionBuilder;
-    private final TransactionSerializer transactionSerializer;
-    private final IteratorToStreamConverter<UnconfirmedTransaction> streamConverter;
+    private static final LongKeyFactory<UnconfirmedTransactionEntity> transactionKeyFactory = new LongKeyFactory<>("id") {
+        @Override
+        public DbKey newKey(UnconfirmedTransactionEntity unconfirmedTransaction) {
+            return new LongKey(unconfirmedTransaction.getId());
+        }
+    };
+
+    private final UnconfirmedTransactionEntityRowMapper entityRowMapper;
+
+    private final IteratorToStreamConverter<UnconfirmedTransactionEntity> streamConverter;
 
     @Inject
-    public UnconfirmedTransactionTable(LongKeyFactory<UnconfirmedTransaction> transactionKeyFactory,
-                                       TransactionBuilder transactionBuilder,
-                                       TransactionSerializer transactionSerializer,
-                                       DerivedTablesRegistry derivedDbTablesRegistry,
+    public UnconfirmedTransactionTable(UnconfirmedTransactionEntityRowMapper entityRowMapper,
                                        DatabaseManager databaseManager,
-                                       Event<DeleteOnTrimData> deleteOnTrimDataEvent) {
+                                       Event<FullTextOperationData> fullTextOperationDataEvent) {
         super("unconfirmed_transaction", transactionKeyFactory, false, null,
-            derivedDbTablesRegistry, databaseManager, null, deleteOnTrimDataEvent);
-        this.transactionKeyFactory = transactionKeyFactory;
-        this.transactionBuilder = transactionBuilder;
-        this.transactionSerializer = transactionSerializer;
+                databaseManager, fullTextOperationDataEvent);
+        this.entityRowMapper = entityRowMapper;
         this.streamConverter = new IteratorToStreamConverter<>();
     }
 
     @Override
-    public UnconfirmedTransaction load(Connection con, ResultSet rs, DbKey dbKey) throws SQLException {
-        try {
-            byte[] transactionBytes = rs.getBytes("transaction_bytes");
-            JSONObject prunableAttachments = null;
-            String prunableJSON = rs.getString("prunable_json");
-            if (prunableJSON != null) {
-                prunableAttachments = (JSONObject) JSONValue.parse(prunableJSON);
-            }
-            Transaction tx = transactionBuilder.newTransactionBuilder(transactionBytes, prunableAttachments).build();
-            tx.setHeight(rs.getInt("transaction_height"));
-            long arrivalTimestamp = rs.getLong("arrival_timestamp");
-            long feePerByte = rs.getLong("fee_per_byte");
-            return new UnconfirmedTransaction(tx, arrivalTimestamp, feePerByte);
-        } catch (AplException.ValidationException e) {
-            throw new RuntimeException(e.toString(), e);
-        }
+    public UnconfirmedTransactionEntity load(Connection con, ResultSet rs, DbKey dbKey) throws SQLException {
+        UnconfirmedTransactionEntity entity = entityRowMapper.map(rs, null);
+        return entity;
     }
 
     @Override
-    public void save(Connection con, UnconfirmedTransaction unconfirmedTransaction) throws SQLException {
+    public void save(Connection con, UnconfirmedTransactionEntity unconfirmedTransactionEntity) throws SQLException {
         try (PreparedStatement pstmt = con.prepareStatement("INSERT INTO unconfirmed_transaction (id, transaction_height, "
-            + "fee_per_byte, expiration, transaction_bytes, prunable_json, arrival_timestamp, height) "
-            + "VALUES (?, ?, ?, ?, ?, ?, ?, ?)")) {
+                + "fee_per_byte, expiration, transaction_bytes, prunable_json, arrival_timestamp, height) "
+                + "VALUES (?, ?, ?, ?, ?, ?, ?, ?)")) {
             int i = 0;
-            pstmt.setLong(++i, unconfirmedTransaction.getId());
-            pstmt.setInt(++i, unconfirmedTransaction.getHeight());
-            pstmt.setLong(++i, unconfirmedTransaction.getFeePerByte());
-            pstmt.setInt(++i, unconfirmedTransaction.getExpiration());
-            pstmt.setBytes(++i, unconfirmedTransaction.getCopyTxBytes());
-            JSONObject prunableJSON = transactionSerializer.getPrunableAttachmentJSON(unconfirmedTransaction);
-            if (prunableJSON != null) {
-                pstmt.setString(++i, prunableJSON.toJSONString());
+            pstmt.setLong(++i, unconfirmedTransactionEntity.getId());
+            pstmt.setInt(++i, unconfirmedTransactionEntity.getHeight());
+            pstmt.setLong(++i, unconfirmedTransactionEntity.getFeePerByte());
+            pstmt.setInt(++i, unconfirmedTransactionEntity.getExpiration());
+            pstmt.setBytes(++i, unconfirmedTransactionEntity.getTransactionBytes());
+            String prunableJSONString = unconfirmedTransactionEntity.getPrunableAttachmentJsonString();
+            if (prunableJSONString != null) {
+                pstmt.setString(++i, prunableJSONString);
             } else {
                 pstmt.setNull(++i, Types.VARCHAR);
             }
-            pstmt.setLong(++i, unconfirmedTransaction.getArrivalTimestamp());
-            pstmt.setInt(++i, unconfirmedTransaction.getHeight());
+            pstmt.setLong(++i, unconfirmedTransactionEntity.getArrivalTimestamp());
+            pstmt.setInt(++i, unconfirmedTransactionEntity.getHeight());
             pstmt.executeUpdate();
         }
     }
@@ -112,12 +95,16 @@ public class UnconfirmedTransactionTable extends EntityDbTable<UnconfirmedTransa
         }
     }
 
-        @Override
+    public UnconfirmedTransactionEntity getById(long id) {
+        return get(getTransactionKeyFactory().newKey(id));
+    }
+
+    @Override
     public String defaultSort() {
         return " ORDER BY transaction_height ASC, fee_per_byte DESC, arrival_timestamp ASC, id ASC ";
     }
 
-    public Stream<UnconfirmedTransaction> getExpiredTxsStream(int time) {
+    public Stream<UnconfirmedTransactionEntity> getExpiredTxsStream(int time) {
         return streamConverter.apply(getManyBy(new DbClause.IntClause("expiration", DbClause.Op.LT, time), 0, -1, ""));
     }
 
@@ -126,9 +113,8 @@ public class UnconfirmedTransactionTable extends EntityDbTable<UnconfirmedTransa
             new DbClause.IntClause("expiration", DbClause.Op.LT, epochTime));
     }
 
-
-    public Stream<UnconfirmedTransaction> getAllUnconfirmedTransactions() {
-        return streamConverter.convert(this.getAll(0, -1));
+    public Stream<UnconfirmedTransactionEntity> getAllUnconfirmedTransactions() {
+        return streamConverter.apply(this.getAll(0, -1));
     }
 
     @Override
@@ -150,10 +136,8 @@ public class UnconfirmedTransactionTable extends EntityDbTable<UnconfirmedTransa
         return result;
     }
 
-    public LongKeyFactory<UnconfirmedTransaction> getTransactionKeyFactory() {
+    public LongKeyFactory<UnconfirmedTransactionEntity> getTransactionKeyFactory() {
         return transactionKeyFactory;
     }
-
-
 
 }

@@ -4,16 +4,17 @@
 
 package com.apollocurrency.aplwallet.apl.core.service.fulltext;
 
-import com.apollocurrency.aplwallet.apl.core.service.appdata.DatabaseManager;
+import com.apollocurrency.aplwallet.apl.core.dao.state.poll.PollTable;
+import com.apollocurrency.aplwallet.apl.core.db.DatabaseManager;
 import com.apollocurrency.aplwallet.apl.util.annotation.DatabaseSpecificDml;
 import com.apollocurrency.aplwallet.apl.util.annotation.DmlMarker;
 import lombok.extern.slf4j.Slf4j;
 
-import javax.inject.Inject;
-import javax.inject.Named;
-import javax.inject.Singleton;
+import jakarta.annotation.PostConstruct;
+import jakarta.inject.Inject;
+import jakarta.inject.Named;
+import jakarta.inject.Singleton;
 import java.io.IOException;
-import java.math.BigInteger;
 import java.sql.Connection;
 import java.sql.ResultSet;
 import java.sql.SQLException;
@@ -34,6 +35,8 @@ public class FullTextSearchServiceImpl implements FullTextSearchService {
     private final Map<String, String> fullTextSearchIndexedTables;
     private final String schemaName;
     private final DatabaseManager databaseManager;
+    private volatile boolean indexDeleted;
+    private volatile boolean isIndexFolderEmpty;
 
     @Inject
     public FullTextSearchServiceImpl(DatabaseManager databaseManager, FullTextSearchEngine fullTextSearchEngine,
@@ -88,17 +91,17 @@ public class FullTextSearchServiceImpl implements FullTextSearchService {
      * This method should be called from AplDbVersion when performing the database version update
      * that enables fulltext search support
      */
+    @PostConstruct
     public void init() {
-        boolean isIndexFolderEmpty;
         try {
-            isIndexFolderEmpty = fullTextSearchEngine.isIndexFolderEmpty(); // first check if index is deleted manually
+            this.isIndexFolderEmpty = fullTextSearchEngine.isIndexFolderEmpty(); // first check if index is deleted manually
             log.debug("init = (isIndexFolderEmpty = {})", isIndexFolderEmpty);
             fullTextSearchEngine.init(); // some files are created by initialization
         } catch (IOException e) {
             throw new RuntimeException("Unable to init fulltext engine", e);
         }
         // store lucene indexed data: table + schema + columns
-        log.debug("fullTextTableName = {}", FTL_INDEXES_TABLE);
+        log.debug("Check if exists meta-info table = '{}'", FTL_INDEXES_TABLE);
         try (Connection conn = databaseManager.getDataSource().getConnection();
              Statement stmt = conn.createStatement();
              Statement qstmt = conn.createStatement()) {
@@ -125,14 +128,16 @@ public class FullTextSearchServiceImpl implements FullTextSearchService {
             //
             // We need to delete an existing Lucene index since the V3 file format is not compatible with V5
             //
-            fullTextSearchEngine.clearIndex();
+            if (!isIndexFolderEmpty) {
+                this.fullTextSearchEngine.clearIndex();
+            }
 
             //
             // Create our schema and table
             //
             boolean createResult = stmt.execute("CREATE TABLE IF NOT EXISTS " + FTL_INDEXES_TABLE + " "
                 + "(`schema` VARCHAR(20), `table` VARCHAR(100), columns VARCHAR(200), PRIMARY KEY(`schema`, `table`))");
-            log.info("fulltext table is created = '{}'", createResult);
+            log.debug("The fullTextSearch meta-info table is created = '{}'", createResult);
             //
             // Drop existing triggers and create our triggers.  H2 will initialize the trigger
             // when it is created.  H2 has already initialized the existing triggers and they
@@ -143,10 +148,13 @@ public class FullTextSearchServiceImpl implements FullTextSearchService {
             try (ResultSet rs = qstmt.executeQuery("SELECT count(*) as count FROM " + FTL_INDEXES_TABLE)) {
                 while (rs.next()) {
                     recordCount = rs.getLong("count");
+                    log.debug("Created db records for fullTextSearch meta-info = [{}]", recordCount);
                 }
             }
 
-            if (recordCount == 0 && this.fullTextSearchIndexedTables != null) { // skip if table if filled with initial data
+            if (recordCount == 0
+                && this.fullTextSearchIndexedTables != null
+                && this.fullTextSearchIndexedTables.size() > 0) { // skip if table if filled with initial data
                 for (String tableName : this.fullTextSearchIndexedTables.keySet()) {
                     initTableLazyIfNotPresent(conn, stmt, tableName); // try to create something if it's present
                 }
@@ -180,8 +188,10 @@ public class FullTextSearchServiceImpl implements FullTextSearchService {
             if (rs.next() && rs.getLong("count") == 0) {
                 log.debug("found 0 count from " + FTL_INDEXES_TABLE + "...");
                 // insert if empty
-                stmt.execute(String.format("INSERT INTO " + FTL_INDEXES_TABLE + " VALUES('%s', '%s', '%s')",
-                    this.schemaName.toLowerCase(), tableName.toLowerCase(), indexedColumns.trim().toLowerCase()));
+                String sqlInsertIntoFts = String.format("INSERT INTO " + FTL_INDEXES_TABLE + " VALUES('%s', '%s', '%s')",
+                    this.schemaName.toLowerCase(), tableName.toLowerCase(), indexedColumns.trim().toLowerCase());
+                log.trace("sqlInsertIntoFts: {}", sqlInsertIntoFts);
+                stmt.execute(sqlInsertIntoFts);
                 reindex(conn, tableName, schemaName);
             }
             log.info("Lucene search index created for table '{}'", tableName);
@@ -198,6 +208,7 @@ public class FullTextSearchServiceImpl implements FullTextSearchService {
      * @throws SQLException Unable to drop fulltext indexes
      */
     public void dropAll(Connection conn) throws SQLException {
+        indexDeleted = true;
         //
         // Drop records about stored 'searchable' and indexed tables
         //
@@ -239,22 +250,27 @@ public class FullTextSearchServiceImpl implements FullTextSearchService {
             sb.append(", ").append(tableData.getColumnNames().get(index));
         }
         sb.append(" FROM ").append(tableName);
+        if (!tableName.equalsIgnoreCase(PollTable.TABLE_NAME)) { // only 'poll' table doesn't have 'latest' column
+            sb.append(" WHERE latest = TRUE");
+        }
 
         boolean isIndexAppended = false;
         int insertedDocsCount = 0;
         //
         // Index each row in the table
         //
+        String sql = sb.toString();
+        log.trace("Data select for {} = {}", tableName, sql);
         try (Statement qstmt = conn.createStatement();
-             ResultSet rs = qstmt.executeQuery(sb.toString())) {
+             ResultSet rs = qstmt.executeQuery(sql)) {
             while (rs.next()) {
                 // create full text search data set for every row fetched from DB
                 FullTextOperationData operationData = new FullTextOperationData(
                     DEFAULT_SCHEMA, tableName, Thread.currentThread().getName());
                 operationData.setOperationType(FullTextOperationData.OperationType.INSERT_UPDATE);
                 int i = 0;
-                Object dbId = rs.getObject(i + 1); // put DB_ID value
-                operationData.setDbIdValue((BigInteger) dbId);
+                Long dbId = rs.getLong(i + 1); // put DB_ID value, LONG VALUE FOR H2/MARIA compatibility
+                operationData.setDbIdValue(dbId);
                 i++;
                 Iterator it = tableData.getIndexColumns().iterator();
                 while (it.hasNext()) {
@@ -301,6 +317,7 @@ public class FullTextSearchServiceImpl implements FullTextSearchService {
                 reindex(conn, tableName, schema);
                 log.debug("Reindexing '{}' DONE in '{}' ms", tableName, System.currentTimeMillis() - startTable);
             }
+            indexDeleted = false;
         } catch (SQLException exc) {
             throw new SQLException("Unable to rebuild the Lucene index", exc);
         }
@@ -323,8 +340,8 @@ public class FullTextSearchServiceImpl implements FullTextSearchService {
         final String table,
         final String fullTextSearchColumns
     ) throws SQLException {
-        if (fullTextSearchColumns != null) {
-            log.debug("Creating search index on {} ({})", table, fullTextSearchColumns);
+        if (fullTextSearchColumns != null && !fullTextSearchColumns.isEmpty()) {
+            log.debug("Creating meta-info db record about searched table '{}' (columns = {})", table, fullTextSearchColumns);
             String table1 = table.toLowerCase();
             String upperSchema = schemaName.toLowerCase();
             //
@@ -336,10 +353,11 @@ public class FullTextSearchServiceImpl implements FullTextSearchService {
             // will be initialized when it is created.
             //
             boolean isTableDataExist = false;
-            try (Statement stmt = con.createStatement()) {
+            try (Statement stmt = con.createStatement();
                 ResultSet rs = stmt.executeQuery(String.format("SELECT count(*) as count FROM " + FTL_INDEXES_TABLE
                         + " WHERE `schema` = '%s' AND `table` = '%s'",
                     upperSchema.toLowerCase(), table1.toLowerCase()));
+            ) {
                 if (rs.next()) {
                     isTableDataExist = rs.getLong("count") > 0;
                 }
@@ -359,5 +377,14 @@ public class FullTextSearchServiceImpl implements FullTextSearchService {
                 }
             }
         }
+    }
+
+    @Override
+    public boolean enabled() {
+        return !indexDeleted;
+    }
+
+    public boolean isIndexFolderEmpty() {
+        return isIndexFolderEmpty;
     }
 }

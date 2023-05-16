@@ -7,8 +7,8 @@ package com.apollocurrency.aplwallet.apl.core.transaction.messages;
 
 import org.json.simple.JSONObject;
 
-import javax.enterprise.inject.Instance;
-import javax.inject.Inject;
+import jakarta.enterprise.inject.Instance;
+import jakarta.inject.Inject;
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.List;
@@ -22,7 +22,7 @@ public class AppendixParsingManager {
 
     @Inject
     public AppendixParsingManager(Instance<AppendixParser<?>> instances) {
-        instances.iterator().forEachRemaining(e-> parsers.put(e.forClass(), e));
+        instances.iterator().forEachRemaining(e -> parsers.put(e.forClass(), e));
     }
 
     public AppendixParsingManager(Collection<AppendixParser<?>> parsers) {

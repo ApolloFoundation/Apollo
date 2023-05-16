@@ -8,8 +8,9 @@ import com.apollocurrency.aplwallet.apl.core.app.AplAppStatus;
 import com.apollocurrency.aplwallet.apl.core.chainid.BlockchainConfig;
 import com.apollocurrency.aplwallet.apl.core.chainid.HeightConfig;
 import com.apollocurrency.aplwallet.apl.core.config.DaoConfig;
-import com.apollocurrency.aplwallet.apl.core.config.NtpTimeConfig;
+import com.apollocurrency.aplwallet.apl.core.config.JdbiConfiguration;
 import com.apollocurrency.aplwallet.apl.core.config.PropertyProducer;
+import com.apollocurrency.aplwallet.apl.core.config.TimeConfig;
 import com.apollocurrency.aplwallet.apl.core.config.UtilComponentConfig;
 import com.apollocurrency.aplwallet.apl.core.converter.db.BlockEntityRowMapper;
 import com.apollocurrency.aplwallet.apl.core.converter.db.BlockEntityToModelConverter;
@@ -18,10 +19,8 @@ import com.apollocurrency.aplwallet.apl.core.converter.db.PrunableTxRowMapper;
 import com.apollocurrency.aplwallet.apl.core.converter.db.TransactionEntityRowMapper;
 import com.apollocurrency.aplwallet.apl.core.converter.db.TransactionEntityToModelConverter;
 import com.apollocurrency.aplwallet.apl.core.converter.db.TransactionModelToEntityConverter;
-import com.apollocurrency.aplwallet.apl.core.converter.db.TransactionRowMapper;
 import com.apollocurrency.aplwallet.apl.core.converter.db.TxReceiptRowMapper;
 import com.apollocurrency.aplwallet.apl.core.dao.DBContainerRootTest;
-import com.apollocurrency.aplwallet.apl.core.dao.TransactionalDataSource;
 import com.apollocurrency.aplwallet.apl.core.dao.appdata.BlockIndexDao;
 import com.apollocurrency.aplwallet.apl.core.dao.appdata.ReferencedTransactionDao;
 import com.apollocurrency.aplwallet.apl.core.dao.appdata.ShardDao;
@@ -34,23 +33,24 @@ import com.apollocurrency.aplwallet.apl.core.dao.blockchain.TransactionDao;
 import com.apollocurrency.aplwallet.apl.core.dao.blockchain.TransactionDaoImpl;
 import com.apollocurrency.aplwallet.apl.core.dao.state.dgs.DGSGoodsTable;
 import com.apollocurrency.aplwallet.apl.core.dao.state.phasing.PhasingPollTable;
+import com.apollocurrency.aplwallet.apl.core.db.DatabaseManager;
+import com.apollocurrency.aplwallet.apl.core.db.DatabaseManagerImpl;
 import com.apollocurrency.aplwallet.apl.core.entity.appdata.Shard;
 import com.apollocurrency.aplwallet.apl.core.entity.appdata.ShardRecovery;
 import com.apollocurrency.aplwallet.apl.core.entity.appdata.ShardState;
-import com.apollocurrency.aplwallet.apl.core.entity.blockchain.Transaction;
+import com.apollocurrency.aplwallet.apl.core.model.Transaction;
 import com.apollocurrency.aplwallet.apl.core.model.TransactionDbInfo;
 import com.apollocurrency.aplwallet.apl.core.peer.PeersService;
-import com.apollocurrency.aplwallet.apl.core.service.appdata.DatabaseManager;
 import com.apollocurrency.aplwallet.apl.core.service.appdata.GeneratorService;
 import com.apollocurrency.aplwallet.apl.core.service.appdata.TimeService;
 import com.apollocurrency.aplwallet.apl.core.service.appdata.TrimService;
-import com.apollocurrency.aplwallet.apl.core.service.appdata.impl.DatabaseManagerImpl;
 import com.apollocurrency.aplwallet.apl.core.service.appdata.impl.TimeServiceImpl;
 import com.apollocurrency.aplwallet.apl.core.service.blockchain.Blockchain;
 import com.apollocurrency.aplwallet.apl.core.service.blockchain.BlockchainImpl;
 import com.apollocurrency.aplwallet.apl.core.service.blockchain.BlockchainProcessor;
 import com.apollocurrency.aplwallet.apl.core.service.blockchain.BlockchainProcessorImpl;
 import com.apollocurrency.aplwallet.apl.core.service.blockchain.GlobalSyncImpl;
+import com.apollocurrency.aplwallet.apl.core.service.blockchain.TransactionBuilderFactory;
 import com.apollocurrency.aplwallet.apl.core.service.blockchain.TransactionProcessor;
 import com.apollocurrency.aplwallet.apl.core.service.blockchain.TransactionProcessorImpl;
 import com.apollocurrency.aplwallet.apl.core.service.blockchain.TransactionServiceImpl;
@@ -61,6 +61,7 @@ import com.apollocurrency.aplwallet.apl.core.service.state.AliasService;
 import com.apollocurrency.aplwallet.apl.core.service.state.DerivedDbTablesRegistryImpl;
 import com.apollocurrency.aplwallet.apl.core.service.state.DerivedTablesRegistry;
 import com.apollocurrency.aplwallet.apl.core.service.state.PhasingPollService;
+import com.apollocurrency.aplwallet.apl.core.service.state.TableRegistryInitializer;
 import com.apollocurrency.aplwallet.apl.core.service.state.account.AccountService;
 import com.apollocurrency.aplwallet.apl.core.service.state.account.PublicKeyDao;
 import com.apollocurrency.aplwallet.apl.core.service.state.account.impl.AccountServiceImpl;
@@ -78,7 +79,6 @@ import com.apollocurrency.aplwallet.apl.core.shard.helper.csv.CsvEscaperImpl;
 import com.apollocurrency.aplwallet.apl.core.shard.model.ExcludeInfo;
 import com.apollocurrency.aplwallet.apl.core.shard.model.PrevBlockData;
 import com.apollocurrency.aplwallet.apl.core.shard.model.TableInfo;
-import com.apollocurrency.aplwallet.apl.core.transaction.TransactionBuilder;
 import com.apollocurrency.aplwallet.apl.core.transaction.TransactionTypeFactory;
 import com.apollocurrency.aplwallet.apl.core.transaction.messages.PrunableLoadingService;
 import com.apollocurrency.aplwallet.apl.data.BlockTestData;
@@ -89,8 +89,9 @@ import com.apollocurrency.aplwallet.apl.extension.DbExtension;
 import com.apollocurrency.aplwallet.apl.extension.TemporaryFolderExtension;
 import com.apollocurrency.aplwallet.apl.testutil.DbPopulator;
 import com.apollocurrency.aplwallet.apl.util.Zip;
-import com.apollocurrency.aplwallet.apl.util.ZipImpl;
 import com.apollocurrency.aplwallet.apl.util.cdi.transaction.JdbiHandleFactory;
+import com.apollocurrency.aplwallet.apl.util.db.TransactionalDataSource;
+import com.apollocurrency.aplwallet.apl.util.env.config.Chain;
 import com.apollocurrency.aplwallet.apl.util.env.dirprovider.DirProvider;
 import com.apollocurrency.aplwallet.apl.util.injectable.PropertiesHolder;
 import com.apollocurrency.aplwallet.apl.util.service.TaskDispatchManager;
@@ -100,7 +101,6 @@ import org.jboss.weld.junit5.EnableWeld;
 import org.jboss.weld.junit5.WeldInitiator;
 import org.jboss.weld.junit5.WeldSetup;
 import org.jboss.weld.literal.NamedLiteral;
-import org.jdbi.v3.core.Jdbi;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.BeforeEach;
@@ -109,8 +109,8 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.RegisterExtension;
 import org.mockito.Mockito;
 
-import javax.enterprise.inject.spi.Bean;
-import javax.inject.Inject;
+import jakarta.enterprise.inject.spi.Bean;
+import jakarta.inject.Inject;
 import java.io.IOException;
 import java.nio.file.Path;
 import java.util.List;
@@ -149,6 +149,7 @@ class ShardMigrationExecutorTest extends DBContainerRootTest {
     static TemporaryFolderExtension temporaryFolderExtension = new TemporaryFolderExtension();
     static PropertiesHolder propertiesHolder = initPropertyHolder();
     private static BlockchainConfig blockchainConfig = mock(BlockchainConfig.class);
+    Chain chain = mock(Chain.class);
     private static HeightConfig heightConfig = mock(HeightConfig.class);
     private final Path dataExportDirPath = createPath("targetDb");
     private final Bean<Path> dataExportDir = MockBean.of(dataExportDirPath.toAbsolutePath(), Path.class);
@@ -158,21 +159,21 @@ class ShardMigrationExecutorTest extends DBContainerRootTest {
     private TransactionProcessor transactionProcessor = mock(TransactionProcessorImpl.class);
     private TaskDispatchManager taskDispatchManager = mock(TaskDispatchManager.class);
     private DirProvider dirProvider = mock(DirProvider.class);
-    private NtpTimeConfig ntpTimeConfig = new NtpTimeConfig();
-    private TimeService timeService = new TimeServiceImpl(ntpTimeConfig.time());
-    private Zip zip = new UtilComponentConfig().zip();
+
+    private Zip zip = new UtilComponentConfig().zip();   TimeConfig config = new TimeConfig(false);
+    TimeService timeService = new TimeServiceImpl(config.timeSource());
     private GeneratorService generatorService = mock(GeneratorService.class);
     private TransactionTestData td = new TransactionTestData();
 
     @WeldSetup
     WeldInitiator weld = WeldInitiator.from(
         BlockchainImpl.class, DaoConfig.class, ReferencedTransactionDao.class,
-        PropertyProducer.class,
+        PropertyProducer.class, TableRegistryInitializer.class,
         TransactionDaoImpl.class,
         TransactionServiceImpl.class, ShardDbExplorerImpl.class,
-        TransactionRowMapper.class, TransactionEntityRowMapper.class, TxReceiptRowMapper.class, PrunableTxRowMapper.class,
+        TransactionEntityRowMapper.class, TransactionEntityRowMapper.class, TxReceiptRowMapper.class, PrunableTxRowMapper.class,
         TransactionModelToEntityConverter.class, TransactionEntityToModelConverter.class,
-        TransactionBuilder.class,
+        TransactionBuilderFactory.class,
         GlobalSyncImpl.class, BlockIndexDao.class, ShardHashCalculatorImpl.class,
         DerivedDbTablesRegistryImpl.class, ShardEngineImpl.class, ShardRecoveryDao.class,
         ShardRecoveryDaoJdbcImpl.class, ShardDao.class, ShardRecoveryDao.class,
@@ -182,15 +183,13 @@ class ShardMigrationExecutorTest extends DBContainerRootTest {
         PhasingPollTable.class,
         FullTextConfigImpl.class,
         DerivedTablesRegistry.class,
-        ShardEngineImpl.class, CsvExporterImpl.class, ZipImpl.class, AplAppStatus.class,
+        ShardEngineImpl.class, CsvExporterImpl.class, AplAppStatus.class,
         BlockDaoImpl.class,
         BlockEntityRowMapper.class, BlockEntityToModelConverter.class, BlockModelToEntityConverter.class,
         TransactionDaoImpl.class, ShardMigrationExecutor.class,
-        CsvEscaperImpl.class)
+        CsvEscaperImpl.class, JdbiHandleFactory.class, JdbiConfiguration.class)
         .addBeans(MockBean.of(blockchainConfig, BlockchainConfig.class))
         .addBeans(MockBean.of(extension.getDatabaseManager(), DatabaseManager.class))
-        .addBeans(MockBean.of(extension.getDatabaseManager().getJdbi(), Jdbi.class))
-        .addBeans(MockBean.of(extension.getDatabaseManager().getJdbiHandleFactory(), JdbiHandleFactory.class))
         .addBeans(MockBean.of(mock(TransactionProcessor.class), TransactionProcessor.class))
         .addBeans(MockBean.of(mock(PeersService.class), PeersService.class))
         .addBeans(MockBean.of(mock(BlockchainProcessor.class), BlockchainProcessor.class, BlockchainProcessorImpl.class))
@@ -205,7 +204,7 @@ class ShardMigrationExecutorTest extends DBContainerRootTest {
         .addBeans(MockBean.of(mock(PrunableMessageService.class), PrunableMessageService.class, PrunableMessageServiceImpl.class))
         .addBeans(MockBean.of(mock(BlockIndexService.class), BlockIndexService.class, BlockIndexServiceImpl.class))
         .addBeans(MockBean.of(mock(AliasService.class), AliasService.class))
-        .addBeans(MockBean.of(ntpTimeConfig, NtpTimeConfig.class))
+        .addBeans(MockBean.of(timeService, TimeConfig.class))
         .addBeans(MockBean.of(timeService, TimeService.class))
         .addBeans(MockBean.of(zip, Zip.class))
         .addBeans(MockBean.of(generatorService, GeneratorService.class))
@@ -219,6 +218,8 @@ class ShardMigrationExecutorTest extends DBContainerRootTest {
     private ShardMigrationExecutor shardMigrationExecutor;
     @Inject
     private BlockIndexDao blockIndexDao;
+    @Inject
+    TableRegistryInitializer initializer;
     @Inject
     private Blockchain blockchain;
     @Inject
@@ -244,6 +245,7 @@ class ShardMigrationExecutorTest extends DBContainerRootTest {
         // return the same dir for both CDI components
         dataExportDir.getQualifiers().add(new NamedLiteral("dataExportDir")); // for CsvExporter
         doReturn(dataExportDirPath).when(dirProvider).getDataExportDir(); // for Zip
+        doReturn(chain).when(blockchainConfig).getChain();
     }
 
     @BeforeAll
@@ -412,12 +414,12 @@ class ShardMigrationExecutorTest extends DBContainerRootTest {
     }
 
     private static PropertiesHolder initPropertyHolder() {
-        PropertiesHolder propertiesHolder = new PropertiesHolder();
         Properties properties = new Properties();
-        properties.put("apl.trimDerivedTables", true);
-        properties.put("apl.maxRollback", 21600);
+        properties.put("apl.trimDerivedTables", "true");
+        properties.put("apl.maxRollback", "21600");
+        properties.put("apl.derivedTablesCount", "2");
+        PropertiesHolder propertiesHolder = new PropertiesHolder(properties);
 
-        propertiesHolder.init(properties);
         return propertiesHolder;
 
     }
