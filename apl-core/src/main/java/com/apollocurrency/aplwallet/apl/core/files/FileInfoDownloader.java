@@ -16,7 +16,7 @@ import com.apollocurrency.aplwallet.apl.crypto.Convert;
 import lombok.Getter;
 import lombok.extern.slf4j.Slf4j;
 
-import javax.inject.Inject;
+import jakarta.inject.Inject;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Map;
@@ -36,20 +36,44 @@ import static com.apollocurrency.aplwallet.apl.core.files.FileDownloader.DOWNLOA
 @Slf4j
 public class FileInfoDownloader {
     private final PeersService peersService;
+    private final Map<String, FileDownloadInfo> peersDownloadInfo = new HashMap<>();
+    private final ExecutorService executor;
+    private final Map<String, Future<FileDownloadInfo>> runningDownloaders = new HashMap<>();
     @Getter
     private Set<PeerFileHashSum> goodPeers;
     @Getter
     private Set<PeerFileHashSum> badPeers;
-    private final Map<String, FileDownloadInfo> peersDownloadInfo = new HashMap<>();
     @Getter
     private FileDownloadInfo fileDownloadInfo;
-    private final ExecutorService executor;
-    private final Map<String, Future<FileDownloadInfo>> runningDownloaders = new HashMap<>();
 
     @Inject
     public FileInfoDownloader(PeersService peersService) {
         this.peersService = peersService;
         this.executor = Executors.newFixedThreadPool(DOWNLOAD_THREADS);
+    }
+
+    /**
+     * Calculates network statistics and tells
+     * can we use it or can not
+     *
+     * @param d
+     * @return true is network is usable;
+     */
+    public static boolean isNetworkUsable(FileDownloadDecision d) {
+        Objects.requireNonNull(d, "decision is NULL");
+        boolean usable = false;
+        switch (d) {
+            case AbsOK:
+                usable = true;
+                break;
+            case OK:
+                usable = true;
+                break;
+            case Risky:
+                usable = true;
+                break;
+        }
+        return usable;
     }
 
     public FileDownloadInfo getFileDownloadInfoFromPeer(String pa, String fileId) {
@@ -105,36 +129,12 @@ public class FileInfoDownloader {
             PeerFileHashSum pfhs = new PeerFileHashSum(hash, pa, fdi.fileInfo.fileId);
             pl.add(pfhs);
         }
-        log.debug("perr list = {}", pl);
+        log.debug("peer list = {}", pl);
         PeerValidityDecisionMaker pvdm = new PeerValidityDecisionMaker(pl);
         res = pvdm.calcualteNetworkState();
         goodPeers = pvdm.getValidPeers();
         badPeers = pvdm.getInvalidPeers();
         return res;
-    }
-
-    /**
-     * Calculates network statistics and tells
-     * can we use it or can not
-     *
-     * @param d
-     * @return true is network is usable;
-     */
-    public static boolean isNetworkUsable(FileDownloadDecision d) {
-        Objects.requireNonNull(d, "decision is NULL");
-        boolean usable = false;
-        switch (d) {
-            case AbsOK:
-                usable = true;
-                break;
-            case OK:
-                usable = true;
-                break;
-            case Risky:
-                usable = true;
-                break;
-        }
-        return usable;
     }
 
     public FileDownloadDecision prepareForDownloading(String fileID, Set<String> onlyPeers) {
@@ -143,7 +143,7 @@ public class FileInfoDownloader {
         Objects.requireNonNull(onlyPeers, "onlyPeers is NULL");
         FileDownloadDecision res;
         Set<String> allPeers = new HashSet<>();
-        if (onlyPeers == null || onlyPeers.isEmpty()) {
+        if (onlyPeers.isEmpty()) {
             for (Peer p : peersService.getAllConnectedPeers()) {
                 allPeers.add(p.getHostWithPort());
             }

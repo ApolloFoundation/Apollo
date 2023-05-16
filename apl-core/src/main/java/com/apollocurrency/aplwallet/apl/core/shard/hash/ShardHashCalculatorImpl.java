@@ -4,16 +4,16 @@
 
 package com.apollocurrency.aplwallet.apl.core.shard.hash;
 
-import com.apollocurrency.aplwallet.apl.core.app.Block;
-import com.apollocurrency.aplwallet.apl.core.app.Blockchain;
 import com.apollocurrency.aplwallet.apl.core.chainid.BlockchainConfig;
-import com.apollocurrency.aplwallet.apl.core.db.dao.ShardDao;
-import com.apollocurrency.aplwallet.apl.core.db.dao.model.Shard;
+import com.apollocurrency.aplwallet.apl.core.dao.appdata.ShardDao;
+import com.apollocurrency.aplwallet.apl.core.entity.appdata.Shard;
+import com.apollocurrency.aplwallet.apl.core.model.Block;
+import com.apollocurrency.aplwallet.apl.core.service.blockchain.Blockchain;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import javax.inject.Inject;
-import javax.inject.Singleton;
+import jakarta.inject.Inject;
+import jakarta.inject.Singleton;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
 import java.util.ArrayList;
@@ -32,6 +32,7 @@ public class ShardHashCalculatorImpl implements ShardHashCalculator {
     private BlockchainConfig blockchainConfig;
     private ShardDao shardDao;
     private int blockSelectLimit;
+
     @Inject
     public ShardHashCalculatorImpl(Blockchain blockchain, BlockchainConfig blockchainConfig, ShardDao shardDao) {
         this(blockchain, blockchainConfig, shardDao, DEFAULT_BLOCK_LIMIT);
@@ -52,7 +53,7 @@ public class ShardHashCalculatorImpl implements ShardHashCalculator {
         List<byte[]> allBlockSignatures = new ArrayList<>();
         int fromHeight = shardStartHeight;
         while (fromHeight < shardEndHeight) {
-            List<byte[]> blockSignatures  = blockchain.getBlockSignaturesFrom(fromHeight, Math.min(fromHeight + blockSelectLimit, shardEndHeight));
+            List<byte[]> blockSignatures = blockchain.getBlockSignaturesFrom(fromHeight, Math.min(fromHeight + blockSelectLimit, shardEndHeight));
             allBlockSignatures.addAll(blockSignatures);
             fromHeight += blockSelectLimit;
         }
@@ -68,8 +69,7 @@ public class ShardHashCalculatorImpl implements ShardHashCalculator {
         String algorithm = blockchainConfig.getCurrentConfig().getShardingDigestAlgorithm();
         try {
             return MessageDigest.getInstance(algorithm);
-        }
-        catch (NoSuchAlgorithmException e) {
+        } catch (NoSuchAlgorithmException e) {
             throw new RuntimeException("Unable to create message digest for algo - " + algorithm, e);
         }
     }
@@ -77,6 +77,7 @@ public class ShardHashCalculatorImpl implements ShardHashCalculator {
     /**
      * {@inheritDoc}
      * <p>This implementation utilize block signatures as shard data and merkle tree as hashing data structure</p>
+     *
      * @return calculated hash or null, when no blocks exist between shardStartHeight(inclusive) and shardEndHeight(exclusive)
      */
     @Override

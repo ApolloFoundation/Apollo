@@ -4,27 +4,31 @@
 
 package com.apollocurrency.aplwallet.apl.core.http.post;
 
-import com.apollocurrency.aplwallet.apl.core.app.Helper2FA;
 import com.apollocurrency.aplwallet.apl.core.http.APITag;
 import com.apollocurrency.aplwallet.apl.core.http.AbstractAPIRequestHandler;
 import com.apollocurrency.aplwallet.apl.core.http.JSONResponses;
-import com.apollocurrency.aplwallet.apl.core.model.WalletKeysInfo;
-import com.apollocurrency.aplwallet.apl.util.AplException;
+import com.apollocurrency.aplwallet.apl.util.exception.AplException;
+import com.apollocurrency.aplwallet.vault.model.WalletKeysInfo;
+import com.apollocurrency.aplwallet.vault.service.auth.Account2FAService;
 import org.json.simple.JSONStreamAware;
 
-import javax.enterprise.inject.Vetoed;
-import javax.servlet.http.HttpServletRequest;
+import jakarta.enterprise.inject.Vetoed;
+import jakarta.enterprise.inject.spi.CDI;
+import jakarta.servlet.http.HttpServletRequest;
+
+@Deprecated
 @Vetoed
 public class GenerateAccount extends AbstractAPIRequestHandler {
     public GenerateAccount() {
-        super(new APITag[] {APITag.ACCOUNTS}, "passphrase");
+        super(new APITag[]{APITag.ACCOUNTS}, "passphrase");
 
     }
 
     @Override
     public JSONStreamAware processRequest(HttpServletRequest request) throws AplException {
         String passphrase = request.getParameter("passphrase");
-        WalletKeysInfo aplWalletKey = Helper2FA.generateUserWallet(passphrase);
+        Account2FAService account2FAService = CDI.current().select(Account2FAService.class).get();
+        WalletKeysInfo aplWalletKey = account2FAService.generateUserWallet(passphrase);
         if (aplWalletKey != null) {
             aplWalletKey.getAplWalletKey().setPassphrase(passphrase);
             return aplWalletKey.toJSON();

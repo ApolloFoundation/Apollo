@@ -20,26 +20,27 @@
 
 package com.apollocurrency.aplwallet.apl.core.http;
 
+import com.apollocurrency.aplwallet.api.dto.auth.TwoFactorAuthParameters;
 import com.apollocurrency.aplwallet.apl.core.addons.AddOns;
 import com.apollocurrency.aplwallet.apl.core.app.BlockNotFoundException;
-import com.apollocurrency.aplwallet.apl.core.app.Blockchain;
-import com.apollocurrency.aplwallet.apl.core.app.BlockchainImpl;
-import com.apollocurrency.aplwallet.apl.core.app.GlobalSync;
-import com.apollocurrency.aplwallet.apl.core.app.Helper2FA;
-import com.apollocurrency.aplwallet.apl.util.AplException;
+import com.apollocurrency.aplwallet.apl.core.service.blockchain.Blockchain;
+import com.apollocurrency.aplwallet.apl.core.service.blockchain.BlockchainImpl;
+import com.apollocurrency.aplwallet.apl.core.service.blockchain.GlobalSync;
 import com.apollocurrency.aplwallet.apl.util.JSON;
 import com.apollocurrency.aplwallet.apl.util.ThreadUtils;
+import com.apollocurrency.aplwallet.apl.util.exception.AplException;
 import com.apollocurrency.aplwallet.apl.util.injectable.PropertiesHolder;
+import com.apollocurrency.aplwallet.vault.service.auth.Account2FAService;
 import org.json.simple.JSONObject;
 import org.json.simple.JSONStreamAware;
 import org.slf4j.Logger;
 
-import javax.enterprise.inject.spi.CDI;
-import javax.inject.Inject;
-import javax.servlet.ServletException;
-import javax.servlet.http.HttpServlet;
-import javax.servlet.http.HttpServletRequest;
-import javax.servlet.http.HttpServletResponse;
+import jakarta.enterprise.inject.spi.CDI;
+import jakarta.inject.Inject;
+import jakarta.servlet.ServletException;
+import jakarta.servlet.http.HttpServlet;
+import jakarta.servlet.http.HttpServletRequest;
+import jakarta.servlet.http.HttpServletResponse;
 import java.io.IOException;
 import java.io.Writer;
 import java.util.Collections;
@@ -58,23 +59,22 @@ import static org.slf4j.LoggerFactory.getLogger;
 
 public final class APIServlet extends HttpServlet {
     private static final Logger LOG = getLogger(APIServlet.class);
-
-    private final PropertiesHolder propertiesHolder;
-
-    private final boolean enforcePost;
     public static Map<String, AbstractAPIRequestHandler> apiRequestHandlers;
     public static Map<String, AbstractAPIRequestHandler> disabledRequestHandlers;
-
+    private final PropertiesHolder propertiesHolder;
+    private final boolean enforcePost;
     private final Blockchain blockchain;//
     private final GlobalSync globalSync; // = CDI.current().select(GlobalSync.class).get();
     private final AdminPasswordVerifier apw; // =  CDI.current().select(AdminPasswordVerifier.class).get();
+    private final Account2FAService account2FAService;
 
     @Inject
     public APIServlet() {
-        this.propertiesHolder=CDI.current().select(PropertiesHolder.class).get();
-        this.blockchain= CDI.current().select(BlockchainImpl.class).get();
-        this.globalSync=CDI.current().select(GlobalSync.class).get();
-        this.apw=CDI.current().select(AdminPasswordVerifier.class).get();
+        this.propertiesHolder = CDI.current().select(PropertiesHolder.class).get();
+        this.blockchain = CDI.current().select(BlockchainImpl.class).get();
+        this.globalSync = CDI.current().select(GlobalSync.class).get();
+        this.apw = CDI.current().select(AdminPasswordVerifier.class).get();
+        this.account2FAService = CDI.current().select(Account2FAService.class).get();
 
 
         Map<String, AbstractAPIRequestHandler> map = new HashMap<>();
@@ -116,13 +116,13 @@ public final class APIServlet extends HttpServlet {
         enforcePost = propertiesHolder.getBooleanProperty("apl.apiServerEnforcePOST");
     }
 
-    @Override
-    public void init(){
-        LOG.debug("API servlet init");
-    }
-
     public static AbstractAPIRequestHandler getAPIRequestHandler(String requestType) {
         return apiRequestHandlers.get(requestType);
+    }
+
+    @Override
+    public void init() {
+        LOG.debug("API servlet init");
     }
 
     @Override
@@ -183,21 +183,17 @@ public final class APIServlet extends HttpServlet {
             }
             String accountName2FA = apiRequestHandler.vaultAccountName();
             if (apiRequestHandler.is2FAProtected()) {
-                Helper2FA.verify2FA(req, accountName2FA);
+                TwoFactorAuthParameters params2FA = HttpParameterParserUtil.parse2FARequest(req, accountName2FA, false);
+                account2FAService.verify2FA(params2FA);
             }
             final long requireBlockId = apiRequestHandler.allowRequiredBlockParameters() ?
-                    ParameterParser.getUnsignedLong(req, "requireBlock", false) : 0;
+                HttpParameterParserUtil.getUnsignedLong(req, "requireBlock", false) : 0;
             final long requireLastBlockId = apiRequestHandler.allowRequiredBlockParameters() ?
-                    ParameterParser.getUnsignedLong(req, "requireLastBlock", false) : 0;
+                HttpParameterParserUtil.getUnsignedLong(req, "requireLastBlock", false) : 0;
             if (requireBlockId != 0 || requireLastBlockId != 0) {
                 globalSync.readLock();
             }
             try {
-//                TransactionalDataSource dataSource = databaseManager.getDataSource();
-                try {
-//                    if (apiRequestHandler.startDbTransaction()) {
-//                        dataSource.begin();
-//                    }
                     if (requireBlockId != 0 && !blockchain.hasBlock(requireBlockId)) {
                         response = REQUIRED_BLOCK_NOT_FOUND;
                         return;
@@ -211,11 +207,6 @@ public final class APIServlet extends HttpServlet {
                     if (requireLastBlockId == 0 && requireBlockId != 0 && response instanceof JSONObject) {
                         ((JSONObject) response).put("lastBlock", blockchain.getLastBlock().getStringId());
                     }
-                } finally {
-//                    if (apiRequestHandler.startDbTransaction()) {
-//                        dataSource.commit(true);
-//                    }
-                }
             } finally {
                 if (requireBlockId != 0 || requireLastBlockId != 0) {
                     globalSync.readUnlock();
@@ -247,7 +238,7 @@ public final class APIServlet extends HttpServlet {
                     long requestTime = System.currentTimeMillis() - startTime;
                     ((JSONObject) response).put("requestProcessingTime", requestTime);
                     if (logRequestTime) {
-                        LOG.debug("Request \'" +req.getParameter("requestType")+ "\' took " + requestTime + " ms");
+                        LOG.debug("Request \'" + req.getParameter("requestType") + "\' took " + requestTime + " ms");
                     }
                 }
                 try (Writer writer = resp.getWriter()) {

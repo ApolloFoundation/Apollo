@@ -1,3 +1,3 @@
-SHUFFLING_ID(-5|19|0),ACCOUNT_ID(-5|19|0),DATA(2003|0|0),TRANSACTION_TIMESTAMP(4|10|0),HEIGHT(4|10|0)
-100,105,(b'ff112385a1f832bc',b'ffffff',b'1234567890',),150,1
-101,110,(b'75849274935438',),250,5
+transaction_id  ,shuffling_id         ,account_id         ,data                                               ,transaction_timestamp,height
+10              ,100                  ,105                ,'[\"ff112385a1f832bc\",\"ffffff\",\"1234567890\"]' ,150                  ,1
+20              ,101                  ,110                ,'[\"75849274935438\"]'                             ,250                  ,5

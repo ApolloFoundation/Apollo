@@ -4,13 +4,13 @@
 
 package com.apollocurrency.aplwallet.apl.core.shard.commands;
 
-import static org.slf4j.LoggerFactory.getLogger;
-
 import com.apollocurrency.aplwallet.apl.core.shard.MigrateState;
 import com.apollocurrency.aplwallet.apl.core.shard.ShardEngine;
 import org.slf4j.Logger;
 
 import java.util.Objects;
+
+import static org.slf4j.LoggerFactory.getLogger;
 
 /**
  * Command for updating Shard table in main database. Inserts record about just created shard.
@@ -26,7 +26,7 @@ public class FinishShardingCommand implements DataMigrateOperation {
 
     public FinishShardingCommand(ShardEngine shardEngine, long shardId) {
         this.shardEngine = Objects.requireNonNull(
-                shardEngine, "shardEngine is NULL");
+            shardEngine, "shardEngine is NULL");
         this.shardId = shardId;
     }
 

@@ -4,31 +4,37 @@
 
 package com.apollocurrency.aplwallet.apl.exchange.service;
 
-import com.apollocurrency.aplwallet.apl.core.app.Blockchain;
-import com.apollocurrency.aplwallet.apl.core.app.TimeService;
-import com.apollocurrency.aplwallet.apl.core.app.TransactionProcessor;
-import com.apollocurrency.aplwallet.apl.core.app.service.SecureStorageService;
 import com.apollocurrency.aplwallet.apl.core.chainid.BlockchainConfig;
-import com.apollocurrency.aplwallet.apl.core.phasing.PhasingPollServiceImpl;
-import com.apollocurrency.aplwallet.apl.core.phasing.dao.PhasingApprovedResultTable;
-import com.apollocurrency.aplwallet.apl.eth.service.EthereumWalletService;
-import com.apollocurrency.aplwallet.apl.exchange.DexConfig;
+import com.apollocurrency.aplwallet.apl.core.dao.state.phasing.PhasingApprovedResultTable;
+import com.apollocurrency.aplwallet.apl.core.model.dex.DexOrder;
+import com.apollocurrency.aplwallet.apl.core.model.dex.DexOrderWithFreezing;
+import com.apollocurrency.aplwallet.apl.core.model.dex.ExchangeContract;
+import com.apollocurrency.aplwallet.apl.core.service.appdata.SecureStorageService;
+import com.apollocurrency.aplwallet.apl.core.service.appdata.TimeService;
+import com.apollocurrency.aplwallet.apl.core.service.blockchain.Blockchain;
+import com.apollocurrency.aplwallet.apl.core.service.blockchain.TransactionProcessor;
+import com.apollocurrency.aplwallet.apl.core.service.state.account.AccountService;
+import com.apollocurrency.aplwallet.apl.core.service.state.PhasingPollServiceImpl;
+import com.apollocurrency.aplwallet.apl.core.transaction.MandatoryTransactionService;
+import com.apollocurrency.aplwallet.apl.core.transaction.TransactionJsonSerializer;
+import com.apollocurrency.aplwallet.apl.core.transaction.TransactionJsonSerializerImpl;
+import com.apollocurrency.aplwallet.apl.core.transaction.messages.PrunableLoadingService;
+import com.apollocurrency.aplwallet.apl.dex.config.DexConfig;
+import com.apollocurrency.aplwallet.apl.dex.core.model.DBSortOrder;
+import com.apollocurrency.aplwallet.apl.dex.core.model.DexCurrency;
+import com.apollocurrency.aplwallet.apl.dex.core.model.DexOrderDBRequest;
+import com.apollocurrency.aplwallet.apl.dex.core.model.DexOrderSortBy;
+import com.apollocurrency.aplwallet.apl.dex.core.model.ExchangeContractStatus;
+import com.apollocurrency.aplwallet.apl.dex.core.model.OrderFreezing;
+import com.apollocurrency.aplwallet.apl.dex.core.model.OrderStatus;
+import com.apollocurrency.aplwallet.apl.dex.core.model.OrderType;
+import com.apollocurrency.aplwallet.apl.dex.eth.service.EthereumWalletService;
 import com.apollocurrency.aplwallet.apl.exchange.dao.DexContractDao;
 import com.apollocurrency.aplwallet.apl.exchange.dao.DexContractTable;
 import com.apollocurrency.aplwallet.apl.exchange.dao.DexOrderDao;
 import com.apollocurrency.aplwallet.apl.exchange.dao.DexOrderTable;
-import com.apollocurrency.aplwallet.apl.exchange.dao.MandatoryTransactionDao;
-import com.apollocurrency.aplwallet.apl.exchange.model.DBSortOrder;
-import com.apollocurrency.aplwallet.apl.exchange.model.DexCurrency;
-import com.apollocurrency.aplwallet.apl.exchange.model.DexOrder;
-import com.apollocurrency.aplwallet.apl.exchange.model.DexOrderDBRequest;
-import com.apollocurrency.aplwallet.apl.exchange.model.DexOrderSortBy;
-import com.apollocurrency.aplwallet.apl.exchange.model.DexOrderWithFreezing;
-import com.apollocurrency.aplwallet.apl.exchange.model.ExchangeContract;
-import com.apollocurrency.aplwallet.apl.exchange.model.ExchangeContractStatus;
-import com.apollocurrency.aplwallet.apl.exchange.model.OrderFreezing;
-import com.apollocurrency.aplwallet.apl.exchange.model.OrderStatus;
-import com.apollocurrency.aplwallet.apl.exchange.model.OrderType;
+import com.apollocurrency.aplwallet.apl.util.env.config.Chain;
+import com.apollocurrency.aplwallet.vault.service.KMSService;
 import com.google.common.cache.LoadingCache;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -45,55 +51,77 @@ import static org.junit.jupiter.api.Assertions.assertSame;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.Mockito.doReturn;
+import static org.mockito.Mockito.mock;
 
 @ExtendWith(MockitoExtension.class)
 class DexServiceTest {
 
-    @Mock EthereumWalletService ethWalletService;
+    @Mock
+    EthereumWalletService ethWalletService;
     @Mock
     DexOrderDao dexOrderDao;
     @Mock
     DexOrderTable dexOrderTable;
-    @Mock TransactionProcessor transactionProcessor;
-    @Mock DexSmartContractService dexSmartContractService;
-    @Mock SecureStorageService secureStorageService;
-    @Mock DexContractTable dexContractTable;
+    @Mock
+    TransactionProcessor transactionProcessor;
+    @Mock
+    DexSmartContractService dexSmartContractService;
+    @Mock
+    SecureStorageService secureStorageService;
+    @Mock
+    DexContractTable dexContractTable;
     @Mock
     DexOrderTransactionCreator dexOrderTransactionCreator;
-    @Mock TimeService timeService;
-    @Mock DexContractDao dexContractDao;
-    @Mock Blockchain blockchain;
-    @Mock PhasingPollServiceImpl phasingPollService;
-    @Mock DexMatcherServiceImpl dexMatcherService;
+    @Mock
+    TimeService timeService;
+    @Mock
+    DexContractDao dexContractDao;
+    @Mock
+    Blockchain blockchain;
+    @Mock
+    PhasingPollServiceImpl phasingPollService;
+    @Mock
+    DexMatcherServiceImpl dexMatcherService;
     @Mock
     PhasingApprovedResultTable approvedResultTable;
     @Mock
-    MandatoryTransactionDao mandatoryTransactionDao;
-    @Mock
-    BlockchainConfig blockchainConfig;
+    MandatoryTransactionService mandatoryTransactionService;
+
+    BlockchainConfig blockchainConfig = mock(BlockchainConfig.class);
+    Chain chain = mock(Chain.class);
+
+    {
+        doReturn(chain).when(blockchainConfig).getChain();
+    }
+
     @Mock
     LoadingCache<Long, OrderFreezing> cache;
     @Mock
     DexConfig dexConfig;
+    @Mock
+    AccountService accountService;
+    @Mock
+    KMSService KMSService;
 
     DexOrder order = new DexOrder(2L, 100L, "from-address", "to-address", OrderType.BUY, OrderStatus.OPEN, DexCurrency.APL, 127_000_000L, DexCurrency.ETH, BigDecimal.valueOf(0.0001), 500);
-    DexOrder order1 = new DexOrder(1L, 2L, OrderType.BUY, 100L, DexCurrency.APL, 10000L, DexCurrency.PAX, BigDecimal.ONE, 90, OrderStatus.OPEN, 259 , "", "");
-    DexOrder order2 = new DexOrder(2L, 4L, OrderType.SELL, 200L, DexCurrency.APL, 50000L, DexCurrency.ETH, BigDecimal.TEN, 290, OrderStatus.WAITING_APPROVAL, 380 , "", "");
-    DexOrder order3 = new DexOrder(3L, 6L, OrderType.BUY, 200L, DexCurrency.APL, 100000L, DexCurrency.ETH, BigDecimal.TEN, 290, OrderStatus.WAITING_APPROVAL, 380 , "", "");
-    DexOrder order4 = new DexOrder(4L, 8L, OrderType.BUY, 100L, DexCurrency.APL, 20000L, DexCurrency.PAX, BigDecimal.valueOf(2.2), 500, OrderStatus.PENDING, 381 , "", "");
+    DexOrder order1 = new DexOrder(1L, 2L, OrderType.BUY, 100L, DexCurrency.APL, 10000L, DexCurrency.PAX, BigDecimal.ONE, 90, OrderStatus.OPEN, 259, "", "");
+    DexOrder order2 = new DexOrder(2L, 4L, OrderType.SELL, 200L, DexCurrency.APL, 50000L, DexCurrency.ETH, BigDecimal.TEN, 290, OrderStatus.WAITING_APPROVAL, 380, "", "");
+    DexOrder order3 = new DexOrder(3L, 6L, OrderType.BUY, 200L, DexCurrency.APL, 100000L, DexCurrency.ETH, BigDecimal.TEN, 290, OrderStatus.WAITING_APPROVAL, 380, "", "");
+    DexOrder order4 = new DexOrder(4L, 8L, OrderType.BUY, 100L, DexCurrency.APL, 20000L, DexCurrency.PAX, BigDecimal.valueOf(2.2), 500, OrderStatus.PENDING, 381, "", "");
     ExchangeContract contract = new ExchangeContract(
-            0L, 2L, 1L, 3L, 200L, 100L,
-            ExchangeContractStatus.STEP_3, new byte[32], "123",
-            "0x86d5bc08c2eba828a8e3588e25ad26a312ce77f6ecc02e3500ba05607f49c935",
-            new byte[32], 100, null, true);
+        0L, 2L, 1L, 3L, 200L, 100L,
+        ExchangeContractStatus.STEP_3, new byte[32], "123",
+        "0x86d5bc08c2eba828a8e3588e25ad26a312ce77f6ecc02e3500ba05607f49c935",
+        new byte[32], 100, null, true);
 
     DexService dexService;
 
     @BeforeEach
     void setUp() {
+        TransactionJsonSerializer serializer = new TransactionJsonSerializerImpl(mock(PrunableLoadingService.class), blockchainConfig);
         dexService = new DexService(ethWalletService, dexOrderDao, dexOrderTable, transactionProcessor, dexSmartContractService, secureStorageService,
-                dexContractTable, dexOrderTransactionCreator, timeService, dexContractDao, blockchain, phasingPollService, dexMatcherService,
-                approvedResultTable, mandatoryTransactionDao, blockchainConfig, cache, dexConfig);
+            dexContractTable, dexOrderTransactionCreator, timeService, dexContractDao, blockchain, phasingPollService, dexMatcherService,
+            approvedResultTable, mandatoryTransactionService, serializer, accountService, blockchainConfig, cache, dexConfig, KMSService);
     }
 
     @Test
@@ -182,8 +210,8 @@ class DexServiceTest {
 
     @Test
     void testGetOrdersWithoutHasFrozenMoneyParameter() {
-        DexOrder order1 = new DexOrder(1L, 2L, OrderType.BUY, 100L, DexCurrency.APL, 10000L, DexCurrency.PAX, BigDecimal.ONE, 90, OrderStatus.OPEN, 259 , "", "");
-        DexOrder order2 = new DexOrder(2L, 4L, OrderType.SELL, 200L, DexCurrency.APL, 50000L, DexCurrency.ETH, BigDecimal.TEN, 290, OrderStatus.WAITING_APPROVAL, 380 , "", "");
+        DexOrder order1 = new DexOrder(1L, 2L, OrderType.BUY, 100L, DexCurrency.APL, 10000L, DexCurrency.PAX, BigDecimal.ONE, 90, OrderStatus.OPEN, 259, "", "");
+        DexOrder order2 = new DexOrder(2L, 4L, OrderType.SELL, 200L, DexCurrency.APL, 50000L, DexCurrency.ETH, BigDecimal.TEN, 290, OrderStatus.WAITING_APPROVAL, 380, "", "");
         DexOrderDBRequest request = DexOrderDBRequest.builder().limit(2).sortBy(DexOrderSortBy.PAIR_RATE).sortOrder(DBSortOrder.DESC).build();
         doReturn(List.of(order1, order2)).when(dexOrderDao).getOrders(request, DexOrderSortBy.PAIR_RATE, DBSortOrder.DESC);
         doReturn(new OrderFreezing(2L, false)).when(cache).getUnchecked(2L);

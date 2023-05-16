@@ -20,43 +20,51 @@
 
 package com.apollocurrency.aplwallet.apl.core.http.get;
 
-import com.apollocurrency.aplwallet.apl.core.app.Order;
-import com.apollocurrency.aplwallet.apl.core.app.Transaction;
-import com.apollocurrency.aplwallet.apl.core.db.DbIterator;
+import com.apollocurrency.aplwallet.apl.core.model.Transaction;
+import com.apollocurrency.aplwallet.apl.core.entity.state.order.AskOrder;
 import com.apollocurrency.aplwallet.apl.core.http.APITag;
 import com.apollocurrency.aplwallet.apl.core.http.AbstractAPIRequestHandler;
+import com.apollocurrency.aplwallet.apl.core.http.HttpParameterParserUtil;
 import com.apollocurrency.aplwallet.apl.core.http.JSONData;
-import com.apollocurrency.aplwallet.apl.core.http.ParameterParser;
-import com.apollocurrency.aplwallet.apl.core.transaction.ColoredCoins;
+import com.apollocurrency.aplwallet.apl.core.service.state.order.OrderService;
+import com.apollocurrency.aplwallet.apl.core.service.state.order.impl.AskOrderServiceImpl;
+import com.apollocurrency.aplwallet.apl.core.service.state.qualifier.AskOrderService;
+import com.apollocurrency.aplwallet.apl.core.transaction.TransactionTypes;
+import com.apollocurrency.aplwallet.apl.core.transaction.messages.CCAskOrderPlacementAttachment;
 import com.apollocurrency.aplwallet.apl.core.transaction.messages.ColoredCoinsOrderCancellationAttachment;
-import com.apollocurrency.aplwallet.apl.util.AplException;
+import com.apollocurrency.aplwallet.apl.core.utils.CollectorUtils;
 import com.apollocurrency.aplwallet.apl.util.Filter;
+import com.apollocurrency.aplwallet.apl.util.exception.AplException;
 import org.json.simple.JSONArray;
 import org.json.simple.JSONObject;
 import org.json.simple.JSONStreamAware;
 
+import jakarta.enterprise.inject.Vetoed;
+import jakarta.enterprise.inject.spi.CDI;
+import jakarta.servlet.http.HttpServletRequest;
 import java.util.Arrays;
 import java.util.List;
-import javax.servlet.http.HttpServletRequest;
-import javax.enterprise.inject.Vetoed;
 
 @Vetoed
 public final class GetAskOrders extends AbstractAPIRequestHandler {
+    private final OrderService<AskOrder, CCAskOrderPlacementAttachment> askOrderService =
+        CDI.current().select(AskOrderServiceImpl.class, AskOrderService.Literal.INSTANCE).get();
 
     public GetAskOrders() {
-        super(new APITag[] {APITag.AE}, "asset", "firstIndex", "lastIndex", "showExpectedCancellations");
+        super(new APITag[]{APITag.AE}, "asset", "firstIndex", "lastIndex", "showExpectedCancellations");
     }
+
     @Override
     public JSONStreamAware processRequest(HttpServletRequest req) throws AplException {
 
-        long assetId = ParameterParser.getUnsignedLong(req, "asset", true);
-        int firstIndex = ParameterParser.getFirstIndex(req);
-        int lastIndex = ParameterParser.getLastIndex(req);
+        long assetId = HttpParameterParserUtil.getUnsignedLong(req, "asset", true);
+        int firstIndex = HttpParameterParserUtil.getFirstIndex(req);
+        int lastIndex = HttpParameterParserUtil.getLastIndex(req);
         boolean showExpectedCancellations = "true".equalsIgnoreCase(req.getParameter("showExpectedCancellations"));
 
         long[] cancellations = null;
         if (showExpectedCancellations) {
-            Filter<Transaction> filter = transaction -> transaction.getType() == ColoredCoins.ASK_ORDER_CANCELLATION;
+            Filter<Transaction> filter = transaction -> transaction.getType().getSpec() == TransactionTypes.TransactionTypeSpec.CC_ASK_ORDER_CANCELLATION;
             List<Transaction> transactions = lookupBlockchainProcessor().getExpectedTransactions(filter);
             cancellations = new long[transactions.size()];
             for (int i = 0; i < transactions.size(); i++) {
@@ -66,22 +74,22 @@ public final class GetAskOrders extends AbstractAPIRequestHandler {
             Arrays.sort(cancellations);
         }
 
-        JSONArray orders = new JSONArray();
-        try (DbIterator<Order.Ask> askOrders = Order.Ask.getSortedOrders(assetId, firstIndex, lastIndex)) {
-            while (askOrders.hasNext()) {
-                Order.Ask order = askOrders.next();
-                JSONObject orderJSON = JSONData.askOrder(order);
-                if (showExpectedCancellations && Arrays.binarySearch(cancellations, order.getId()) >= 0) {
-                    orderJSON.put("expectedCancellation", Boolean.TRUE);
-                }
-                orders.add(orderJSON);
-            }
-        }
+        long[] finalCancellations = cancellations;
+        JSONArray orders = askOrderService.getSortedOrders(assetId, firstIndex, lastIndex)
+            .map(askOrder -> getJsonObject(showExpectedCancellations, finalCancellations, askOrder))
+            .collect(CollectorUtils.jsonCollector());
 
         JSONObject response = new JSONObject();
         response.put("askOrders", orders);
         return response;
+    }
 
+    private JSONObject getJsonObject(boolean showExpectedCancellations, long[] finalCancellations, AskOrder askOrder) {
+        JSONObject orderJSON = JSONData.askOrder(askOrder);
+        if (showExpectedCancellations && Arrays.binarySearch(finalCancellations, askOrder.getId()) >= 0) {
+            orderJSON.put("expectedCancellation", Boolean.TRUE);
+        }
+        return orderJSON;
     }
 
 }

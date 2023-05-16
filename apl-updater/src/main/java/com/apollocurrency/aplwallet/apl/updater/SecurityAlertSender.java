@@ -4,7 +4,7 @@
 
 package com.apollocurrency.aplwallet.apl.updater;
 
-import com.apollocurrency.aplwallet.apl.core.app.Transaction;
+import com.apollocurrency.aplwallet.apl.core.model.Transaction;
 
 public interface SecurityAlertSender {
 

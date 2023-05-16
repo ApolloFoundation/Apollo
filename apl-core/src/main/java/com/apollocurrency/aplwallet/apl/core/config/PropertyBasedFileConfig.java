@@ -9,19 +9,20 @@ import com.apollocurrency.aplwallet.apl.util.injectable.PropertiesHolder;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import javax.enterprise.inject.Produces;
-import javax.inject.Inject;
-import javax.inject.Named;
+import jakarta.enterprise.inject.Produces;
+import jakarta.inject.Inject;
+import jakarta.inject.Named;
 import java.nio.file.Path;
 
 public class PropertyBasedFileConfig {
     private static final Logger LOG = LoggerFactory.getLogger(PropertyBasedFileConfig.class);
     private final PropertiesHolder propertiesHolder;
     private final DirProvider dirProvider;
+
     @Inject
     public PropertyBasedFileConfig(PropertiesHolder propertiesHolder, DirProvider dirProvider) {
         this.propertiesHolder = propertiesHolder;
-        this.dirProvider=dirProvider;
+        this.dirProvider = dirProvider;
     }
 
     @Produces
@@ -35,7 +36,6 @@ public class PropertyBasedFileConfig {
     public Path getSecureStoreDirPath() {
         return dirProvider.getSecureStorageDir().toAbsolutePath();
     }
-
 
 
     private String getOrDefault(String property, String defaultValue) {

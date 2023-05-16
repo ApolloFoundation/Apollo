@@ -4,12 +4,12 @@
 
 package com.apollocurrency.aplwallet.apl.exchange.dao;
 
-import com.apollocurrency.aplwallet.apl.core.db.DbKey;
-import com.apollocurrency.aplwallet.apl.core.db.LongKey;
-import com.apollocurrency.aplwallet.apl.core.db.LongKeyFactory;
-import com.apollocurrency.aplwallet.apl.exchange.model.DexOrder;
+import com.apollocurrency.aplwallet.apl.core.dao.state.keyfactory.DbKey;
+import com.apollocurrency.aplwallet.apl.core.dao.state.keyfactory.LongKey;
+import com.apollocurrency.aplwallet.apl.core.dao.state.keyfactory.LongKeyFactory;
+import com.apollocurrency.aplwallet.apl.core.model.dex.DexOrder;
 
-import javax.inject.Singleton;
+import jakarta.inject.Singleton;
 
 @Singleton
 public class DexOrderKeyFactory extends LongKeyFactory<DexOrder> {

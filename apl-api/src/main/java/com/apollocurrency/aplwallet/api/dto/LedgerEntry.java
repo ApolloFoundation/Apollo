@@ -13,15 +13,16 @@ public class LedgerEntry {
     private Long ledgerId;
     private boolean isTransactionEvent;
     private Long balance;
- //   private AccountLedger.LedgerHolding holdingType;
     private Long change;
     private String block;
-//    private AccountLedger.LedgerEvent eventType;
     private String event;
     private BasicAccount account;
     private Long height;
     private Long timestamp;
     private JSONTransaction transaction;
+
+    public LedgerEntry() {
+    }
 
     public Long getLedgerId() {
         return ledgerId;
@@ -47,14 +48,6 @@ public class LedgerEntry {
         this.balance = balance;
     }
 
-//    public AccountLedger.LedgerHolding getHoldingType() {
-//        return holdingType;
-//    }
-//
-//    public void setHoldingType(AccountLedger.LedgerHolding holdingType) {
-//        this.holdingType = holdingType;
-//    }
-
     public Long getChange() {
         return change;
     }
@@ -70,14 +63,6 @@ public class LedgerEntry {
     public void setBlock(String block) {
         this.block = block;
     }
-//
-//    public AccountLedger.LedgerEvent getEventType() {
-//        return eventType;
-//    }
-//
-//    public void setEventType(AccountLedger.LedgerEvent eventType) {
-//        this.eventType = eventType;
-//    }
 
     public String getEvent() {
         return event;
@@ -89,10 +74,6 @@ public class LedgerEntry {
 
     public BasicAccount getAccount() {
         return account;
-    }
-
-    public void setAccount(String account) {
-        this.account = new BasicAccount(account);
     }
 
     public Long getHeight() {
@@ -107,33 +88,27 @@ public class LedgerEntry {
         return timestamp;
     }
 
+    public void setTimestamp(Long timestamp) {
+        this.timestamp = timestamp;
+    }
+
     @Override
     public boolean equals(Object o) {
         if (this == o) return true;
         if (!(o instanceof LedgerEntry)) return false;
         LedgerEntry that = (LedgerEntry) o;
         return isTransactionEvent() == that.isTransactionEvent() &&
-                Objects.equals(getLedgerId(), that.getLedgerId()) &&
-                Objects.equals(getBalance(), that.getBalance()) &&
-  //              getHoldingType() == that.getHoldingType() &&
-                Objects.equals(getChange(), that.getChange()) &&
-                Objects.equals(getBlock(), that.getBlock()) &&
- //               getEventType() == that.getEventType() &&
-                Objects.equals(getEvent(), that.getEvent()) &&
-                Objects.equals(getAccount(), that.getAccount()) &&
-                Objects.equals(getHeight(), that.getHeight()) &&
-                Objects.equals(getTimestamp(), that.getTimestamp()) &&
-                Objects.equals(getTransaction(), that.getTransaction());
-    }
-
-//    @Override
-//    public int hashCode() {
-//
-//        return Objects.hash(getLedgerId(), isTransactionEvent(), getBalance(), getHoldingType(), getChange(), getBlock(), getEventType(), getEvent(), getAccount(), getHeight(), getTimestamp(), getTransaction());
-//    }
-
-    public void setTimestamp(Long timestamp) {
-        this.timestamp = timestamp;
+            Objects.equals(getLedgerId(), that.getLedgerId()) &&
+            Objects.equals(getBalance(), that.getBalance()) &&
+            //              getHoldingType() == that.getHoldingType() &&
+            Objects.equals(getChange(), that.getChange()) &&
+            Objects.equals(getBlock(), that.getBlock()) &&
+            //               getEventType() == that.getEventType() &&
+            Objects.equals(getEvent(), that.getEvent()) &&
+            Objects.equals(getAccount(), that.getAccount()) &&
+            Objects.equals(getHeight(), that.getHeight()) &&
+            Objects.equals(getTimestamp(), that.getTimestamp()) &&
+            Objects.equals(getTransaction(), that.getTransaction());
     }
 
     public JSONTransaction getTransaction() {
@@ -144,27 +119,14 @@ public class LedgerEntry {
         this.transaction = transaction;
     }
 
-    public LedgerEntry() {
-    }
-
     @Override
     public String toString() {
         return "LedgerEntry{" +
-                "balance=" + balance +
-//                ", holdingType=" + holdingType +
-                ", change=" + change +
-//                ", eventType=" + eventType +
-                ", transaction=" + transaction +
-                '}';
+            "balance=" + balance +
+            ", change=" + change +
+            ", transaction=" + transaction +
+            '}';
     }
-
-//    public boolean isPrivate() {
-//        return AccountLedger.LedgerEvent.PRIVATE_PAYMENT == eventType;
-//    }
-
-//    public boolean isPublic() {
-//        return !isPrivate();
-//    }
 
     public boolean isNull() {
         return ledgerId == null && account == null && block == null && timestamp == null;

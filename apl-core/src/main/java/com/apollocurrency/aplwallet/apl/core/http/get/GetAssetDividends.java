@@ -20,37 +20,41 @@
 
 package com.apollocurrency.aplwallet.apl.core.http.get;
 
-import com.apollocurrency.aplwallet.apl.core.monetary.AssetDividend;
+import com.apollocurrency.aplwallet.apl.core.entity.state.asset.AssetDividend;
 import com.apollocurrency.aplwallet.apl.core.http.APITag;
 import com.apollocurrency.aplwallet.apl.core.http.AbstractAPIRequestHandler;
+import com.apollocurrency.aplwallet.apl.core.http.HttpParameterParserUtil;
 import com.apollocurrency.aplwallet.apl.core.http.JSONData;
-import com.apollocurrency.aplwallet.apl.core.http.ParameterParser;
-import com.apollocurrency.aplwallet.apl.util.AplException;
-import com.apollocurrency.aplwallet.apl.core.db.DbIterator;
-import javax.enterprise.inject.Vetoed;
+import com.apollocurrency.aplwallet.apl.core.service.state.asset.AssetDividendService;
+import com.apollocurrency.aplwallet.apl.util.exception.AplException;
 import org.json.simple.JSONArray;
 import org.json.simple.JSONObject;
 import org.json.simple.JSONStreamAware;
 
-import javax.servlet.http.HttpServletRequest;
+import jakarta.enterprise.inject.Vetoed;
+import jakarta.enterprise.inject.spi.CDI;
+import jakarta.servlet.http.HttpServletRequest;
+import java.util.List;
 
 @Vetoed
 public final class GetAssetDividends extends AbstractAPIRequestHandler {
 
     public GetAssetDividends() {
-        super(new APITag[] {APITag.AE}, "asset", "firstIndex", "lastIndex", "timestamp");
+        super(new APITag[]{APITag.AE}, "asset", "firstIndex", "lastIndex", "timestamp");
     }
 
     @Override
     public JSONStreamAware processRequest(HttpServletRequest req) throws AplException {
 
-        long assetId = ParameterParser.getUnsignedLong(req, "asset", false);
-        int timestamp = ParameterParser.getTimestamp(req);
-        int firstIndex = ParameterParser.getFirstIndex(req);
-        int lastIndex = ParameterParser.getLastIndex(req);
+        long assetId = HttpParameterParserUtil.getUnsignedLong(req, "asset", false);
+        int timestamp = HttpParameterParserUtil.getTimestamp(req);
+        int firstIndex = HttpParameterParserUtil.getFirstIndex(req);
+        int lastIndex = HttpParameterParserUtil.getLastIndex(req);
 
         JSONObject response = new JSONObject();
         JSONArray dividendsData = new JSONArray();
+        AssetDividendService assetDividendService = CDI.current().select(AssetDividendService.class).get();
+/*
         try (DbIterator<AssetDividend> dividends = AssetDividend.getAssetDividends(assetId, firstIndex, lastIndex)) {
             while (dividends.hasNext()) {
                 AssetDividend assetDividend = dividends.next();
@@ -59,6 +63,15 @@ public final class GetAssetDividends extends AbstractAPIRequestHandler {
                 }
                 dividendsData.add(JSONData.assetDividend(assetDividend));
             }
+        }
+*/
+        List<AssetDividend> dividends = assetDividendService.getAssetDividends(assetId, firstIndex, lastIndex);
+        for (int i = 0; i < dividends.size(); i++) {
+            AssetDividend assetDividend = dividends.get(i);
+            if (assetDividend.getTimestamp() < timestamp) {
+                break;
+            }
+            dividendsData.add(JSONData.assetDividend(assetDividend));
         }
         response.put("dividends", dividendsData);
         return response;

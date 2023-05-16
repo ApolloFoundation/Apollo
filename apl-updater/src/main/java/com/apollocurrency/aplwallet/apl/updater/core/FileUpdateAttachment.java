@@ -4,21 +4,31 @@
 
 package com.apollocurrency.aplwallet.apl.updater.core;
 
-import com.apollocurrency.aplwallet.apl.util.Architecture;
-import com.apollocurrency.aplwallet.apl.util.Platform;
+import com.apollocurrency.aplwallet.apl.util.env.Arch;
+import com.apollocurrency.aplwallet.apl.util.env.OS;
 
 import java.util.Objects;
 
 public class FileUpdateAttachment {
-    private Platform platform;
-    private Architecture architecture;
-    private String  urlFirstPart;
-    private String  urlSecondPart;
+    private OS os;
+    private Arch architecture;
+    private String urlFirstPart;
+    private String urlSecondPart;
     private String version;
     private String hash;
     private int level;
 
     public FileUpdateAttachment() {
+    }
+
+    public FileUpdateAttachment(OS os, Arch architecture, String urlFirstPart, String urlSecondPart, String version, String hash, int level) {
+        this.os = os;
+        this.architecture = architecture;
+        this.urlFirstPart = urlFirstPart;
+        this.urlSecondPart = urlSecondPart;
+        this.version = version;
+        this.hash = hash;
+        this.level = level;
     }
 
     @Override
@@ -27,32 +37,32 @@ public class FileUpdateAttachment {
         if (!(o instanceof FileUpdateAttachment)) return false;
         FileUpdateAttachment that = (FileUpdateAttachment) o;
         return level == that.level &&
-                platform == that.platform &&
-                architecture == that.architecture &&
-                Objects.equals(urlFirstPart, that.urlFirstPart) &&
-                Objects.equals(urlSecondPart, that.urlSecondPart) &&
-                Objects.equals(version, that.version) &&
-                Objects.equals(hash, that.hash);
+            os == that.os &&
+            architecture == that.architecture &&
+            Objects.equals(urlFirstPart, that.urlFirstPart) &&
+            Objects.equals(urlSecondPart, that.urlSecondPart) &&
+            Objects.equals(version, that.version) &&
+            Objects.equals(hash, that.hash);
     }
 
     @Override
     public int hashCode() {
-        return Objects.hash(platform, architecture, urlFirstPart, urlSecondPart, version, hash, level);
+        return Objects.hash(os, architecture, urlFirstPart, urlSecondPart, version, hash, level);
     }
 
-    public Platform getPlatform() {
-        return platform;
+    public OS getOS() {
+        return os;
     }
 
-    public void setPlatform(Platform platform) {
-        this.platform = platform;
+    public void setOS(String os) {
+        this.os = OS.from(os);
     }
 
-    public Architecture getArchitecture() {
+    public Arch getArchitecture() {
         return architecture;
     }
 
-    public void setArchitecture(Architecture architecture) {
+    public void setArchitecture(Arch architecture) {
         this.architecture = architecture;
     }
 
@@ -78,16 +88,6 @@ public class FileUpdateAttachment {
 
     public void setVersion(String version) {
         this.version = version;
-    }
-
-    public FileUpdateAttachment(Platform platform, Architecture architecture, String urlFirstPart, String urlSecondPart, String version, String hash, int level) {
-        this.platform = platform;
-        this.architecture = architecture;
-        this.urlFirstPart = urlFirstPart;
-        this.urlSecondPart = urlSecondPart;
-        this.version = version;
-        this.hash = hash;
-        this.level = level;
     }
 
     public String getHash() {

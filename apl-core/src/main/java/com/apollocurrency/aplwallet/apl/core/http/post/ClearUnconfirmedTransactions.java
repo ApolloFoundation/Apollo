@@ -23,17 +23,17 @@ package com.apollocurrency.aplwallet.apl.core.http.post;
 import com.apollocurrency.aplwallet.apl.core.http.APITag;
 import com.apollocurrency.aplwallet.apl.core.http.AbstractAPIRequestHandler;
 import com.apollocurrency.aplwallet.apl.core.http.JSONData;
-import javax.enterprise.inject.Vetoed;
 import org.json.simple.JSONObject;
 import org.json.simple.JSONStreamAware;
 
-import javax.servlet.http.HttpServletRequest;
+import jakarta.enterprise.inject.Vetoed;
+import jakarta.servlet.http.HttpServletRequest;
 
 @Vetoed
 public final class ClearUnconfirmedTransactions extends AbstractAPIRequestHandler {
 
     public ClearUnconfirmedTransactions() {
-        super(new APITag[] {APITag.DEBUG});
+        super(new APITag[]{APITag.DEBUG});
     }
 
     @Override

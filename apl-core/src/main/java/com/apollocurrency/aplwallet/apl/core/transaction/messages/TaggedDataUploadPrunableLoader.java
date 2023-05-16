@@ -1,0 +1,30 @@
+/*
+ *  Copyright © 2018-2020 Apollo Foundation
+ */
+
+package com.apollocurrency.aplwallet.apl.core.transaction.messages;
+
+import com.apollocurrency.aplwallet.apl.core.model.Transaction;
+import com.apollocurrency.aplwallet.apl.core.service.state.TaggedDataService;
+
+import jakarta.inject.Inject;
+import jakarta.inject.Singleton;
+
+@Singleton
+public class TaggedDataUploadPrunableLoader extends TaggedDataPrunableLoader<TaggedDataUploadAttachment>{
+
+    @Inject
+    public TaggedDataUploadPrunableLoader(PrunableLoadingChecker prunableLoadingChecker, TaggedDataService taggedDataService) {
+        super(prunableLoadingChecker, taggedDataService);
+    }
+
+    @Override
+    public void restorePrunableData(Transaction transaction, TaggedDataUploadAttachment appendix, int blockTimestamp, int height) {
+        taggedDataService.restore(transaction, appendix, blockTimestamp, height);
+    }
+
+    @Override
+    public Class<TaggedDataUploadAttachment> forClass() {
+        return TaggedDataUploadAttachment.class;
+    }
+}

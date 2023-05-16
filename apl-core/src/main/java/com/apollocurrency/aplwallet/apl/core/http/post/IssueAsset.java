@@ -20,30 +20,30 @@
 
 package com.apollocurrency.aplwallet.apl.core.http.post;
 
-import com.apollocurrency.aplwallet.apl.core.account.Account;
+import com.apollocurrency.aplwallet.apl.core.entity.state.account.Account;
+import com.apollocurrency.aplwallet.apl.core.http.APITag;
+import com.apollocurrency.aplwallet.apl.core.http.HttpParameterParserUtil;
 import com.apollocurrency.aplwallet.apl.core.transaction.messages.Attachment;
 import com.apollocurrency.aplwallet.apl.core.transaction.messages.ColoredCoinsAssetIssuance;
-import com.apollocurrency.aplwallet.apl.util.Constants;
-import com.apollocurrency.aplwallet.apl.core.http.APITag;
-import com.apollocurrency.aplwallet.apl.core.http.ParameterParser;
-import com.apollocurrency.aplwallet.apl.util.AplException;
 import com.apollocurrency.aplwallet.apl.crypto.Convert;
+import com.apollocurrency.aplwallet.apl.util.Constants;
+import com.apollocurrency.aplwallet.apl.util.exception.AplException;
 import org.json.simple.JSONStreamAware;
 
-import javax.servlet.http.HttpServletRequest;
+import jakarta.enterprise.inject.Vetoed;
+import jakarta.servlet.http.HttpServletRequest;
 
 import static com.apollocurrency.aplwallet.apl.core.http.JSONResponses.INCORRECT_ASSET_DESCRIPTION;
 import static com.apollocurrency.aplwallet.apl.core.http.JSONResponses.INCORRECT_ASSET_NAME;
 import static com.apollocurrency.aplwallet.apl.core.http.JSONResponses.INCORRECT_ASSET_NAME_LENGTH;
 import static com.apollocurrency.aplwallet.apl.core.http.JSONResponses.INCORRECT_DECIMALS;
 import static com.apollocurrency.aplwallet.apl.core.http.JSONResponses.MISSING_NAME;
-import javax.enterprise.inject.Vetoed;
 
 @Vetoed
-public final class IssueAsset extends CreateTransaction {
+public final class IssueAsset extends CreateTransactionHandler {
 
     public IssueAsset() {
-        super(new APITag[] {APITag.AE, APITag.CREATE_TRANSACTION}, "name", "description", "quantityATU", "decimals");
+        super(new APITag[]{APITag.AE, APITag.CREATE_TRANSACTION}, "name", "description", "quantityATU", "decimals");
     }
 
     @Override
@@ -84,8 +84,8 @@ public final class IssueAsset extends CreateTransaction {
             }
         }
 
-        long quantityATU = ParameterParser.getQuantityATU(req);
-        Account account = ParameterParser.getSenderAccount(req);
+        long quantityATU = HttpParameterParserUtil.getQuantityATU(req);
+        Account account = HttpParameterParserUtil.getSenderAccount(req);
         Attachment attachment = new ColoredCoinsAssetIssuance(name, description, quantityATU, decimals);
         return createTransaction(req, account, attachment);
 

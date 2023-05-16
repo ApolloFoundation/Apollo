@@ -20,17 +20,17 @@
 
 package com.apollocurrency.aplwallet.apl.core.http.post;
 
-import com.apollocurrency.aplwallet.apl.core.account.Account;
+import com.apollocurrency.aplwallet.apl.core.entity.state.account.Account;
 import com.apollocurrency.aplwallet.apl.core.http.APITag;
-import com.apollocurrency.aplwallet.apl.core.http.ParameterParser;
-import com.apollocurrency.aplwallet.apl.util.AplException;
+import com.apollocurrency.aplwallet.apl.core.http.HttpParameterParserUtil;
+import com.apollocurrency.aplwallet.apl.util.exception.AplException;
 import org.json.simple.JSONStreamAware;
 
-import javax.enterprise.inject.Vetoed;
-import javax.servlet.http.HttpServletRequest;
+import jakarta.enterprise.inject.Vetoed;
+import jakarta.servlet.http.HttpServletRequest;
 
 @Vetoed
-public final class SendMoney extends CreateTransaction {
+public final class SendMoney extends CreateTransactionHandler {
 
     public SendMoney() {
         super(new APITag[]{APITag.ACCOUNTS, APITag.CREATE_TRANSACTION}, "recipient", "amountATM");
@@ -38,9 +38,9 @@ public final class SendMoney extends CreateTransaction {
 
     @Override
     public JSONStreamAware processRequest(HttpServletRequest req) throws AplException {
-        long recipient = ParameterParser.getAccountId(req, "recipient", true);
-        long amountATM = ParameterParser.getAmountATM(req);
-        Account account = ParameterParser.getSenderAccount(req);
+        long recipient = HttpParameterParserUtil.getAccountId(req, "recipient", true);
+        long amountATM = HttpParameterParserUtil.getAmountATM(req);
+        Account account = HttpParameterParserUtil.getSenderAccount(req);
         return createTransaction(req, account, recipient, amountATM);
     }
 

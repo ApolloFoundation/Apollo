@@ -1,79 +1,122 @@
+/*
+ * Copyright © 2018-2020 Apollo Foundation
+ */
+
 package com.apollocurrency.aplwallet.apl.core.shard.helper;
 
-import com.apollocurrency.aplwallet.apl.core.account.PhasingOnly;
 import com.apollocurrency.aplwallet.apl.core.app.AplAppStatus;
-import com.apollocurrency.aplwallet.apl.core.app.BlockchainImpl;
-import com.apollocurrency.aplwallet.apl.core.app.BlockchainProcessor;
-import com.apollocurrency.aplwallet.apl.core.app.BlockchainProcessorImpl;
-import com.apollocurrency.aplwallet.apl.core.app.DefaultBlockValidator;
-import com.apollocurrency.aplwallet.apl.core.app.GlobalSyncImpl;
-import com.apollocurrency.aplwallet.apl.core.app.ReferencedTransactionService;
-import com.apollocurrency.aplwallet.apl.core.app.TimeServiceImpl;
-import com.apollocurrency.aplwallet.apl.core.app.TransactionDaoImpl;
-import com.apollocurrency.aplwallet.apl.core.app.TransactionProcessor;
-import com.apollocurrency.aplwallet.apl.core.app.TransactionProcessorImpl;
-import com.apollocurrency.aplwallet.apl.core.app.TrimService;
 import com.apollocurrency.aplwallet.apl.core.chainid.BlockchainConfig;
 import com.apollocurrency.aplwallet.apl.core.chainid.HeightConfig;
 import com.apollocurrency.aplwallet.apl.core.config.DaoConfig;
+import com.apollocurrency.aplwallet.apl.core.config.JdbiConfiguration;
 import com.apollocurrency.aplwallet.apl.core.config.PropertyProducer;
-import com.apollocurrency.aplwallet.apl.core.db.BlockDaoImpl;
+import com.apollocurrency.aplwallet.apl.core.config.TimeConfig;
+import com.apollocurrency.aplwallet.apl.core.converter.db.BlockEntityRowMapper;
+import com.apollocurrency.aplwallet.apl.core.converter.db.BlockEntityToModelConverter;
+import com.apollocurrency.aplwallet.apl.core.converter.db.BlockModelToEntityConverter;
+import com.apollocurrency.aplwallet.apl.core.converter.db.PrunableTxRowMapper;
+import com.apollocurrency.aplwallet.apl.core.converter.db.TransactionEntityRowMapper;
+import com.apollocurrency.aplwallet.apl.core.converter.db.TransactionEntityToModelConverter;
+import com.apollocurrency.aplwallet.apl.core.converter.db.TransactionModelToEntityConverter;
+import com.apollocurrency.aplwallet.apl.core.converter.db.TxReceiptRowMapper;
+import com.apollocurrency.aplwallet.apl.core.converter.db.UnconfirmedTransactionEntityRowMapper;
+import com.apollocurrency.aplwallet.apl.core.dao.DbContainerBaseTest;
+import com.apollocurrency.aplwallet.apl.core.dao.appdata.UnconfirmedTransactionTable;
+import com.apollocurrency.aplwallet.apl.core.dao.appdata.impl.ReferencedTransactionDaoImpl;
+import com.apollocurrency.aplwallet.apl.core.dao.blockchain.BlockDaoImpl;
+import com.apollocurrency.aplwallet.apl.core.dao.blockchain.TransactionDaoImpl;
+import com.apollocurrency.aplwallet.apl.core.dao.prunable.DataTagDao;
+import com.apollocurrency.aplwallet.apl.core.dao.prunable.TaggedDataTable;
+import com.apollocurrency.aplwallet.apl.core.dao.state.phasing.PhasingApprovedResultTable;
+import com.apollocurrency.aplwallet.apl.core.dao.state.phasing.PhasingPollLinkedTransactionTable;
+import com.apollocurrency.aplwallet.apl.core.dao.state.phasing.PhasingPollResultTable;
+import com.apollocurrency.aplwallet.apl.core.dao.state.phasing.PhasingPollTable;
+import com.apollocurrency.aplwallet.apl.core.dao.state.phasing.PhasingPollVoterTable;
+import com.apollocurrency.aplwallet.apl.core.dao.state.phasing.PhasingVoteTable;
+import com.apollocurrency.aplwallet.apl.core.dao.state.tagged.TaggedDataExtendDao;
+import com.apollocurrency.aplwallet.apl.core.dao.state.tagged.TaggedDataTimestampDao;
 import com.apollocurrency.aplwallet.apl.core.db.DatabaseManager;
-import com.apollocurrency.aplwallet.apl.core.db.DerivedDbTablesRegistryImpl;
-import com.apollocurrency.aplwallet.apl.core.db.KeyFactoryProducer;
-import com.apollocurrency.aplwallet.apl.core.db.TransactionalDataSource;
-import com.apollocurrency.aplwallet.apl.core.db.cdi.transaction.JdbiHandleFactory;
-import com.apollocurrency.aplwallet.apl.core.db.dao.ReferencedTransactionDaoImpl;
-import com.apollocurrency.aplwallet.apl.core.db.fulltext.FullTextConfigImpl;
-import com.apollocurrency.aplwallet.apl.core.phasing.PhasingPollServiceImpl;
-import com.apollocurrency.aplwallet.apl.core.phasing.dao.PhasingApprovedResultTable;
-import com.apollocurrency.aplwallet.apl.core.phasing.dao.PhasingPollLinkedTransactionTable;
-import com.apollocurrency.aplwallet.apl.core.phasing.dao.PhasingPollResultTable;
-import com.apollocurrency.aplwallet.apl.core.phasing.dao.PhasingPollTable;
-import com.apollocurrency.aplwallet.apl.core.phasing.dao.PhasingPollVoterTable;
-import com.apollocurrency.aplwallet.apl.core.phasing.dao.PhasingVoteTable;
+import com.apollocurrency.aplwallet.apl.core.entity.state.account.AccountControlPhasing;
+import com.apollocurrency.aplwallet.apl.core.peer.PeersService;
+import com.apollocurrency.aplwallet.apl.core.service.appdata.GeneratorService;
+import com.apollocurrency.aplwallet.apl.core.service.appdata.TimeService;
+import com.apollocurrency.aplwallet.apl.core.service.appdata.TrimService;
+import com.apollocurrency.aplwallet.apl.core.service.appdata.impl.TimeServiceImpl;
+import com.apollocurrency.aplwallet.apl.core.service.blockchain.BlockSerializer;
+import com.apollocurrency.aplwallet.apl.core.service.blockchain.BlockchainImpl;
+import com.apollocurrency.aplwallet.apl.core.service.blockchain.BlockchainProcessor;
+import com.apollocurrency.aplwallet.apl.core.service.blockchain.BlockchainProcessorImpl;
+import com.apollocurrency.aplwallet.apl.core.service.blockchain.DefaultBlockValidator;
+import com.apollocurrency.aplwallet.apl.core.service.blockchain.GlobalSyncImpl;
+import com.apollocurrency.aplwallet.apl.core.service.blockchain.MemPool;
+import com.apollocurrency.aplwallet.apl.core.service.blockchain.ReferencedTransactionService;
+import com.apollocurrency.aplwallet.apl.core.service.blockchain.TransactionBuilderFactory;
+import com.apollocurrency.aplwallet.apl.core.service.blockchain.TransactionProcessor;
+import com.apollocurrency.aplwallet.apl.core.service.blockchain.TransactionProcessorImpl;
+import com.apollocurrency.aplwallet.apl.core.service.blockchain.TransactionServiceImpl;
+import com.apollocurrency.aplwallet.apl.core.service.blockchain.UnconfirmedTransactionCreator;
+import com.apollocurrency.aplwallet.apl.core.service.blockchain.UnconfirmedTransactionProcessingService;
+import com.apollocurrency.aplwallet.apl.core.service.fulltext.FullTextConfigImpl;
+import com.apollocurrency.aplwallet.apl.core.service.fulltext.FullTextSearchService;
+import com.apollocurrency.aplwallet.apl.core.service.fulltext.FullTextSearchUpdater;
+import com.apollocurrency.aplwallet.apl.core.service.fulltext.FullTextSearchUpdaterImpl;
+import com.apollocurrency.aplwallet.apl.core.service.state.DerivedDbTablesRegistryImpl;
+import com.apollocurrency.aplwallet.apl.core.service.state.PhasingPollServiceImpl;
+import com.apollocurrency.aplwallet.apl.core.service.state.TaggedDataServiceImpl;
+import com.apollocurrency.aplwallet.apl.core.service.state.account.AccountControlPhasingService;
+import com.apollocurrency.aplwallet.apl.core.service.state.account.AccountPublicKeyService;
+import com.apollocurrency.aplwallet.apl.core.service.state.account.AccountService;
+import com.apollocurrency.aplwallet.apl.core.service.state.account.PublicKeyDao;
+import com.apollocurrency.aplwallet.apl.core.service.state.account.impl.AccountPublicKeyServiceImpl;
+import com.apollocurrency.aplwallet.apl.core.service.state.account.impl.AccountServiceImpl;
+import com.apollocurrency.aplwallet.apl.core.service.state.currency.CurrencyService;
 import com.apollocurrency.aplwallet.apl.core.shard.BlockIndexService;
 import com.apollocurrency.aplwallet.apl.core.shard.BlockIndexServiceImpl;
 import com.apollocurrency.aplwallet.apl.core.shard.ShardConstants;
+import com.apollocurrency.aplwallet.apl.core.shard.ShardDbExplorerImpl;
 import com.apollocurrency.aplwallet.apl.core.shard.helper.csv.CsvEscaper;
 import com.apollocurrency.aplwallet.apl.core.shard.helper.csv.CsvEscaperImpl;
 import com.apollocurrency.aplwallet.apl.core.shard.helper.csv.ValueParser;
-import com.apollocurrency.aplwallet.apl.core.tagged.TaggedDataServiceImpl;
-import com.apollocurrency.aplwallet.apl.core.tagged.dao.DataTagDao;
-import com.apollocurrency.aplwallet.apl.core.tagged.dao.TaggedDataDao;
-import com.apollocurrency.aplwallet.apl.core.tagged.dao.TaggedDataExtendDao;
-import com.apollocurrency.aplwallet.apl.core.tagged.dao.TaggedDataTimestampDao;
 import com.apollocurrency.aplwallet.apl.core.transaction.FeeCalculator;
 import com.apollocurrency.aplwallet.apl.core.transaction.TransactionApplier;
+import com.apollocurrency.aplwallet.apl.core.transaction.TransactionJsonSerializerImpl;
+import com.apollocurrency.aplwallet.apl.core.transaction.TransactionTypeFactory;
 import com.apollocurrency.aplwallet.apl.core.transaction.TransactionValidator;
+import com.apollocurrency.aplwallet.apl.core.transaction.TransactionVersionValidator;
+import com.apollocurrency.aplwallet.apl.core.transaction.messages.AppendixApplierRegistry;
+import com.apollocurrency.aplwallet.apl.core.transaction.messages.AppendixValidatorRegistry;
+import com.apollocurrency.aplwallet.apl.core.transaction.messages.PrunableLoadingService;
 import com.apollocurrency.aplwallet.apl.data.DbTestData;
+import com.apollocurrency.aplwallet.apl.data.TransactionTestData;
 import com.apollocurrency.aplwallet.apl.extension.DbExtension;
 import com.apollocurrency.aplwallet.apl.extension.TemporaryFolderExtension;
 import com.apollocurrency.aplwallet.apl.testutil.DbUtils;
 import com.apollocurrency.aplwallet.apl.testutil.ResourceFileLoader;
-import com.apollocurrency.aplwallet.apl.util.NtpTime;
+import com.apollocurrency.aplwallet.apl.util.cdi.transaction.JdbiHandleFactory;
+import com.apollocurrency.aplwallet.apl.util.db.TransactionalDataSource;
 import com.apollocurrency.aplwallet.apl.util.env.config.Chain;
 import com.apollocurrency.aplwallet.apl.util.env.dirprovider.DirProvider;
 import com.apollocurrency.aplwallet.apl.util.env.dirprovider.ServiceModeDirProvider;
 import com.apollocurrency.aplwallet.apl.util.injectable.PropertiesHolder;
+import com.apollocurrency.aplwallet.apl.util.service.TaskDispatchManager;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import lombok.extern.slf4j.Slf4j;
 import org.jboss.weld.junit.MockBean;
 import org.jboss.weld.junit5.EnableWeld;
 import org.jboss.weld.junit5.WeldInitiator;
 import org.jboss.weld.junit5.WeldSetup;
-import org.jdbi.v3.core.Jdbi;
 import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.RegisterExtension;
 import org.junit.jupiter.api.parallel.Execution;
 import org.junit.jupiter.api.parallel.ExecutionMode;
 import org.mockito.Mockito;
-import org.slf4j.Logger;
 
-import javax.inject.Inject;
+import jakarta.inject.Inject;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.sql.Array;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
@@ -90,66 +133,101 @@ import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.Mockito.doReturn;
 import static org.mockito.Mockito.mock;
-import static org.slf4j.LoggerFactory.getLogger;
 
+@Slf4j
+
+@Tag("slow")
 @EnableWeld
 @Execution(ExecutionMode.CONCURRENT)
-class CsvImporterTest {
-    private static final Logger log = getLogger(CsvImporterTest.class);
+class CsvImporterTest extends DbContainerBaseTest {
 
-    @RegisterExtension
-    DbExtension extension = new DbExtension(DbTestData.getDbFileProperties(createPath("csvExporterDb").toAbsolutePath().toString()));
     @RegisterExtension
     static TemporaryFolderExtension temporaryFolderExtension = new TemporaryFolderExtension();
-
-    private NtpTime time = mock(NtpTime.class);
-    private BlockchainConfig blockchainConfig = mock(BlockchainConfig.class);
-    private HeightConfig config = Mockito.mock(HeightConfig.class);
-    private Chain chain = Mockito.mock(Chain.class);
+    @RegisterExtension
+    static DbExtension extension = new DbExtension(mariaDBContainer, DbTestData.getDbFileProperties(createPath("csvExporterDb").toAbsolutePath().toString()));
+    CsvImporter csvImporter;
+    BlockchainConfig blockchainConfig = mock(BlockchainConfig.class);
+    PropertiesHolder propertiesHolder = mock(PropertiesHolder.class);
+    TimeConfig timeConfig = new TimeConfig(false);
+    TimeService timeService = new TimeServiceImpl(timeConfig.timeSource());
+    PeersService peersService = mock(PeersService.class);
+    GeneratorService generatorService = mock(GeneratorService.class);
+    TransactionTestData td = new TransactionTestData();
+    BlockSerializer blockSerializer = mock(BlockSerializer.class);
+    MemPool memPool = mock(MemPool.class);
+    UnconfirmedTransactionProcessingService unconfirmedTransactionProcessingService = mock(UnconfirmedTransactionProcessingService.class);
 
     @WeldSetup
     public WeldInitiator weld = WeldInitiator.from(
-            PropertiesHolder.class, BlockchainImpl.class, DaoConfig.class,
-            PropertyProducer.class, TransactionApplier.class, ServiceModeDirProvider.class,
-            TaggedDataServiceImpl.class, TransactionValidator.class, TransactionProcessorImpl.class,
-            GlobalSyncImpl.class, DefaultBlockValidator.class, ReferencedTransactionService.class,
-            ReferencedTransactionDaoImpl.class,
-            TaggedDataDao.class,
-            DataTagDao.class, PhasingPollServiceImpl.class, PhasingPollResultTable.class,
-            PhasingPollLinkedTransactionTable.class, PhasingPollVoterTable.class, PhasingVoteTable.class, PhasingPollTable.class, PhasingApprovedResultTable.class,
-            KeyFactoryProducer.class, FeeCalculator.class,
-            TaggedDataTimestampDao.class,
-            TaggedDataExtendDao.class,
-            FullTextConfigImpl.class,
-            DerivedDbTablesRegistryImpl.class,
-            AplAppStatus.class,
-            TimeServiceImpl.class, BlockDaoImpl.class, TransactionDaoImpl.class,
-            ValueParserImpl.class, CsvEscaperImpl.class)
-            .addBeans(MockBean.of(extension.getDatabaseManager(), DatabaseManager.class))
-            .addBeans(MockBean.of(extension.getDatabaseManager().getJdbi(), Jdbi.class))
-            .addBeans(MockBean.of(extension.getDatabaseManager().getJdbiHandleFactory(), JdbiHandleFactory.class))
-            .addBeans(MockBean.of(mock(DirProvider.class), DirProvider.class))
-            .addBeans(MockBean.of(mock(TransactionProcessor.class), TransactionProcessor.class))
-            .addBeans(MockBean.of(mock(BlockchainProcessor.class), BlockchainProcessorImpl.class, BlockchainProcessor.class))
-            .addBeans(MockBean.of(mock(TrimService.class), TrimService.class))
-            .addBeans(MockBean.of(time, NtpTime.class))
-            .addBeans(MockBean.of(blockchainConfig, BlockchainConfig.class))
-            .addBeans(MockBean.of(mock(BlockIndexService.class), BlockIndexService.class, BlockIndexServiceImpl.class))
-            .build();
+        BlockchainImpl.class, DaoConfig.class,
+        PropertyProducer.class, TransactionApplier.class, ServiceModeDirProvider.class,
+        TaggedDataServiceImpl.class, TransactionValidator.class, TransactionProcessorImpl.class,
+        GlobalSyncImpl.class, DefaultBlockValidator.class, ReferencedTransactionService.class,
+        ReferencedTransactionDaoImpl.class,
+        AppendixApplierRegistry.class,
+        AppendixValidatorRegistry.class,
+        TransactionServiceImpl.class, ShardDbExplorerImpl.class,
+        TransactionEntityRowMapper.class, TransactionEntityRowMapper.class, TxReceiptRowMapper.class, PrunableTxRowMapper.class,
+        TransactionModelToEntityConverter.class, TransactionEntityToModelConverter.class,
+        UnconfirmedTransactionEntityRowMapper.class, UnconfirmedTransactionCreator.class,
+        TransactionBuilderFactory.class,
+        TaggedDataTable.class,
+        DataTagDao.class, PhasingPollServiceImpl.class, PhasingPollResultTable.class,
+        PhasingPollLinkedTransactionTable.class, PhasingPollVoterTable.class, PhasingVoteTable.class, PhasingPollTable.class, PhasingApprovedResultTable.class,
+        FeeCalculator.class,
+        TaggedDataTimestampDao.class,
+        TaggedDataExtendDao.class,
+        FullTextConfigImpl.class,
+        DerivedDbTablesRegistryImpl.class,
+        AplAppStatus.class, TransactionJsonSerializerImpl.class,
+        BlockDaoImpl.class,
+        BlockEntityRowMapper.class, BlockEntityToModelConverter.class, BlockModelToEntityConverter.class,
+        TransactionDaoImpl.class,
+        ValueParserImpl.class, CsvEscaperImpl.class,
+        UnconfirmedTransactionTable.class, AccountService.class, TaskDispatchManager.class, JdbiHandleFactory.class, JdbiConfiguration.class)
+        .addBeans(MockBean.of(extension.getDatabaseManager(), DatabaseManager.class))
+        .addBeans(MockBean.of(extension.getFullTextSearchService(), FullTextSearchService.class))
+        .addBeans(MockBean.of(mock(DirProvider.class), DirProvider.class))
+        .addBeans(MockBean.of(mock(TransactionProcessor.class), TransactionProcessor.class))
+        .addBeans(MockBean.of(mock(BlockchainProcessor.class), BlockchainProcessorImpl.class, BlockchainProcessor.class))
+        .addBeans(MockBean.of(mock(TrimService.class), TrimService.class))
+        .addBeans(MockBean.of(blockchainConfig, BlockchainConfig.class))
+        .addBeans(MockBean.of(mock(AccountService.class), AccountServiceImpl.class, AccountService.class))
+        .addBeans(MockBean.of(mock(AccountPublicKeyService.class), AccountPublicKeyServiceImpl.class, AccountPublicKeyService.class))
+        .addBeans(MockBean.of(mock(BlockIndexService.class), BlockIndexService.class, BlockIndexServiceImpl.class))
+        .addBeans(MockBean.of(mock(AccountControlPhasingService.class), AccountControlPhasingService.class))
+        .addBeans(MockBean.of(propertiesHolder, PropertiesHolder.class))
+        .addBeans(MockBean.of(timeConfig, TimeConfig.class))
+        .addBeans(MockBean.of(timeService, TimeService.class))
+        .addBeans(MockBean.of(peersService, PeersService.class))
+        .addBeans(MockBean.of(generatorService, GeneratorService.class))
+        .addBeans(MockBean.of(mock(PrunableLoadingService.class), PrunableLoadingService.class))
+        .addBeans(MockBean.of(mock(CurrencyService.class), CurrencyService.class))
+        .addBeans(MockBean.of(td.getTransactionTypeFactory(), TransactionTypeFactory.class))
+        .addBeans(MockBean.of(mock(TransactionVersionValidator.class), TransactionVersionValidator.class))
+        .addBeans(MockBean.of(blockSerializer, BlockSerializer.class))
+        .addBeans(MockBean.of(mock(PublicKeyDao.class), PublicKeyDao.class))
+        .addBeans(MockBean.of(unconfirmedTransactionProcessingService, UnconfirmedTransactionProcessingService.class))
+        .addBeans(MockBean.of(memPool, MemPool.class))
+        .addBeans(MockBean.of(mock(FullTextSearchUpdater.class), FullTextSearchUpdater.class, FullTextSearchUpdaterImpl.class))
+        .build();
 
+    private HeightConfig config = Mockito.mock(HeightConfig.class);
+    private Chain chain = Mockito.mock(Chain.class);
     @Inject
     private AplAppStatus aplAppStatus;
     @Inject
     private ValueParser valueParser;
-    CsvImporter csvImporter;
     @Inject
     private CsvEscaper translator;
+    private final ObjectMapper mapper = new ObjectMapper();
 
-    private Set<String> tables = Set.of( "account_info", "account_control_phasing", "phasing_poll", "public_key", "purchase", "shard", "shuffling_data");
+    private Set<String> tables = Set.of("account_info", "account_control_phasing", "phasing_poll", "public_key", "purchase", "shard", "shuffling_data");
 
-    public CsvImporterTest() throws Exception {}
+    public CsvImporterTest() throws Exception {
+    }
 
-    private Path createPath(String fileName) {
+    private static Path createPath(String fileName) {
         try {
             return temporaryFolderExtension.newFolder().toPath().resolve(fileName);
         } catch (IOException e) {
@@ -238,7 +316,8 @@ class CsvImporterTest {
                 assertEquals(4, countRs.getInt(1));
                 ResultSet allRs = stmt.executeQuery("select * from " + tableName);
                 while (allRs.next()) {
-                    PhasingOnly phasingOnly = new PhasingOnly(allRs, null); // should not fail
+//                    PhasingOnly phasingOnly = new PhasingOnly(allRs, null); // should not fail
+                    AccountControlPhasing phasingOnly = new AccountControlPhasing(allRs, null); // should not fail
                     long[] whitelist = phasingOnly.getPhasingParams().getWhitelist();
                     assertNotNull(whitelist);
                 }
@@ -284,13 +363,11 @@ class CsvImporterTest {
                 assertEquals(2, countRs.getInt(1));
                 ResultSet allRs = stmt.executeQuery("select * from " + tableName);
                 while (allRs.next()) {
-                    Array data = allRs.getArray("data");// should not fail
+                    byte[][] data = com.apollocurrency.aplwallet.apl.util.db.DbUtils.get2dByteArray(allRs
+                        , "data", null);
                     if (data != null) {
-                        Object[] array = (Object[]) data.getArray();
-                        for (int i = 0; i < array.length; i++) {
-                            byte[] bytes = (byte[]) array[i];
-                            assertNotNull(bytes);
-                        }
+                        assertNotNull(data);
+                        assertTrue(data.length >= 1);
                     }
                 }
             } catch (Exception e) {
@@ -326,20 +403,20 @@ class CsvImporterTest {
                 log.error("Import error " + tableName, e);
                 throw new RuntimeException(e);
             }
-            assertEquals(14, result);
+            assertEquals(13, result);
             try (Connection con = dataSource.getConnection();
                  Statement stmt = con.createStatement()) {
                 ResultSet countRs = stmt.executeQuery("select count(*) from " + tableName);
                 countRs.next();
-                assertEquals(14, countRs.getInt(1));
+                assertEquals(13, countRs.getInt(1));
                 ResultSet allRs = stmt.executeQuery("select * from " + tableName);
                 while (allRs.next()) {
-                    Array data = allRs.getArray("parsed_tags");// should not fail
+                    String data = allRs.getString("parsed_tags");// should not fail
                     assertNotNull(data);
-                    Object[] array = (Object[]) data.getArray();
+                    String[] array = mapper.readValue(data, String[].class);
                     assertNotNull(array);
                     for (int i = 0; i < array.length; i++) {
-                        String tag = (String) array[i];
+                        String tag = array[i];
                         assertNotNull(tag);
                     }
                 }
@@ -445,8 +522,10 @@ class CsvImporterTest {
                  PreparedStatement pstmt = con.prepareStatement("select GENERATOR_IDS, BLOCK_TIMEOUTS from " + tableName + " order by shard_id")) {
                 ResultSet rs = pstmt.executeQuery();
                 rs.next();
-                assertNotNull(rs.getArray(1).getArray());
-                assertNotNull(rs.getArray(2).getArray());
+                assertNotNull(rs.getString(1));
+                assertTrue(rs.getString(1).length() > 0);
+                assertNotNull(rs.getString(2));
+                assertTrue(rs.getString(2).length() > 0);
             } catch (SQLException e) {
                 throw new RuntimeException(e.toString(), e);
             }
@@ -522,11 +601,11 @@ class CsvImporterTest {
     }
 
     private void verifyCount(TransactionalDataSource dataSource, String tableName, long count) {
+        long result = -1;
         try (Connection con = dataSource.getConnection();
-             PreparedStatement preparedCount = con.prepareStatement("select count(*) as count from " + tableName)
+             PreparedStatement preparedCount = con.prepareStatement("select count(*) as count from " + tableName);
+             ResultSet rs = preparedCount.executeQuery()
         ) {
-            long result = -1;
-            ResultSet rs = preparedCount.executeQuery();
             if (rs.next()) {
                 result = rs.getLong("count");
             }

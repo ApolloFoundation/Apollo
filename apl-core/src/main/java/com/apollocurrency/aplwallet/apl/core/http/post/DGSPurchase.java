@@ -15,10 +15,25 @@
  */
 
 /*
- * Copyright © 2018-2019 Apollo Foundation
+ * Copyright © 2018-2021 Apollo Foundation
  */
 
 package com.apollocurrency.aplwallet.apl.core.http.post;
+
+import com.apollocurrency.aplwallet.apl.core.entity.state.account.Account;
+import com.apollocurrency.aplwallet.apl.core.entity.state.dgs.DGSGoods;
+import com.apollocurrency.aplwallet.apl.core.http.APITag;
+import com.apollocurrency.aplwallet.apl.core.http.HttpParameterParserUtil;
+import com.apollocurrency.aplwallet.apl.core.service.state.DGSService;
+import com.apollocurrency.aplwallet.apl.core.transaction.messages.Attachment;
+import com.apollocurrency.aplwallet.apl.core.transaction.messages.DGSPurchaseAttachment;
+import com.apollocurrency.aplwallet.apl.crypto.Convert;
+import com.apollocurrency.aplwallet.apl.util.exception.AplException;
+import org.json.simple.JSONStreamAware;
+
+import jakarta.enterprise.inject.Vetoed;
+import jakarta.enterprise.inject.spi.CDI;
+import jakarta.servlet.http.HttpServletRequest;
 
 import static com.apollocurrency.aplwallet.apl.core.http.JSONResponses.INCORRECT_DELIVERY_DEADLINE_TIMESTAMP;
 import static com.apollocurrency.aplwallet.apl.core.http.JSONResponses.INCORRECT_PURCHASE_PRICE;
@@ -26,44 +41,30 @@ import static com.apollocurrency.aplwallet.apl.core.http.JSONResponses.INCORRECT
 import static com.apollocurrency.aplwallet.apl.core.http.JSONResponses.MISSING_DELIVERY_DEADLINE_TIMESTAMP;
 import static com.apollocurrency.aplwallet.apl.core.http.JSONResponses.UNKNOWN_GOODS;
 
-import com.apollocurrency.aplwallet.apl.core.account.Account;
-import com.apollocurrency.aplwallet.apl.core.dgs.DGSService;
-import com.apollocurrency.aplwallet.apl.core.dgs.model.DGSGoods;
-import com.apollocurrency.aplwallet.apl.core.http.APITag;
-import com.apollocurrency.aplwallet.apl.core.http.JSONResponses;
-import com.apollocurrency.aplwallet.apl.core.http.ParameterParser;
-import com.apollocurrency.aplwallet.apl.core.transaction.messages.Attachment;
-import com.apollocurrency.aplwallet.apl.core.transaction.messages.DigitalGoodsPurchase;
-import com.apollocurrency.aplwallet.apl.crypto.Convert;
-import com.apollocurrency.aplwallet.apl.util.AplException;
-import org.json.simple.JSONStreamAware;
-
-import javax.enterprise.inject.Vetoed;
-import javax.enterprise.inject.spi.CDI;
-import javax.servlet.http.HttpServletRequest;
-
 @Vetoed
-public final class DGSPurchase extends CreateTransaction {
+public final class DGSPurchase extends CreateTransactionHandler {
+
+    private DGSService service = CDI.current().select(DGSService.class).get();
 
     public DGSPurchase() {
-        super(new APITag[] {APITag.DGS, APITag.CREATE_TRANSACTION},
+        super(new APITag[]{APITag.DGS, APITag.CREATE_TRANSACTION},
                 "goods", "priceATM", "quantity", "deliveryDeadlineTimestamp");
     }
-    private DGSService service = CDI.current().select(DGSService.class).get();
+
     @Override
     public JSONStreamAware processRequest(HttpServletRequest req) throws AplException {
 
-        DGSGoods goods = ParameterParser.getGoods(service, req);
+        DGSGoods goods = HttpParameterParserUtil.getGoods(service, req);
         if (goods.isDelisted()) {
             return UNKNOWN_GOODS;
         }
 
-        int quantity = ParameterParser.getGoodsQuantity(req);
+        int quantity = HttpParameterParserUtil.getGoodsQuantity(req);
         if (quantity > goods.getQuantity()) {
             return INCORRECT_PURCHASE_QUANTITY;
         }
 
-        long priceATM = ParameterParser.getPriceATM(req);
+        long priceATM = HttpParameterParserUtil.getPriceATM(req);
         if (priceATM != goods.getPriceATM()) {
             return INCORRECT_PURCHASE_PRICE;
         }
@@ -82,17 +83,11 @@ public final class DGSPurchase extends CreateTransaction {
             return INCORRECT_DELIVERY_DEADLINE_TIMESTAMP;
         }
 
-        Account buyerAccount = ParameterParser.getSenderAccount(req);
-        Account sellerAccount = Account.getAccount(goods.getSellerId());
+        Account buyerAccount = HttpParameterParserUtil.getSenderAccount(req);
+        Account sellerAccount = lookupAccountService().getAccount(goods.getSellerId());
 
-        Attachment attachment = new DigitalGoodsPurchase(goods.getId(), quantity, priceATM,
-                deliveryDeadline);
-        try {
-            return createTransaction(req, buyerAccount, sellerAccount.getId(), 0, attachment);
-        } catch (AplException.InsufficientBalanceException e) {
-            return JSONResponses.NOT_ENOUGH_APL;
-        }
-
+        Attachment attachment = new DGSPurchaseAttachment(goods.getId(), quantity, priceATM, deliveryDeadline);
+        return createTransaction(req, buyerAccount, sellerAccount.getId(), 0, attachment);
     }
 
 }

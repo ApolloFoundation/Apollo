@@ -3,25 +3,26 @@
  */
 package com.apollocurrency.aplwallet.apl.core.peer.endpoint;
 
-import com.apollocurrency.aplwallet.api.p2p.FileDownloadInfoRequest;
-import com.apollocurrency.aplwallet.api.p2p.FileDownloadInfoResponse;
+import com.apollocurrency.aplwallet.api.p2p.request.FileDownloadInfoRequest;
+import com.apollocurrency.aplwallet.api.p2p.response.FileDownloadInfoResponse;
 import com.apollocurrency.aplwallet.apl.core.files.DownloadableFilesManager;
 import com.apollocurrency.aplwallet.apl.core.peer.Peer;
 import lombok.extern.slf4j.Slf4j;
 import org.json.simple.JSONObject;
 import org.json.simple.JSONStreamAware;
 
-import javax.inject.Inject;
+import jakarta.inject.Inject;
+import jakarta.inject.Singleton;
 
 /**
- *
  * @author alukin@gmail.com
  */
 @Slf4j
-public class GetFileDownloadInfo extends PeerRequestHandler{
+@Singleton
+public class GetFileDownloadInfo extends PeerRequestHandler {
 
     private DownloadableFilesManager downloadableFilesManager;
-    
+
     @Inject
     public GetFileDownloadInfo(DownloadableFilesManager downloadableFilesManager) {
         this.downloadableFilesManager = downloadableFilesManager;
@@ -34,18 +35,18 @@ public class GetFileDownloadInfo extends PeerRequestHandler{
         log.debug("GetFileDownloadInfo request = {}", rq);
 
         res.downloadInfo = downloadableFilesManager.getFileDownloadInfo(rq.fileId);
-        if(res.downloadInfo == null || !res.downloadInfo.fileInfo.isPresent) {
-            res.errorCode=-2;
+        if (res.downloadInfo == null || !res.downloadInfo.fileInfo.isPresent) {
+            res.errorCode = -2;
             log.debug("FileID: {} is not present", rq.fileId);
         }
         JSONObject response = mapper.convertValue(res, JSONObject.class);
         log.debug("GetFileDownloadInfo response = {}", response);
-        return response;        
+        return response;
     }
 
     @Override
     public boolean rejectWhileDownloading() {
-       return false;
+        return false;
     }
-    
+
 }

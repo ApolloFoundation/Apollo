@@ -1,28 +1,30 @@
 package com.apollocurrency.aplwallet.apl.exchange.service.graph;
 
-import com.apollocurrency.aplwallet.apl.core.app.Block;
-import com.apollocurrency.aplwallet.apl.core.app.Blockchain;
 import com.apollocurrency.aplwallet.apl.core.app.GenesisImporter;
 import com.apollocurrency.aplwallet.apl.core.app.observer.events.BlockEvent;
 import com.apollocurrency.aplwallet.apl.core.app.observer.events.BlockEventBinding;
 import com.apollocurrency.aplwallet.apl.core.app.observer.events.BlockEventType;
-import com.apollocurrency.aplwallet.apl.core.task.TaskDispatchManager;
+import com.apollocurrency.aplwallet.apl.core.model.Block;
+import com.apollocurrency.aplwallet.apl.core.service.blockchain.Blockchain;
+import com.apollocurrency.aplwallet.apl.dex.core.model.DexCurrency;
+import com.apollocurrency.aplwallet.apl.dex.core.model.OrderScan;
 import com.apollocurrency.aplwallet.apl.exchange.dao.DexCandlestickDao;
 import com.apollocurrency.aplwallet.apl.exchange.dao.DexOrderDao;
 import com.apollocurrency.aplwallet.apl.exchange.dao.OrderScanDao;
-import com.apollocurrency.aplwallet.apl.exchange.model.DexCurrency;
-import com.apollocurrency.aplwallet.apl.exchange.model.OrderScan;
+import com.apollocurrency.aplwallet.apl.util.Convert2;
 import com.apollocurrency.aplwallet.apl.util.ThreadUtils;
+import com.apollocurrency.aplwallet.apl.util.service.TaskDispatchManager;
 import com.apollocurrency.aplwallet.apl.util.task.TaskDispatcher;
 import org.jboss.weld.junit.MockBean;
 import org.jboss.weld.junit5.EnableWeld;
 import org.jboss.weld.junit5.WeldInitiator;
 import org.jboss.weld.junit5.WeldSetup;
+import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
 
-import javax.enterprise.event.Event;
-import javax.enterprise.util.AnnotationLiteral;
-import javax.inject.Inject;
+import jakarta.enterprise.event.Event;
+import jakarta.enterprise.util.AnnotationLiteral;
+import jakarta.inject.Inject;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.atomic.AtomicInteger;
 
@@ -40,29 +42,33 @@ class DexOrderScanningServiceIntegrationTest {
 
     Blockchain blockchain = mock(Blockchain.class);
     TaskDispatchManager dispatchManager = mock(TaskDispatchManager.class);
-    {
-        doReturn(mock(TaskDispatcher.class)).when(dispatchManager).newScheduledDispatcher(SERVICE_NAME);
-    }
-
-    private DexOrderDao orderDao = mock(DexOrderDao.class);
-    private ScanPerformer scanPerformer = mock(ScanPerformer.class);
-    private OrderScanDao orderScanDao = mock(OrderScanDao.class);
-    private DexCandlestickDao candlestickDao = mock(DexCandlestickDao.class);
     @Inject
     DexOrderScanningService service;
     @Inject
     Event<Block> blockEvent;
+    private DexOrderDao orderDao = mock(DexOrderDao.class);
+    private ScanPerformer scanPerformer = mock(ScanPerformer.class);
+    private OrderScanDao orderScanDao = mock(OrderScanDao.class);
+    private DexCandlestickDao candlestickDao = mock(DexCandlestickDao.class);
     @WeldSetup
     WeldInitiator weld = WeldInitiator.from(DexOrderScanningService.class)
-            .addBeans(
-                    MockBean.of(orderDao, DexOrderDao.class)
-                    , MockBean.of(scanPerformer, ScanPerformer.class)
-                    , MockBean.of(orderScanDao, OrderScanDao.class)
-                    , MockBean.of(blockchain, Blockchain.class)
-                    , MockBean.of(dispatchManager, TaskDispatchManager.class)
-                    , MockBean.of(candlestickDao, DexCandlestickDao.class))
+        .addBeans(
+            MockBean.of(orderDao, DexOrderDao.class)
+            , MockBean.of(scanPerformer, ScanPerformer.class)
+                , MockBean.of(orderScanDao, OrderScanDao.class)
+                , MockBean.of(blockchain, Blockchain.class)
+                , MockBean.of(dispatchManager, TaskDispatchManager.class)
+                , MockBean.of(candlestickDao, DexCandlestickDao.class))
             .build();
 
+    {
+        doReturn(mock(TaskDispatcher.class)).when(dispatchManager).newScheduledDispatcher(SERVICE_NAME);
+    }
+
+    @BeforeAll
+    static void beforeAll() {
+        Convert2.init("APL", 0);
+    }
 
     @Test
     void testStartBlockchainScan() {
@@ -78,7 +84,7 @@ class DexOrderScanningServiceIntegrationTest {
             waitFor(state, 2, 3);
             return 100;
         }).when(scanPerformer).doIteration(DexCurrency.ETH, 1000, 100);
-        doAsync(()-> {
+        doAsync(() -> {
             service.tryScan();
             state.set(4);
         });
@@ -87,7 +93,7 @@ class DexOrderScanningServiceIntegrationTest {
         doReturn(8000).when(block).getTimestamp();
         doReturn(eOrder(10L, 10_000, dec("3.22"), 1000, 50000)).when(orderDao).getLastClosedOrderBeforeHeight(DexCurrency.ETH, 50901);
         waitFor(state, 1); // wait until doIteration method will be started
-        doAsync(()-> state.set(2)); // interrupt waiting in doIteration method
+        doAsync(() -> state.set(2)); // interrupt waiting in doIteration method
 
         blockEvent.select(literal(BlockEventType.RESCAN_BEGIN)).fire(block);
         verify(candlestickDao).removeAfterTimestamp(7999);
@@ -128,6 +134,7 @@ class DexOrderScanningServiceIntegrationTest {
     private void waitFor(AtomicInteger integer, int state) {
         waitFor(integer, state, state);
     }
+
     private void waitFor(AtomicInteger integer, int expected, int newValue) {
         while (!integer.compareAndSet(expected, newValue)) {
             ThreadUtils.sleep(10);

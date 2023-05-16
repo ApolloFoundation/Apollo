@@ -3,11 +3,21 @@
 
 echo Downloading shards...
 
+DOWNLOAD_PATH=https://apl-db-upd.s3.fr-par.scw.cloud/
+
+DB_POSTFIX=-2021-q4
+if [ $4 == 'false' ]
+then
+    DB_POSTFIX=${DB_POSTFIX}-noshards
+fi
+
 cd $1
+rm -rfv $1/tmpdir
 mkdir tmpdir
 cd tmpdir
 rm -rfv "$5".tar.gz
-curl --retry 100 https://s3.amazonaws.com/updates.apollowallet.org/database/$5.tar.gz -o $5.tar.gz
+
+wget -v ${DOWNLOAD_PATH}$5${DB_POSTFIX}.tar.gz -O $5.tar.gz || curl --retry 100 ${DOWNLOAD_PATH}$5${DB_POSTFIX}.tar.gz -o $5.tar.gz
 echo Unpacking...
 tar -zxvf $5.tar.gz
 
@@ -29,7 +39,7 @@ echo Config dir = ${CONFIGDIR}
 if [ $3 == 'true' ]
 then
     rm -rfv ~/.apl-blockchain/apl-blockchain-db/$5
-    cp -rfv $1/tmpdir/$5 ~/.apl-blockchain/apl-blockchain-db/
+    cp -rfv $1/tmpdir/* ~/.apl-blockchain/apl-blockchain-db/
 
 else
     if [ -f $1/$CONFIGDIR/apl-blockchain.properties ]
@@ -39,20 +49,20 @@ else
     	    cd $1
     	    cd $(cat $1/$CONFIGDIR/apl-blockchain.properties | grep customDbDir | cut -f2 -d'=')
     	    rm -rfv $5
-    	    cp -rfv $1/tmpdir/$5 .
+    	    cp -rfv $1/tmpdir/* .
 	else
-	    cd $1/apl-blockchain-db/
+	    cd $1/../apl-blockchain-db/
 	    rm -rfv $5
-    	    cp -rfv $1/tmpdir/$5 .
+    	    cp -rfv $1/tmpdir/* .
 	fi
 	
     else
-	cd $1/apl-blockchain-db/
+	cd $1/../apl-blockchain-db/
 	rm -rfv $5
-    	cp -rfv $1/tmpdir/$5 .
+    	cp -rfv $1/tmpdir/* .
     fi
 
-    rm -rfv $/tmpdir
+    rm -rfv $1/tmpdir
 fi
 
-rm -rfv $/tmpdir
+rm -rfv $1/tmpdir

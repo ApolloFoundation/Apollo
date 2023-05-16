@@ -20,40 +20,40 @@
 
 package com.apollocurrency.aplwallet.apl.core.http.get;
 
-import com.apollocurrency.aplwallet.apl.core.monetary.AssetTransfer;
+import com.apollocurrency.aplwallet.apl.util.db.DbIterator;
+import com.apollocurrency.aplwallet.apl.util.db.DbUtils;
+import com.apollocurrency.aplwallet.apl.core.entity.state.asset.AssetTransfer;
 import com.apollocurrency.aplwallet.apl.core.http.APITag;
 import com.apollocurrency.aplwallet.apl.core.http.AbstractAPIRequestHandler;
+import com.apollocurrency.aplwallet.apl.core.http.HttpParameterParserUtil;
 import com.apollocurrency.aplwallet.apl.core.http.JSONData;
 import com.apollocurrency.aplwallet.apl.core.http.JSONResponses;
-import com.apollocurrency.aplwallet.apl.core.http.ParameterParser;
-import com.apollocurrency.aplwallet.apl.util.AplException;
-import com.apollocurrency.aplwallet.apl.core.db.DbIterator;
-import com.apollocurrency.aplwallet.apl.core.db.DbUtils;
-import javax.enterprise.inject.Vetoed;
+import com.apollocurrency.aplwallet.apl.util.exception.AplException;
 import org.json.simple.JSONArray;
 import org.json.simple.JSONObject;
 import org.json.simple.JSONStreamAware;
 
-import javax.servlet.http.HttpServletRequest;
+import jakarta.enterprise.inject.Vetoed;
+import jakarta.servlet.http.HttpServletRequest;
 
 @Vetoed
 public final class GetAssetTransfers extends AbstractAPIRequestHandler {
 
     public GetAssetTransfers() {
-        super(new APITag[] {APITag.AE}, "asset", "account", "firstIndex", "lastIndex", "timestamp", "includeAssetInfo");
+        super(new APITag[]{APITag.AE}, "asset", "account", "firstIndex", "lastIndex", "timestamp", "includeAssetInfo");
     }
 
     @Override
     public JSONStreamAware processRequest(HttpServletRequest req) throws AplException {
 
-        long assetId = ParameterParser.getUnsignedLong(req, "asset", false);
-        long accountId = ParameterParser.getAccountId(req, false);
+        long assetId = HttpParameterParserUtil.getUnsignedLong(req, "asset", false);
+        long accountId = HttpParameterParserUtil.getAccountId(req, false);
         if (assetId == 0 && accountId == 0) {
             return JSONResponses.MISSING_ASSET_ACCOUNT;
         }
-        int timestamp = ParameterParser.getTimestamp(req);
-        int firstIndex = ParameterParser.getFirstIndex(req);
-        int lastIndex = ParameterParser.getLastIndex(req);
+        int timestamp = HttpParameterParserUtil.getTimestamp(req);
+        int firstIndex = HttpParameterParserUtil.getFirstIndex(req);
+        int lastIndex = HttpParameterParserUtil.getLastIndex(req);
         boolean includeAssetInfo = "true".equalsIgnoreCase(req.getParameter("includeAssetInfo"));
 
         JSONObject response = new JSONObject();
@@ -61,11 +61,11 @@ public final class GetAssetTransfers extends AbstractAPIRequestHandler {
         DbIterator<AssetTransfer> transfers = null;
         try {
             if (accountId == 0) {
-                transfers = AssetTransfer.getAssetTransfers(assetId, firstIndex, lastIndex);
+                transfers = lookupAssetTransferService().getAssetTransfers(assetId, firstIndex, lastIndex);
             } else if (assetId == 0) {
-                transfers = AssetTransfer.getAccountAssetTransfers(accountId, firstIndex, lastIndex);
+                transfers = lookupAssetTransferService().getAccountAssetTransfers(accountId, firstIndex, lastIndex);
             } else {
-                transfers = AssetTransfer.getAccountAssetTransfers(accountId, assetId, firstIndex, lastIndex);
+                transfers = lookupAssetTransferService().getAccountAssetTransfers(accountId, assetId, firstIndex, lastIndex);
             }
             while (transfers.hasNext()) {
                 AssetTransfer assetTransfer = transfers.next();

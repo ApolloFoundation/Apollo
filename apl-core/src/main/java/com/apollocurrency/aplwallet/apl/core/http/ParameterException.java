@@ -20,9 +20,10 @@
 
 package com.apollocurrency.aplwallet.apl.core.http;
 
-import com.apollocurrency.aplwallet.apl.util.AplException;
+import com.apollocurrency.aplwallet.apl.util.exception.AplException;
 import org.json.simple.JSONStreamAware;
 
+@Deprecated
 public final class ParameterException extends AplException {
 
     private final JSONStreamAware errorResponse;
@@ -31,12 +32,12 @@ public final class ParameterException extends AplException {
         this.errorResponse = errorResponse;
     }
 
-    public JSONStreamAware getErrorResponse() {
-        return errorResponse;
-    }
-
     public ParameterException(String message, Throwable cause, JSONStreamAware errorResponse) {
         super(message, cause);
         this.errorResponse = errorResponse;
+    }
+
+    public JSONStreamAware getErrorResponse() {
+        return errorResponse;
     }
 }

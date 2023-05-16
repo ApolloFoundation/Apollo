@@ -22,23 +22,23 @@ package com.apollocurrency.aplwallet.apl.core.http.get;
 
 import com.apollocurrency.aplwallet.apl.core.http.APITag;
 import com.apollocurrency.aplwallet.apl.core.http.AbstractAPIRequestHandler;
+import com.apollocurrency.aplwallet.apl.core.http.HttpParameterParserUtil;
 import com.apollocurrency.aplwallet.apl.core.http.JSONData;
-import com.apollocurrency.aplwallet.apl.core.http.ParameterParser;
-import com.apollocurrency.aplwallet.apl.util.AplException;
+import com.apollocurrency.aplwallet.apl.util.exception.AplException;
 import org.json.simple.JSONStreamAware;
 
-import javax.servlet.http.HttpServletRequest;
+import jakarta.servlet.http.HttpServletRequest;
 
 public final class GetAsset extends AbstractAPIRequestHandler {
 
     public GetAsset() {
-        super(new APITag[] {APITag.AE}, "asset", "includeCounts");
+        super(new APITag[]{APITag.AE}, "asset", "includeCounts");
     }
 
     @Override
     public JSONStreamAware processRequest(HttpServletRequest req) throws AplException {
         boolean includeCounts = "true".equalsIgnoreCase(req.getParameter("includeCounts"));
-        return JSONData.asset(ParameterParser.getAsset(req), includeCounts);
+        return JSONData.asset(HttpParameterParserUtil.getAsset(req), includeCounts);
     }
 
 }

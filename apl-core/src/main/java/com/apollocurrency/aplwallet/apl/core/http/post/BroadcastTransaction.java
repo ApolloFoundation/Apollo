@@ -20,29 +20,27 @@
 
 package com.apollocurrency.aplwallet.apl.core.http.post;
 
-import javax.servlet.http.HttpServletRequest;
-
+import com.apollocurrency.aplwallet.apl.core.exception.AplCoreLogicException;
 import com.apollocurrency.aplwallet.apl.core.http.APITag;
 import com.apollocurrency.aplwallet.apl.core.http.AbstractAPIRequestHandler;
+import com.apollocurrency.aplwallet.apl.core.http.HttpParameterParserUtil;
 import com.apollocurrency.aplwallet.apl.core.http.JSONData;
 import com.apollocurrency.aplwallet.apl.core.http.ParameterException;
-import com.apollocurrency.aplwallet.apl.core.http.ParameterParser;
-import com.apollocurrency.aplwallet.apl.util.AplException;
-import com.apollocurrency.aplwallet.apl.core.app.Transaction;
+import com.apollocurrency.aplwallet.apl.core.model.Transaction;
 import com.apollocurrency.aplwallet.apl.crypto.Convert;
-import javax.enterprise.inject.Vetoed;
+import lombok.extern.slf4j.Slf4j;
 import org.json.simple.JSONObject;
 import org.json.simple.JSONStreamAware;
 
+import jakarta.enterprise.inject.Vetoed;
+import jakarta.servlet.http.HttpServletRequest;
+
 /**
  * The purpose of broadcast transaction is to support client side signing of transactions.
- * Clients first submit their transaction using {@link CreateTransaction} without providing the secret phrase.<br>
+ * Clients first submit their transaction using {@link CreateTransactionHandler} without providing the secret phrase.<br>
  * In response the client receives the unsigned transaction JSON and transaction bytes.
  * <p>
  * The client then signs and submits the signed transaction using {@link BroadcastTransaction}
- * <p>
- * The default wallet implements this procedure in ars.server.js which you can use as reference.
- * <p>
  * {@link BroadcastTransaction} accepts the following parameters:<br>
  * transactionJSON - JSON representation of the signed transaction<br>
  * transactionBytes - row bytes composing the signed transaction bytes excluding the prunable appendages<br>
@@ -52,13 +50,13 @@ import org.json.simple.JSONStreamAware;
  * In case the client submits transactionBytes for a transaction containing prunable appendages, the client also needs
  * to submit the prunableAttachmentJSON parameter which includes the attachment JSON for the prunable appendages.<br>
  * <p>
- * Prunable appendages are classes implementing the {@link com.apollocurrency.aplwallet.apl} interface.
+ * Prunable appendages are classes implementing the {@link com.apollocurrency.aplwallet.apl.core.transaction.messages.Prunable} interface.
  */
 @Vetoed
+@Slf4j
 public final class BroadcastTransaction extends AbstractAPIRequestHandler {
-
     public BroadcastTransaction() {
-        super(new APITag[] {APITag.TRANSACTIONS}, "transactionJSON", "transactionBytes", "prunableAttachmentJSON");
+        super(new APITag[]{APITag.TRANSACTIONS}, "transactionJSON", "transactionBytes", "prunableAttachmentJSON");
     }
 
     @Override
@@ -70,12 +68,12 @@ public final class BroadcastTransaction extends AbstractAPIRequestHandler {
 
         JSONObject response = new JSONObject();
         try {
-            Transaction.Builder builder = ParameterParser.parseTransaction(transactionJSON, transactionBytes, prunableAttachmentJSON);
-            Transaction transaction = builder.build();
+            Transaction transaction = HttpParameterParserUtil.parseTransaction(transactionJSON, transactionBytes, prunableAttachmentJSON);
+
             lookupTransactionProcessor().broadcast(transaction);
             response.put("transaction", transaction.getStringId());
             response.put("fullHash", transaction.getFullHashString());
-        } catch (AplException.ValidationException | RuntimeException e) {
+        } catch (AplCoreLogicException e) {
             JSONData.putException(response, e, "Failed to broadcast transaction");
         }
         return response;

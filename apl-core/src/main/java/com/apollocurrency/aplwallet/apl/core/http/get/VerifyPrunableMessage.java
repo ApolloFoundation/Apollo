@@ -20,30 +20,34 @@
 
 package com.apollocurrency.aplwallet.apl.core.http.get;
 
-import com.apollocurrency.aplwallet.apl.core.transaction.messages.PrunableEncryptedMessageAppendix;
-import com.apollocurrency.aplwallet.apl.core.transaction.messages.PrunablePlainMessageAppendix;
+import com.apollocurrency.aplwallet.apl.core.model.Transaction;
 import com.apollocurrency.aplwallet.apl.core.http.APITag;
 import com.apollocurrency.aplwallet.apl.core.http.AbstractAPIRequestHandler;
+import com.apollocurrency.aplwallet.apl.core.http.HttpParameterParserUtil;
 import com.apollocurrency.aplwallet.apl.core.http.JSONResponses;
-import com.apollocurrency.aplwallet.apl.core.http.ParameterParser;
-import com.apollocurrency.aplwallet.apl.util.AplException;
-import com.apollocurrency.aplwallet.apl.core.app.Transaction;
+import com.apollocurrency.aplwallet.apl.core.transaction.messages.PrunableEncryptedMessageAppendix;
+import com.apollocurrency.aplwallet.apl.core.transaction.messages.PrunableLoadingService;
+import com.apollocurrency.aplwallet.apl.core.transaction.messages.PrunablePlainMessageAppendix;
 import com.apollocurrency.aplwallet.apl.util.JSON;
+import com.apollocurrency.aplwallet.apl.util.exception.AplException;
 import org.json.simple.JSONObject;
 import org.json.simple.JSONStreamAware;
 
-import javax.servlet.http.HttpServletRequest;
+import jakarta.enterprise.inject.Vetoed;
+import jakarta.enterprise.inject.spi.CDI;
+import jakarta.servlet.http.HttpServletRequest;
 import java.util.Arrays;
 
 import static com.apollocurrency.aplwallet.apl.core.http.JSONResponses.EITHER_MESSAGE_ENCRYPTED_MESSAGE;
 import static com.apollocurrency.aplwallet.apl.core.http.JSONResponses.MISSING_MESSAGE_ENCRYPTED_MESSAGE;
 import static com.apollocurrency.aplwallet.apl.core.http.JSONResponses.UNKNOWN_TRANSACTION;
-import javax.enterprise.inject.Vetoed;
 
 @Vetoed
 public final class VerifyPrunableMessage extends AbstractAPIRequestHandler {
 
     private static final JSONStreamAware NO_SUCH_PLAIN_MESSAGE;
+    private static final JSONStreamAware NO_SUCH_ENCRYPTED_MESSAGE;
+
     static {
         JSONObject response = new JSONObject();
         response.put("errorCode", 5);
@@ -51,7 +55,6 @@ public final class VerifyPrunableMessage extends AbstractAPIRequestHandler {
         NO_SUCH_PLAIN_MESSAGE = JSON.prepare(response);
     }
 
-    private static final JSONStreamAware NO_SUCH_ENCRYPTED_MESSAGE;
     static {
         JSONObject response = new JSONObject();
         response.put("errorCode", 5);
@@ -59,24 +62,26 @@ public final class VerifyPrunableMessage extends AbstractAPIRequestHandler {
         NO_SUCH_ENCRYPTED_MESSAGE = JSON.prepare(response);
     }
 
+    private PrunableLoadingService prunableLoadingService = CDI.current().select(PrunableLoadingService.class).get();
+
     public VerifyPrunableMessage() {
-        super(new APITag[] {APITag.MESSAGES}, "transaction",
-                "message", "messageIsText",
-                "messageToEncryptIsText", "encryptedMessageData", "encryptedMessageNonce", "compressMessageToEncrypt", "account");
+        super(new APITag[]{APITag.MESSAGES}, "transaction",
+            "message", "messageIsText",
+            "messageToEncryptIsText", "encryptedMessageData", "encryptedMessageNonce", "compressMessageToEncrypt", "account");
     }
 
     @Override
     public JSONStreamAware processRequest(HttpServletRequest req) throws AplException {
 
-        long transactionId = ParameterParser.getUnsignedLong(req, "transaction", true);
+        long transactionId = HttpParameterParserUtil.getUnsignedLong(req, "transaction", true);
         Transaction transaction = lookupBlockchain().getTransaction(transactionId);
         if (transaction == null) {
             return UNKNOWN_TRANSACTION;
         }
-        long account = ParameterParser.getAccountId(req, "account", false);
-        PrunablePlainMessageAppendix plainMessage = (PrunablePlainMessageAppendix) ParameterParser.getPlainMessage(req, true);
-        PrunableEncryptedMessageAppendix encryptedMessage = (PrunableEncryptedMessageAppendix) ParameterParser.getEncryptedMessage(req, null,
-                account,true);
+        long account = HttpParameterParserUtil.getAccountId(req, "account", false);
+        PrunablePlainMessageAppendix plainMessage = (PrunablePlainMessageAppendix) HttpParameterParserUtil.getPlainMessage(req, true);
+        PrunableEncryptedMessageAppendix encryptedMessage = (PrunableEncryptedMessageAppendix) HttpParameterParserUtil.getEncryptedMessage(req, null,
+            account, true);
 
         if (plainMessage == null && encryptedMessage == null) {
             return MISSING_MESSAGE_ENCRYPTED_MESSAGE;
@@ -90,6 +95,7 @@ public final class VerifyPrunableMessage extends AbstractAPIRequestHandler {
             if (myPlainMessage == null) {
                 return NO_SUCH_PLAIN_MESSAGE;
             }
+            prunableLoadingService.loadPrunable(transaction, myPlainMessage, false);
             if (!Arrays.equals(myPlainMessage.getHash(), plainMessage.getHash())) {
                 return JSONResponses.HASHES_MISMATCH;
             }
@@ -101,6 +107,7 @@ public final class VerifyPrunableMessage extends AbstractAPIRequestHandler {
             if (myEncryptedMessage == null) {
                 return NO_SUCH_ENCRYPTED_MESSAGE;
             }
+            prunableLoadingService.loadPrunable(transaction, myEncryptedMessage, false);
             if (!Arrays.equals(myEncryptedMessage.getHash(), encryptedMessage.getHash())) {
                 return JSONResponses.HASHES_MISMATCH;
             }

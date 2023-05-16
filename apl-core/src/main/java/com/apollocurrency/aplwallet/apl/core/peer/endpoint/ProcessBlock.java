@@ -21,40 +21,44 @@
 package com.apollocurrency.aplwallet.apl.core.peer.endpoint;
 
 
-import com.apollocurrency.aplwallet.apl.core.app.Block;
+import com.apollocurrency.aplwallet.apl.core.model.Block;
 import com.apollocurrency.aplwallet.apl.core.peer.Peer;
 import com.apollocurrency.aplwallet.apl.crypto.Convert;
-import com.apollocurrency.aplwallet.apl.util.AplException;
 import com.apollocurrency.aplwallet.apl.util.JSON;
+import com.apollocurrency.aplwallet.apl.util.exception.AplException;
+import lombok.NoArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.json.simple.JSONObject;
 import org.json.simple.JSONStreamAware;
-import org.slf4j.Logger;
 
-import static org.slf4j.LoggerFactory.getLogger;
+import jakarta.inject.Singleton;
 
+@Slf4j
+@NoArgsConstructor
+@Singleton
 public final class ProcessBlock extends PeerRequestHandler {
-    private static final Logger LOG = getLogger(ProcessBlock.class);
-
-    public ProcessBlock() {}
 
     @Override
     public JSONStreamAware processRequest(final JSONObject request, final Peer peer) {
-        String previousBlockId = (String)request.get("previousBlock");
+        String previousBlockId = (String) request.get("previousBlock");
         Block lastBlock = lookupBlockchain().getLastBlock();
         if (lastBlock == null) {
             return JSON.emptyJSON; // probably node is not loaded with any block
         }
         long peerBlockTimestamp = Convert.parseLong(request.get("timestamp"));
         Object timeoutJsonValue = request.get("timeout");
-        int peerBlockTimeout =  timeoutJsonValue == null ? 0 : ((Long)timeoutJsonValue).intValue();
+        int peerBlockTimeout = timeoutJsonValue == null ? 0 : ((Long) timeoutJsonValue).intValue();
         if (lastBlock.getStringId().equals(previousBlockId) ||
-                (Convert.parseUnsignedLong(previousBlockId) == lastBlock.getPreviousBlockId()
-                        && (lastBlock.getTimestamp() > peerBlockTimestamp ||
-                        peerBlockTimestamp == lastBlock.getTimestamp() && peerBlockTimeout > lastBlock.getTimeout()))) {
+            (Convert.parseUnsignedLong(previousBlockId) == lastBlock.getPreviousBlockId()
+                && (lastBlock.getTimestamp() > peerBlockTimestamp ||
+                peerBlockTimestamp == lastBlock.getTimestamp() && peerBlockTimeout > lastBlock.getTimeout()))) {
             lookupPeersService().peersExecutorService.submit(() -> {
                 try {
-                    LOG.debug("API: need to process better peer block");
-                    lookupBlockchainProcessor().processPeerBlock(request);
+                    log.debug("API: need to process better peer block");
+                    Object blockObject = request.get("block");
+                    if (blockObject != null) {
+                        lookupBlockchainProcessor().processPeerBlock((JSONObject) blockObject);
+                    }
                 } catch (AplException | RuntimeException e) {
                     if (peer != null) {
                         peer.blacklist(e);
@@ -67,7 +71,7 @@ public final class ProcessBlock extends PeerRequestHandler {
 
     @Override
     public boolean rejectWhileDownloading() {
-        return true;
+        return false;
     }
 
 }

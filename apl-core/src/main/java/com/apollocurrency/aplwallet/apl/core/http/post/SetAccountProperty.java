@@ -20,34 +20,34 @@
 
 package com.apollocurrency.aplwallet.apl.core.http.post;
 
-import com.apollocurrency.aplwallet.apl.core.account.Account;
+import com.apollocurrency.aplwallet.apl.core.entity.state.account.Account;
+import com.apollocurrency.aplwallet.apl.core.http.APITag;
+import com.apollocurrency.aplwallet.apl.core.http.HttpParameterParserUtil;
 import com.apollocurrency.aplwallet.apl.core.transaction.messages.Attachment;
 import com.apollocurrency.aplwallet.apl.core.transaction.messages.MessagingAccountProperty;
-import com.apollocurrency.aplwallet.apl.util.Constants;
-import com.apollocurrency.aplwallet.apl.core.http.APITag;
-import com.apollocurrency.aplwallet.apl.core.http.ParameterParser;
-import com.apollocurrency.aplwallet.apl.util.AplException;
 import com.apollocurrency.aplwallet.apl.crypto.Convert;
+import com.apollocurrency.aplwallet.apl.util.Constants;
+import com.apollocurrency.aplwallet.apl.util.exception.AplException;
 import org.json.simple.JSONStreamAware;
 
-import javax.servlet.http.HttpServletRequest;
+import jakarta.enterprise.inject.Vetoed;
+import jakarta.servlet.http.HttpServletRequest;
 
 import static com.apollocurrency.aplwallet.apl.core.http.JSONResponses.INCORRECT_ACCOUNT_PROPERTY_NAME_LENGTH;
 import static com.apollocurrency.aplwallet.apl.core.http.JSONResponses.INCORRECT_ACCOUNT_PROPERTY_VALUE_LENGTH;
-import javax.enterprise.inject.Vetoed;
 
 @Vetoed
-public final class SetAccountProperty extends CreateTransaction {
+public final class SetAccountProperty extends CreateTransactionHandler {
 
     public SetAccountProperty() {
-        super(new APITag[] {APITag.ACCOUNTS, APITag.CREATE_TRANSACTION}, "recipient", "property", "value");
+        super(new APITag[]{APITag.ACCOUNTS, APITag.CREATE_TRANSACTION}, "recipient", "property", "value");
     }
 
     @Override
     public JSONStreamAware processRequest(HttpServletRequest req) throws AplException {
 
-        Account senderAccount = ParameterParser.getSenderAccount(req);
-        long recipientId = ParameterParser.getAccountId(req, "recipient", false);
+        Account senderAccount = HttpParameterParserUtil.getSenderAccount(req);
+        long recipientId = HttpParameterParserUtil.getAccountId(req, "recipient", false);
         if (recipientId == 0) {
             recipientId = senderAccount.getId();
         }

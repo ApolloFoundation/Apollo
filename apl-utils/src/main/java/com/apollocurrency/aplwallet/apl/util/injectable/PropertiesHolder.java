@@ -4,29 +4,37 @@
 
 package com.apollocurrency.aplwallet.apl.util.injectable;
 
-import static org.slf4j.LoggerFactory.getLogger;
-
-import org.slf4j.Logger;
+import com.apollocurrency.aplwallet.apl.util.Constants;
+import com.apollocurrency.aplwallet.apl.util.annotation.FeeMarker;
+import com.apollocurrency.aplwallet.apl.util.annotation.TransactionFee;
+import lombok.extern.slf4j.Slf4j;
 
 import java.io.UnsupportedEncodingException;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 import java.util.Properties;
-import javax.inject.Singleton;
 
-@Singleton
+@Slf4j
 public class PropertiesHolder {
-    
-    private static final Logger LOG = getLogger(PropertiesHolder.class);
-
     private Properties properties;
 
-    public PropertiesHolder() {
-     //   LOG.trace("Default constructor");
+/**
+ * This is just for mocking in tests. Please do not use it in the real code
+ */
+    public PropertiesHolder(){
+        properties = new Properties();
+    }
+/**
+ * It is dangerous method but it is used in tests with CDI so we need to re-write
+ * properties inside of holder
+ * @param properties to replacxe initial properties
+ */
+    public void init(Properties properties) {
+        this.properties = properties;
     }
 
-    public void init(Properties properties){
+    public PropertiesHolder(Properties properties) {
         this.properties = properties;
     }
 
@@ -40,10 +48,9 @@ public class PropertiesHolder {
                 return defaultValue;
             }
             int result = Integer.parseInt(properties.getProperty(name));
-  //          LOG.debug(name + " = \"" + result + "\"");
             return result;
         } catch (NumberFormatException e) {
-            LOG.trace(name + " not defined or not numeric, using default value " + defaultValue);
+            log.trace("{} not defined or not numeric, using default value {}", name, defaultValue);
             return defaultValue;
         }
     }
@@ -65,10 +72,8 @@ public class PropertiesHolder {
             return defaultValue;
         }
         String value = properties.getProperty(name);
-        if (value != null && ! "".equals(value)) {
-           // LOG.debug(name + " = \"" + (doNotLog ? "{not logged}" : value) + "\"");
-        } else {
-            LOG.trace(name + " not defined");
+        if (value == null || "".equals(value)) {
+            log.trace("{} not defined", name);
             value = defaultValue;
         }
         if (encoding == null || value == null) {
@@ -84,6 +89,7 @@ public class PropertiesHolder {
     public List<String> getStringListProperty(String name) {
         return getStringListProperty(name, Collections.emptyList());
     }
+
     public List<String> getStringListProperty(String name, List<String> defaultValue) {
         String value = getStringProperty(name);
         if (value == null || value.length() == 0) {
@@ -109,63 +115,76 @@ public class PropertiesHolder {
         }
         String value = properties.getProperty(name);
         if (Boolean.TRUE.toString().equals(value)) {
-            // LOG.debug(name + " = \"true\"");
             return true;
         } else if (Boolean.FALSE.toString().equals(value)) {
-          //  LOG.debug(name + " = \"false\"");
             return false;
         }
-        LOG.trace(name + " not defined, using default " + defaultValue);
+        log.trace("{} not defined, using default {}", name, defaultValue);
         return defaultValue;
     }
-    
-    public boolean isOffline(){
+
+    public boolean isOffline() {
         return getBooleanProperty("apl.isOffline");
     }
-    
-    public boolean isLightClient(){
+
+    public boolean isLightClient() {
         return getBooleanProperty("apl.isLightClient");
     }
-    public String customLoginWarning(){
+
+    public String customLoginWarning() {
         return getStringProperty("apl.customLoginWarning", null, false, "UTF-8");
-    }    
-    public  int MAX_ROLLBACK(){
-        return Math.max(getIntProperty("apl.maxRollback"), 720);    
     }
-    public int FORGING_DELAY(){
+
+    public int MAX_ROLLBACK() {
+        return Math.max(getIntProperty("apl.maxRollback"), Constants.MAX_AUTO_ROLLBACK);
+    }
+
+    public int FORGING_DELAY() {
         return getIntProperty("apl.forgingDelay");
     }
-    public int FORGING_SPEEDUP(){
-         return getIntProperty("apl.forgingSpeedup");
+
+    public int FORGING_SPEEDUP() {
+        return getIntProperty("apl.forgingSpeedup");
     }
-    public int BATCH_COMMIT_SIZE(){
-         return getIntProperty("apl.batchCommitSize", Integer.MAX_VALUE);
-    }    
-    public int TRIM_TRANSACTION_TIME_THRESHHOLD(){
+
+    public int BATCH_COMMIT_SIZE() {
+        return getIntProperty("apl.batchCommitSize", Integer.MAX_VALUE);
+    }
+
+    public int TRIM_TRANSACTION_TIME_THRESHHOLD() {
         return getIntProperty("apl.trimOperationsLogThreshold", 1000);
-    }    
-    public boolean INCLUDE_EXPIRED_PRUNABLE(){
-         return getBooleanProperty("apl.includeExpiredPrunable");
-    }    
-    public boolean correctInvalidFees(){
+    }
+
+    public boolean INCLUDE_EXPIRED_PRUNABLE() {
+        return getBooleanProperty("apl.includeExpiredPrunable");
+    }
+
+    @TransactionFee(FeeMarker.CALCULATOR)
+    public boolean correctInvalidFees() {
         return getBooleanProperty("apl.correctInvalidFees");
     }
 
     @Override
     public String toString() {
-        final StringBuffer sb = new StringBuffer("PropertiesHolder{");
-        sb.append("properties size=[]").append(properties != null ? properties.size() : -1);
-        sb.append('}');
-        return sb.toString();
+        return "PropertiesHolder{ properties size=[" + (properties != null ? properties.size() : -1) + "'] }";
     }
 
     public String dumpAllProperties() {
-        final StringBuffer sb = new StringBuffer("PropertiesHolder_DUMP : \n");
-        properties.forEach((k, v) ->
-            sb.append('\'').append(k).append("'->").append(v).append(", ")
+        final StringBuilder sb = new StringBuilder("PropertiesHolder_DUMP : \n");
+        properties.forEach((k, v) -> {
+                if (!k.equals("adminPassword")) {
+                    sb.append("\t'").append(k).append("' <- ").append(v).append(", ");
+                } else {
+                    sb.append("\t'").append(k).append("' <- ").append("***").append(", ");
+                }
+            }
         );
         sb.append('\n');
         return sb.toString();
-
     }
+
+    public Properties getProperties() {
+        return properties;
+    }
+
 }

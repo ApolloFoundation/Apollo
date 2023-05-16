@@ -23,7 +23,7 @@ package com.apollocurrency.aplwallet.apl.core.addons;
 
 import org.slf4j.Logger;
 
-import javax.enterprise.inject.Vetoed;
+import jakarta.enterprise.inject.Vetoed;
 import java.util.Map;
 
 import static org.slf4j.LoggerFactory.getLogger;
@@ -31,18 +31,21 @@ import static org.slf4j.LoggerFactory.getLogger;
 @Vetoed
 public final class Demo implements AddOn {
     private static final Logger LOG = getLogger(Demo.class);
+    //private static AccountService accountService;
+
+    //Commented out because events are synchronous and this demop call is very slow
 
     @Override
     public void init() {
+        //accountService = CDI.current().select(AccountServiceImpl.class).get();
     }
-//Commented out because events are synchronous and this demop call is very slow
 
 //    public void onBlockBeforeApply(@Observes @BlockEvent(BlockEventType.BEFORE_BLOCK_APPLY) Block block) {
+//
 //        LOG.info("Block " + block.getStringId()
 //                + " has been forged by account " + Convert2.rsAccount(block.getGeneratorId()) + " having effective balance of "
-//                + Account.getAccount(block.getGeneratorId()).getEffectiveBalanceAPL());
-    //   }
-
+//                + accountService.getEffectiveBalanceAPL(accountService.getAccount(block.getGeneratorId()), accountService.getBlockchainHeight(), true));
+//    }
 
     @Override
     public void shutdown() {

@@ -43,7 +43,7 @@ class InMemoryCacheManagerTest {
     void testWrongConfiguration_whenElementSizeNegative() {
         doReturn(64 * 1024 * 1024L).when(configurator).getAvailableMemory();
         doReturn(List.of(new CacheConfigurator("SIMPLE_CACHE_NAME_16", 0, 50))).
-                when(configurator).getConfiguredCaches();
+            when(configurator).getConfiguredCaches();
         assertThrows(IllegalArgumentException.class, () -> new InMemoryCacheManager(configurator));
     }
 
@@ -51,7 +51,7 @@ class InMemoryCacheManagerTest {
     void testWrongConfiguration_whenCachePriorityIsZero() {
         doReturn(64 * 1024 * 1024L).when(configurator).getAvailableMemory();
         doReturn(List.of(new CacheConfigurator("SIMPLE_CACHE_NAME_16", 16, 0))).
-                when(configurator).getConfiguredCaches();
+            when(configurator).getConfiguredCaches();
         assertThrows(IllegalArgumentException.class, () -> new InMemoryCacheManager(configurator));
     }
 
@@ -63,6 +63,16 @@ class InMemoryCacheManagerTest {
 
         cache1024 = manager.acquireCache("SIMPLE_CACHE_NAME_2048");
         assertNull(cache1024);
+    }
+
+    @Test
+    void testCreateSynchronizedCache() {
+        setupManager();
+        Cache<Object, Object> cache = manager.acquireCache("SYNCHRONIZED_CACHE_10");
+
+        assertNotNull(cache, "Synchronized cache should be intialized");
+        assertEquals(cache.getClass(), SynchronizedCache.class, "Cache should be of SynchronizedCache.class");
+        assertEquals(117735, ((SynchronizedCache) cache).maxSize());
     }
 
     @Test
@@ -86,15 +96,15 @@ class InMemoryCacheManagerTest {
         String cacheName = "SIMPLE_CACHE_NAME";
         doReturn(64 * 1024 * 1024L).when(configurator).getAvailableMemory();
         CacheConfiguration<String, byte[]> cacheCfg = new CacheConfigurator<>(
-                cacheName,
-                1024,
-                10,
-                new CacheLoader<>() {
-                    @Override
-                    public byte[] load(String key) throws Exception {
-                        return key.getBytes();
-                    }
-                });
+            cacheName,
+            1024,
+            10,
+            new CacheLoader<>() {
+                @Override
+                public byte[] load(String key) throws Exception {
+                    return key.getBytes();
+                }
+            });
         doReturn(List.of(cacheCfg)).when(configurator).getConfiguredCaches();
         manager = new InMemoryCacheManager(configurator);
 
@@ -107,6 +117,17 @@ class InMemoryCacheManagerTest {
         assertEquals(1L, cache.size());
         assertArrayEquals(key2.getBytes(), loadingCache.get(key2));
         assertEquals(2L, loadingCache.size());
+    }
+
+    @Test
+    void testCreateSynchronizedCacheConfigurationWithLoader() {
+        assertThrows(IllegalArgumentException.class, () -> new CacheConfigurator("wrong-synchronized-cache", 2, 100, mock(CacheLoader.class), true));
+    }
+
+    @Test
+    void testCreateSynchronizedCacheConfigAndUseBuilder() {
+        CacheConfigurator wrongSyncCacheConfig = new CacheConfigurator("wrong-synchronized-cache", 2, 100, null, true);
+        assertThrows(UnsupportedOperationException.class, () -> wrongSyncCacheConfig.cacheBuilder());
     }
 
     @Test
@@ -133,31 +154,32 @@ class InMemoryCacheManagerTest {
     @Test
     void testMemCalculator() {
         int size = new InMemoryCacheManager.MemoryUsageCalculator(64)
-                .startObject()//+16
-                .addBooleanPrimitive() //+1
-                .addBytePrimitive()//+1
-                .addChar()//+2
-                .addInt() //+4
-                .addLongPrimitive() //+8
-                .addReference()// +8
-                .addAggregation(LONG_SIZE) //8 + 16 + 8
-                .addArrayExtra(32) //8 + 24 + 32
-                .addString(5)//8 + 56 + 2*5 + 6
-                .addReference(
-                        new InMemoryCacheManager.MemoryUsageCalculator(64)
-                                .startObject()
-                                .addLongPrimitive()
-                                .calc()
-                )// 8 + 16 + 8
-                .calc();//248
+            .startObject()//+16
+            .addBooleanPrimitive() //+1
+            .addBytePrimitive()//+1
+            .addChar()//+2
+            .addInt() //+4
+            .addLongPrimitive() //+8
+            .addReference()// +8
+            .addAggregation(LONG_SIZE) //8 + 16 + 8
+            .addArrayExtra(32) //8 + 24 + 32
+            .addString(5)//8 + 56 + 2*5 + 6
+            .addReference(
+                new InMemoryCacheManager.MemoryUsageCalculator(64)
+                    .startObject()
+                    .addLongPrimitive()
+                    .calc()
+            )// 8 + 16 + 8
+            .calc();//248
         assertEquals(248, size);
     }
 
     private void setupManager() {
         doReturn(64 * 1024 * 1024L).when(configurator).getAvailableMemory();
         doReturn(List.of(new CacheConfigurator("SIMPLE_CACHE_NAME_16", 16, 50),
-                new CacheConfigurator("SIMPLE_CACHE_NAME_128", 128, 30),
-                new CacheConfigurator("SIMPLE_CACHE_NAME_1024", 1024, 50)
+            new CacheConfigurator("SIMPLE_CACHE_NAME_128", 128, 30),
+            new CacheConfigurator("SIMPLE_CACHE_NAME_1024", 1024, 50),
+            new CacheConfigurator("SYNCHRONIZED_CACHE_10", 64, 20, null, true)
         )).when(configurator).getConfiguredCaches();
         manager = new InMemoryCacheManager(configurator);
     }

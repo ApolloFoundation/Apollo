@@ -4,10 +4,10 @@
 
 package com.apollocurrency.aplwallet.apl.updater.pdu;
 
-import com.apollocurrency.aplwallet.apl.util.Platform;
 import com.apollocurrency.aplwallet.apl.udpater.intfce.UpdateInfo;
-import com.apollocurrency.aplwallet.apl.updater.UpdaterConstants;
 import com.apollocurrency.aplwallet.apl.udpater.intfce.UpdaterMediator;
+import com.apollocurrency.aplwallet.apl.updater.UpdaterConstants;
+import com.apollocurrency.aplwallet.apl.util.env.OS;
 
 public class PlatformDependentUpdaterFactoryImpl implements PlatformDependentUpdaterFactory {
     private UpdaterMediator updaterMediator;
@@ -17,17 +17,17 @@ public class PlatformDependentUpdaterFactoryImpl implements PlatformDependentUpd
     }
 
     @Override
-    public PlatformDependentUpdater createInstance(Platform platform, UpdateInfo updateInfo) {
-        switch (platform) {
+    public PlatformDependentUpdater createInstance(OS OS, UpdateInfo updateInfo) {
+        switch (OS) {
             case LINUX:
                 return new LinuxPlatformDependentUpdater(UpdaterConstants.LINUX_RUN_TOOL_PATH, UpdaterConstants.LINUX_UPDATE_SCRIPT_PATH,
-                        updaterMediator, updateInfo);
+                    updaterMediator, updateInfo);
             case MAC_OS:
                 return new MacOSPlatformDependentUpdater(UpdaterConstants.MAC_OS_RUN_TOOL_PATH, UpdaterConstants.MAC_OS_UPDATE_SCRIPT_PATH, updaterMediator, updateInfo);
             case WINDOWS:
                 return new WindowsPlatformDependentUpdater(UpdaterConstants.WINDOWS_RUN_TOOL_PATH, UpdaterConstants.WINDOWS_UPDATE_SCRIPT_PATH, updaterMediator, updateInfo);
             default:
-                throw new IllegalArgumentException("Platform " + platform + " is not supported!");
+                throw new IllegalArgumentException("Platform " + OS + " is not supported!");
         }
     }
 }

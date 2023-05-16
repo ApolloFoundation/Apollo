@@ -5,9 +5,11 @@
 package com.apollocurrency.aplwallet.apl.updater;
 
 import com.apollocurrency.aplwallet.apl.util.DoubleByteArrayTuple;
+import org.apache.commons.lang3.ArrayUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import jakarta.enterprise.inject.Vetoed;
 import java.io.IOException;
 import java.net.URI;
 import java.net.URISyntaxException;
@@ -28,8 +30,6 @@ import java.util.HashSet;
 import java.util.Set;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
-import org.apache.commons.lang3.ArrayUtils;
-import javax.enterprise.inject.Vetoed;
 
 //TODO: how to read from resources
 //       ClassLoader classloader = Thread.currentThread().getContextClassLoader();
@@ -43,6 +43,9 @@ public class UpdaterUtil {
 
     static Set<CertificatePair> certificatePairs = new HashSet<>();
     static Set<Certificate> certificates = new HashSet<>();
+
+    private UpdaterUtil() {
+    }
 
     public static void init(boolean useDebugCerts) {
         try {
@@ -88,7 +91,7 @@ public class UpdaterUtil {
 
     public static Set<CertificatePair> buildCertificatePairs(String certificateDirectory, String firstCertificatePrefix,
                                                              String secondCertificatePrefix, String certificateSuffix) throws IOException,
-            CertificateException {
+        CertificateException {
 //        Set<CertificatePair> certificatePairs = new HashSet<>();
 //        Set<Certificate> firstDecryptionCertificates = readCertificates(findFiles(certificateDirectory,
 //                secondCertificatePrefix, certificateSuffix));
@@ -127,7 +130,7 @@ public class UpdaterUtil {
 
     public static String getStringRepresentation(Certificate cert) {
         return ((cert instanceof X509Certificate) ?
-                ((X509Certificate) cert).getSubjectX500Principal().toString() : cert.toString());
+            ((X509Certificate) cert).getSubjectX500Principal().toString() : cert.toString());
     }
 
     public static Set<Certificate> readCertificates(String directory, String prefix, String suffix) {
@@ -147,34 +150,28 @@ public class UpdaterUtil {
     public static Set<Path> findFiles(Path directory, String prefix, String suffix) throws IOException {
 
         return Files.walk(directory, 1)
-                .filter(filePath ->
-                        filePath.getFileName().toString().endsWith(suffix) &&
-                                filePath.getFileName().toString().startsWith(prefix))
-                .collect(Collectors.toSet());
+            .filter(filePath ->
+                filePath.getFileName().toString().endsWith(suffix) &&
+                    filePath.getFileName().toString().startsWith(prefix))
+            .collect(Collectors.toSet());
     }
-
-
 
     public static Set<Path> findFiles(String directory, String suffix, String... prefixes) {
         return walk(directory)
-                .filter(filePath -> {
-                    String fileName = filePath.getFileName().toString();
-                    return fileName.endsWith(suffix)
-                            && Arrays.stream(prefixes).anyMatch(fileName::startsWith);
-                })
-                .collect(Collectors.toSet());
+            .filter(filePath -> {
+                String fileName = filePath.getFileName().toString();
+                return fileName.endsWith(suffix)
+                    && Arrays.stream(prefixes).anyMatch(fileName::startsWith);
+            })
+            .collect(Collectors.toSet());
     }
 
     public static DoubleByteArrayTuple split(byte[] arr) {
         byte[] first = ArrayUtils.subarray(arr, 0, arr.length / 2);
         byte[] second = ArrayUtils.subarray(arr, arr.length / 2, arr.length);
         return new DoubleByteArrayTuple(first,
-                second);
+            second);
     }
-
-    private UpdaterUtil() {}
-
-
 
     public static Stream<Path> walk(String path) {
         try {
@@ -184,8 +181,7 @@ public class UpdaterUtil {
             } else {
                 return Files.walk(Paths.get(url.toURI()));
             }
-        }
-        catch (Exception e) {
+        } catch (Exception e) {
             throw new RuntimeException(e.toString(), e);
         }
     }

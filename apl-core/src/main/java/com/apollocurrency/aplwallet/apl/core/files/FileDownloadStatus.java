@@ -8,7 +8,7 @@ import com.apollocurrency.aplwallet.apl.core.files.statcheck.FileDownloadDecisio
 import com.apollocurrency.aplwallet.apl.core.files.statcheck.PeerFileHashSum;
 import lombok.Getter;
 
-import javax.enterprise.inject.Vetoed;
+import jakarta.enterprise.inject.Vetoed;
 import java.util.Set;
 import java.util.concurrent.atomic.AtomicInteger;
 
@@ -41,12 +41,12 @@ public class FileDownloadStatus {
     }
 
     @Override
-    public String toString(){
-       return String.format("File ID: %s completed %f3.2 decision %s", id, getPercentCompleted(),decision.name());
+    public String toString() {
+        return String.format("File ID: %s completed %f3.2 decision %s", id, getPercentCompleted(), decision.name());
     }
 
-    public double getPercentCompleted(){
-        double percent = chunksReady.get()*1.0/chunksTotal.get()* 100.0D;
+    public double getPercentCompleted() {
+        double percent = chunksReady.get() * 1.0 / chunksTotal.get() * 100.0D;
         return percent;
     }
 }

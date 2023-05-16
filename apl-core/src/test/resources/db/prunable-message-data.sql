@@ -1,18 +1,18 @@
-delete from account;
-delete from prunable_message;
-delete from public_key;
+TRUNCATE account;
+TRUNCATE prunable_message;
+TRUNCATE public_key;
 
 insert into account
 (DB_ID  	,ID  	                        ,BALANCE  	        ,UNCONFIRMED_BALANCE  	,HAS_CONTROL_PHASING  	,FORGED_BALANCE  	,ACTIVE_LESSEE_ID  	,HEIGHT  	,LATEST) values
 (10          ,-6004096130734886685          ,25000000000000     ,25000000000000           ,false                 , 0                 ,null               ,100       ,true ),
 (20          ,4882266200596627944           ,500000000000       ,500000000000             ,false                  ,0                 ,null               ,100       ,true ),
-(30          ,-5872452783836294400          ,1000000000000      ,1000000000000            ,false                  ,0                 ,null               ,100       ,true ),
+(30          ,-5872452783836294400          ,1000000000000      ,1000000000000            ,false                  ,0                 ,null               ,100       ,true )
 ;
 insert into public_key
 (DB_ID  	,ACCOUNT_ID  	         ,PUBLIC_KEY                                                                               ,HEIGHT  	,LATEST) values
 (10          ,-6004096130734886685   ,X'2e8b2883c27b391359d7d0c15d00815a6693290a38dd8eba341cc07ddaa8ed4d'                      ,1           ,true ),
 (20          ,4882266200596627944    ,X'c0b126b5aa134b84e64625256b8de8973787612b1f3839d2c60526d2114e886d'                      ,10          ,true ),
-(30          ,-5872452783836294400   ,X'a574702cf92b7e0a7847f921ca8a23f538d62a582cc6a2f4861b160077c5f245'                      ,15          ,true ),
+(30          ,-5872452783836294400   ,X'a574702cf92b7e0a7847f921ca8a23f538d62a582cc6a2f4861b160077c5f245'                      ,15          ,true )
 ;
 INSERT INTO prunable_message
 (db_id         ,id                  ,sender_id               , recipient_id          ,message                                                 , encrypted_message                                                                                                                                                                                                                     ,message_is_text  , encrypted_is_text , is_compressed, block_timestamp, transaction_timestamp, height) VALUES
@@ -26,5 +26,5 @@ INSERT INTO prunable_message
 (1070           ,80                  ,-5872452783836294400   ,-6004096130734886685   ,null                                                    ,X'11c48e4daac8e8582c9b83715366a0a0b4a7b7ae048d0ad115d22ae973c9c9e255fbb70f1b17168f6d15d877fa4dfd9017c8aedc9211e4576e434fb4b7102776777164f79368343936dd87f65dd58b24f61b075973c7b7c5947e5020bc835baf'                                    ,false            , true              , false         ,212            ,  225                   , 23   ),
 (1080           ,90                  ,-5872452783836294400   ,4882266200596627944    ,X'f3ab4384a18c2911'                                     ,X'8de2b1bb43fc8f8ed866f551edae2f688494da7601b914fbc69f2c9c406f537845eab9a324a151d432d82a0e9d989467b1ff559a947fe8a5d0c9fe7bf0e6d0a44504273ff6b92b419abf752401b785157eb320f78e6ac13f75036a799ea47a4c'                                    ,false            , false             , false         ,232            ,  230                   , 25   ),
 (1090           ,100                 ,4882266200596627944    ,-5872452783836294400   ,null                                                    ,X'a1e59a83f92fe32e2e8bd4d840adca3af792e65499ae3d87068c793daf7f7d238c9c0820c951a9280d78e492eb27fb5961a974d98f63756728cb7a22d658dabbc0c6bf192eea4f41d950cff9f51c12f03f2f853cd9ead88f3c88ebbdb1ae0423dad64b3d2c0801fc1780b41c84fc330e'    ,false            , false             , true          ,247            ,  242                   , 28   ),
-(1100           ,110                 ,-6004096130734886685   ,-5872452783836294400   ,X'48656c6c6f20436875636b'                               ,null                                                                                                                                                                                                                                   ,true             , false             , false         ,259            ,  254                   , 30   ),
+(1100           ,110                 ,-6004096130734886685   ,-5872452783836294400   ,X'48656c6c6f20436875636b'                               ,null                                                                                                                                                                                                                                   ,true             , false             , false         ,259            ,  254                   , 30   )
 ;

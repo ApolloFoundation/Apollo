@@ -20,25 +20,25 @@
 
 package com.apollocurrency.aplwallet.apl.core.http.get;
 
-import com.apollocurrency.aplwallet.apl.core.app.Alias;
+import com.apollocurrency.aplwallet.apl.core.entity.state.alias.Alias;
 import com.apollocurrency.aplwallet.apl.core.http.APITag;
 import com.apollocurrency.aplwallet.apl.core.http.AbstractAPIRequestHandler;
+import com.apollocurrency.aplwallet.apl.core.http.HttpParameterParserUtil;
 import com.apollocurrency.aplwallet.apl.core.http.JSONData;
 import com.apollocurrency.aplwallet.apl.core.http.ParameterException;
-import com.apollocurrency.aplwallet.apl.core.http.ParameterParser;
 import org.json.simple.JSONStreamAware;
 
-import javax.servlet.http.HttpServletRequest;
+import jakarta.servlet.http.HttpServletRequest;
 
 public final class GetAlias extends AbstractAPIRequestHandler {
 
     public GetAlias() {
-        super(new APITag[] {APITag.ALIASES}, "alias", "aliasName");
+        super(new APITag[]{APITag.ALIASES}, "alias", "aliasName");
     }
 
     @Override
     public JSONStreamAware processRequest(HttpServletRequest req) throws ParameterException {
-        Alias alias = ParameterParser.getAlias(req);
+        Alias alias = HttpParameterParserUtil.getAlias(req);
         return JSONData.alias(alias);
     }
 

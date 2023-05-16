@@ -20,37 +20,36 @@
 
 package com.apollocurrency.aplwallet.apl.core.http.get;
 
+import com.apollocurrency.aplwallet.apl.core.entity.state.shuffling.ShufflingParticipant;
 import com.apollocurrency.aplwallet.apl.core.http.APITag;
 import com.apollocurrency.aplwallet.apl.core.http.AbstractAPIRequestHandler;
+import com.apollocurrency.aplwallet.apl.core.http.HttpParameterParserUtil;
 import com.apollocurrency.aplwallet.apl.core.http.JSONData;
-import com.apollocurrency.aplwallet.apl.core.http.ParameterParser;
-import com.apollocurrency.aplwallet.apl.util.AplException;
-import com.apollocurrency.aplwallet.apl.core.app.ShufflingParticipant;
-import com.apollocurrency.aplwallet.apl.core.db.DbIterator;
-import javax.enterprise.inject.Vetoed;
+import com.apollocurrency.aplwallet.apl.util.exception.AplException;
 import org.json.simple.JSONArray;
 import org.json.simple.JSONObject;
 import org.json.simple.JSONStreamAware;
 
-import javax.servlet.http.HttpServletRequest;
+import jakarta.enterprise.inject.Vetoed;
+import jakarta.servlet.http.HttpServletRequest;
+import java.util.List;
 
 @Vetoed
 public final class GetShufflingParticipants extends AbstractAPIRequestHandler {
 
     public GetShufflingParticipants() {
-        super(new APITag[] {APITag.SHUFFLING}, "shuffling");
+        super(new APITag[]{APITag.SHUFFLING}, "shuffling");
     }
 
     @Override
     public JSONStreamAware processRequest(HttpServletRequest req) throws AplException {
-        long shufflingId = ParameterParser.getUnsignedLong(req, "shuffling", true);
+        long shufflingId = HttpParameterParserUtil.getUnsignedLong(req, "shuffling", true);
         JSONObject response = new JSONObject();
         JSONArray participantsJSONArray = new JSONArray();
         response.put("participants", participantsJSONArray);
-        try (DbIterator<ShufflingParticipant> participants = ShufflingParticipant.getParticipants(shufflingId)) {
-            for (ShufflingParticipant participant : participants) {
-                participantsJSONArray.add(JSONData.participant(participant));
-            }
+        List<ShufflingParticipant> participants = shufflingService.getParticipants(shufflingId);
+        for (ShufflingParticipant participant : participants) {
+            participantsJSONArray.add(JSONData.participant(participant));
         }
         return response;
     }

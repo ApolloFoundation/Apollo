@@ -4,78 +4,49 @@
 
 package com.apollocurrency.aplwallet.apl.exchange.dao;
 
-import com.apollocurrency.aplwallet.apl.core.app.BlockchainImpl;
-import com.apollocurrency.aplwallet.apl.core.app.CollectionUtil;
-import com.apollocurrency.aplwallet.apl.core.app.TimeServiceImpl;
-import com.apollocurrency.aplwallet.apl.core.app.TransactionDaoImpl;
-import com.apollocurrency.aplwallet.apl.core.cache.NullCacheProducerForTests;
-import com.apollocurrency.aplwallet.apl.core.chainid.BlockchainConfig;
-import com.apollocurrency.aplwallet.apl.core.config.DaoConfig;
-import com.apollocurrency.aplwallet.apl.core.db.BlockDaoImpl;
-import com.apollocurrency.aplwallet.apl.core.db.DatabaseManager;
-import com.apollocurrency.aplwallet.apl.core.db.DbIterator;
-import com.apollocurrency.aplwallet.apl.core.db.DerivedDbTablesRegistryImpl;
-import com.apollocurrency.aplwallet.apl.core.db.cdi.transaction.JdbiHandleFactory;
-import com.apollocurrency.aplwallet.apl.core.db.fulltext.FullTextConfigImpl;
-import com.apollocurrency.aplwallet.apl.core.shard.BlockIndexServiceImpl;
+import com.apollocurrency.aplwallet.apl.core.dao.DbContainerBaseTest;
+import com.apollocurrency.aplwallet.apl.core.model.dex.ExchangeContract;
+import com.apollocurrency.aplwallet.apl.core.utils.CollectionUtil;
 import com.apollocurrency.aplwallet.apl.data.DexTestData;
-import com.apollocurrency.aplwallet.apl.exchange.model.ExchangeContract;
 import com.apollocurrency.aplwallet.apl.extension.DbExtension;
 import com.apollocurrency.aplwallet.apl.testutil.DbUtils;
-import com.apollocurrency.aplwallet.apl.util.NtpTime;
-import com.apollocurrency.aplwallet.apl.util.injectable.PropertiesHolder;
-import org.jboss.weld.junit.MockBean;
-import org.jboss.weld.junit5.EnableWeld;
-import org.jboss.weld.junit5.WeldInitiator;
-import org.jboss.weld.junit5.WeldSetup;
-import org.jdbi.v3.core.Jdbi;
+import com.apollocurrency.aplwallet.apl.util.db.DbIterator;
+import lombok.extern.slf4j.Slf4j;
 import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.RegisterExtension;
 
-import javax.inject.Inject;
+import jakarta.enterprise.event.Event;
 import java.util.List;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.mockito.Mockito.mock;
 
-@EnableWeld
-public class DexContractTableTest {
+@Slf4j
+@Tag("slow")
+public class DexContractTableTest extends DbContainerBaseTest {
 
     @RegisterExtension
-    DbExtension extension = new DbExtension();
+    static DbExtension extension = new DbExtension(mariaDBContainer);
 
-    @WeldSetup
-    public WeldInitiator weld = WeldInitiator.from(
-            PropertiesHolder.class, BlockchainConfig.class, BlockchainImpl.class, DaoConfig.class,
-            JdbiHandleFactory.class,
-            FullTextConfigImpl.class,
-            DexContractTable.class,
-            DerivedDbTablesRegistryImpl.class,
-            TimeServiceImpl.class, BlockDaoImpl.class, TransactionDaoImpl.class,
-            BlockIndexServiceImpl.class, NullCacheProducerForTests.class)
-            .addBeans(MockBean.of(extension.getDatabaseManager(), DatabaseManager.class))
-            .addBeans(MockBean.of(extension.getDatabaseManager().getJdbi(), Jdbi.class))
-            .addBeans(MockBean.of(mock(NtpTime.class), NtpTime.class))
-            .build();
-    @Inject
-    DexContractTable table;
-    DexTestData dtd;
+    DexContractTable table = new DexContractTable(extension.getDatabaseManager(), mock(Event.class));
+    DexTestData td;
 
     @BeforeEach
     void setUp() {
-        dtd = new DexTestData();
+        td = new DexTestData();
     }
 
     @Test
     void testInsert() {
         DbUtils.inTransaction(extension, (con) -> {
-            table.insert(dtd.NEW_EXCHANGE_CONTRACT_16);
+            table.insert(td.NEW_EXCHANGE_CONTRACT_16);
         });
-        ExchangeContract result = table.getById(dtd.NEW_EXCHANGE_CONTRACT_16.getId());
+        ExchangeContract result = table.getById(td.NEW_EXCHANGE_CONTRACT_16.getId());
         assertNotNull(result);
-        assertEquals(dtd.NEW_EXCHANGE_CONTRACT_16.getId(), result.getId());
+        assertEquals(td.NEW_EXCHANGE_CONTRACT_16.getId(), result.getId());
     }
 
     @Test
@@ -83,6 +54,14 @@ public class DexContractTableTest {
         DbIterator<ExchangeContract> iterator = table.getAll(0, 10);
         List<ExchangeContract> result = CollectionUtil.toList(iterator);
         assertEquals(10, result.size());
+    }
+
+    @Test
+    void testGetByCounterOrder() {
+        List<ExchangeContract> allByCounterOrder = table.getAllByCounterOrder(-6968465014361285240L);
+
+        assertEquals(List.of(td.EXCHANGE_CONTRACT_11, td.EXCHANGE_CONTRACT_12, td.EXCHANGE_CONTRACT_13,
+            td.EXCHANGE_CONTRACT_14, td.EXCHANGE_CONTRACT_15), allByCounterOrder);
     }
 
 }

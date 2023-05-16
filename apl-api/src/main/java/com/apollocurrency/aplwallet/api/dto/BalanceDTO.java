@@ -19,5 +19,4 @@ public class BalanceDTO extends BaseDTO {
     private Long requestProcessingTime;
     private Long unconfirmedBalanceATM;
     private Long guaranteedBalanceATM;
-
 }

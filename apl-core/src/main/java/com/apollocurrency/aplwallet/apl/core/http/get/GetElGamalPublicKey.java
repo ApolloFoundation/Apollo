@@ -4,27 +4,26 @@
 
 package com.apollocurrency.aplwallet.apl.core.http.get;
 
-import javax.servlet.http.HttpServletRequest;
-
-
 import com.apollocurrency.aplwallet.apl.core.http.APITag;
 import com.apollocurrency.aplwallet.apl.core.http.AbstractAPIRequestHandler;
-import com.apollocurrency.aplwallet.apl.util.AplException;
-import javax.enterprise.inject.Vetoed;
+import com.apollocurrency.aplwallet.apl.util.exception.AplException;
 import org.json.simple.JSONObject;
 import org.json.simple.JSONStreamAware;
+
+import jakarta.enterprise.inject.Vetoed;
+import jakarta.servlet.http.HttpServletRequest;
 
 //TODO: Refactor that according to Feng shui
 @Vetoed
 public final class GetElGamalPublicKey extends AbstractAPIRequestHandler {
 
     public GetElGamalPublicKey() {
-        super(new APITag[] {APITag.TRANSACTIONS}, "publicKey");
+        super(new APITag[]{APITag.TRANSACTIONS}, "publicKey");
     }
-    
+
     @Override
     public JSONStreamAware processRequest(HttpServletRequest req) throws AplException {
-        
+
         JSONObject response = new JSONObject();
         response.put("ElGamalX", elGamal.getServerElGamalPublicKey().getPrivateKeyX().toString(16));
         response.put("ElGamalY", elGamal.getServerElGamalPublicKey().getPrivateKeyY().toString(16));

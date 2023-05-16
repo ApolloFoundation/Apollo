@@ -4,7 +4,7 @@ import com.apollocurrency.aplwallet.api.dto.TradingDataOutputDTO;
 import com.apollocurrency.aplwallet.api.trading.TradingDataOutput;
 import com.apollocurrency.aplwallet.apl.core.rest.converter.TradingDataOutputToDtoConverter;
 import com.apollocurrency.aplwallet.apl.core.rest.exception.LegacyParameterExceptionMapper;
-import com.apollocurrency.aplwallet.apl.exchange.model.DexCurrency;
+import com.apollocurrency.aplwallet.apl.dex.core.model.DexCurrency;
 import com.apollocurrency.aplwallet.apl.exchange.service.graph.DexTradingDataService;
 import com.apollocurrency.aplwallet.apl.exchange.service.graph.TimeFrame;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -18,13 +18,14 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
-import javax.ws.rs.core.MediaType;
+import jakarta.ws.rs.core.MediaType;
 import java.io.IOException;
 import java.net.URISyntaxException;
 
 import static com.apollocurrency.aplwallet.apl.exchange.service.graph.CandlestickTestUtil.dec;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.mockito.Mockito.doReturn;
+
 @ExtendWith(MockitoExtension.class)
 class TradingDataControllerTest {
     private static ObjectMapper mapper = new ObjectMapper();
@@ -34,9 +35,9 @@ class TradingDataControllerTest {
     private TradingDataOutput tradingDataOutput = new TradingDataOutput();
 
     @BeforeEach
-    void setup(){
+    void setup() {
         dispatcher = MockDispatcherFactory.createDispatcher();
-        TradingDataController tradingDataController = new TradingDataController(service, null, null);
+        TradingDataController tradingDataController = new TradingDataController(service, null);
         dispatcher.getRegistry().addSingletonResource(tradingDataController);
         dispatcher.getProviderFactory().registerProvider(LegacyParameterExceptionMapper.class);
         tradingDataOutput.init();

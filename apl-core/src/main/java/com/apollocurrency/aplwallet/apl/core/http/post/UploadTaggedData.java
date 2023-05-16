@@ -20,29 +20,29 @@
 
 package com.apollocurrency.aplwallet.apl.core.http.post;
 
-import com.apollocurrency.aplwallet.apl.core.account.Account;
-import com.apollocurrency.aplwallet.apl.core.tagged.model.TaggedDataUploadAttachment;
+import com.apollocurrency.aplwallet.apl.core.entity.state.account.Account;
 import com.apollocurrency.aplwallet.apl.core.http.APITag;
-import com.apollocurrency.aplwallet.apl.core.http.ParameterParser;
-import com.apollocurrency.aplwallet.apl.util.AplException;
-import javax.enterprise.inject.Vetoed;
+import com.apollocurrency.aplwallet.apl.core.http.HttpParameterParserUtil;
+import com.apollocurrency.aplwallet.apl.core.transaction.messages.TaggedDataUploadAttachment;
+import com.apollocurrency.aplwallet.apl.util.exception.AplException;
 import org.json.simple.JSONStreamAware;
 
-import javax.servlet.http.HttpServletRequest;
+import jakarta.enterprise.inject.Vetoed;
+import jakarta.servlet.http.HttpServletRequest;
 
 @Vetoed
-public final class UploadTaggedData extends CreateTransaction {
+public final class UploadTaggedData extends CreateTransactionHandler {
 
     public UploadTaggedData() {
-        super("file", new APITag[] {APITag.DATA, APITag.CREATE_TRANSACTION},
-                "name", "description", "tags", "type", "channel", "isText", "filename", "data");
+        super("file", new APITag[]{APITag.DATA, APITag.CREATE_TRANSACTION},
+            "name", "description", "tags", "type", "channel", "isText", "filename", "data");
     }
 
     @Override
     public JSONStreamAware processRequest(HttpServletRequest req) throws AplException {
 
-        Account account = ParameterParser.getSenderAccount(req);
-        TaggedDataUploadAttachment taggedDataUploadAttachment = ParameterParser.getTaggedData(req);
+        Account account = HttpParameterParserUtil.getSenderAccount(req);
+        TaggedDataUploadAttachment taggedDataUploadAttachment = HttpParameterParserUtil.getTaggedData(req);
         return createTransaction(req, account, taggedDataUploadAttachment);
 
     }

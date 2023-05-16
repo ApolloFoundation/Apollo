@@ -20,52 +20,55 @@
 
 package com.apollocurrency.aplwallet.apl.core.http.get;
 
-import com.apollocurrency.aplwallet.apl.core.monetary.AssetDelete;
+import com.apollocurrency.aplwallet.apl.core.entity.state.asset.AssetDelete;
 import com.apollocurrency.aplwallet.apl.core.http.APITag;
 import com.apollocurrency.aplwallet.apl.core.http.AbstractAPIRequestHandler;
+import com.apollocurrency.aplwallet.apl.core.http.HttpParameterParserUtil;
 import com.apollocurrency.aplwallet.apl.core.http.JSONData;
 import com.apollocurrency.aplwallet.apl.core.http.JSONResponses;
-import com.apollocurrency.aplwallet.apl.core.http.ParameterParser;
-import com.apollocurrency.aplwallet.apl.util.AplException;
-import com.apollocurrency.aplwallet.apl.core.db.DbIterator;
-import com.apollocurrency.aplwallet.apl.core.db.DbUtils;
-import javax.enterprise.inject.Vetoed;
+import com.apollocurrency.aplwallet.apl.core.service.state.asset.AssetDeleteService;
+import com.apollocurrency.aplwallet.apl.util.db.DbIterator;
+import com.apollocurrency.aplwallet.apl.util.db.DbUtils;
+import com.apollocurrency.aplwallet.apl.util.exception.AplException;
 import org.json.simple.JSONArray;
 import org.json.simple.JSONObject;
 import org.json.simple.JSONStreamAware;
 
-import javax.servlet.http.HttpServletRequest;
+import jakarta.enterprise.inject.Vetoed;
+import jakarta.enterprise.inject.spi.CDI;
+import jakarta.servlet.http.HttpServletRequest;
 
 @Vetoed
 public final class GetAssetDeletes extends AbstractAPIRequestHandler {
 
     public GetAssetDeletes() {
-        super(new APITag[] {APITag.AE}, "asset", "account", "firstIndex", "lastIndex", "timestamp", "includeAssetInfo");
+        super(new APITag[]{APITag.AE}, "asset", "account", "firstIndex", "lastIndex", "timestamp", "includeAssetInfo");
     }
 
     @Override
     public JSONStreamAware processRequest(HttpServletRequest req) throws AplException {
 
-        long assetId = ParameterParser.getUnsignedLong(req, "asset", false);
-        long accountId = ParameterParser.getAccountId(req, false);
+        long assetId = HttpParameterParserUtil.getUnsignedLong(req, "asset", false);
+        long accountId = HttpParameterParserUtil.getAccountId(req, false);
         if (assetId == 0 && accountId == 0) {
             return JSONResponses.MISSING_ASSET_ACCOUNT;
         }
-        int timestamp = ParameterParser.getTimestamp(req);
-        int firstIndex = ParameterParser.getFirstIndex(req);
-        int lastIndex = ParameterParser.getLastIndex(req);
+        int timestamp = HttpParameterParserUtil.getTimestamp(req);
+        int firstIndex = HttpParameterParserUtil.getFirstIndex(req);
+        int lastIndex = HttpParameterParserUtil.getLastIndex(req);
         boolean includeAssetInfo = "true".equalsIgnoreCase(req.getParameter("includeAssetInfo"));
 
         JSONObject response = new JSONObject();
         JSONArray deletesData = new JSONArray();
+        AssetDeleteService assetDeleteService = CDI.current().select(AssetDeleteService.class).get();
         DbIterator<AssetDelete> deletes = null;
         try {
             if (accountId == 0) {
-                deletes = AssetDelete.getAssetDeletes(assetId, firstIndex, lastIndex);
+                deletes = assetDeleteService.getAssetDeletes(assetId, firstIndex, lastIndex);
             } else if (assetId == 0) {
-                deletes = AssetDelete.getAccountAssetDeletes(accountId, firstIndex, lastIndex);
+                deletes = assetDeleteService.getAccountAssetDeletes(accountId, firstIndex, lastIndex);
             } else {
-                deletes = AssetDelete.getAccountAssetDeletes(accountId, assetId, firstIndex, lastIndex);
+                deletes = assetDeleteService.getAccountAssetDeletes(accountId, assetId, firstIndex, lastIndex);
             }
             while (deletes.hasNext()) {
                 AssetDelete assetDelete = deletes.next();

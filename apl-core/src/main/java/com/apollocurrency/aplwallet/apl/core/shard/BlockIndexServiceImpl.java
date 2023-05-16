@@ -4,14 +4,14 @@
 
 package com.apollocurrency.aplwallet.apl.core.shard;
 
-import com.apollocurrency.aplwallet.apl.core.db.dao.BlockIndexDao;
-import com.apollocurrency.aplwallet.apl.core.db.dao.model.BlockIndex;
+import com.apollocurrency.aplwallet.apl.core.dao.appdata.BlockIndexDao;
+import com.apollocurrency.aplwallet.apl.core.entity.appdata.BlockIndex;
 import com.apollocurrency.aplwallet.apl.util.cache.CacheProducer;
 import com.apollocurrency.aplwallet.apl.util.cache.CacheType;
 import com.google.common.cache.Cache;
 
-import javax.inject.Inject;
-import javax.inject.Singleton;
+import jakarta.inject.Inject;
+import jakarta.inject.Singleton;
 import java.util.List;
 
 import static com.apollocurrency.aplwallet.apl.core.cache.BlockIndexCacheConfig.BLOCK_INDEX_CACHE_NAME;
@@ -32,7 +32,7 @@ public class BlockIndexServiceImpl implements BlockIndexService {
     public BlockIndexServiceImpl(BlockIndexDao blockIndexDao,
                                  @CacheProducer
                                  @CacheType(BLOCK_INDEX_CACHE_NAME)
-                                         Cache<Long, BlockIndex> blockIndexCache
+                                     Cache<Long, BlockIndex> blockIndexCache
     ) {
         this.blockIndexDao = blockIndexDao;
         this.blockIndexCache = blockIndexCache;
@@ -92,5 +92,4 @@ public class BlockIndexServiceImpl implements BlockIndexService {
         }
         return blockIndexDao.hardDeleteAllBlockIndex();
     }
-
 }

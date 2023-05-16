@@ -20,28 +20,32 @@
 
 package com.apollocurrency.aplwallet.apl.core.http.get;
 
-import com.apollocurrency.aplwallet.apl.core.app.Alias;
 import com.apollocurrency.aplwallet.apl.core.http.APITag;
 import com.apollocurrency.aplwallet.apl.core.http.AbstractAPIRequestHandler;
-import com.apollocurrency.aplwallet.apl.core.http.ParameterParser;
-import com.apollocurrency.aplwallet.apl.util.AplException;
-import javax.enterprise.inject.Vetoed;
+import com.apollocurrency.aplwallet.apl.core.http.HttpParameterParserUtil;
+import com.apollocurrency.aplwallet.apl.core.service.state.AliasService;
+import com.apollocurrency.aplwallet.apl.util.exception.AplException;
 import org.json.simple.JSONObject;
 import org.json.simple.JSONStreamAware;
 
-import javax.servlet.http.HttpServletRequest;
+import jakarta.enterprise.inject.Vetoed;
+import jakarta.enterprise.inject.spi.CDI;
+import jakarta.servlet.http.HttpServletRequest;
+
 @Vetoed
 public final class GetAliasCount extends AbstractAPIRequestHandler {
+    private final AliasService aliasService;
 
     public GetAliasCount() {
-        super(new APITag[] {APITag.ALIASES}, "account");
+        super(new APITag[]{APITag.ALIASES}, "account");
+        this.aliasService = CDI.current().select(AliasService.class).get();
     }
 
     @Override
     public JSONStreamAware processRequest(HttpServletRequest req) throws AplException {
-        final long accountId = ParameterParser.getAccountId(req, true);
+        final long accountId = HttpParameterParserUtil.getAccountId(req, true);
         JSONObject response = new JSONObject();
-        response.put("numberOfAliases", Alias.getAccountAliasCount(accountId));
+        response.put("numberOfAliases", aliasService.getAccountAliasCount(accountId));
         return response;
     }
 

@@ -15,76 +15,82 @@
  */
 
 /*
- * Copyright © 2018-2019 Apollo Foundation
+ * Copyright © 2018-2021 Apollo Foundation
  */
 
 package com.apollocurrency.aplwallet.apl.core.http.get;
 
-import static com.apollocurrency.aplwallet.apl.core.http.JSONResponses.PRIVATE_TRANSACTIONS_ACCESS_DENIED;
-
-import javax.enterprise.inject.Vetoed;
-import javax.servlet.http.HttpServletRequest;
-import java.util.List;
-
-import com.apollocurrency.aplwallet.apl.core.app.Transaction;
 import com.apollocurrency.aplwallet.apl.core.http.APITag;
 import com.apollocurrency.aplwallet.apl.core.http.AbstractAPIRequestHandler;
+import com.apollocurrency.aplwallet.apl.core.http.HttpParameterParserUtil;
 import com.apollocurrency.aplwallet.apl.core.http.JSONData;
-import com.apollocurrency.aplwallet.apl.core.http.ParameterParser;
-import com.apollocurrency.aplwallet.apl.core.transaction.Payment;
-import com.apollocurrency.aplwallet.apl.core.transaction.TransactionType;
-import com.apollocurrency.aplwallet.apl.util.AplException;
+import com.apollocurrency.aplwallet.apl.core.model.Sort;
+import com.apollocurrency.aplwallet.apl.core.model.Transaction;
+import com.apollocurrency.aplwallet.apl.util.exception.AplException;
 import org.json.simple.JSONArray;
 import org.json.simple.JSONObject;
 import org.json.simple.JSONStreamAware;
+
+import jakarta.enterprise.inject.Vetoed;
+import jakarta.servlet.http.HttpServletRequest;
+import java.util.List;
+
+import static com.apollocurrency.aplwallet.apl.core.http.JSONResponses.PRIVATE_TRANSACTIONS_ACCESS_DENIED;
+import static com.apollocurrency.aplwallet.apl.core.transaction.TransactionTypes.TransactionTypeSpec.PRIVATE_PAYMENT;
 
 @Vetoed
 public final class GetBlockchainTransactions extends AbstractAPIRequestHandler {
 
     public GetBlockchainTransactions() {
-        super(new APITag[] {APITag.ACCOUNTS, APITag.TRANSACTIONS}, "account", "timestamp", "type", "subtype",
-                "firstIndex", "lastIndex", "numberOfConfirmations", "withMessage", "phasedOnly", "nonPhasedOnly",
-                "includeExpiredPrunable", "includePhasingResult", "executedOnly");
+        super(new APITag[]{APITag.ACCOUNTS, APITag.TRANSACTIONS}, "account", "timestamp", "type", "subtype",
+            "firstIndex", "lastIndex", "numberOfConfirmations", "withMessage", "phasedOnly", "nonPhasedOnly",
+            "includeExpiredPrunable", "includePhasingResult", "executedOnly", "failedOnly", "nonFailedOnly", "sort");
     }
 
     @Override
     public JSONStreamAware processRequest(HttpServletRequest req) throws AplException {
 
-        long accountId = ParameterParser.getAccountId(req, true);
-        int timestamp = ParameterParser.getTimestamp(req);
-        int numberOfConfirmations = ParameterParser.getNumberOfConfirmations(req);
+        long accountId = HttpParameterParserUtil.getAccountId(req, true);
+        int timestamp = HttpParameterParserUtil.getTimestamp(req);
+        int numberOfConfirmations = HttpParameterParserUtil.getNumberOfConfirmations(req);
         boolean withMessage = "true".equalsIgnoreCase(req.getParameter("withMessage"));
         boolean phasedOnly = "true".equalsIgnoreCase(req.getParameter("phasedOnly"));
         boolean nonPhasedOnly = "true".equalsIgnoreCase(req.getParameter("nonPhasedOnly"));
         boolean includeExpiredPrunable = "true".equalsIgnoreCase(req.getParameter("includeExpiredPrunable"));
         boolean includePhasingResult = "true".equalsIgnoreCase(req.getParameter("includePhasingResult"));
         boolean executedOnly = "true".equalsIgnoreCase(req.getParameter("executedOnly"));
+        boolean failedOnly = "true".equalsIgnoreCase(req.getParameter("failedOnly"));
+        boolean nonFailedOnly = "true".equalsIgnoreCase(req.getParameter("nonFailedOnly"));
+        String sort = HttpParameterParserUtil.getStringParameter(req, "sort", false);
+
+        if (sort == null) {
+            sort = "DESC";
+        }
+        Sort sortObj = new Sort(sort);
 
         byte type;
         byte subtype;
         try {
             type = Byte.parseByte(req.getParameter("type"));
-        }
-        catch (NumberFormatException e) {
+        } catch (NumberFormatException e) {
             type = -1;
         }
         try {
             subtype = Byte.parseByte(req.getParameter("subtype"));
-        }
-        catch (NumberFormatException e) {
+        } catch (NumberFormatException e) {
             subtype = -1;
         }
-        if (TransactionType.findTransactionType(type, subtype) == Payment.PRIVATE) {
+        if (PRIVATE_PAYMENT.getType() == type && PRIVATE_PAYMENT.getSubtype() == subtype) {
             return PRIVATE_TRANSACTIONS_ACCESS_DENIED;
         }
-        int firstIndex = ParameterParser.getFirstIndex(req);
-        int lastIndex = ParameterParser.getLastIndex(req);
+        int firstIndex = HttpParameterParserUtil.getFirstIndex(req);
+        int lastIndex = HttpParameterParserUtil.getLastIndex(req);
 
         JSONArray transactions = new JSONArray();
         List<Transaction> transactionList = lookupBlockchain().getTransactions(accountId, numberOfConfirmations,
-                type, subtype, timestamp, withMessage, phasedOnly, nonPhasedOnly, firstIndex, lastIndex,
-                includeExpiredPrunable, executedOnly, false);
-            transactionList.forEach(tx -> transactions.add(JSONData.transaction(tx, includePhasingResult, false)));
+            type, subtype, timestamp, withMessage, phasedOnly, nonPhasedOnly, firstIndex, lastIndex,
+            includeExpiredPrunable, executedOnly, false, failedOnly, nonFailedOnly, sortObj);
+        transactionList.forEach(tx -> transactions.add(JSONData.transaction(tx, includePhasingResult, false)));
 
         JSONObject response = new JSONObject();
         response.put("transactions", transactions);

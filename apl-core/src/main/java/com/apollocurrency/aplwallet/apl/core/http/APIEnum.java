@@ -1,18 +1,18 @@
 /*
-* Copyright © 2013-2016 The Nxt Core Developers.
-* Copyright © 2016-2017 Jelurida IP B.V.
-*
-* See the LICENSE.txt file at the top-level directory of this distribution
-* for licensing information.
-*
-* Unless otherwise agreed in a custom licensing agreement with Jelurida B.V.,
-* no part of the Nxt software, including this file, may be copied, modified,
-* propagated, or distributed except according to the terms contained in the
-* LICENSE.txt file.
-*
-* Removal or modification of this copyright notice is prohibited.
-*
-*/
+ * Copyright © 2013-2016 The Nxt Core Developers.
+ * Copyright © 2016-2017 Jelurida IP B.V.
+ *
+ * See the LICENSE.txt file at the top-level directory of this distribution
+ * for licensing information.
+ *
+ * Unless otherwise agreed in a custom licensing agreement with Jelurida B.V.,
+ * no part of the Nxt software, including this file, may be copied, modified,
+ * propagated, or distributed except according to the terms contained in the
+ * LICENSE.txt file.
+ *
+ * Removal or modification of this copyright notice is prohibited.
+ *
+ */
 
 /*
  * Copyright © 2018-2019 Apollo Foundation
@@ -20,194 +20,7 @@
 
 package com.apollocurrency.aplwallet.apl.core.http;
 
-import com.apollocurrency.aplwallet.apl.core.http.get.CalculateFullHash;
-import com.apollocurrency.aplwallet.apl.core.http.get.CanDeleteCurrency;
-import com.apollocurrency.aplwallet.apl.core.http.get.DecodeHallmark;
-import com.apollocurrency.aplwallet.apl.core.http.get.DecodeToken;
-import com.apollocurrency.aplwallet.apl.core.http.get.DecryptFrom;
-import com.apollocurrency.aplwallet.apl.core.http.get.DownloadPrunableMessage;
-import com.apollocurrency.aplwallet.apl.core.http.get.DownloadTaggedData;
-import com.apollocurrency.aplwallet.apl.core.http.get.EncryptTo;
-import com.apollocurrency.aplwallet.apl.core.http.get.FullHashToId;
-import com.apollocurrency.aplwallet.apl.core.http.get.GetAccount;
-import com.apollocurrency.aplwallet.apl.core.http.get.GetAccountAssetCount;
-import com.apollocurrency.aplwallet.apl.core.http.get.GetAccountAssets;
-import com.apollocurrency.aplwallet.apl.core.http.get.GetAccountBlockCount;
-import com.apollocurrency.aplwallet.apl.core.http.get.GetAccountBlockIds;
-import com.apollocurrency.aplwallet.apl.core.http.get.GetAccountBlocks;
-import com.apollocurrency.aplwallet.apl.core.http.get.GetAccountCurrencies;
-import com.apollocurrency.aplwallet.apl.core.http.get.GetAccountCurrencyCount;
-import com.apollocurrency.aplwallet.apl.core.http.get.GetAccountCurrentAskOrderIds;
-import com.apollocurrency.aplwallet.apl.core.http.get.GetAccountCurrentAskOrders;
-import com.apollocurrency.aplwallet.apl.core.http.get.GetAccountCurrentBidOrderIds;
-import com.apollocurrency.aplwallet.apl.core.http.get.GetAccountCurrentBidOrders;
-import com.apollocurrency.aplwallet.apl.core.http.get.GetAccountExchangeRequests;
-import com.apollocurrency.aplwallet.apl.core.http.get.GetAccountId;
-import com.apollocurrency.aplwallet.apl.core.http.get.GetAccountLedger;
-import com.apollocurrency.aplwallet.apl.core.http.get.GetAccountLedgerEntry;
-import com.apollocurrency.aplwallet.apl.core.http.get.GetAccountLessors;
-import com.apollocurrency.aplwallet.apl.core.http.get.GetAccountPhasedTransactionCount;
-import com.apollocurrency.aplwallet.apl.core.http.get.GetAccountPhasedTransactions;
-import com.apollocurrency.aplwallet.apl.core.http.get.GetAccountProperties;
-import com.apollocurrency.aplwallet.apl.core.http.get.GetAccountPublicKey;
-import com.apollocurrency.aplwallet.apl.core.http.get.GetAccountShufflings;
-import com.apollocurrency.aplwallet.apl.core.http.get.GetAccountTaggedData;
-import com.apollocurrency.aplwallet.apl.core.http.get.GetAccounts;
-import com.apollocurrency.aplwallet.apl.core.http.get.GetAlias;
-import com.apollocurrency.aplwallet.apl.core.http.get.GetAliasCount;
-import com.apollocurrency.aplwallet.apl.core.http.get.GetAliases;
-import com.apollocurrency.aplwallet.apl.core.http.get.GetAliasesLike;
-import com.apollocurrency.aplwallet.apl.core.http.get.GetAllAssets;
-import com.apollocurrency.aplwallet.apl.core.http.get.GetAllBroadcastedTransactions;
-import com.apollocurrency.aplwallet.apl.core.http.get.GetAllCurrencies;
-import com.apollocurrency.aplwallet.apl.core.http.get.GetAllExchanges;
-import com.apollocurrency.aplwallet.apl.core.http.get.GetAllOpenAskOrders;
-import com.apollocurrency.aplwallet.apl.core.http.get.GetAllOpenBidOrders;
-import com.apollocurrency.aplwallet.apl.core.http.get.GetAllPhasingOnlyControls;
-import com.apollocurrency.aplwallet.apl.core.http.get.GetAllPrunableMessages;
-import com.apollocurrency.aplwallet.apl.core.http.get.GetAllShufflings;
-import com.apollocurrency.aplwallet.apl.core.http.get.GetAllTaggedData;
-import com.apollocurrency.aplwallet.apl.core.http.get.GetAllTrades;
-import com.apollocurrency.aplwallet.apl.core.http.get.GetAllTransactions;
-import com.apollocurrency.aplwallet.apl.core.http.get.GetAllWaitingTransactions;
-import com.apollocurrency.aplwallet.apl.core.http.get.GetAskOrder;
-import com.apollocurrency.aplwallet.apl.core.http.get.GetAskOrderIds;
-import com.apollocurrency.aplwallet.apl.core.http.get.GetAskOrders;
-import com.apollocurrency.aplwallet.apl.core.http.get.GetAsset;
-import com.apollocurrency.aplwallet.apl.core.http.get.GetAssetAccountCount;
-import com.apollocurrency.aplwallet.apl.core.http.get.GetAssetAccounts;
-import com.apollocurrency.aplwallet.apl.core.http.get.GetAssetDeletes;
-import com.apollocurrency.aplwallet.apl.core.http.get.GetAssetDividends;
-import com.apollocurrency.aplwallet.apl.core.http.get.GetAssetIds;
-import com.apollocurrency.aplwallet.apl.core.http.get.GetAssetPhasedTransactions;
-import com.apollocurrency.aplwallet.apl.core.http.get.GetAssetTransfers;
-import com.apollocurrency.aplwallet.apl.core.http.get.GetAssets;
-import com.apollocurrency.aplwallet.apl.core.http.get.GetAssetsByIssuer;
-import com.apollocurrency.aplwallet.apl.core.http.get.GetAssignedShufflings;
-import com.apollocurrency.aplwallet.apl.core.http.get.GetAvailableToBuy;
-import com.apollocurrency.aplwallet.apl.core.http.get.GetAvailableToSell;
-import com.apollocurrency.aplwallet.apl.core.http.get.GetBalance;
-import com.apollocurrency.aplwallet.apl.core.http.get.GetBidOrder;
-import com.apollocurrency.aplwallet.apl.core.http.get.GetBidOrderIds;
-import com.apollocurrency.aplwallet.apl.core.http.get.GetBidOrders;
-import com.apollocurrency.aplwallet.apl.core.http.get.GetBlock;
-import com.apollocurrency.aplwallet.apl.core.http.get.GetBlockId;
-import com.apollocurrency.aplwallet.apl.core.http.get.GetBlockchainStatus;
-import com.apollocurrency.aplwallet.apl.core.http.get.GetBlockchainTransactions;
-import com.apollocurrency.aplwallet.apl.core.http.get.GetBlocks;
-import com.apollocurrency.aplwallet.apl.core.http.get.GetBuyOffers;
-import com.apollocurrency.aplwallet.apl.core.http.get.GetChannelTaggedData;
-import com.apollocurrency.aplwallet.apl.core.http.get.GetChatHistory;
-import com.apollocurrency.aplwallet.apl.core.http.get.GetChats;
-import com.apollocurrency.aplwallet.apl.core.http.get.GetConstants;
-import com.apollocurrency.aplwallet.apl.core.http.get.GetCurrencies;
-import com.apollocurrency.aplwallet.apl.core.http.get.GetCurrenciesByIssuer;
-import com.apollocurrency.aplwallet.apl.core.http.get.GetCurrency;
-import com.apollocurrency.aplwallet.apl.core.http.get.GetCurrencyAccountCount;
-import com.apollocurrency.aplwallet.apl.core.http.get.GetCurrencyAccounts;
-import com.apollocurrency.aplwallet.apl.core.http.get.GetCurrencyFounders;
-import com.apollocurrency.aplwallet.apl.core.http.get.GetCurrencyIds;
-import com.apollocurrency.aplwallet.apl.core.http.get.GetCurrencyPhasedTransactions;
-import com.apollocurrency.aplwallet.apl.core.http.get.GetCurrencyTransfers;
-import com.apollocurrency.aplwallet.apl.core.http.get.GetDGSExpiredPurchases;
-import com.apollocurrency.aplwallet.apl.core.http.get.GetDGSGood;
-import com.apollocurrency.aplwallet.apl.core.http.get.GetDGSGoods;
-import com.apollocurrency.aplwallet.apl.core.http.get.GetDGSGoodsCount;
-import com.apollocurrency.aplwallet.apl.core.http.get.GetDGSGoodsPurchaseCount;
-import com.apollocurrency.aplwallet.apl.core.http.get.GetDGSGoodsPurchases;
-import com.apollocurrency.aplwallet.apl.core.http.get.GetDGSPendingPurchases;
-import com.apollocurrency.aplwallet.apl.core.http.get.GetDGSPurchase;
-import com.apollocurrency.aplwallet.apl.core.http.get.GetDGSPurchaseCount;
-import com.apollocurrency.aplwallet.apl.core.http.get.GetDGSPurchases;
-import com.apollocurrency.aplwallet.apl.core.http.get.GetDGSTagCount;
-import com.apollocurrency.aplwallet.apl.core.http.get.GetDGSTags;
-import com.apollocurrency.aplwallet.apl.core.http.get.GetDGSTagsLike;
-import com.apollocurrency.aplwallet.apl.core.http.get.GetDataTagCount;
-import com.apollocurrency.aplwallet.apl.core.http.get.GetDataTags;
-import com.apollocurrency.aplwallet.apl.core.http.get.GetDataTagsLike;
-import com.apollocurrency.aplwallet.apl.core.http.get.GetECBlock;
-import com.apollocurrency.aplwallet.apl.core.http.get.GetElGamalPublicKey;
-import com.apollocurrency.aplwallet.apl.core.http.get.GetExchanges;
-import com.apollocurrency.aplwallet.apl.core.http.get.GetExchangesByExchangeRequest;
-import com.apollocurrency.aplwallet.apl.core.http.get.GetExchangesByOffer;
-import com.apollocurrency.aplwallet.apl.core.http.get.GetExpectedAskOrders;
-import com.apollocurrency.aplwallet.apl.core.http.get.GetExpectedAssetDeletes;
-import com.apollocurrency.aplwallet.apl.core.http.get.GetExpectedAssetTransfers;
-import com.apollocurrency.aplwallet.apl.core.http.get.GetExpectedBidOrders;
-import com.apollocurrency.aplwallet.apl.core.http.get.GetExpectedBuyOffers;
-import com.apollocurrency.aplwallet.apl.core.http.get.GetExpectedCurrencyTransfers;
-import com.apollocurrency.aplwallet.apl.core.http.get.GetExpectedExchangeRequests;
-import com.apollocurrency.aplwallet.apl.core.http.get.GetExpectedOrderCancellations;
-import com.apollocurrency.aplwallet.apl.core.http.get.GetExpectedSellOffers;
-import com.apollocurrency.aplwallet.apl.core.http.get.GetExpectedTransactions;
-import com.apollocurrency.aplwallet.apl.core.http.get.GetForging;
-import com.apollocurrency.aplwallet.apl.core.http.get.GetFundingMonitor;
-import com.apollocurrency.aplwallet.apl.core.http.get.GetGenesisBalances;
-import com.apollocurrency.aplwallet.apl.core.http.get.GetGuaranteedBalance;
-import com.apollocurrency.aplwallet.apl.core.http.get.GetHoldingShufflings;
-import com.apollocurrency.aplwallet.apl.core.http.get.GetLastExchanges;
-import com.apollocurrency.aplwallet.apl.core.http.get.GetLastTrades;
-import com.apollocurrency.aplwallet.apl.core.http.get.GetLinkedPhasedTransactions;
-import com.apollocurrency.aplwallet.apl.core.http.get.GetLog;
-import com.apollocurrency.aplwallet.apl.core.http.get.GetMintingTarget;
-import com.apollocurrency.aplwallet.apl.core.http.get.GetNextBlockGeneratorsTemp;
-import com.apollocurrency.aplwallet.apl.core.http.get.GetOffer;
-import com.apollocurrency.aplwallet.apl.core.http.get.GetOrderTrades;
-import com.apollocurrency.aplwallet.apl.core.http.get.GetPhasingOnlyControl;
-import com.apollocurrency.aplwallet.apl.core.http.get.GetPhasingPoll;
-import com.apollocurrency.aplwallet.apl.core.http.get.GetPhasingPollVote;
-import com.apollocurrency.aplwallet.apl.core.http.get.GetPhasingPollVotes;
-import com.apollocurrency.aplwallet.apl.core.http.get.GetPhasingPolls;
-import com.apollocurrency.aplwallet.apl.core.http.get.GetPlugins;
-import com.apollocurrency.aplwallet.apl.core.http.get.GetPoll;
-import com.apollocurrency.aplwallet.apl.core.http.get.GetPollResult;
-import com.apollocurrency.aplwallet.apl.core.http.get.GetPollVote;
-import com.apollocurrency.aplwallet.apl.core.http.get.GetPollVotes;
-import com.apollocurrency.aplwallet.apl.core.http.get.GetPolls;
-import com.apollocurrency.aplwallet.apl.core.http.get.GetPrivateAccountLedger;
-import com.apollocurrency.aplwallet.apl.core.http.get.GetPrivateAccountLedgerEntry;
-import com.apollocurrency.aplwallet.apl.core.http.get.GetPrivateBlockchainTransactions;
-import com.apollocurrency.aplwallet.apl.core.http.get.GetPrivateTransaction;
-import com.apollocurrency.aplwallet.apl.core.http.get.GetPrivateUnconfirmedTransactions;
-import com.apollocurrency.aplwallet.apl.core.http.get.GetPrunableMessage;
-import com.apollocurrency.aplwallet.apl.core.http.get.GetPrunableMessages;
-import com.apollocurrency.aplwallet.apl.core.http.get.GetReferencingTransactions;
-import com.apollocurrency.aplwallet.apl.core.http.get.GetScheduledTransactions;
-import com.apollocurrency.aplwallet.apl.core.http.get.GetSellOffers;
-import com.apollocurrency.aplwallet.apl.core.http.get.GetSharedKey;
-import com.apollocurrency.aplwallet.apl.core.http.get.GetShufflers;
-import com.apollocurrency.aplwallet.apl.core.http.get.GetShuffling;
-import com.apollocurrency.aplwallet.apl.core.http.get.GetShufflingParticipants;
-import com.apollocurrency.aplwallet.apl.core.http.get.GetStackTraces;
-import com.apollocurrency.aplwallet.apl.core.http.get.GetState;
-import com.apollocurrency.aplwallet.apl.core.http.get.GetTaggedData;
-import com.apollocurrency.aplwallet.apl.core.http.get.GetTaggedDataExtendTransactions;
-import com.apollocurrency.aplwallet.apl.core.http.get.GetTime;
-import com.apollocurrency.aplwallet.apl.core.http.get.GetTotalSupply;
-import com.apollocurrency.aplwallet.apl.core.http.get.GetTrades;
-import com.apollocurrency.aplwallet.apl.core.http.get.GetTransaction;
-import com.apollocurrency.aplwallet.apl.core.http.get.GetTransactionBytes;
-import com.apollocurrency.aplwallet.apl.core.http.get.GetUnconfirmedTransactionIds;
-import com.apollocurrency.aplwallet.apl.core.http.get.GetUnconfirmedTransactions;
-import com.apollocurrency.aplwallet.apl.core.http.get.GetUpdateStatus;
-import com.apollocurrency.aplwallet.apl.core.http.get.GetVotedAccountPolls;
-import com.apollocurrency.aplwallet.apl.core.http.get.GetVoterPhasedTransactions;
-import com.apollocurrency.aplwallet.apl.core.http.get.Hash;
-import com.apollocurrency.aplwallet.apl.core.http.get.HexConvert;
-import com.apollocurrency.aplwallet.apl.core.http.get.ImportKey;
-import com.apollocurrency.aplwallet.apl.core.http.get.LongConvert;
-import com.apollocurrency.aplwallet.apl.core.http.get.ParseTransaction;
-import com.apollocurrency.aplwallet.apl.core.http.get.RSConvert;
-import com.apollocurrency.aplwallet.apl.core.http.get.ReadMessage;
-import com.apollocurrency.aplwallet.apl.core.http.get.SearchAccounts;
-import com.apollocurrency.aplwallet.apl.core.http.get.SearchAssets;
-import com.apollocurrency.aplwallet.apl.core.http.get.SearchCurrencies;
-import com.apollocurrency.aplwallet.apl.core.http.get.SearchDGSGoods;
-import com.apollocurrency.aplwallet.apl.core.http.get.SearchPolls;
-import com.apollocurrency.aplwallet.apl.core.http.get.SearchTaggedData;
-import com.apollocurrency.aplwallet.apl.core.http.get.SignTransaction;
-import com.apollocurrency.aplwallet.apl.core.http.get.VerifyPrunableMessage;
-import com.apollocurrency.aplwallet.apl.core.http.get.VerifyTaggedData;
+import com.apollocurrency.aplwallet.apl.core.http.get.*;
 import com.apollocurrency.aplwallet.apl.core.http.post.ApproveTransaction;
 import com.apollocurrency.aplwallet.apl.core.http.post.BroadcastTransaction;
 import com.apollocurrency.aplwallet.apl.core.http.post.BuyAlias;
@@ -253,7 +66,6 @@ import com.apollocurrency.aplwallet.apl.core.http.post.GenerateToken;
 import com.apollocurrency.aplwallet.apl.core.http.post.IssueAsset;
 import com.apollocurrency.aplwallet.apl.core.http.post.IssueCurrency;
 import com.apollocurrency.aplwallet.apl.core.http.post.LeaseBalance;
-import com.apollocurrency.aplwallet.apl.core.http.post.LuceneReindex;
 import com.apollocurrency.aplwallet.apl.core.http.post.MarkHost;
 import com.apollocurrency.aplwallet.apl.core.http.post.PlaceAskOrder;
 import com.apollocurrency.aplwallet.apl.core.http.post.PlaceBidOrder;
@@ -330,14 +142,14 @@ public enum APIEnum {
     DECODE_TOKEN("decodeToken", new DecodeToken()),
     DECODE_FILE_TOKEN("decodeFileToken", new DecodeFileToken()),
     DECODE_Q_R_CODE("decodeQRCode", new DecodeQRCode()),
-    ENCODE_Q_R_CODE("encodeQRCode", new  EncodeQRCode()),
+    ENCODE_Q_R_CODE("encodeQRCode", new EncodeQRCode()),
     ENCRYPT_TO("encryptTo", new EncryptTo()),
     GENERATE_TOKEN("generateToken", new GenerateToken()),
     GENERATE_FILE_TOKEN("generateFileToken", new GenerateFileToken()),
-    GET_ACCOUNT("getAccount", new GetAccount()),
-    GET_ACCOUNT_BLOCK_COUNT("getAccountBlockCount", new GetAccountBlockCount()),
-    GET_ACCOUNT_BLOCK_IDS("getAccountBlockIds", new GetAccountBlockIds()),
-    GET_ACCOUNT_BLOCKS("getAccountBlocks", new GetAccountBlocks()),
+    @Deprecated GET_ACCOUNT("getAccount", new GetAccount()),
+    @Deprecated GET_ACCOUNT_BLOCK_COUNT("getAccountBlockCount", new GetAccountBlockCount()),
+    @Deprecated GET_ACCOUNT_BLOCK_IDS("getAccountBlockIds", new GetAccountBlockIds()),
+    @Deprecated GET_ACCOUNT_BLOCKS("getAccountBlocks", new GetAccountBlocks()),
     GET_ACCOUNT_ID("getAccountId", new GetAccountId()),
     GET_ACCOUNT_LEDGER("getAccountLedger", new GetAccountLedger()),
     GET_ACCOUNT_LEDGER_ENTRY("getAccountLedgerEntry", new GetAccountLedgerEntry()),
@@ -348,10 +160,10 @@ public enum APIEnum {
     GET_ACCOUNT_PHASED_TRANSACTION_COUNT("getAccountPhasedTransactionCount", new GetAccountPhasedTransactionCount()),
     GET_ACCOUNT_PUBLIC_KEY("getAccountPublicKey", new GetAccountPublicKey()),
     GET_ACCOUNT_LESSORS("getAccountLessors", new GetAccountLessors()),
-    GET_ACCOUNT_ASSETS("getAccountAssets", new GetAccountAssets()),
-    GET_ACCOUNT_CURRENCIES("getAccountCurrencies", new GetAccountCurrencies()),
-    GET_ACCOUNT_CURRENCY_COUNT("getAccountCurrencyCount", new GetAccountCurrencyCount()),
-    GET_ACCOUNT_ASSET_COUNT("getAccountAssetCount", new GetAccountAssetCount()),
+    @Deprecated GET_ACCOUNT_ASSETS("getAccountAssets", new GetAccountAssets()),
+    @Deprecated GET_ACCOUNT_CURRENCIES("getAccountCurrencies", new GetAccountCurrencies()),
+    @Deprecated GET_ACCOUNT_CURRENCY_COUNT("getAccountCurrencyCount", new GetAccountCurrencyCount()),
+    @Deprecated GET_ACCOUNT_ASSET_COUNT("getAccountAssetCount", new GetAccountAssetCount()),
     GET_ACCOUNT_PROPERTIES("getAccountProperties", new GetAccountProperties()),
     SELL_ALIAS("sellAlias", new SellAlias()),
     BUY_ALIAS("buyAlias", new BuyAlias()),
@@ -431,7 +243,7 @@ public enum APIEnum {
     GET_UNCONFIRMED_TRANSACTION_IDS("getUnconfirmedTransactionIds", new GetUnconfirmedTransactionIds()),
     GET_UNCONFIRMED_TRANSACTIONS("getUnconfirmedTransactions", new GetUnconfirmedTransactions()),
     GET_EXPECTED_TRANSACTIONS("getExpectedTransactions", new GetExpectedTransactions()),
-    GET_ACCOUNT_CURRENT_ASK_ORDER_IDS("getAccountCurrentAskOrderIds", new GetAccountCurrentAskOrderIds()),
+    @Deprecated GET_ACCOUNT_CURRENT_ASK_ORDER_IDS("getAccountCurrentAskOrderIds", new GetAccountCurrentAskOrderIds()),
     GET_ACCOUNT_CURRENT_BID_ORDER_IDS("getAccountCurrentBidOrderIds", new GetAccountCurrentBidOrderIds()),
     GET_ACCOUNT_CURRENT_ASK_ORDERS("getAccountCurrentAskOrders", new GetAccountCurrentAskOrders()),
     GET_ACCOUNT_CURRENT_BID_ORDERS("getAccountCurrentBidOrders", new GetAccountCurrentBidOrders()),
@@ -529,7 +341,7 @@ public enum APIEnum {
     FULL_RESET("fullReset", new FullReset()),
     POP_OFF("popOff", new PopOff()),
     SCAN("scan", new Scan()),
-    LUCENE_REINDEX("luceneReindex", new LuceneReindex()),
+    //LUCENE_REINDEX("luceneReindex", new LuceneReindex()),
     DUMP_PEERS("dumpPeers", new DumpPeers()),
     GET_LOG("getLog", new GetLog()),
     GET_STACK_TRACES("getStackTraces", new GetStackTraces()),
@@ -570,14 +382,14 @@ public enum APIEnum {
     GET_CHAT_HISTORY("getChatHistory", new GetChatHistory()),
     GET_TOTAL_SUPPLY("getTotalSupply", new GetTotalSupply()),
     GET_ACCOUNTS("getAccounts", new GetAccounts()),
-    GENERATE_ACCOUNT("generateAccount", new GenerateAccount()),
-    EXPORT_KEY("exportKey", new ExportKey()),
+    @Deprecated GENERATE_ACCOUNT("generateAccount", new GenerateAccount()),
+    @Deprecated EXPORT_KEY("exportKey", new ExportKey()),
     IMPORT_KEY("importKey", new ImportKey()),
-    ENABLE_2FA("enable2FA", new Enable2FA()),
-    DISABLE_2FA("disable2FA", new Disable2FA()),
-    CONFIRM_2FA("confirm2FA", new Confirm2FA()),
+    @Deprecated ENABLE_2FA("enable2FA", new Enable2FA()),
+    @Deprecated DISABLE_2FA("disable2FA", new Disable2FA()),
+    @Deprecated CONFIRM_2FA("confirm2FA", new Confirm2FA()),
     GET_GENESIS_BALANCES("getGenesisBalances", new GetGenesisBalances()),
-    DELETE_KEY("deleteKey", new DeleteKey()),
+    @Deprecated DELETE_KEY("deleteKey", new DeleteKey()),
     ;
     private static final Map<String, APIEnum> apiByName = new HashMap<>();
 
@@ -592,17 +404,13 @@ public enum APIEnum {
 
             final AbstractAPIRequestHandler handler = api.getHandler();
             if (!Collections.disjoint(handler.getAPITags(), tagsNotRequiringBlockchain)
-                    && handler.requireBlockchain()) {
+                && handler.requireBlockchain()) {
                 AssertionError assertionError = new AssertionError("API " + api.getName()
-                        + " is not supposed to require blockchain");
+                    + " is not supposed to require blockchain");
                 assertionError.printStackTrace();
                 throw assertionError;
             }
         }
-    }
-
-    public static APIEnum fromName(String name) {
-        return apiByName.get(name);
     }
 
     private final String name;
@@ -613,23 +421,19 @@ public enum APIEnum {
         this.handler = handler;
     }
 
-    public String getName() {
-        return name;
-    }
-
-    public AbstractAPIRequestHandler getHandler() {
-        return handler;
+    public static APIEnum fromName(String name) {
+        return apiByName.get(name);
     }
 
     public static EnumSet<APIEnum> base64StringToEnumSet(String apiSetBase64) {
         EnumSet<APIEnum> result = EnumSet.noneOf(APIEnum.class);
-        if(apiSetBase64==null){
+        if (apiSetBase64 == null) {
             return result;
         }
         byte[] decoded = Base64.getDecoder().decode(apiSetBase64);
         BitSet bs = BitSet.valueOf(decoded);
-        
-        for (int i = bs.nextSetBit(0); i >= 0; i = bs.nextSetBit(i+1)) {
+
+        for (int i = bs.nextSetBit(0); i >= 0; i = bs.nextSetBit(i + 1)) {
             result.add(APIEnum.values()[i]);
             if (i == Integer.MAX_VALUE) {
                 break; // or (i+1) would overflow
@@ -640,9 +444,17 @@ public enum APIEnum {
 
     public static String enumSetToBase64String(EnumSet<APIEnum> apiSet) {
         BitSet bitSet = new BitSet();
-        for (APIEnum api: apiSet) {
+        for (APIEnum api : apiSet) {
             bitSet.set(api.ordinal());
         }
         return Base64.getEncoder().encodeToString(bitSet.toByteArray());
+    }
+
+    public String getName() {
+        return name;
+    }
+
+    public AbstractAPIRequestHandler getHandler() {
+        return handler;
     }
 }

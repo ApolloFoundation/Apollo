@@ -4,24 +4,22 @@
 
 package com.apollocurrency.aplwallet.apl.core.config;
 
-import com.apollocurrency.aplwallet.apl.core.db.cdi.transaction.JdbiHandleFactory;
-import com.apollocurrency.aplwallet.apl.core.db.cdi.transaction.JdbiTransactionalSqlObjectDaoProxyInvocationHandler;
-import com.apollocurrency.aplwallet.apl.core.db.dao.BlockIndexDao;
-import com.apollocurrency.aplwallet.apl.core.db.dao.ShardDao;
-import com.apollocurrency.aplwallet.apl.core.db.dao.ShardRecoveryDao;
-import com.apollocurrency.aplwallet.apl.core.db.dao.TransactionIndexDao;
+import com.apollocurrency.aplwallet.apl.core.dao.appdata.BlockIndexDao;
+import com.apollocurrency.aplwallet.apl.core.dao.appdata.ShardDao;
+import com.apollocurrency.aplwallet.apl.core.dao.appdata.ShardRecoveryDao;
+import com.apollocurrency.aplwallet.apl.core.dao.appdata.TransactionIndexDao;
 import com.apollocurrency.aplwallet.apl.exchange.dao.DexCandlestickDao;
 import com.apollocurrency.aplwallet.apl.exchange.dao.DexContractDao;
 import com.apollocurrency.aplwallet.apl.exchange.dao.DexOperationDao;
 import com.apollocurrency.aplwallet.apl.exchange.dao.DexOrderDao;
-import com.apollocurrency.aplwallet.apl.exchange.dao.DexTransactionDao;
 import com.apollocurrency.aplwallet.apl.exchange.dao.MandatoryTransactionDao;
 import com.apollocurrency.aplwallet.apl.exchange.dao.OrderScanDao;
-import com.apollocurrency.aplwallet.apl.exchange.dao.UserErrorMessageDao;
+import com.apollocurrency.aplwallet.apl.util.cdi.transaction.JdbiHandleFactory;
+import com.apollocurrency.aplwallet.apl.util.cdi.transaction.JdbiTransactionalSqlObjectDaoProxyInvocationHandler;
 
-import javax.enterprise.inject.Produces;
-import javax.inject.Inject;
-import javax.inject.Singleton;
+import jakarta.enterprise.inject.Produces;
+import jakarta.inject.Inject;
+import jakarta.inject.Singleton;
 
 /**
  * Configuration DAO classes with Jdbi, Transaction resources
@@ -74,16 +72,6 @@ public class DaoConfig {
     }
 
     @Produces
-    private DexTransactionDao dexTransactionDao() {
-        return createDaoInterfaceProxy(DexTransactionDao.class);
-    }
-
-    @Produces
-    private UserErrorMessageDao userErrorMessage() {
-        return createDaoInterfaceProxy(UserErrorMessageDao.class);
-    }
-
-    @Produces
     private DexCandlestickDao candlestickDao() {
         return createDaoInterfaceProxy(DexCandlestickDao.class);
     }
@@ -100,8 +88,8 @@ public class DaoConfig {
 
     private <T> T createDaoInterfaceProxy(Class<T> daoClass) {
         return JdbiTransactionalSqlObjectDaoProxyInvocationHandler.createProxy(
-                jdbiHandleFactory,
-                daoClass
+            jdbiHandleFactory,
+            daoClass
         );
     }
 

@@ -20,16 +20,17 @@
 
 package com.apollocurrency.aplwallet.apl.core.http.post;
 
-import com.apollocurrency.aplwallet.apl.core.app.Block;
+import com.apollocurrency.aplwallet.apl.core.model.Block;
 import com.apollocurrency.aplwallet.apl.core.http.APITag;
 import com.apollocurrency.aplwallet.apl.core.http.AbstractAPIRequestHandler;
 import com.apollocurrency.aplwallet.apl.core.http.JSONResponses;
+import com.apollocurrency.aplwallet.apl.core.service.blockchain.Blockchain;
 import lombok.extern.slf4j.Slf4j;
 import org.json.simple.JSONObject;
 import org.json.simple.JSONStreamAware;
 
-import javax.enterprise.inject.Vetoed;
-import javax.servlet.http.HttpServletRequest;
+import jakarta.enterprise.inject.Vetoed;
+import jakarta.servlet.http.HttpServletRequest;
 import java.util.List;
 
 @Slf4j
@@ -56,6 +57,7 @@ public final class PopOff extends AbstractAPIRequestHandler {
         boolean keepTransactions = "true".equalsIgnoreCase(req.getParameter("keepTransactions"));
         List<? extends Block> blocks;
         lookupBlockchainProcessor();
+        Blockchain blockchain = lookupBlockchain();
         try {
             blockchainProcessor.suspendBlockchainDownloading();
             //TODO: It's a temporary approach to prevent hanging on calling the waitTrimming method.
@@ -63,7 +65,7 @@ public final class PopOff extends AbstractAPIRequestHandler {
             _waitForSuitableConditionBeforePopOff();
 
             if (numBlocks > 0) {
-                height = lookupBlockchain().getHeight() - numBlocks;
+                height = blockchain.getHeight() - numBlocks;
                 log.trace(">> PopOff by 'numBlocks' to height = {}", height);
                 blocks = blockchainProcessor.popOffTo(height);
             } else if (height > 0) {
@@ -81,8 +83,8 @@ public final class PopOff extends AbstractAPIRequestHandler {
         //blocks.forEach(block -> blocksJSON.add(JSONData.block(block, true, false)));
         JSONObject response = new JSONObject();
         //response.put("blocks", blocksJSON);
-        if (keepTransactions) {
-            blocks.forEach(block -> lookupTransactionProcessor().processLater(block.getOrLoadTransactions()));
+        if (keepTransactions) { // assume that popOff method call loaded block data (including transactions) fully
+            blocks.forEach(block -> lookupTransactionProcessor().processLater(block.getTransactions()));
         }
         return response;
     }

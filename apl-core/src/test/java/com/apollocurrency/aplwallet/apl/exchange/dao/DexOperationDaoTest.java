@@ -1,11 +1,21 @@
+/*
+ *  Copyright © 2018-2020 Apollo Foundation
+ */
+
 package com.apollocurrency.aplwallet.apl.exchange.dao;
 
-import com.apollocurrency.aplwallet.apl.core.db.cdi.transaction.JdbiTransactionalSqlObjectDaoProxyInvocationHandler;
+import com.apollocurrency.aplwallet.apl.core.dao.DbContainerBaseTest;
 import com.apollocurrency.aplwallet.apl.data.DbTestData;
 import com.apollocurrency.aplwallet.apl.data.DexOperationTestData;
-import com.apollocurrency.aplwallet.apl.exchange.model.DexOperation;
+import com.apollocurrency.aplwallet.apl.dex.core.model.DexOperation;
 import com.apollocurrency.aplwallet.apl.extension.DbExtension;
+import com.apollocurrency.aplwallet.apl.testutil.DbUtils;
+import com.apollocurrency.aplwallet.apl.util.cdi.transaction.JdbiTransactionalSqlObjectDaoProxyInvocationHandler;
+import lombok.extern.slf4j.Slf4j;
+import org.apache.commons.lang3.RandomStringUtils;
+import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.RegisterExtension;
 
@@ -16,18 +26,27 @@ import java.util.List;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 
-class DexOperationDaoTest {
+@Slf4j
+
+@Tag("slow")
+class DexOperationDaoTest extends DbContainerBaseTest {
+
     @RegisterExtension
-    DbExtension extension = new DbExtension(DbTestData.getInMemDbProps(), "db/dex-operation-data.sql", null);
+    static DbExtension extension = new DbExtension(mariaDBContainer, DbTestData.getInMemDbProps(), "db/dex-operation-data.sql", null);
     private DexOperationDao dao;
 
     private DexOperationTestData td;
 
     @BeforeEach
     void setUp() {
-        dao = JdbiTransactionalSqlObjectDaoProxyInvocationHandler.createProxy(
-            extension.getDatabaseManager().getJdbiHandleFactory(), DexOperationDao.class);
+
+        dao = JdbiTransactionalSqlObjectDaoProxyInvocationHandler.createProxy(DbUtils.createJdbiHandleFactory(extension.getDatabaseManager()), DexOperationDao.class);
         td = new DexOperationTestData();
+    }
+
+    @AfterEach
+    void tearDown() {
+        extension.cleanAndPopulateDb();
     }
 
     @Test
@@ -58,11 +77,25 @@ class DexOperationDaoTest {
     }
 
     @Test
-    void testUniqueConstraint() {
-        DexOperation newOp = new DexOperation(null, td.OP_4.getAccount(), td.OP_4.getStage(), td.OP_4.getEid(), null, null, false, new Timestamp(System.currentTimeMillis()));
+    void testAddMaxDescriptionLength() {
+        String description = RandomStringUtils.randomAlphabetic(1000);
+        DexOperation newOp = new DexOperation(null, "New acc", DexOperation.Stage.APL_CONTRACT_S2, "100", description, null, false, new Timestamp(System.currentTimeMillis()));
+        long dbId = dao.add(newOp);
+
+        assertEquals(1005, dbId);
+        DexOperation savedOp = dao.getBy("New acc", DexOperation.Stage.APL_CONTRACT_S2, "100");
+        newOp.setDbId(1005L);
+        assertEquals(newOp, savedOp);
+    }
+
+    @Test
+    void testAddDescriptionOverLength() {
+        String description = RandomStringUtils.randomAlphabetic(1001);
+        DexOperation newOp = new DexOperation(null, "New acc", DexOperation.Stage.APL_CONTRACT_S2, "100", description, null, false, new Timestamp(System.currentTimeMillis()));
 
         assertThrows(UndeclaredThrowableException.class, () -> dao.add(newOp));
     }
+
 
     @Test
     void testDelete() {
@@ -80,7 +113,6 @@ class DexOperationDaoTest {
 
         assertEquals(List.of(td.OP_2, td.OP_3), all);
     }
-
 
 
 }

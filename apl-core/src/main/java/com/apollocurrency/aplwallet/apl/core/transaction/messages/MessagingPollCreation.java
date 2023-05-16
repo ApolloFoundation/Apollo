@@ -4,66 +4,23 @@
 package com.apollocurrency.aplwallet.apl.core.transaction.messages;
 
 import com.apollocurrency.aplwallet.apl.core.app.VoteWeighting;
-import com.apollocurrency.aplwallet.apl.core.transaction.Messaging;
-import com.apollocurrency.aplwallet.apl.core.transaction.TransactionType;
+import com.apollocurrency.aplwallet.apl.core.transaction.TransactionTypes;
 import com.apollocurrency.aplwallet.apl.crypto.Convert;
 import com.apollocurrency.aplwallet.apl.crypto.NotValidException;
-import com.apollocurrency.aplwallet.apl.util.AplException;
 import com.apollocurrency.aplwallet.apl.util.Constants;
-import java.nio.ByteBuffer;
-import java.util.Collections;
+import com.apollocurrency.aplwallet.apl.util.exception.AplException;
 import org.json.simple.JSONArray;
 import org.json.simple.JSONObject;
 
+import java.nio.ByteBuffer;
+import java.util.Collections;
+import java.util.List;
+
 /**
- *
  * @author al
  */
 public final class MessagingPollCreation extends AbstractAttachment {
-    
-    public static final class PollBuilder {
 
-        private final String pollName;
-        private final String pollDescription;
-        private final String[] pollOptions;
-        private final int finishHeight;
-        private final byte votingModel;
-        private long minBalance = 0;
-        private byte minBalanceModel;
-        private final byte minNumberOfOptions;
-        private final byte maxNumberOfOptions;
-        private final byte minRangeValue;
-        private final byte maxRangeValue;
-        private long holdingId;
-
-        public PollBuilder(final String pollName, final String pollDescription, final String[] pollOptions, final int finishHeight, final byte votingModel, byte minNumberOfOptions, byte maxNumberOfOptions, byte minRangeValue, byte maxRangeValue) {
-            this.pollName = pollName;
-            this.pollDescription = pollDescription;
-            this.pollOptions = pollOptions;
-            this.finishHeight = finishHeight;
-            this.votingModel = votingModel;
-            this.minNumberOfOptions = minNumberOfOptions;
-            this.maxNumberOfOptions = maxNumberOfOptions;
-            this.minRangeValue = minRangeValue;
-            this.maxRangeValue = maxRangeValue;
-            this.minBalanceModel = VoteWeighting.VotingModel.get(votingModel).getMinBalanceModel().getCode();
-        }
-
-        public PollBuilder minBalance(byte minBalanceModel, long minBalance) {
-            this.minBalanceModel = minBalanceModel;
-            this.minBalance = minBalance;
-            return this;
-        }
-
-        public PollBuilder holdingId(long holdingId) {
-            this.holdingId = holdingId;
-            return this;
-        }
-
-        public MessagingPollCreation build() {
-            return new MessagingPollCreation(this);
-        }
-    }
     final String pollName;
     final String pollDescription;
     final String[] pollOptions;
@@ -106,19 +63,19 @@ public final class MessagingPollCreation extends AbstractAttachment {
         super(attachmentData);
         this.pollName = ((String) attachmentData.get("name")).trim();
         this.pollDescription = ((String) attachmentData.get("description")).trim();
-        this.finishHeight = ((Long) attachmentData.get("finishHeight")).intValue();
-        JSONArray options = (JSONArray) attachmentData.get("options");
+        this.finishHeight = ((Number) attachmentData.get("finishHeight")).intValue();
+        List<?> options = (List<?>) attachmentData.get("options");
         this.pollOptions = new String[options.size()];
         for (int i = 0; i < pollOptions.length; i++) {
             this.pollOptions[i] = ((String) options.get(i)).trim();
         }
-        byte votingModel = ((Long) attachmentData.get("votingModel")).byteValue();
-        this.minNumberOfOptions = ((Long) attachmentData.get("minNumberOfOptions")).byteValue();
-        this.maxNumberOfOptions = ((Long) attachmentData.get("maxNumberOfOptions")).byteValue();
-        this.minRangeValue = ((Long) attachmentData.get("minRangeValue")).byteValue();
-        this.maxRangeValue = ((Long) attachmentData.get("maxRangeValue")).byteValue();
+        byte votingModel = ((Number) attachmentData.get("votingModel")).byteValue();
+        this.minNumberOfOptions = ((Number) attachmentData.get("minNumberOfOptions")).byteValue();
+        this.maxNumberOfOptions = ((Number) attachmentData.get("maxNumberOfOptions")).byteValue();
+        this.minRangeValue = ((Number) attachmentData.get("minRangeValue")).byteValue();
+        this.maxRangeValue = ((Number) attachmentData.get("maxRangeValue")).byteValue();
         long minBalance = Convert.parseLong(attachmentData.get("minBalance"));
-        byte minBalanceModel = ((Long) attachmentData.get("minBalanceModel")).byteValue();
+        byte minBalanceModel = ((Number) attachmentData.get("minBalanceModel")).byteValue();
         long holdingId = Convert.parseUnsignedLong((String) attachmentData.get("holding"));
         this.voteWeighting = new VoteWeighting(votingModel, holdingId, minBalance, minBalanceModel);
     }
@@ -194,8 +151,8 @@ public final class MessagingPollCreation extends AbstractAttachment {
     }
 
     @Override
-    public TransactionType getTransactionType() {
-        return Messaging.POLL_CREATION;
+    public TransactionTypes.TransactionTypeSpec getTransactionTypeSpec() {
+        return TransactionTypes.TransactionTypeSpec.POLL_CREATION;
     }
 
     public String getPollName() {
@@ -233,5 +190,49 @@ public final class MessagingPollCreation extends AbstractAttachment {
     public VoteWeighting getVoteWeighting() {
         return voteWeighting;
     }
-    
+
+    public static final class PollBuilder {
+
+        private final String pollName;
+        private final String pollDescription;
+        private final String[] pollOptions;
+        private final int finishHeight;
+        private final byte votingModel;
+        private final byte minNumberOfOptions;
+        private final byte maxNumberOfOptions;
+        private final byte minRangeValue;
+        private final byte maxRangeValue;
+        private long minBalance = 0;
+        private byte minBalanceModel;
+        private long holdingId;
+
+        public PollBuilder(final String pollName, final String pollDescription, final String[] pollOptions, final int finishHeight, final byte votingModel, byte minNumberOfOptions, byte maxNumberOfOptions, byte minRangeValue, byte maxRangeValue) {
+            this.pollName = pollName;
+            this.pollDescription = pollDescription;
+            this.pollOptions = pollOptions;
+            this.finishHeight = finishHeight;
+            this.votingModel = votingModel;
+            this.minNumberOfOptions = minNumberOfOptions;
+            this.maxNumberOfOptions = maxNumberOfOptions;
+            this.minRangeValue = minRangeValue;
+            this.maxRangeValue = maxRangeValue;
+            this.minBalanceModel = VoteWeighting.VotingModel.get(votingModel).getMinBalanceModel().getCode();
+        }
+
+        public PollBuilder minBalance(byte minBalanceModel, long minBalance) {
+            this.minBalanceModel = minBalanceModel;
+            this.minBalance = minBalance;
+            return this;
+        }
+
+        public PollBuilder holdingId(long holdingId) {
+            this.holdingId = holdingId;
+            return this;
+        }
+
+        public MessagingPollCreation build() {
+            return new MessagingPollCreation(this);
+        }
+    }
+
 }

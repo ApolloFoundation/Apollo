@@ -4,14 +4,17 @@
 
 package com.apollocurrency.aplwallet.apl.util;
 
-import javax.enterprise.inject.Vetoed;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.PrintWriter;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.concurrent.TimeUnit;
 
-@Vetoed
 public class ThreadUtils {
+    private ThreadUtils() {
+    }
+
     public static void sleep(long millis) {
         try {
             TimeUnit.MILLISECONDS.sleep(millis);
@@ -29,8 +32,21 @@ public class ThreadUtils {
     }
 
     public static String last3Stacktrace() {
+        return lastNStacktrace(3);
+    }
+
+    public static String last5Stacktrace() {
+        return lastNStacktrace(5);
+    }
+
+    public static String lastNStacktrace(int n) {
         StackTraceElement[] stackTraceElements = Thread.currentThread().getStackTrace();
-        return String.join("->", getStacktraceSpec(stackTraceElements[5]), getStacktraceSpec(stackTraceElements[4]), getStacktraceSpec(stackTraceElements[3]));
+        List<String> stacktracesToJoin = new ArrayList<>();
+        for (int i = Math.min(n + 2, stackTraceElements.length - 1); i >= 3; i--) {
+            stacktracesToJoin.add(getStacktraceSpec(stackTraceElements[i]));
+        }
+
+        return String.join("->", stacktracesToJoin);
     }
 
     public static String lastStacktrace() {
@@ -69,15 +85,11 @@ public class ThreadUtils {
         }
     }
 
-
     public static String getStackTraceSilently(Throwable exception) {
         try {
             return getStackTrace(exception);
         } catch (IOException e) {
             return e.getMessage() + "(unable to extract stacktrace)";
         }
-    }
-
-    private ThreadUtils() {
     }
 }

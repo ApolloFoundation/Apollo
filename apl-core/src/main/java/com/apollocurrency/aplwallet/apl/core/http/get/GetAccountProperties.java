@@ -20,41 +20,40 @@
 
 package com.apollocurrency.aplwallet.apl.core.http.get;
 
-import com.apollocurrency.aplwallet.apl.core.account.Account;
-import com.apollocurrency.aplwallet.apl.core.account.AccountProperty;
-import com.apollocurrency.aplwallet.apl.core.account.AccountPropertyTable;
+import com.apollocurrency.aplwallet.apl.core.entity.state.account.AccountProperty;
 import com.apollocurrency.aplwallet.apl.core.http.APITag;
 import com.apollocurrency.aplwallet.apl.core.http.AbstractAPIRequestHandler;
+import com.apollocurrency.aplwallet.apl.core.http.HttpParameterParserUtil;
 import com.apollocurrency.aplwallet.apl.core.http.JSONData;
 import com.apollocurrency.aplwallet.apl.core.http.JSONResponses;
-import com.apollocurrency.aplwallet.apl.core.http.ParameterParser;
-import com.apollocurrency.aplwallet.apl.util.AplException;
-import com.apollocurrency.aplwallet.apl.core.db.DbIterator;
 import com.apollocurrency.aplwallet.apl.crypto.Convert;
-import javax.enterprise.inject.Vetoed;
+import com.apollocurrency.aplwallet.apl.util.exception.AplException;
 import org.json.simple.JSONArray;
 import org.json.simple.JSONObject;
 import org.json.simple.JSONStreamAware;
 
-import javax.servlet.http.HttpServletRequest;
+import jakarta.enterprise.inject.Vetoed;
+import jakarta.servlet.http.HttpServletRequest;
+import java.util.List;
+
 @Vetoed
 public final class GetAccountProperties extends AbstractAPIRequestHandler {
 
     public GetAccountProperties() {
-        super(new APITag[] {APITag.ACCOUNTS}, "recipient", "property", "setter", "firstIndex", "lastIndex");
+        super(new APITag[]{APITag.ACCOUNTS}, "recipient", "property", "setter", "firstIndex", "lastIndex");
     }
 
     @Override
     public JSONStreamAware processRequest(HttpServletRequest req) throws AplException {
 
-        long recipientId = ParameterParser.getAccountId(req, "recipient", false);
-        long setterId = ParameterParser.getAccountId(req, "setter", false);
+        long recipientId = HttpParameterParserUtil.getAccountId(req, "recipient", false);
+        long setterId = HttpParameterParserUtil.getAccountId(req, "setter", false);
         if (recipientId == 0 && setterId == 0) {
             return JSONResponses.missing("recipient", "setter");
         }
         String property = Convert.emptyToNull(req.getParameter("property"));
-        int firstIndex = ParameterParser.getFirstIndex(req);
-        int lastIndex = ParameterParser.getLastIndex(req);
+        int firstIndex = HttpParameterParserUtil.getFirstIndex(req);
+        int lastIndex = HttpParameterParserUtil.getLastIndex(req);
 
         JSONObject response = new JSONObject();
         JSONArray propertiesJSON = new JSONArray();
@@ -65,11 +64,8 @@ public final class GetAccountProperties extends AbstractAPIRequestHandler {
         if (setterId != 0) {
             JSONData.putAccount(response, "setter", setterId);
         }
-        try (DbIterator<AccountProperty> iterator = AccountPropertyTable.getProperties(recipientId, setterId, property, firstIndex, lastIndex)) {
-            while (iterator.hasNext()) {
-                propertiesJSON.add(JSONData.accountProperty(iterator.next(), recipientId == 0, setterId == 0));
-            }
-        }
+        List<AccountProperty> properties = lookupAccountPropertyService().getProperties(recipientId, setterId, property, firstIndex, lastIndex);
+        properties.forEach(accountProperty -> propertiesJSON.add(JSONData.accountProperty(accountProperty, recipientId == 0, setterId == 0)));
         return response;
 
     }

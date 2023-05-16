@@ -20,17 +20,18 @@
 
 package com.apollocurrency.aplwallet.apl.core.http.post;
 
-import com.apollocurrency.aplwallet.apl.core.account.Account;
-import com.apollocurrency.aplwallet.apl.core.transaction.messages.Attachment;
-import com.apollocurrency.aplwallet.apl.core.monetary.Currency;
-import com.apollocurrency.aplwallet.apl.core.transaction.messages.MonetarySystemReserveClaim;
+import com.apollocurrency.aplwallet.apl.core.entity.state.account.Account;
+import com.apollocurrency.aplwallet.apl.core.entity.state.currency.Currency;
+import com.apollocurrency.aplwallet.apl.core.entity.state.currency.CurrencyType;
 import com.apollocurrency.aplwallet.apl.core.http.APITag;
-import com.apollocurrency.aplwallet.apl.core.http.ParameterParser;
-import com.apollocurrency.aplwallet.apl.util.AplException;
-import javax.enterprise.inject.Vetoed;
+import com.apollocurrency.aplwallet.apl.core.http.HttpParameterParserUtil;
+import com.apollocurrency.aplwallet.apl.core.transaction.messages.Attachment;
+import com.apollocurrency.aplwallet.apl.core.transaction.messages.MSReserveClaimAttachment;
+import com.apollocurrency.aplwallet.apl.util.exception.AplException;
 import org.json.simple.JSONStreamAware;
 
-import javax.servlet.http.HttpServletRequest;
+import jakarta.enterprise.inject.Vetoed;
+import jakarta.servlet.http.HttpServletRequest;
 
 /**
  * Claim currency units and receive back APL invested into this currency before it became active
@@ -43,21 +44,21 @@ import javax.servlet.http.HttpServletRequest;
  * </ul>
  * <p>
  * Constraints
- * <p>This transaction is allowed only when the currency is {@link com.apollocurrency.aplwallet.apl.CurrencyType#CLAIMABLE} and is already active.<br>
+ * <p>This transaction is allowed only when the currency is {@link CurrencyType#CLAIMABLE} and is already active.<br>
  */
 @Vetoed
-public final class CurrencyReserveClaim extends CreateTransaction {
+public final class CurrencyReserveClaim extends CreateTransactionHandler {
 
     public CurrencyReserveClaim() {
-        super(new APITag[] {APITag.MS, APITag.CREATE_TRANSACTION}, "currency", "units");
+        super(new APITag[]{APITag.MS, APITag.CREATE_TRANSACTION}, "currency", "units");
     }
 
     @Override
     public JSONStreamAware processRequest(HttpServletRequest req) throws AplException {
-        Currency currency = ParameterParser.getCurrency(req);
-        long units = ParameterParser.getLong(req, "units", 0, currency.getReserveSupply(), false);
-        Account account = ParameterParser.getSenderAccount(req);
-        Attachment attachment = new MonetarySystemReserveClaim(currency.getId(), units);
+        Currency currency = HttpParameterParserUtil.getCurrency(req);
+        long units = HttpParameterParserUtil.getLong(req, "units", 0, currency.getReserveSupply(), false);
+        Account account = HttpParameterParserUtil.getSenderAccount(req);
+        Attachment attachment = new MSReserveClaimAttachment(currency.getId(), units);
         return createTransaction(req, account, attachment);
 
     }

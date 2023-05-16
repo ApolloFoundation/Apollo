@@ -7,11 +7,7 @@ import com.apollocurrency.aplwallet.api.p2p.FileChunk;
 import com.apollocurrency.aplwallet.api.p2p.FileChunkInfo;
 import com.apollocurrency.aplwallet.api.p2p.FileChunkState;
 import com.apollocurrency.aplwallet.api.p2p.FileDownloadInfo;
-import com.apollocurrency.aplwallet.api.p2p.FileInfo;
 import com.apollocurrency.aplwallet.apl.core.app.AplAppStatus;
-import com.apollocurrency.aplwallet.apl.core.app.observer.events.ShardPresentEvent;
-import com.apollocurrency.aplwallet.apl.core.app.observer.events.ShardPresentEventBinding;
-import com.apollocurrency.aplwallet.apl.core.app.observer.events.ShardPresentEventType;
 import com.apollocurrency.aplwallet.apl.core.files.statcheck.PeerFileHashSum;
 import com.apollocurrency.aplwallet.apl.core.peer.Peer;
 import com.apollocurrency.aplwallet.apl.core.peer.PeerAddress;
@@ -21,10 +17,10 @@ import com.apollocurrency.aplwallet.apl.util.ChunkedFileOps;
 import lombok.Getter;
 import lombok.extern.slf4j.Slf4j;
 
-import javax.annotation.PreDestroy;
-import javax.enterprise.event.Event;
-import javax.enterprise.util.AnnotationLiteral;
-import javax.inject.Inject;
+import jakarta.annotation.PreDestroy;
+import jakarta.enterprise.event.Event;
+import jakarta.enterprise.util.AnnotationLiteral;
+import jakarta.inject.Inject;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Base64;
@@ -52,23 +48,21 @@ public class FileDownloader {
 
 
     public static final int DOWNLOAD_THREADS = 12; //should be enough for good speed
-    private String fileID;
-
     private final DownloadableFilesManager manager;
     private final AplAppStatus aplAppStatus;
-    private String taskId;
     private final ReadWriteLock fileChunksLock = new ReentrantReadWriteLock();
     private final AtomicLong lastPercent = new AtomicLong(0L);
-            
+    private final Event<FileEventData> fileEvent;
+    private final Set<Peer> peers = new HashSet<>();
+    private final PeersService peersService;
     ExecutorService executor;
     List<Future<Boolean>> runningDownloaders = new ArrayList<>();
-    private final Event<FileEventData> fileEvent;
+    private String fileID;
+    private String taskId;
     @Getter
     private CompletableFuture<Boolean> downloadTask;
     @Getter
     private FileDownloadStatus status;
-    private final Set<Peer> peers = new HashSet<>();
-    private final PeersService peersService;
 
     @Inject
     public FileDownloader(DownloadableFilesManager manager,
@@ -95,11 +89,11 @@ public class FileDownloader {
         this.taskId = this.aplAppStatus.durableTaskStart("FileDownload", "Downloading file from Peers...", true);
         log.debug("startDownload() : {} , fileID={} ...", downloadInfo, fileID);
         downloadTask = CompletableFuture.supplyAsync(() -> {
-                status.chunksTotal.set(downloadInfo.chunks.size());
-                status.chunksReady.set(0);
-                log.debug("Starting file chunks downloading");
-                download();
-                return status.isComplete();
+            status.chunksTotal.set(downloadInfo.chunks.size());
+            status.chunksReady.set(0);
+            log.debug("Starting file chunks downloading");
+            download();
+            return status.isComplete();
         });
     }
 
@@ -110,7 +104,7 @@ public class FileDownloader {
             for (FileChunkInfo fci : status.fileDownloadInfo.chunks) {
                 if (fci.present.ordinal() < FileChunkState.DOWNLOAD_IN_PROGRESS.ordinal()) {
                     res = fci;
-                    fci.present=FileChunkState.DOWNLOAD_IN_PROGRESS;
+                    fci.present = FileChunkState.DOWNLOAD_IN_PROGRESS;
                     log.trace("getNextEmptyChunk(): state: {}", fci.present);
                     break;
                 }
@@ -120,47 +114,49 @@ public class FileDownloader {
         }
         return res;
     }
+
     //TODO: change to more general signal, not shard
     private void signalFinishedOK() {
         log.debug("signaling finished fileID = {}", fileID);
         this.aplAppStatus.durableTaskFinished(this.taskId, false, "File downloading finished: " + fileID);
         //FIRE event when shard is PRESENT + ZIP is downloaded
         FileEventData data = new FileEventData(
-                fileID,
-                true,
-                ""
+            fileID,
+            true,
+            ""
         );
         log.debug("Firing 'FILE_DOWNLOADED_PRESENT' event {}", data);
         fileEvent.select(new AnnotationLiteral<FileDownloadEvent>() {
         }).fireAsync(data);
     }
-    //TODO: change to more general signal, not shard   
+    //TODO: change to more general signal, not shard
 
     private void signalFailed(String reason) {
         FileEventData data = new FileEventData(
-                fileID,
-                false,
-                reason
-        );      
-        fileEvent.select(new AnnotationLiteral<FileDownloadEvent>(){}).fireAsync(data);
+            fileID,
+            false,
+            reason
+        );
+        fileEvent.select(new AnnotationLiteral<FileDownloadEvent>() {
+        }).fireAsync(data);
         this.aplAppStatus.durableTaskFinished(this.taskId, true, "File downloading failed: " + fileID);
-    } 
-      
-    private void setFileChunkState(FileChunkState state, FileChunkInfo fci){
+    }
+
+    private void setFileChunkState(FileChunkState state, FileChunkInfo fci) {
         fileChunksLock.writeLock().lock();
         try {
-            fci.present=state;
+            fci.present = state;
             //setting this state means download of chunk failed
-            if(state==FileChunkState.PRESENT_IN_PEER){
+            if (state == FileChunkState.PRESENT_IN_PEER) {
                 fci.failedAttempts++;
             }
         } finally {
             fileChunksLock.writeLock().unlock();
         }
     }
-    
+
     private boolean downloadAndSaveChunk(FileChunkInfo fci, PeerClient p, ChunkedFileOps fops) {
-        boolean isLast=false;
+        boolean isLast = false;
         FileChunk fc = p.downloadChunk(fci);
         if (fc != null) {
             byte[] data = Base64.getDecoder().decode(fc.mime64data);
@@ -169,38 +165,38 @@ public class FileDownloader {
                 setFileChunkState(FileChunkState.SAVED, fci);
                 status.chunksReady.incrementAndGet();
                 //is the very last chunk succeed?
-                if(status.chunksReady.get()>=status.fileDownloadInfo.chunks.size()-1){
-                     isLast=true;
+                if (status.chunksReady.get() >= status.fileDownloadInfo.chunks.size() - 1) {
+                    isLast = true;
                 }
             } catch (IOException ex) {
-                log.debug("Failed to download or save chunk: {} \n exception: {}",fci.chunkId,ex);
+                log.debug("Failed to download or save chunk: {} \n exception: {}", fci.chunkId, ex);
                 setFileChunkState(FileChunkState.PRESENT_IN_PEER, fci); // may be next time we'll get it right
             }
         } else {
-            log.debug("Failed to download or save chunk: {}",fci.chunkId);
+            log.debug("Failed to download or save chunk: {}", fci.chunkId);
             setFileChunkState(FileChunkState.PRESENT_IN_PEER, fci);  //well, it exists anyway on some peer
         }
-        if(fci.failedAttempts>=DOWNLOAD_THREADS*2){
-           //Seems that no peer has this chunk, we should finish
-            isLast=true;
+        if (fci.failedAttempts >= DOWNLOAD_THREADS * 2) {
+            //Seems that no peer has this chunk, we should finish
+            isLast = true;
         }
         return isLast;
     }
-    
+
     private boolean doPeerDownload(PeerClient p) throws IOException {
         boolean res = true;
         FileChunkInfo fci;
         ChunkedFileOps fops = new ChunkedFileOps(manager.mapFileIdToLocalPath(fileID));
-        while ((fci = getNextEmptyChunk())!= null) {
+        while ((fci = getNextEmptyChunk()) != null) {
             boolean isLast = downloadAndSaveChunk(fci, p, fops);
-            if(fci.present==FileChunkState.SAVED){
+            if (fci.present == FileChunkState.SAVED) {
                 long percent = Math.round(status.getPercentCompleted());
-                if(lastPercent.get()+5<percent){
+                if (lastPercent.get() + 5 < percent) {
                     lastPercent.set(percent);
-                    aplAppStatus.durableTaskUpdate(this.taskId, status.getPercentCompleted(), "File downloading: "+this.fileID+"...");
+                    aplAppStatus.durableTaskUpdate(this.taskId, status.getPercentCompleted(), "File downloading: " + this.fileID + "...");
                 }
             }
-            if(isLast){
+            if (isLast) {
                 break;
             }
         }
@@ -220,40 +216,40 @@ public class FileDownloader {
             runningDownloaders.add(dn_res);
             peerCount++;
             if (peerCount > DOWNLOAD_THREADS) {
-                break; 
+                break;
             }
         }
         //it is not important that some task fails, other trasks should do the job
-        for(Future<Boolean> dn_task: runningDownloaders){
+        for (Future<Boolean> dn_task : runningDownloaders) {
             try {
                 dn_task.get();
             } catch (InterruptedException ex) {
-                log.debug("Some subtask of file downloader has been interrupted",ex);
+                log.debug("Some subtask of file downloader has been interrupted", ex);
                 //we can interrupt thread here may be
                 Thread.currentThread().interrupt();
             } catch (ExecutionException ex) {
-                log.debug("Some subtask of file downloader has failed",ex);
+                log.debug("Some subtask of file downloader has failed", ex);
             }
         }
         int chunksTotal = status.getChunksTotal().get();
         int chunksReady = status.getChunksReady().get();
-        boolean allOk=chunksReady>=chunksTotal;
-        if(allOk){
+        boolean allOk = chunksReady >= chunksTotal;
+        if (allOk) {
             FileDownloadInfo fdi = manager.updateFileDownloadInfo(fileID);
-            if(fdi.fileInfo.hash.equalsIgnoreCase(status.fileDownloadInfo.fileInfo.hash)){
+            if (fdi.fileInfo.hash.equalsIgnoreCase(status.fileDownloadInfo.fileInfo.hash)) {
                 signalFinishedOK();
-            }else{
-                signalFailed("File downloading final hash check failed: "+fileID);
+            } else {
+                signalFailed("File downloading final hash check failed: " + fileID);
             }
-        }else{
-            signalFailed("File downloading failed, not all chunks: "+fileID);
+        } else {
+            signalFailed("File downloading failed, not all chunks: " + fileID);
         }
         return status;
     }
 
 
     @PreDestroy
-    public void preDestroy(){
+    public void preDestroy() {
         if (executor != null) {
             //TODO: do we need to cancel tasks and threads?
             executor.shutdown();

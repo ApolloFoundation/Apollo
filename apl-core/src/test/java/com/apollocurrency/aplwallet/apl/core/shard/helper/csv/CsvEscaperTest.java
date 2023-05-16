@@ -15,9 +15,9 @@ class CsvEscaperTest {
 
     @Test
     void escape() {
-        String[] str = {"AbcDef \" 12345", "\\AbcDef \\\\ 12345",  "AbcDef \n 12345\f", "AbcDef \r 12345", "AbcDef \r 123 \n 45", "AbcDef \r\n 12345"};
-        String[] escapedStr = {"AbcDef \\\" 12345", "\\\\AbcDef \\\\\\\\ 12345",  "AbcDef \\n 12345\\f", "AbcDef \\r 12345", "AbcDef \\r 123 \\n 45", "AbcDef \\r\\n 12345"};
-        for(int i=0; i < str.length; i++) {
+        String[] str = {"AbcDef \" 12345", "\\AbcDef \\\\ 12345", "AbcDef \n 12345\f", "AbcDef \r 12345", "AbcDef \r 123 \n 45", "AbcDef \r\n 12345"};
+        String[] escapedStr = {"AbcDef \\\" 12345", "\\\\AbcDef \\\\\\\\ 12345", "AbcDef \\n 12345\\f", "AbcDef \\r 12345", "AbcDef \\r 123 \\n 45", "AbcDef \\r\\n 12345"};
+        for (int i = 0; i < str.length; i++) {
             String es = translator.escape(str[i]);
             String us = translator.unEscape(es);
             log.debug(" escaped string=[{}]", es);

@@ -4,9 +4,10 @@
 
 package com.apollocurrency.aplwallet.apl.core.shard.helper.csv;
 
-import com.apollocurrency.aplwallet.apl.core.db.DbUtils;
+import com.apollocurrency.aplwallet.apl.util.db.DbUtils;
 import com.apollocurrency.aplwallet.apl.core.shard.helper.CsvExportData;
 import com.apollocurrency.aplwallet.apl.core.shard.helper.jdbc.ColumnMetaData;
+import com.apollocurrency.aplwallet.apl.core.shard.model.ArrayColumn;
 import org.slf4j.Logger;
 
 import java.io.BufferedOutputStream;
@@ -27,11 +28,11 @@ import java.sql.Statement;
 import java.sql.Types;
 import java.text.SimpleDateFormat;
 import java.util.Arrays;
-import java.util.Base64;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Map;
 import java.util.Objects;
+import java.util.Optional;
 import java.util.Set;
 
 import static org.slf4j.LoggerFactory.getLogger;
@@ -40,13 +41,22 @@ import static org.slf4j.LoggerFactory.getLogger;
  * {@inheritDoc}
  */
 public class CsvWriterImpl extends CsvAbstractBase implements CsvWriter {
-    private static final Logger log = getLogger(CsvWriterImpl.class);
     public static final SimpleDateFormat DATE_FORMAT = new SimpleDateFormat("yyyy/MM/dd HH:mm:ss");
+    private static final Logger log = getLogger(CsvWriterImpl.class);
     private static final String EMPTY_ARRAY = "()";
+    /**
+     * Extends H2 ARRAY SQL type by providing a proper precision and scale
+     * as per Java type.
+     */
+    private static final Map<ArrayColumn, ArrayColumn> ARRAY_COLUMN_INDEX;
 
-    private Writer output;
+    static {
+        ARRAY_COLUMN_INDEX = getArrayColumnIndex();
+    }
+
     private final StringBuilder outputBuffer = new StringBuilder(400);
     private final Set<String> excludeColumn = new HashSet<>();
+    private Writer output;
 
     public CsvWriterImpl(Path dataExportPath, Set<String> excludeColumnNames, CsvEscaper translator) {
         super.dataExportPath = Objects.requireNonNull(dataExportPath, "dataExportPath is NULL.");
@@ -54,10 +64,49 @@ public class CsvWriterImpl extends CsvAbstractBase implements CsvWriter {
         if (excludeColumnNames != null && !excludeColumnNames.isEmpty()) {
             // assign non empty Set
             this.excludeColumn.addAll(excludeColumnNames);
-            if(log.isDebugEnabled()) {
+            if (log.isDebugEnabled()) {
                 log.debug("Config Excluded columns = {}", Arrays.toString(excludeColumnNames.toArray()));
             }
         }
+    }
+
+    private static Map<ArrayColumn, ArrayColumn> getArrayColumnIndex() {
+        ArrayColumn arrayColumn1 =
+            new ArrayColumn("account_control_phasing", "whitelist", 19, 0);
+        ArrayColumn arrayColumn2 =
+            new ArrayColumn("goods", "parsed_tags", 2147483647, 0);
+        ArrayColumn arrayColumn3 =
+            new ArrayColumn("poll", "options", 2147483647, 0);
+        ArrayColumn arrayColumn4 =
+            new ArrayColumn("shard", "block_timeouts", 10, 0);
+        ArrayColumn arrayColumn5 =
+            new ArrayColumn("shard", "generator_ids", 19, 0);
+        ArrayColumn arrayColumn6 =
+            new ArrayColumn("shard", "block_timestamps", 10, 0);
+        ArrayColumn arrayColumn7 =
+            new ArrayColumn("shuffling", "recipient_public_keys", 2147483647, 0);
+        ArrayColumn arrayColumn8 =
+            new ArrayColumn("shuffling_data", "data", 2147483647, 0);
+        ArrayColumn arrayColumn9 =
+            new ArrayColumn("shuffling_participant", "blame_data", 2147483647, 0);
+        ArrayColumn arrayColumn10 =
+            new ArrayColumn("shuffling_participant", "key_seeds", 2147483647, 0);
+        ArrayColumn arrayColumn11 =
+            new ArrayColumn("tagged_data", "parsed_tags", 2147483647, 0);
+
+        return Map.ofEntries(
+            Map.entry(arrayColumn1, arrayColumn1),
+            Map.entry(arrayColumn2, arrayColumn2),
+            Map.entry(arrayColumn3, arrayColumn3),
+            Map.entry(arrayColumn4, arrayColumn4),
+            Map.entry(arrayColumn5, arrayColumn5),
+            Map.entry(arrayColumn6, arrayColumn6),
+            Map.entry(arrayColumn7, arrayColumn7),
+            Map.entry(arrayColumn8, arrayColumn8),
+            Map.entry(arrayColumn9, arrayColumn9),
+            Map.entry(arrayColumn10, arrayColumn10),
+            Map.entry(arrayColumn11, arrayColumn11)
+        );
     }
 
     /**
@@ -109,21 +158,20 @@ public class CsvWriterImpl extends CsvAbstractBase implements CsvWriter {
         }
     }
 
-
     /**
      * {@inheritDoc}
      */
     @Override
     public CsvExportData write(Connection conn, String outputFileName, String sql, String charset) throws SQLException {
         CsvExportData exportData;
-        try (Statement stat = conn.createStatement()) {
-            ResultSet rs = stat.executeQuery(sql);
+        try (Statement stat = conn.createStatement();
+             ResultSet rs = stat.executeQuery(sql)) {
             exportData = write(outputFileName, rs);
         }
         return exportData;
     }
 
-    private void initWrite(boolean appendMode){
+    private void initWrite(boolean appendMode) {
         if (output == null) {
             try {
                 Path filePath = this.dataExportPath.resolve(!this.fileName.endsWith(CSV_FILE_EXTENSION) ? this.fileName + CSV_FILE_EXTENSION : this.fileName);
@@ -170,15 +218,13 @@ public class CsvWriterImpl extends CsvAbstractBase implements CsvWriter {
             for (int i = 0; i < columnCount; i++) {
                 rowColumnNames[i] = meta.getColumnLabel(i + 1);
                 // fill in meta data
-                columnsMetaData[i] = new ColumnMetaData(meta.getColumnLabel(i + 1),
-                        meta.getColumnTypeName(i + 1), meta.getColumnType(i + 1),
-                        meta.getPrecision(i + 1), meta.getScale(i + 1));
+                columnsMetaData[i] = getColumnMetaData(meta, i + 1);
             }
-            if(log.isTraceEnabled()) {
+            if (log.isTraceEnabled()) {
                 log.trace("Table/File = '{}', MetaData = {}", this.fileName, Arrays.toString(columnsMetaData));
             }
             if (writeColumnHeader) {
-                if(log.isDebugEnabled()) {
+                if (log.isDebugEnabled()) {
                     log.debug("Header columns = {}", Arrays.toString(rowColumnNames));
                 }
                 writeHeaderRow(columnsMetaData);
@@ -189,18 +235,12 @@ public class CsvWriterImpl extends CsvAbstractBase implements CsvWriter {
                     java.util.Date date = null;
                     Object o;
                     String defaultValue = defaultValues.get(columnsMetaData[i].getName().toLowerCase());
-                if (defaultValue != null) {
-                    o = defaultValue;
-                    lastRow.put(rs.getMetaData().getColumnName(i + 1), o);
-                } else {
-                    lastRow.put(rs.getMetaData().getColumnName(i + 1), rs.getObject(i + 1));
+                    if (defaultValue != null) {
+                        o = defaultValue;
+                        lastRow.put(rs.getMetaData().getColumnName(i + 1), o);
+                    } else {
+                        lastRow.put(rs.getMetaData().getColumnName(i + 1), rs.getObject(i + 1));
                         switch (columnsMetaData[i].getSqlTypeInt()) {
-                            case Types.BLOB:
-                                o = rs.getBlob(i + 1);
-                                if (o == null) {
-                                    o = nullString;
-                                }
-                                break;
                             case Types.BIGINT:
                             case Types.BIT:
                             case Types.BOOLEAN:
@@ -234,7 +274,7 @@ public class CsvWriterImpl extends CsvAbstractBase implements CsvWriter {
                                     StringBuilder outputValue = new StringBuilder();
                                     outputValue.append(arrayStartToken);
                                     for (int j = 0; j < objectArray.length; j++) {
-                                        if (j>0){
+                                        if (j > 0) {
                                             outputValue.append(fieldSeparatorWrite);
                                         }
                                         Object item = objectArray[j];
@@ -242,7 +282,7 @@ public class CsvWriterImpl extends CsvAbstractBase implements CsvWriter {
                                         if (item instanceof byte[]) {
                                             objectValue = translator.translate((byte[]) item);
                                         } else if (item instanceof String) {
-                                            objectValue = translator.quotedText((String)item);
+                                            objectValue = translator.quotedText((String) item);
                                         } else if (item instanceof Long || item instanceof Integer) {
                                             objectValue = item.toString();
                                         } else {
@@ -259,6 +299,7 @@ public class CsvWriterImpl extends CsvAbstractBase implements CsvWriter {
                                 break;
                             case Types.VARBINARY:
                             case Types.BINARY:
+                            case Types.BLOB:
                                 o = rs.getBytes(i + 1);
                                 if (o != null) {
                                     o = translator.translate((byte[]) o);
@@ -280,7 +321,7 @@ public class CsvWriterImpl extends CsvAbstractBase implements CsvWriter {
                     }
                     rowColumnNames[i] = o == null ? null : o.toString();
                 }
-                if(log.isTraceEnabled()) {
+                if (log.isTraceEnabled()) {
                     log.trace("Row = {}", Arrays.toString(rowColumnNames));
                 }
                 writeRow(rowColumnNames);
@@ -295,13 +336,63 @@ public class CsvWriterImpl extends CsvAbstractBase implements CsvWriter {
             log.trace("CSV file '{}' written rows=[{}]", fileName, rows);
             return new CsvExportData(rows, lastRow);
         } catch (IOException e) {
-            throw new CsvException("IO exception, file="+fileName, e);
+            throw new CsvException("IO exception, file=" + fileName, e);
         } finally {
             if (closeWhenNotAppend) {
                 close();
             }
             DbUtils.closeSilently(rs);
         }
+    }
+
+    /**
+     * Gets a ColumnMetaData object as per an index in ResultSetMetaData.
+     * When it comes to the ARRAY SQL type, this method asks a prepopulated index map
+     * for a proper precision and scale. This is because, H2 has no concrete types for arrays
+     * and the precision of arrays may change (as it was from 196 to 200).
+     *
+     * @param meta
+     * @param index
+     * @return
+     * @throws SQLException
+     */
+    private ColumnMetaData getColumnMetaData(
+        final ResultSetMetaData meta,
+        final int index
+    ) throws SQLException {
+        final int columnType = meta.getColumnType(index);
+        final String columnLabel = meta.getColumnLabel(index);
+        final String columnTypeName = meta.getColumnTypeName(index);
+        int precision;
+        int scale;
+        if (columnType == Types.ARRAY) {
+            final String tableName = meta.getTableName(index);
+            final String columnName = meta.getColumnName(index);
+            final ArrayColumn arrayColumn = getArrayColumn(tableName, columnName);
+            precision = arrayColumn.getPrecision();
+            scale = arrayColumn.getScale();
+        } else {
+            precision = meta.getPrecision(index);
+            scale = meta.getScale(index);
+        }
+        return new ColumnMetaData(columnLabel, columnTypeName, columnType, precision, scale);
+    }
+
+    private ArrayColumn getArrayColumn(String tableName, String columnName) {
+        return Optional.ofNullable(
+            ARRAY_COLUMN_INDEX.get(
+                ArrayColumn.builder().tableName(tableName).columnName(columnName).build()
+            )
+        ).orElseThrow(() -> {
+                final String message = String.format(
+                    "Cannot find tableName: %s and columnName: %s.",
+                    tableName,
+                    columnName
+                );
+                log.error(message);
+                return new IllegalStateException(message);
+            }
+        );
     }
 
     /**
@@ -330,15 +421,9 @@ public class CsvWriterImpl extends CsvAbstractBase implements CsvWriter {
                 if (fieldDelimiter != 0) {
                     outputBuffer.append(fieldDelimiter);
                 }
-                // writing 'header columns' row into output file
-                if ((!Character.isLetterOrDigit(fieldTypeSeparatorStart) && !Character.isSpaceChar(fieldTypeSeparatorStart))
-                        && (!Character.isLetterOrDigit(fieldTypeSeparatorEnd) && !Character.isSpaceChar(fieldTypeSeparatorEnd))) {
-                    // write 'complex' csv Header columns as COLUMN_NAME_1(TYPE_1|PRECISION_1|SCALE_1),COLUMN_NAME_2(TYPE_2|PRECISION_2|SCALE_2)
-                    outputBuffer.append(columnsMetaData[i].toString());
-                } else {
-                    // write simple header columns as : COLUMN_NAME_1,COLUMN_NAME_2
-                    outputBuffer.append(s);
-                }
+                // write simple header columns as : COLUMN_NAME_1,COLUMN_NAME_2
+                outputBuffer.append(s.toLowerCase());
+
                 if (fieldDelimiter != 0) {
                     outputBuffer.append(fieldDelimiter);
                 }
@@ -389,15 +474,15 @@ public class CsvWriterImpl extends CsvAbstractBase implements CsvWriter {
         outputBuffer.setLength(0); // reset
     }
 
-    private String arrayToString(Object[] data){
+    private String arrayToString(Object[] data) {
         StringBuilder buffer = new StringBuilder();
         buffer.append("(");
         for (int j = 0; j < data.length; j++) {
-                if(j>0){
-                    buffer.append(",");
-                }
-                Object rowColumnValue = data[j];
-                buffer.append(rowColumnValue);
+            if (j > 0) {
+                buffer.append(",");
+            }
+            Object rowColumnValue = data[j];
+            buffer.append(rowColumnValue);
         }
         buffer.append(")");
         return buffer.toString();

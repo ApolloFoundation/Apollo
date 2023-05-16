@@ -1,17 +1,17 @@
 package com.apollocurrency.aplwallet.apl.exchange.service;
 
-import com.apollocurrency.aplwallet.apl.core.config.Property;
-import com.apollocurrency.aplwallet.apl.core.db.cdi.Transactional;
-import com.apollocurrency.aplwallet.apl.core.task.TaskDispatchManager;
+import com.apollocurrency.aplwallet.apl.dex.core.model.DexOperation;
 import com.apollocurrency.aplwallet.apl.exchange.dao.DexOperationDao;
-import com.apollocurrency.aplwallet.apl.exchange.model.DexOperation;
+import com.apollocurrency.aplwallet.apl.util.cdi.Transactional;
+import com.apollocurrency.aplwallet.apl.util.cdi.config.Property;
+import com.apollocurrency.aplwallet.apl.util.service.TaskDispatchManager;
 import com.apollocurrency.aplwallet.apl.util.task.Task;
 import com.apollocurrency.aplwallet.apl.util.task.TaskDispatcher;
 import lombok.extern.slf4j.Slf4j;
 
-import javax.annotation.PostConstruct;
-import javax.inject.Inject;
-import javax.inject.Singleton;
+import jakarta.annotation.PostConstruct;
+import jakarta.inject.Inject;
+import jakarta.inject.Singleton;
 import java.sql.Timestamp;
 import java.util.List;
 import java.util.Objects;
@@ -31,20 +31,20 @@ public class DexOperationService {
     private long entryLifetime; //ms
     private TaskDispatchManager dispatchManager;
 
-    @Transactional(readOnly = true)
-    public List<DexOperation> getAll(long fromDbId, int limit) {
-        return dao.getAll(fromDbId, limit);
-    }
-
     @Inject
-    public DexOperationService(@Property(name = "apl.dex.operations.lifetime", defaultValue = "" + DEFAULT_ENTRY_LIFETIME)  int entryLifetime,
-                               @Property(name = "apl.dex.operations.deleteOld", defaultValue = "true")  boolean deleteOldEntries,
+    public DexOperationService(@Property(name = "apl.dex.operations.lifetime", defaultValue = "" + DEFAULT_ENTRY_LIFETIME) int entryLifetime,
+                               @Property(name = "apl.dex.operations.deleteOld", defaultValue = "true") boolean deleteOldEntries,
                                DexOperationDao dao,
                                TaskDispatchManager dispatchManager) {
         this.dao = Objects.requireNonNull(dao);
         this.dispatchManager = Objects.requireNonNull(dispatchManager);
         this.deleteOldEntries = deleteOldEntries;
-        this.entryLifetime = (long)Math.max(entryLifetime, MIN_ENTRY_LIFETIME) * 1000; // do not let set less than specified limit to prevent confusions and complications related to this feature
+        this.entryLifetime = (long) Math.max(entryLifetime, MIN_ENTRY_LIFETIME) * 1000; // do not let set less than specified limit to prevent confusions and complications related to this feature
+    }
+
+    @Transactional(readOnly = true)
+    public List<DexOperation> getAll(long fromDbId, int limit) {
+        return dao.getAll(fromDbId, limit);
     }
 
     @PostConstruct

@@ -20,18 +20,18 @@
 
 package com.apollocurrency.aplwallet.apl.core.http.post;
 
-import com.apollocurrency.aplwallet.apl.core.account.Account;
-import com.apollocurrency.aplwallet.apl.core.transaction.messages.Attachment;
-import com.apollocurrency.aplwallet.apl.core.monetary.Currency;
-import com.apollocurrency.aplwallet.apl.core.transaction.messages.MonetarySystemCurrencyMinting;
+import com.apollocurrency.aplwallet.apl.core.entity.state.account.Account;
+import com.apollocurrency.aplwallet.apl.core.entity.state.currency.Currency;
 import com.apollocurrency.aplwallet.apl.core.http.APITag;
+import com.apollocurrency.aplwallet.apl.core.http.HttpParameterParserUtil;
 import com.apollocurrency.aplwallet.apl.core.http.get.GetMintingTarget;
-import com.apollocurrency.aplwallet.apl.core.http.ParameterParser;
-import com.apollocurrency.aplwallet.apl.util.AplException;
-import javax.enterprise.inject.Vetoed;
+import com.apollocurrency.aplwallet.apl.core.transaction.messages.Attachment;
+import com.apollocurrency.aplwallet.apl.core.transaction.messages.MonetarySystemCurrencyMinting;
+import com.apollocurrency.aplwallet.apl.util.exception.AplException;
 import org.json.simple.JSONStreamAware;
 
-import javax.servlet.http.HttpServletRequest;
+import jakarta.enterprise.inject.Vetoed;
+import jakarta.servlet.http.HttpServletRequest;
 
 /**
  * Generate new currency units
@@ -44,28 +44,28 @@ import javax.servlet.http.HttpServletRequest;
  * <li>counter - a sequential number counting the ordinal mint operation number per currency/account combination<br>
  * this ever increasing value ensures that the same mint transaction cannot execute more than once</li>
  * </ul>
- *
+ * <p>
  * Each minting request triggers a hash calculation based on the submitted data and the currency hash algorithm<br>
  * The resulting hash code is compared to the target value derived from the current difficulty.<br>
  * If the hash code is smaller than the target the currency units are generated into the sender account.<br>
  * It is recommended to calculate the hash value offline before submitting the transaction.<br>
  * Use the {@link GetMintingTarget} transaction to retrieve the current hash target and then calculate the hash offline
- * by following the procedure used in {@link com.apollocurrency.aplwallet.apl.CurrencyMint#mintCurrency}<br>
+ * by following the procedure used in {@link com.apollocurrency.aplwallet.apl.core.app.mint.CurrencyMint#mintCurrency}<br>
  */
 @Vetoed
-public final class CurrencyMint extends CreateTransaction {
+public final class CurrencyMint extends CreateTransactionHandler {
 
     public CurrencyMint() {
-        super(new APITag[] {APITag.MS, APITag.CREATE_TRANSACTION}, "currency", "nonce", "units", "counter");
+        super(new APITag[]{APITag.MS, APITag.CREATE_TRANSACTION}, "currency", "nonce", "units", "counter");
     }
 
     @Override
     public JSONStreamAware processRequest(HttpServletRequest req) throws AplException {
-        Currency currency = ParameterParser.getCurrency(req);
-        long nonce = ParameterParser.getLong(req, "nonce", Long.MIN_VALUE, Long.MAX_VALUE, true);
-        long units = ParameterParser.getLong(req, "units", 0, Long.MAX_VALUE, true);
-        long counter = ParameterParser.getLong(req, "counter", 0, Integer.MAX_VALUE, true);
-        Account account = ParameterParser.getSenderAccount(req);
+        Currency currency = HttpParameterParserUtil.getCurrency(req);
+        long nonce = HttpParameterParserUtil.getLong(req, "nonce", Long.MIN_VALUE, Long.MAX_VALUE, true);
+        long units = HttpParameterParserUtil.getLong(req, "units", 0, Long.MAX_VALUE, true);
+        long counter = HttpParameterParserUtil.getLong(req, "counter", 0, Integer.MAX_VALUE, true);
+        Account account = HttpParameterParserUtil.getSenderAccount(req);
 
         Attachment attachment = new MonetarySystemCurrencyMinting(nonce, currency.getId(), units, counter);
         return createTransaction(req, account, attachment);

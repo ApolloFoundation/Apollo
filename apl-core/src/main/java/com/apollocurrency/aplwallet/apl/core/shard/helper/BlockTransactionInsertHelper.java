@@ -4,10 +4,7 @@
 
 package com.apollocurrency.aplwallet.apl.core.shard.helper;
 
-import static com.apollocurrency.aplwallet.apl.core.shard.MigrateState.DATA_COPY_TO_SHARD_STARTED;
-import static org.slf4j.LoggerFactory.getLogger;
-
-import com.apollocurrency.aplwallet.apl.core.db.DbUtils;
+import com.apollocurrency.aplwallet.apl.util.db.DbUtils;
 import com.apollocurrency.aplwallet.apl.core.shard.ShardConstants;
 import org.slf4j.Logger;
 
@@ -17,6 +14,9 @@ import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Types;
 import java.util.Set;
+
+import static com.apollocurrency.aplwallet.apl.core.shard.MigrateState.DATA_COPY_TO_SHARD_STARTED;
+import static org.slf4j.LoggerFactory.getLogger;
 
 /**
  * Helper class for selecting Table data from one Db and inserting those data into another DB.
@@ -29,7 +29,7 @@ public class BlockTransactionInsertHelper extends AbstractHelper {
     @Override
     public long processOperation(Connection sourceConnect, Connection targetConnect,
                                  TableOperationParams operationParams)
-            throws Exception {
+        throws Exception {
         log.debug("Processing: {}", operationParams);
 
         checkMandatoryParameters(sourceConnect, targetConnect, operationParams);
@@ -62,7 +62,7 @@ public class BlockTransactionInsertHelper extends AbstractHelper {
                 int deleted = deletePs.executeUpdate();
                 sourceConnect.commit();
                 log.trace("Previous DELETE '{}', lower > {} AND upper < {}, deleted = {}",
-                        currentTableName, lowerBoundIdValue, upperBoundIdValue, deleted);
+                    currentTableName, lowerBoundIdValue, upperBoundIdValue, deleted);
             } catch (Exception e) {
                 log.error("Previous DELETE failed, Table " + currentTableName, e);
                 throw e;
@@ -98,14 +98,14 @@ public class BlockTransactionInsertHelper extends AbstractHelper {
     protected boolean handleResultSet(PreparedStatement ps, PaginateResultWrapper paginateResultWrapper,
                                       Connection sourceConnect, Connection targetConnect,
                                       TableOperationParams operationParams, Set<Long> exludeDbIds)
-            throws SQLException {
+        throws SQLException {
         int rows = 0;
         int processedRows = 0;
         try (ResultSet rs = ps.executeQuery()) {
             log.trace("SELECT...from {} where DB_ID > {} AND DB_ID < {} LIMIT {}",
-                    operationParams.tableName,
-                    paginateResultWrapper.lowerBoundColumnValue, paginateResultWrapper.upperBoundColumnValue,
-                    operationParams.batchCommitSize);
+                operationParams.tableName,
+                paginateResultWrapper.lowerBoundColumnValue, paginateResultWrapper.upperBoundColumnValue,
+                operationParams.batchCommitSize);
             while (rs.next()) {
                 // execute one time
                 extractMetaDataCreateInsert(targetConnect, rs);
@@ -123,7 +123,7 @@ public class BlockTransactionInsertHelper extends AbstractHelper {
                     }
                     processedRows += preparedInsertStatement.executeUpdate();
                     log.trace("Inserting '{}' into {} : next value {}={}", rows, currentTableName, BASE_COLUMN_NAME,
-                            paginateResultWrapper.lowerBoundColumnValue);
+                        paginateResultWrapper.lowerBoundColumnValue);
                 } catch (Exception e) {
                     log.error("Failed Inserting '{}' into {}, {}", rows, currentTableName, paginateResultWrapper);
                     log.error("Failed inserting = {}, value={}", currentTableName, columnValues);
@@ -136,7 +136,7 @@ public class BlockTransactionInsertHelper extends AbstractHelper {
             columnValues.setLength(0);
         }
         log.trace("Total Records: selected = {}, inserted = {}, rows = {}, {}={}",
-                totalSelectedRows, totalProcessedCount, rows, BASE_COLUMN_NAME, paginateResultWrapper.lowerBoundColumnValue);
+            totalSelectedRows, totalProcessedCount, rows, BASE_COLUMN_NAME, paginateResultWrapper.lowerBoundColumnValue);
         if (rows == 1) {
             // in case we have only 1 RECORD selected, move lower bound to bigger value
             paginateResultWrapper.lowerBoundColumnValue += operationParams.batchCommitSize;
@@ -168,7 +168,7 @@ public class BlockTransactionInsertHelper extends AbstractHelper {
             }
             columnQuestionMarks.append("?");
             sqlInsertString.append("INSERT INTO ").append(currentTableName)
-                    .append("(").append(columnNames).append(")").append(" values (").append(columnQuestionMarks).append(")");
+                .append("(").append(columnNames).append(")").append(" values (").append(columnQuestionMarks).append(")");
             // precompile sql
             if (preparedInsertStatement == null) {
                 preparedInsertStatement = targetConnect.prepareStatement(sqlInsertString.toString());
@@ -210,7 +210,7 @@ public class BlockTransactionInsertHelper extends AbstractHelper {
             default:
                 v = rs.getString(i + 1);
                 if (v != null) {
-                    columnValues.append("'").append( v.replaceAll("'", "''")).append("'");
+                    columnValues.append("'").append(v.replaceAll("'", "''")).append("'");
                 } else {
                     columnValues.append("null");
                 }
@@ -223,23 +223,24 @@ public class BlockTransactionInsertHelper extends AbstractHelper {
 
     private void assignMainBottomTopSelectSql() throws IllegalAccessException {
         if (ShardConstants.BLOCK_TABLE_NAME.equalsIgnoreCase(currentTableName)) {
-            sqlToExecuteWithPaging = "SELECT * FROM BLOCK WHERE DB_ID > ? AND DB_ID < ? limit ?";
+            sqlToExecuteWithPaging = "SELECT * FROM block WHERE db_id > ? AND db_id < ? LIMIT ?";
             log.trace(sqlToExecuteWithPaging);
-            sqlSelectUpperBound = "SELECT IFNULL(max(DB_ID), 0) as DB_ID from BLOCK where HEIGHT = ?";
+            sqlSelectUpperBound = "SELECT IFNULL(MAX(db_id), 0) AS db_id FROM block WHERE height = ?";
             log.trace(sqlSelectUpperBound);
-            sqlSelectBottomBound = "SELECT IFNULL(min(DB_ID)-1, 0) as DB_ID from BLOCK";
+            sqlSelectBottomBound = "SELECT IFNULL(MIN(db_id)-1, 0) AS db_id FROM block";
             log.trace(sqlSelectBottomBound);
-            sqlDeleteFromBottomBound = "DELETE from BLOCK WHERE DB_ID > ? AND DB_ID < ?";
+            sqlDeleteFromBottomBound = "DELETE FROM block WHERE db_id > ? AND db_id < ?";
             log.trace(sqlDeleteFromBottomBound);
         } else if (ShardConstants.TRANSACTION_TABLE_NAME.equalsIgnoreCase(currentTableName)) {
-            sqlToExecuteWithPaging = "select * from transaction where DB_ID > ? AND DB_ID < ? limit ?";
+            sqlToExecuteWithPaging = "SELECT * FROM transaction WHERE db_id > ? AND db_id < ? LIMIT ?";
             log.trace(sqlToExecuteWithPaging);
             sqlSelectUpperBound =
-                    "select DB_ID + 1 as DB_ID from transaction where block_timestamp < (SELECT TIMESTAMP from BLOCK where HEIGHT = ?) order by block_timestamp desc, transaction_index desc limit 1";
+                "SELECT db_id + 1 AS db_id FROM transaction WHERE block_timestamp < (SELECT `TIMESTAMP` FROM block WHERE height = ?) ORDER BY block_timestamp DESC, transaction_index DESC LIMIT 1";
             log.trace(sqlSelectUpperBound);
-            sqlSelectBottomBound = "SELECT IFNULL(min(DB_ID)-1, 0) as DB_ID from " + currentTableName;
+            sqlSelectBottomBound = "SELECT IFNULL(MIN(db_id)-1, 0) AS db_id FROM " + currentTableName;
             log.trace(sqlSelectBottomBound);
-            sqlDeleteFromBottomBound = "DELETE from TRANSACTION WHERE  DB_ID > ? AND DB_ID < ?";
+//            sqlDeleteFromBottomBound = "DELETE tx, us from transaction AS tx LEFT JOIN update_status AS us ON tx.id = us.transaction_id WHERE tx.db_id > ? AND tx.db_id < ?";
+            sqlDeleteFromBottomBound = "DELETE FROM transaction WHERE db_id > ? AND db_id < ?";
             log.trace(sqlDeleteFromBottomBound);
         } else {
             throw new IllegalAccessException("Unsupported table. Either 'Block' or 'Transaction' is expected. Pls use another Helper class");

@@ -19,33 +19,31 @@
  */
 package com.apollocurrency.aplwallet.apl.core.peer.endpoint;
 
-import com.apollocurrency.aplwallet.apl.core.app.Blockchain;
-import com.apollocurrency.aplwallet.apl.core.app.BlockchainImpl;
-import com.apollocurrency.aplwallet.apl.core.app.BlockchainProcessor;
-import com.apollocurrency.aplwallet.apl.core.app.BlockchainProcessorImpl;
-import com.apollocurrency.aplwallet.apl.core.app.TransactionProcessor;
-import com.apollocurrency.aplwallet.apl.core.app.TransactionProcessorImpl;
 import com.apollocurrency.aplwallet.apl.core.peer.Peer;
 import com.apollocurrency.aplwallet.apl.core.peer.PeersService;
+import com.apollocurrency.aplwallet.apl.core.service.blockchain.BlockSerializer;
+import com.apollocurrency.aplwallet.apl.core.service.blockchain.Blockchain;
+import com.apollocurrency.aplwallet.apl.core.service.blockchain.BlockchainProcessor;
+import com.apollocurrency.aplwallet.apl.core.service.blockchain.BlockchainProcessorImpl;
+import com.apollocurrency.aplwallet.apl.core.service.blockchain.MemPool;
+import com.apollocurrency.aplwallet.apl.core.service.blockchain.TransactionProcessor;
+import com.apollocurrency.aplwallet.apl.core.service.blockchain.TransactionProcessorImpl;
+import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.DeserializationFeature;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.datatype.jsonorg.JsonOrgModule;
 import org.json.simple.JSONObject;
 import org.json.simple.JSONStreamAware;
 
-import javax.enterprise.inject.spi.CDI;
-import javax.inject.Inject;
+import jakarta.enterprise.inject.spi.CDI;
+import jakarta.inject.Inject;
 
 /**
- *
  * @author al
  */
 public abstract class PeerRequestHandler {
-    
-    public abstract JSONStreamAware processRequest(JSONObject request, Peer peer);
 
-    public abstract boolean rejectWhileDownloading();
-
+    protected ObjectMapper mapper = new ObjectMapper();
     @Inject
     private Blockchain blockchain;
     @Inject
@@ -54,13 +52,19 @@ public abstract class PeerRequestHandler {
     private TransactionProcessor transactionProcessor;
     @Inject
     private PeersService peers;
+    @Inject
+    private BlockSerializer blockSerializer;
 
-    protected ObjectMapper mapper = new ObjectMapper();
-    
-    public PeerRequestHandler(){
+    private MemPool memPool;
+
+    public PeerRequestHandler() {
         mapper.registerModule(new JsonOrgModule());
         mapper.configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false);
     }
+
+    public abstract JSONStreamAware processRequest(JSONObject request, Peer peer) throws JsonProcessingException;
+
+    public abstract boolean rejectWhileDownloading();
 
     protected PeersService lookupPeersService() {
         if (peers == null) peers = CDI.current().select(PeersService.class).get();
@@ -69,9 +73,16 @@ public abstract class PeerRequestHandler {
 
     protected Blockchain lookupBlockchain() {
         if (blockchain == null) {
-            blockchain = CDI.current().select(BlockchainImpl.class).get();
+            blockchain = CDI.current().select(Blockchain.class).get();
         }
         return blockchain;
+    }
+
+    protected MemPool lookupMemPool() {
+        if (memPool == null) {
+            memPool = CDI.current().select(MemPool.class).get();
+        }
+        return memPool;
     }
 
     protected BlockchainProcessor lookupBlockchainProcessor() {
@@ -87,5 +98,12 @@ public abstract class PeerRequestHandler {
         }
         return transactionProcessor;
     }
-    
+
+    protected BlockSerializer lookupBlockSerializer() {
+        if (blockSerializer == null) {
+            blockSerializer = CDI.current().select(BlockSerializer.class).get();
+        }
+        return blockSerializer;
+    }
+
 }

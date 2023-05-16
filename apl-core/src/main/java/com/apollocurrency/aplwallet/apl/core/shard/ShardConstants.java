@@ -4,7 +4,7 @@
 
 package com.apollocurrency.aplwallet.apl.core.shard;
 
-import javax.enterprise.inject.Vetoed;
+import jakarta.enterprise.inject.Vetoed;
 
 @Vetoed
 public class ShardConstants {
@@ -28,5 +28,6 @@ public class ShardConstants {
     public static final String ACCOUNT_ASSET_TABLE_NAME = "account_asset";
 
 
-    private ShardConstants() {}
+    private ShardConstants() {
+    }
 }

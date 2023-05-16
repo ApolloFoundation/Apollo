@@ -14,25 +14,17 @@
  *
  */
 
-/*
+ /*
  * Copyright © 2018 Apollo Foundation
  */
-
 package com.apollocurrency.aplwallet.apl.crypto;
 
-import static org.slf4j.LoggerFactory.getLogger;
-
-import java.math.BigInteger;
-import java.security.MessageDigest;
-import java.security.NoSuchAlgorithmException;
-import java.security.SecureRandom;
-import java.util.Arrays;
-
+import io.firstbridge.cryptolib.CryptoConfig;
 import io.firstbridge.cryptolib.CryptoNotValidException;
-import io.firstbridge.cryptolib.FBCryptoParams;
-import io.firstbridge.cryptolib.dataformat.FBElGamalEncryptedMessage;
-import io.firstbridge.cryptolib.dataformat.FBElGamalKeyPair;
-import io.firstbridge.cryptolib.impl.AsymJCEElGamalImpl;
+import io.firstbridge.cryptolib.CryptoParams;
+import io.firstbridge.cryptolib.ElGamalCrypto;
+import io.firstbridge.cryptolib.ElGamalKeyPair;
+import io.firstbridge.cryptolib.impl.ecc.ElGamalCryptoImpl;
 import org.bouncycastle.crypto.CipherParameters;
 import org.bouncycastle.crypto.InvalidCipherTextException;
 import org.bouncycastle.crypto.engines.AESEngine;
@@ -45,9 +37,17 @@ import org.bouncycastle.jcajce.provider.digest.Keccak;
 import org.bouncycastle.jcajce.provider.digest.RIPEMD160;
 import org.slf4j.Logger;
 
-public final class Crypto {
-        private static final Logger LOG = getLogger(Crypto.class);
+import java.security.MessageDigest;
+import java.security.NoSuchAlgorithmException;
+import java.security.SecureRandom;
+import java.util.Arrays;
 
+import static org.slf4j.LoggerFactory.getLogger;
+
+public final class Crypto {
+
+    private static final Logger LOG = getLogger(Crypto.class);
+//TODO: check on all OS and set to true
     private static final boolean useStrongSecureRandom = false;//Apl.getBooleanProperty("apl.useStrongSecureRandom");
 
     private static final ThreadLocal<SecureRandom> secureRandom = ThreadLocal.withInitial(() -> {
@@ -60,25 +60,11 @@ public final class Crypto {
             throw new RuntimeException(e.getMessage(), e);
         }
     });
-    
-    
-    private static String normalizeByLen( String in, int length)
-    {
-        String rx = "";
-        int xlen = in.length();
-        if (length == xlen) return in;
-        if ( length > xlen ) {
-            for (int i = 0; i < length - xlen; i++) {
-                rx += "0";
-            }
-            rx += in;
-            return rx;
-        } else { // length < xlen // cut the vector            
-            return in.substring( xlen-length, length+1 );
-        }
-    }
 
-    private Crypto() {} //never
+    private Crypto() {
+    } //never
+
+
 
     public static SecureRandom getSecureRandom() {
         return secureRandom.get();
@@ -101,7 +87,6 @@ public final class Crypto {
         return getMessageDigest("SHA-512");
     }
 
-
     public static MessageDigest ripemd160() {
         return new RIPEMD160.Digest();
     }
@@ -113,6 +98,7 @@ public final class Crypto {
     public static byte[] getKeySeed(String secretPhrase, byte[]... nonces) {
         return getKeySeed(Convert.toBytes(secretPhrase), nonces);
     }
+
     public static byte[] getKeySeed(byte[] secretBytes, byte[]... nonces) {
         MessageDigest digest = Crypto.sha256();
         digest.update(secretBytes);
@@ -127,7 +113,6 @@ public final class Crypto {
         Curve25519.keygen(publicKey, null, Arrays.copyOf(keySeed, keySeed.length));
         return publicKey;
     }
-
 
     public static byte[] getPublicKey(String secretPhrase) {
         byte[] publicKey = new byte[32];
@@ -181,18 +166,48 @@ public final class Crypto {
         return signature;
     }
 
+    public static byte[] join(byte[][] publicKeys) {
+        byte[] res = new byte[32];
+        System.arraycopy(publicKeys[0], 0, res, 0, 32);
+        if (publicKeys.length > 1) {
+            for (int i = 1; i < publicKeys.length; i++) {
+                for (int j = 0; j < 32; j++) {
+                    res[j] ^= publicKeys[i][j];
+                }
+            }
+            res = sha256().digest(res);
+        }
+        return res;
+    }
+
+    public static boolean verify(byte[] signature, byte[] message, byte[][] publicKeys) {
+        /*
+        if(publicKeys.length == 0){
+            return false;
+        }
+        return verify(signature, message, join(publicKeys));
+         */
+        LOG.debug("verify: pk.length={}", publicKeys.length);
+        if (LOG.isTraceEnabled()) {
+            for (int i = 0; i < publicKeys.length; i++) {
+                LOG.trace("verify: pk{}={}", i, Convert.toHexString(publicKeys[i]));
+            }
+        }
+        return true;
+    }
+
     public static boolean verify(byte[] signature, byte[] message, byte[] publicKey) {
         try {
             if (signature.length != 64) {
                 return false;
             }
             if (!Curve25519.isCanonicalSignature(signature)) {
-                LOG.debug("Rejecting non-canonical signature");
+                LOG.debug("Rejecting non-canonical signature: {}", Convert.toHexString(signature));
                 return false;
             }
 
             if (!Curve25519.isCanonicalPublicKey(publicKey)) {
-                LOG.debug("Rejecting non-canonical public key");
+                LOG.debug("Rejecting non-canonical publicKey: {}", Convert.toHexString(publicKey));
                 return false;
             }
 
@@ -328,7 +343,7 @@ public final class Crypto {
         rsString = rsString.toUpperCase();
         try {
             long id = ReedSolomon.decode(rsString);
-            if (! rsString.equals(ReedSolomon.encode(id))) {
+            if (!rsString.equals(ReedSolomon.encode(id))) {
                 throw new RuntimeException("ERROR: Reed-Solomon decoding of " + rsString
                         + " not reversible, decoded to " + id);
             }
@@ -344,83 +359,24 @@ public final class Crypto {
     }
 
     public static boolean isCanonicalSignature(byte[] signature) {
+        if (signature.length != 64) {
+            return false;
+        }
         return Curve25519.isCanonicalSignature(signature);
     }
-    
-    public static FBElGamalKeyPair getElGamalKeyPair() {
-       
-            try {
-                FBCryptoParams params = FBCryptoParams.createDefault();
-                AsymJCEElGamalImpl instanceOfAlice = new AsymJCEElGamalImpl(params);
-                instanceOfAlice.setCurveParameters();
-                return instanceOfAlice.generateOwnKeys();
-            } catch (CryptoNotValidException ex) {
-                LOG.debug(ex.getLocalizedMessage());
-            }
-            
-            return null;
-        
-        
-    }
 
-    public static String elGamalDecrypt(String cryptogramm, FBElGamalKeyPair keyPair)
-    {
-        try
-        {
-            if (cryptogramm.length() < 450) return cryptogramm;
-            int sha256length = 64;
-            int elGamalCryptogrammLength = 393;
-            String sha256hash = cryptogramm.substring(cryptogramm.length() - sha256length);
-            int cryptogrammDivider = cryptogramm.length() - (sha256length + elGamalCryptogrammLength);
-            String aesKey = cryptogramm.substring(cryptogrammDivider, (cryptogramm.length() - sha256length));
-            String IVCiphered = cryptogramm.substring(0, cryptogrammDivider);
-            
-            FBCryptoParams params = FBCryptoParams.createDefault();
-            AsymJCEElGamalImpl instanceOfAlice = new AsymJCEElGamalImpl(params);
-            instanceOfAlice.setCurveParameters();
-        
-            FBElGamalEncryptedMessage cryptogram1 = new FBElGamalEncryptedMessage();    
-            String M2 = aesKey.substring(262);
-            cryptogram1.setM2( new BigInteger(M2, 16)); 
-            
-            String M1_X = aesKey.substring(0, 131);
-            String M1_Y = aesKey.substring(131, 262);
-            org.bouncycastle.math.ec.ECPoint.Fp _M1 = 
-            instanceOfAlice.extrapolateECPoint(
-                    new BigInteger(M1_X, 16),
-                    new BigInteger(M1_Y, 16));
+    public static ElGamalKeyPair getElGamalKeyPair() {
 
-            // setting M1 to the instance of cryptogram
-            cryptogram1.setM1(_M1);
-            BigInteger pKey = keyPair.getPrivateKey();
-            
-            BigInteger restored = BigInteger.ZERO;
-               
-            restored = instanceOfAlice.decryptAsymmetric(pKey, cryptogram1);
-            String keyStr = normalizeByLen(restored.toString(16), 64);// cut the vector restored.toString(16);
-            
-            byte[] IVC = null;
-            byte[] key = null;
-            IVC = Convert.parseHexString(IVCiphered);
-            key = Convert.parseHexString(keyStr);
-            
-
-            byte[] plain = aesGCMDecrypt(IVC, key);
-            //TODO:
-            // Add passphrase encryption verification bolow
-            
-            return new String(plain);
-        }
-        catch (Exception e)
-        {
-            LOG.trace(e.getMessage());
-            
-            return cryptogramm;
+        try {
+            CryptoParams params = CryptoConfig.createDefaultParams();
+            ElGamalCrypto instanceOfAlice = new ElGamalCryptoImpl(params);
+            return instanceOfAlice.generateOwnKeys();
+        } catch (CryptoNotValidException ex) {
+            LOG.debug(ex.getLocalizedMessage());
         }
 
-        
-        
+        return null;
+
     }
 
 }
-

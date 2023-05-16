@@ -1,6 +1,9 @@
+/*
+ * Copyright © 2018-2020 Apollo Foundation
+ */
+
 package com.apollocurrency.aplwallet.apl.core.model;
 
-import com.apollocurrency.aplwallet.apl.core.app.Transaction;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 

@@ -21,20 +21,20 @@
 package com.apollocurrency.aplwallet.apl.core.http.get;
 
 
+import com.apollocurrency.aplwallet.apl.core.entity.state.poll.Poll;
 import com.apollocurrency.aplwallet.apl.core.http.APITag;
 import com.apollocurrency.aplwallet.apl.core.http.AbstractAPIRequestHandler;
+import com.apollocurrency.aplwallet.apl.core.http.HttpParameterParserUtil;
 import com.apollocurrency.aplwallet.apl.core.http.JSONData;
-import com.apollocurrency.aplwallet.apl.core.http.ParameterParser;
-import com.apollocurrency.aplwallet.apl.util.AplException;
-import com.apollocurrency.aplwallet.apl.core.app.Poll;
-import com.apollocurrency.aplwallet.apl.core.db.DbIterator;
-import com.apollocurrency.aplwallet.apl.core.db.DbUtils;
-import javax.enterprise.inject.Vetoed;
+import com.apollocurrency.aplwallet.apl.core.utils.CollectorUtils;
+import com.apollocurrency.aplwallet.apl.util.exception.AplException;
 import org.json.simple.JSONArray;
 import org.json.simple.JSONObject;
 import org.json.simple.JSONStreamAware;
 
-import javax.servlet.http.HttpServletRequest;
+import jakarta.enterprise.inject.Vetoed;
+import jakarta.servlet.http.HttpServletRequest;
+import java.util.stream.Stream;
 
 @Vetoed
 public class GetPolls extends AbstractAPIRequestHandler {
@@ -45,37 +45,29 @@ public class GetPolls extends AbstractAPIRequestHandler {
 
     @Override
     public JSONStreamAware processRequest(HttpServletRequest req) throws AplException {
-        long accountId = ParameterParser.getAccountId(req, "account", false);
+        long accountId = HttpParameterParserUtil.getAccountId(req, "account", false);
         boolean includeFinished = "true".equalsIgnoreCase(req.getParameter("includeFinished"));
         boolean finishedOnly = "true".equalsIgnoreCase(req.getParameter("finishedOnly"));
-        int firstIndex = ParameterParser.getFirstIndex(req);
-        int lastIndex = ParameterParser.getLastIndex(req);
-        final int timestamp = ParameterParser.getTimestamp(req);
+        int firstIndex = HttpParameterParserUtil.getFirstIndex(req);
+        int lastIndex = HttpParameterParserUtil.getLastIndex(req);
+        final int timestamp = HttpParameterParserUtil.getTimestamp(req);
 
-        JSONArray pollsJson = new JSONArray();
-        DbIterator<Poll> polls = null;
-        try {
-            if (accountId == 0) {
-                if (finishedOnly) {
-                    polls = Poll.getPollsFinishingAtOrBefore(lookupBlockchain().getHeight(), firstIndex, lastIndex);
-                } else if (includeFinished) {
-                    polls = Poll.getAllPolls(firstIndex, lastIndex);
-                } else {
-                    polls = Poll.getActivePolls(firstIndex, lastIndex);
-                }
+        Stream<Poll> polls;
+        if (accountId == 0) {
+            if (finishedOnly) {
+                polls = pollService.getPollsFinishingAtOrBefore(lookupBlockchain().getHeight(), firstIndex, lastIndex);
+            } else if (includeFinished) {
+                polls = pollService.getAllPolls(firstIndex, lastIndex);
             } else {
-                polls = Poll.getPollsByAccount(accountId, includeFinished, finishedOnly, firstIndex, lastIndex);
+                polls = pollService.getActivePolls(firstIndex, lastIndex);
             }
-            while (polls.hasNext()) {
-                Poll poll = polls.next();
-                if (poll.getTimestamp() < timestamp) {
-                    break;
-                }
-                pollsJson.add(JSONData.poll(poll));
-            }
-        } finally {
-            DbUtils.close(polls);
+        } else {
+            polls = pollService.getPollsByAccount(accountId, includeFinished, finishedOnly, firstIndex, lastIndex);
         }
+
+        JSONArray pollsJson = polls.takeWhile(poll -> poll.getTimestamp() >= timestamp)
+            .map(JSONData::poll)
+            .collect(CollectorUtils.jsonCollector());
 
         JSONObject response = new JSONObject();
         response.put("polls", pollsJson);

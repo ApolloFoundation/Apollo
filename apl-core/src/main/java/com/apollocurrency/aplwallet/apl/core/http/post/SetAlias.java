@@ -21,31 +21,35 @@
 package com.apollocurrency.aplwallet.apl.core.http.post;
 
 
-import com.apollocurrency.aplwallet.apl.core.account.Account;
-import com.apollocurrency.aplwallet.apl.core.app.Alias;
+import com.apollocurrency.aplwallet.apl.core.entity.state.account.Account;
+import com.apollocurrency.aplwallet.apl.core.entity.state.alias.Alias;
+import com.apollocurrency.aplwallet.apl.core.http.APITag;
+import com.apollocurrency.aplwallet.apl.core.http.HttpParameterParserUtil;
+import com.apollocurrency.aplwallet.apl.core.service.state.AliasService;
 import com.apollocurrency.aplwallet.apl.core.transaction.messages.Attachment;
 import com.apollocurrency.aplwallet.apl.core.transaction.messages.MessagingAliasAssignment;
-import com.apollocurrency.aplwallet.apl.util.Constants;
-import com.apollocurrency.aplwallet.apl.core.http.APITag;
-import com.apollocurrency.aplwallet.apl.core.http.ParameterParser;
-import com.apollocurrency.aplwallet.apl.util.AplException;
 import com.apollocurrency.aplwallet.apl.crypto.Convert;
+import com.apollocurrency.aplwallet.apl.util.Constants;
+import com.apollocurrency.aplwallet.apl.util.exception.AplException;
 import org.json.simple.JSONObject;
 import org.json.simple.JSONStreamAware;
 
-import javax.servlet.http.HttpServletRequest;
+import jakarta.enterprise.inject.Vetoed;
+import jakarta.enterprise.inject.spi.CDI;
+import jakarta.servlet.http.HttpServletRequest;
 
 import static com.apollocurrency.aplwallet.apl.core.http.JSONResponses.INCORRECT_ALIAS_LENGTH;
 import static com.apollocurrency.aplwallet.apl.core.http.JSONResponses.INCORRECT_ALIAS_NAME;
 import static com.apollocurrency.aplwallet.apl.core.http.JSONResponses.INCORRECT_URI_LENGTH;
 import static com.apollocurrency.aplwallet.apl.core.http.JSONResponses.MISSING_ALIAS_NAME;
-import javax.enterprise.inject.Vetoed;
 
 @Vetoed
-public final class SetAlias extends CreateTransaction {
+public final class SetAlias extends CreateTransactionHandler {
+    private final AliasService aliasService;
 
     public SetAlias() {
-        super(new APITag[] {APITag.ALIASES, APITag.CREATE_TRANSACTION}, "aliasName", "aliasURI");
+        super(new APITag[]{APITag.ALIASES, APITag.CREATE_TRANSACTION}, "aliasName", "aliasURI");
+        this.aliasService = CDI.current().select(AliasService.class).get();
     }
 
     @Override
@@ -74,9 +78,9 @@ public final class SetAlias extends CreateTransaction {
             return INCORRECT_URI_LENGTH;
         }
 
-        Account account = ParameterParser.getSenderAccount(req);
+        Account account = HttpParameterParserUtil.getSenderAccount(req);
 
-        Alias alias = Alias.getAlias(normalizedAlias);
+        Alias alias = aliasService.getAliasByName(normalizedAlias);
         if (alias != null && alias.getAccountId() != account.getId()) {
             JSONObject response = new JSONObject();
             response.put("errorCode", 8);

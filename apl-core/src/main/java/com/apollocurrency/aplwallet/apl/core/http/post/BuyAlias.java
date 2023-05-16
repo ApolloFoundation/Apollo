@@ -20,33 +20,37 @@
 
 package com.apollocurrency.aplwallet.apl.core.http.post;
 
-import com.apollocurrency.aplwallet.apl.core.account.Account;
-import com.apollocurrency.aplwallet.apl.core.app.Alias;
+import com.apollocurrency.aplwallet.apl.core.entity.state.account.Account;
+import com.apollocurrency.aplwallet.apl.core.entity.state.alias.Alias;
+import com.apollocurrency.aplwallet.apl.core.http.APITag;
+import com.apollocurrency.aplwallet.apl.core.http.HttpParameterParserUtil;
+import com.apollocurrency.aplwallet.apl.core.service.state.AliasService;
 import com.apollocurrency.aplwallet.apl.core.transaction.messages.Attachment;
 import com.apollocurrency.aplwallet.apl.core.transaction.messages.MessagingAliasBuy;
-import com.apollocurrency.aplwallet.apl.core.http.APITag;
-import com.apollocurrency.aplwallet.apl.core.http.ParameterParser;
-import com.apollocurrency.aplwallet.apl.util.AplException;
+import com.apollocurrency.aplwallet.apl.util.exception.AplException;
 import org.json.simple.JSONStreamAware;
 
-import javax.servlet.http.HttpServletRequest;
+import jakarta.enterprise.inject.Vetoed;
+import jakarta.enterprise.inject.spi.CDI;
+import jakarta.servlet.http.HttpServletRequest;
 
 import static com.apollocurrency.aplwallet.apl.core.http.JSONResponses.INCORRECT_ALIAS_NOTFORSALE;
-import javax.enterprise.inject.Vetoed;
 
 @Vetoed
-public final class BuyAlias extends CreateTransaction {
+public final class BuyAlias extends CreateTransactionHandler {
+    private final AliasService aliasService;
 
     public BuyAlias() {
-        super(new APITag[] {APITag.ALIASES, APITag.CREATE_TRANSACTION}, "alias", "aliasName", "amountATM");
+        super(new APITag[]{APITag.ALIASES, APITag.CREATE_TRANSACTION}, "alias", "aliasName", "amountATM");
+        this.aliasService = CDI.current().select(AliasService.class).get();
     }
 
     @Override
     public JSONStreamAware processRequest(HttpServletRequest req) throws AplException {
-        Account buyer = ParameterParser.getSenderAccount(req);
-        Alias alias = ParameterParser.getAlias(req);
-        long amountATM = ParameterParser.getAmountATM(req);
-        if (Alias.getOffer(alias) == null) {
+        Account buyer = HttpParameterParserUtil.getSenderAccount(req);
+        Alias alias = HttpParameterParserUtil.getAlias(req);
+        long amountATM = HttpParameterParserUtil.getAmountATM(req);
+        if (aliasService.getOffer(alias) == null) {
             return INCORRECT_ALIAS_NOTFORSALE;
         }
         long sellerId = alias.getAccountId();

@@ -7,10 +7,13 @@ package com.apollocurrency.aplwallet.apl.core.utils;
 import com.apollocurrency.aplwallet.apl.crypto.Convert;
 import com.apollocurrency.aplwallet.apl.crypto.EncryptedData;
 
-import javax.enterprise.inject.Vetoed;
+import jakarta.enterprise.inject.Vetoed;
 
 @Vetoed
 public class CryptoUtils {
+    private CryptoUtils() {
+    }
+
     public static EncryptedData encryptTo(byte[] publicKey, byte[] data, byte[] keySeed, boolean compress) {
         if (compress && data.length > 0) {
             data = Convert.compress(data);
@@ -25,6 +28,4 @@ public class CryptoUtils {
         }
         return decrypted;
     }
-
-    private CryptoUtils() {}
 }

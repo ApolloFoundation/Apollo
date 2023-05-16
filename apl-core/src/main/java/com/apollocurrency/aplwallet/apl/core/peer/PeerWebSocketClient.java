@@ -10,40 +10,67 @@ import org.eclipse.jetty.websocket.client.WebSocketClient;
 
 import java.io.IOException;
 import java.net.URI;
+import java.time.Duration;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 
 /**
- *
  * @author alukin@gmail.com
  */
 @Slf4j
-public class PeerWebSocketClient extends PeerWebSocket{
+public class PeerWebSocketClient extends PeerWebSocket {
 
-    private static WebSocketClient client = null;
-    private Monitor startMonitor = new Monitor();
+    private static volatile WebSocketClient client = null;
+    private final Monitor startMonitor = new Monitor();
     private Session session = null;
-
-    private static void init() throws Exception {
-        client = new WebSocketClient();
-        client.getPolicy().setIdleTimeout(PeersService.webSocketIdleTimeout);
-        client.setConnectTimeout(PeersService.connectTimeout);
-        client.getPolicy().setMaxBinaryMessageSize(PeersService.MAX_MESSAGE_SIZE);
-        client.setStopAtShutdown(true);
-        client.start();
-    }
 
     public PeerWebSocketClient(Peer2PeerTransport peer) {
         super(peer);
         if (client == null) {
-            try {
-                init();
-            } catch (Exception ex) {
-                log.error("Can not start wesocket client", ex);
+            synchronized (PeerWebSocketClient.class) {
+                if (client == null) {
+                    try {
+                        init();
+                    } catch (Exception ex) {
+                        log.error("Can not start wesocket client", ex);
+                    }
+                }
             }
         }
+    }
+
+    private static void init() throws Exception {
+        client = new WebSocketClient();
+        client.setIdleTimeout(Duration.ofMillis(PeersService.webSocketIdleTimeout));
+        client.setConnectTimeout(PeersService.connectTimeout);
+        client.setMaxBinaryMessageSize(PeersService.MAX_MESSAGE_SIZE);
+        client.setStopAtShutdown(true);
+        client.start();
+    }
+
+    public static void destroyClient() {
+        if (client == null) {
+            synchronized (PeerWebSocketClient.class) {
+                if (client == null) {
+                    return;
+                }
+            }
+        }
+        try {
+            //if (client.isRunning()) {
+            //need to stop the client anyway
+            client.stop();
+            //}
+
+        } catch (Exception ex) {
+            log.trace("Exception on websocket client stop", ex);
+        }
+        if (client != null) {
+            client.destroy();
+        }
+        client = null;
     }
 
     public boolean startClient(URI uri) {
@@ -57,7 +84,6 @@ public class PeerWebSocketClient extends PeerWebSocket{
         //synchronizing here
         startMonitor.enter();
         try {
-
             Future<Session> conn = client.connect(this, uri);
             session = conn.get(PeersService.connectTimeout + 100, TimeUnit.MILLISECONDS);
             connected = session.isOpen();
@@ -72,7 +98,7 @@ public class PeerWebSocketClient extends PeerWebSocket{
             log.trace("I/O error while connecting as client to: {}", which());
         } catch (Exception ex) {
             log.trace("Generic error while connecting as client to: {}", which());
-        }finally {
+        } finally {
             startMonitor.leave();
         }
 
@@ -81,35 +107,12 @@ public class PeerWebSocketClient extends PeerWebSocket{
 
     @Override
     public void close() {
-        try {
-            super.close();
-            if (isClientConnected()) {
-                session.disconnect();
-                session.close();
-                session = null;
-            }
-        } catch (IOException ex) {
-            log.warn("Can not close websocket");
+        super.close();
+        if (isClientConnected()) {
+            session.disconnect();
+            session.close();
+            session = null;
         }
-    }
-
-    public static void destroyClient() {
-        if (client == null) {
-            return;
-        }
-        try {
-            //if (client.isRunning()) {
-            //need to stop the client anyway
-                client.stop();
-            //}
-
-        } catch (Exception ex) {
-            log.trace("Exception on websocket client stop", ex);
-        }
-        if (client != null) {
-            client.destroy();
-        }
-        client = null;
     }
 
     boolean isClientConnected() {

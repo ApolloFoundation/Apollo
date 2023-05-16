@@ -12,27 +12,19 @@ import com.apollocurrency.aplwallet.apl.core.rest.converter.PeerConverter;
 import com.apollocurrency.aplwallet.apl.core.rest.service.NetworkService;
 import com.apollocurrency.aplwallet.apl.testutil.EntityProducer;
 import com.fasterxml.jackson.databind.JsonNode;
-import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.extern.slf4j.Slf4j;
-import org.jboss.resteasy.mock.MockDispatcherFactory;
-import org.jboss.resteasy.mock.MockHttpRequest;
 import org.jboss.resteasy.mock.MockHttpResponse;
-import org.jboss.resteasy.spi.Dispatcher;
 import org.junit.jupiter.api.AfterEach;
-import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
-import javax.ws.rs.core.MediaType;
-import javax.ws.rs.core.Response;
+import jakarta.ws.rs.core.Response;
 import java.io.IOException;
 import java.net.URISyntaxException;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 
-import static org.jboss.resteasy.mock.MockHttpRequest.get;
-import static org.jboss.resteasy.mock.MockHttpRequest.post;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
@@ -40,45 +32,24 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
+/**
+ * @author andrew.zinchenko@gmail.com
+ */
 @Slf4j
-class NetworkControllerTest {
+public class NetworkControllerTest extends AbstractEndpointTest {
     private static final String PEER_ADDRESS = "192.168.2.68";
     private static final String WRONG_PEER_ADDRESS = "10.0.0.1";
     private static final String ANNOUNCED_ADDRESS = "10.10.10.10";
 
-    private static ObjectMapper mapper = new ObjectMapper();
-    private static Dispatcher dispatcher;
+    private static Peer peer = EntityProducer.createPeer(PEER_ADDRESS, ANNOUNCED_ADDRESS, true, 0);
 
-    @BeforeAll
-    static void setupClass(){
-        dispatcher = MockDispatcherFactory.createDispatcher();
-
-        NetworkController endpoint = new NetworkController();
-        endpoint.setPeerConverter(new PeerConverter());
-        dispatcher.getRegistry().addSingletonResource(endpoint);
-
-        NetworkService service = mock(NetworkService.class);
-        endpoint.setService(service);
-
-        Peer peer = EntityProducer.createPeer(PEER_ADDRESS, ANNOUNCED_ADDRESS, true, 0);
-
-        when(service.findPeerByAddress(PEER_ADDRESS)).thenReturn(peer);
-        when(service.findPeerByAddress(WRONG_PEER_ADDRESS)).thenReturn(null);
-
-        when(service.findOrCreatePeerByAddress(PEER_ADDRESS)).thenReturn(peer);
-        when(service.findOrCreatePeerByAddress(WRONG_PEER_ADDRESS)).thenReturn(null);
-
-        when(service.putPeerInBlackList(PEER_ADDRESS)).thenReturn(peer);
-
-        when(service.getInboundPeers()).thenReturn(List.of(peer));
-
-        when(service.getPeersByStateAndService(true, null, 0)).thenReturn(Collections.EMPTY_LIST);
-        when(service.getPeersByStateAndService(false, null, 0)).thenReturn(List.of(peer));
-
-    }
+    private NetworkService service = mock(NetworkService.class);
 
     @BeforeEach
     void setUp() {
+        super.setUp();
+        NetworkController endpoint = new NetworkController(new PeerConverter(), service);
+        dispatcher.getRegistry().addSingletonResource(endpoint);
     }
 
     @AfterEach
@@ -95,14 +66,18 @@ class NetworkControllerTest {
 
     @Test
     void getPeer_whenCallWithUnknownPeer_thenGetError_2005() throws URISyntaxException, IOException {
-        MockHttpResponse response = sendGetRequest("/networking/peer?peer="+ WRONG_PEER_ADDRESS);
+        when(service.findPeerByAddress(WRONG_PEER_ADDRESS)).thenReturn(null);
+
+        MockHttpResponse response = sendGetRequest("/networking/peer?peer=" + WRONG_PEER_ADDRESS);
 
         checkMandatoryParameterMissingErrorCode(response, 2005);
     }
 
     @Test
     void getPeer_whenCallWithParameter_thenGetPeer() throws URISyntaxException, IOException {
-        MockHttpResponse response = sendGetRequest("/networking/peer?peer="+ PEER_ADDRESS);
+        when(service.findPeerByAddress(PEER_ADDRESS)).thenReturn(peer);
+
+        MockHttpResponse response = sendGetRequest("/networking/peer?peer=" + PEER_ADDRESS);
 
         assertEquals(Response.Status.OK.getStatusCode(), response.getStatus());
 
@@ -112,7 +87,18 @@ class NetworkControllerTest {
     }
 
     @Test
+    void getPeersList_whenGetWithWrongState_thenGetError_2004() throws URISyntaxException, IOException {
+        when(service.getPeersByStateAndService(false, null, 0)).thenReturn(List.of(peer));
+
+        MockHttpResponse response = sendGetRequest("/networking/peer/all?state=BAD_STATE_OF_PEER&includePeerInfo=true");
+
+        checkMandatoryParameterMissingErrorCode(response, 2004);
+    }
+
+    @Test
     void getPeersList_whenSetActive_thenGetEmptyList() throws URISyntaxException, IOException {
+        when(service.getPeersByStateAndService(true, null, 0)).thenReturn(Collections.EMPTY_LIST);
+
         MockHttpResponse response = sendGetRequest("/networking/peer/all?active=true");
 
         assertEquals(Response.Status.OK.getStatusCode(), response.getStatus());
@@ -127,6 +113,8 @@ class NetworkControllerTest {
 
     @Test
     void getPeersList_whenSetIncludePeerInfo_thenGetPeersList() throws URISyntaxException, IOException {
+        when(service.getPeersByStateAndService(false, null, 0)).thenReturn(List.of(peer));
+
         MockHttpResponse response = sendGetRequest("/networking/peer/all?includePeerInfo=true");
 
         assertEquals(Response.Status.OK.getStatusCode(), response.getStatus());
@@ -140,6 +128,8 @@ class NetworkControllerTest {
 
     @Test
     void getPeersList_whenUnSetIncludePeerInfo_thenGetHostsList() throws URISyntaxException, IOException {
+        when(service.getPeersByStateAndService(false, null, 0)).thenReturn(List.of(peer));
+
         MockHttpResponse response = sendGetRequest("/networking/peer/all");
 
         assertEquals(Response.Status.OK.getStatusCode(), response.getStatus());
@@ -153,14 +143,16 @@ class NetworkControllerTest {
 
     @Test
     void addOrReplacePeer() throws URISyntaxException, IOException {
-        MockHttpResponse response = sendPostRequest("/networking/peer", "peer="+PEER_ADDRESS);
+        when(service.findOrCreatePeerByAddress(PEER_ADDRESS)).thenReturn(peer);
+
+        MockHttpResponse response = sendPostRequest("/networking/peer", "peer=" + PEER_ADDRESS);
 
         assertEquals(Response.Status.OK.getStatusCode(), response.getStatus());
 
         String content = response.getContentAsString();
         print(content);
         Map result = mapper.readValue(content, Map.class);
-        assertFalse(result.containsKey("newErrorCode"), "Unexpected error code:"+result.get("newErrorCode"));
+        assertFalse(result.containsKey("newErrorCode"), "Unexpected error code:" + result.get("newErrorCode"));
 
         PeerDTO dto = mapper.readValue(content, PeerDTO.class);
         assertNotNull(dto);
@@ -170,20 +162,24 @@ class NetworkControllerTest {
 
     @Test
     void addOrReplacePeer_whenCallWithoutMandatoryParam_thenGetError_2003() throws URISyntaxException, IOException {
-        MockHttpResponse response = sendPostRequest("/networking/peer", "");
+        MockHttpResponse response = sendPostRequest("/networking/peer", "missedParam=value");
 
         checkMandatoryParameterMissingErrorCode(response, 2003);
     }
 
     @Test
     void addOrReplacePeer_whenCallWithWrongPeer_thenGetError_2008() throws URISyntaxException, IOException {
-        MockHttpResponse response = sendPostRequest("/networking/peer", "peer="+WRONG_PEER_ADDRESS);
+        when(service.findOrCreatePeerByAddress(WRONG_PEER_ADDRESS)).thenReturn(null);
 
-        checkMandatoryParameterMissingErrorCode(response, 2008);
+        MockHttpResponse response = sendPostRequest("/networking/peer", "peer=" + WRONG_PEER_ADDRESS);
+
+        checkMandatoryParameterMissingErrorCode(response, 2009);
     }
 
     @Test
     void getInboundPeersList_whenSetIncludePeerInfo_thenGetPeersList() throws URISyntaxException, IOException {
+        when(service.getInboundPeers()).thenReturn(List.of(peer));
+
         MockHttpResponse response = sendGetRequest("/networking/peer/inbound?includePeerInfo=true");
 
         assertEquals(Response.Status.OK.getStatusCode(), response.getStatus());
@@ -197,6 +193,8 @@ class NetworkControllerTest {
 
     @Test
     void getInboundPeersList_whenUnSetIncludePeerInfo_thenGetPeersList() throws URISyntaxException, IOException {
+        when(service.getInboundPeers()).thenReturn(List.of(peer));
+
         MockHttpResponse response = sendGetRequest("/networking/peer/inbound");
 
         assertEquals(Response.Status.OK.getStatusCode(), response.getStatus());
@@ -210,7 +208,9 @@ class NetworkControllerTest {
 
     @Test
     void addPeerInBlackList() throws URISyntaxException, IOException {
-        MockHttpResponse response = sendPostRequest("/networking/peer/blacklist", "peer="+PEER_ADDRESS);
+        when(service.putPeerInBlackList(PEER_ADDRESS)).thenReturn(peer);
+
+        MockHttpResponse response = sendPostRequest("/networking/peer/blacklist", "peer=" + PEER_ADDRESS);
 
         assertEquals(Response.Status.OK.getStatusCode(), response.getStatus());
 
@@ -223,15 +223,17 @@ class NetworkControllerTest {
     }
 
     @Test
-    void addPeerInBlackList_whenCallWithoutMandatoryParam_thenGetError_2003() throws URISyntaxException, IOException {
-        MockHttpResponse response = sendPostRequest("/networking/peer/blacklist", "");
+    void addPeerInBlackList_whenCallWithoutMandatoryParam_thenGetError_2001() throws URISyntaxException, IOException {
+        MockHttpResponse response = sendPostRequest("/networking/peer/blacklist", "missedParam=value");
 
-        checkMandatoryParameterMissingErrorCode(response, 2003);
+        checkMandatoryParameterMissingErrorCode(response, 2001);
     }
 
     @Test
     void addAPIProxyPeerInBlackList() throws URISyntaxException, IOException {
-        MockHttpResponse response = sendPostRequest("/networking/peer/proxyblacklist", "peer="+PEER_ADDRESS);
+        when(service.findOrCreatePeerByAddress(PEER_ADDRESS)).thenReturn(peer);
+
+        MockHttpResponse response = sendPostRequest("/networking/peer/proxyblacklist", "peer=" + PEER_ADDRESS);
 
         assertEquals(Response.Status.OK.getStatusCode(), response.getStatus());
 
@@ -243,29 +245,33 @@ class NetworkControllerTest {
     }
 
     @Test
-    void addAPIProxyPeerInBlackList_whenCallWithoutMandatoryParam_thenGetError_2003() throws URISyntaxException, IOException {
-        MockHttpResponse response = sendPostRequest("/networking/peer/proxyblacklist", "");
+    void addAPIProxyPeerInBlackList_whenCallWithoutMandatoryParam_thenGetError_2001() throws URISyntaxException, IOException {
+        MockHttpResponse response = sendPostRequest("/networking/peer/proxyblacklist", "missedParam=value");
 
-        checkMandatoryParameterMissingErrorCode(response, 2003);
+        checkMandatoryParameterMissingErrorCode(response, 2001);
     }
 
     @Test
     void addAPIProxyPeerInBlackList_whenCallWithWrongPeer_thenGetError_2005() throws URISyntaxException, IOException {
-        MockHttpResponse response = sendPostRequest("/networking/peer/proxyblacklist", "peer="+WRONG_PEER_ADDRESS);
+        when(service.findOrCreatePeerByAddress(WRONG_PEER_ADDRESS)).thenReturn(null);
+
+        MockHttpResponse response = sendPostRequest("/networking/peer/proxyblacklist", "peer=" + WRONG_PEER_ADDRESS);
 
         checkMandatoryParameterMissingErrorCode(response, 2005);
     }
 
     @Test
     void setAPIProxyPeer() throws URISyntaxException, IOException {
-        MockHttpResponse response = sendPostRequest("/networking/peer/setproxy", "peer="+PEER_ADDRESS);
+        when(service.findPeerByAddress(PEER_ADDRESS)).thenReturn(peer);
+
+        MockHttpResponse response = sendPostRequest("/networking/peer/setproxy", "peer=" + PEER_ADDRESS);
 
         assertEquals(Response.Status.OK.getStatusCode(), response.getStatus());
 
         String content = response.getContentAsString();
         print(content);
         Map result = mapper.readValue(content, Map.class);
-        assertFalse(result.containsKey("newErrorCode"), "Unexpected error code:"+result.get("newErrorCode"));
+        assertFalse(result.containsKey("newErrorCode"), "Unexpected error code:" + result.get("newErrorCode"));
 
         PeerDTO dto = mapper.readValue(content, PeerDTO.class);
         assertNotNull(dto);
@@ -275,49 +281,9 @@ class NetworkControllerTest {
 
     @Test
     void setAPIProxyPeer_whenCallWithoutMandatoryParam_thenGetError_2003() throws URISyntaxException, IOException {
-        MockHttpResponse response = sendPostRequest("/networking/peer/setproxy", "");
+        MockHttpResponse response = sendPostRequest("/networking/peer/setproxy", "missedParam=value");
 
         checkMandatoryParameterMissingErrorCode(response, 2003);
-    }
-
-    private void checkMandatoryParameterMissingErrorCode(MockHttpResponse response, int expectedErrorCode) throws IOException {
-        assertEquals(Response.Status.OK.getStatusCode(), response.getStatus());
-
-        String content = response.getContentAsString();
-        print(content);
-        Map result = mapper.readValue(content, Map.class);
-        assertTrue(result.containsKey("newErrorCode"),"Missing param, it's an issue.");
-        assertEquals(expectedErrorCode, result.get("newErrorCode"));
-    }
-
-    private MockHttpResponse sendGetRequest(String uri) throws URISyntaxException{
-        MockHttpRequest request = get(uri);
-        request.accept(MediaType.APPLICATION_JSON);
-        request.contentType(MediaType.APPLICATION_JSON_TYPE);
-
-        MockHttpResponse response = new MockHttpResponse();
-
-        return sendHttpRequest(request, response);
-    }
-
-    private MockHttpResponse sendPostRequest(String uri, String body) throws URISyntaxException{
-        MockHttpRequest request = post(uri);
-        request.accept(MediaType.TEXT_HTML);
-        request.contentType(MediaType.APPLICATION_FORM_URLENCODED_TYPE);
-        request.content(body.getBytes());
-
-        MockHttpResponse response = new MockHttpResponse();
-
-        return sendHttpRequest(request, response);
-    }
-
-    private MockHttpResponse sendHttpRequest(MockHttpRequest request, MockHttpResponse response) {
-        dispatcher.invoke(request, response);
-        return response;
-    }
-
-    private static void print(String format, Object... args){
-        log.debug(format, args);
     }
 
 }

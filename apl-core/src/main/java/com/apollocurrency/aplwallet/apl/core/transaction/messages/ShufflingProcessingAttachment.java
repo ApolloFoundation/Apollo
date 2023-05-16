@@ -3,36 +3,28 @@
  */
 package com.apollocurrency.aplwallet.apl.core.transaction.messages;
 
-import com.apollocurrency.aplwallet.apl.core.app.ShufflingParticipant;
-import com.apollocurrency.aplwallet.apl.core.app.ShufflingTransaction;
-import com.apollocurrency.aplwallet.apl.core.app.Transaction;
-import com.apollocurrency.aplwallet.apl.core.transaction.TransactionType;
+import com.apollocurrency.aplwallet.apl.core.transaction.TransactionTypes;
+import com.apollocurrency.aplwallet.apl.core.transaction.types.shuffling.ShufflingProcessingTransactionType;
 import com.apollocurrency.aplwallet.apl.crypto.Convert;
 import com.apollocurrency.aplwallet.apl.crypto.Crypto;
+import lombok.ToString;
 import org.json.simple.JSONArray;
 import org.json.simple.JSONObject;
 
 import java.nio.ByteBuffer;
 import java.security.MessageDigest;
 import java.util.Arrays;
+import java.util.List;
 
 /**
- *
  * @author al
  */
+@ToString(callSuper = true)
 public final class ShufflingProcessingAttachment extends AbstractShufflingAttachment implements Prunable {
-    
+
     private static final byte[] emptyDataHash = Crypto.sha256().digest();
-
-    public static ShufflingProcessingAttachment parse(JSONObject attachmentData) {
-        if (!Appendix.hasAppendix(ShufflingTransaction.SHUFFLING_PROCESSING.getName(), attachmentData)) {
-            return null;
-        }
-        return new ShufflingProcessingAttachment(attachmentData);
-    }
-
-    volatile byte[][] data;
     final byte[] hash;
+    volatile byte[][] data;
 
     public ShufflingProcessingAttachment(ByteBuffer buffer) {
         super(buffer);
@@ -43,7 +35,7 @@ public final class ShufflingProcessingAttachment extends AbstractShufflingAttach
 
     public ShufflingProcessingAttachment(JSONObject attachmentData) {
         super(attachmentData);
-        JSONArray jsonArray = (JSONArray) attachmentData.get("data");
+        List<?> jsonArray = (List<?>) attachmentData.get("data");
         if (jsonArray != null) {
             this.data = new byte[jsonArray.size()][];
             for (int i = 0; i < this.data.length; i++) {
@@ -60,6 +52,13 @@ public final class ShufflingProcessingAttachment extends AbstractShufflingAttach
         super(shufflingId, shufflingStateHash);
         this.data = data;
         this.hash = null;
+    }
+
+    public static ShufflingProcessingAttachment parse(JSONObject attachmentData) {
+        if (!Appendix.hasAppendix(ShufflingProcessingTransactionType.NAME, attachmentData)) {
+            return null;
+        }
+        return new ShufflingProcessingAttachment(attachmentData);
     }
 
     @Override
@@ -86,6 +85,10 @@ public final class ShufflingProcessingAttachment extends AbstractShufflingAttach
         buffer.put(getHash());
     }
 
+    public void setData(byte[][] data) {
+        this.data = data;
+    }
+
     @Override
     public void putMyJSON(JSONObject attachment) {
         super.putMyJSON(attachment);
@@ -100,8 +103,8 @@ public final class ShufflingProcessingAttachment extends AbstractShufflingAttach
     }
 
     @Override
-    public TransactionType getTransactionType() {
-        return ShufflingTransaction.SHUFFLING_PROCESSING;
+    public TransactionTypes.TransactionTypeSpec getTransactionTypeSpec() {
+        return TransactionTypes.TransactionTypeSpec.SHUFFLING_PROCESSING;
     }
 
     @Override
@@ -124,20 +127,8 @@ public final class ShufflingProcessingAttachment extends AbstractShufflingAttach
     }
 
     @Override
-    public void loadPrunable(Transaction transaction, boolean includeExpiredPrunable) {
-        if (data == null && shouldLoadPrunable(transaction, includeExpiredPrunable)) {
-            data = ShufflingParticipant.getData(getShufflingId(), transaction.getSenderId());
-        }
-    }
-
-    @Override
     public boolean hasPrunableData() {
         return data != null;
     }
 
-    @Override
-    public void restorePrunableData(Transaction transaction, int blockTimestamp, int height) {
-        ShufflingParticipant.restoreData(getShufflingId(), transaction.getSenderId(), getData(), transaction.getTimestamp(), height);
-    }
-    
 }

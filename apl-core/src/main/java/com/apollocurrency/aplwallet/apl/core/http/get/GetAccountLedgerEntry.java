@@ -20,19 +20,18 @@
 
 package com.apollocurrency.aplwallet.apl.core.http.get;
 
-import com.apollocurrency.aplwallet.apl.core.account.AccountLedger;
-import com.apollocurrency.aplwallet.apl.core.account.LedgerEntry;
+import com.apollocurrency.aplwallet.apl.core.entity.state.account.LedgerEntry;
 import com.apollocurrency.aplwallet.apl.core.http.APITag;
 import com.apollocurrency.aplwallet.apl.core.http.AbstractAPIRequestHandler;
+import com.apollocurrency.aplwallet.apl.core.http.HttpParameterParserUtil;
 import com.apollocurrency.aplwallet.apl.core.http.JSONData;
 import com.apollocurrency.aplwallet.apl.core.http.JSONResponses;
-import com.apollocurrency.aplwallet.apl.core.http.ParameterParser;
-import com.apollocurrency.aplwallet.apl.util.AplException;
-import javax.enterprise.inject.Vetoed;
+import com.apollocurrency.aplwallet.apl.util.exception.AplException;
 import org.json.simple.JSONObject;
 import org.json.simple.JSONStreamAware;
 
-import javax.servlet.http.HttpServletRequest;
+import jakarta.enterprise.inject.Vetoed;
+import jakarta.servlet.http.HttpServletRequest;
 
 /**
  * <p>
@@ -182,29 +181,29 @@ public class GetAccountLedgerEntry extends AbstractAPIRequestHandler {
      * Create the GetAccountLedgerEntry instance
      */
     public GetAccountLedgerEntry() {
-        super(new APITag[] {APITag.ACCOUNTS}, "ledgerId", "includeTransaction", "includeHoldingInfo");
+        super(new APITag[]{APITag.ACCOUNTS}, "ledgerId", "includeTransaction", "includeHoldingInfo");
     }
 
     /**
      * Process the GetAccountLedgerEntry API request
      *
-     * @param   req                 API request
-     * @return                      API response
-     * @throws  AplException        Invalid request
+     * @param req API request
+     * @return API response
+     * @throws AplException Invalid request
      */
     @Override
     public JSONStreamAware processRequest(HttpServletRequest req) throws AplException {
         //
         // Process the request parameters
         //
-        long ledgerId = ParameterParser.getUnsignedLong(req, "ledgerId", true);
+        long ledgerId = HttpParameterParserUtil.getUnsignedLong(req, "ledgerId", true);
         boolean includeTransaction = "true".equalsIgnoreCase(req.getParameter("includeTransaction"));
         boolean includeHoldingInfo = "true".equalsIgnoreCase(req.getParameter("includeHoldingInfo"));
 
         //
         // Get the ledger entry
         //
-        LedgerEntry ledgerEntry = AccountLedger.getEntry(ledgerId, false);
+        LedgerEntry ledgerEntry = lookupAccountLedgerService().getEntry(ledgerId, false);
         if (ledgerEntry == null)
             return JSONResponses.UNKNOWN_ENTRY;
         //
@@ -218,7 +217,7 @@ public class GetAccountLedgerEntry extends AbstractAPIRequestHandler {
     /**
      * No required block parameters
      *
-     * @return                      FALSE to disable the required block parameters
+     * @return FALSE to disable the required block parameters
      */
     @Override
     protected boolean allowRequiredBlockParameters() {

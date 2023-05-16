@@ -14,7 +14,17 @@ public class NextGenerators {
     private Long height;
     private Long timestamp;
 
-    public NextGenerators() {}
+    public NextGenerators() {
+    }
+
+    public NextGenerators(Long activeCount, String lastBlock, List<GeneratorInfo> generators, Long height, Long timestamp) {
+
+        this.activeCount = activeCount;
+        this.lastBlock = lastBlock;
+        this.generators = generators;
+        this.height = height;
+        this.timestamp = timestamp;
+    }
 
     @Override
     public boolean equals(Object o) {
@@ -22,10 +32,10 @@ public class NextGenerators {
         if (!(o instanceof NextGenerators)) return false;
         NextGenerators that = (NextGenerators) o;
         return Objects.equals(activeCount, that.activeCount) &&
-                Objects.equals(lastBlock, that.lastBlock) &&
-                Objects.equals(generators, that.generators) &&
-                Objects.equals(height, that.height) &&
-                Objects.equals(timestamp, that.timestamp);
+            Objects.equals(lastBlock, that.lastBlock) &&
+            Objects.equals(generators, that.generators) &&
+            Objects.equals(height, that.height) &&
+            Objects.equals(timestamp, that.timestamp);
     }
 
     @Override
@@ -37,12 +47,12 @@ public class NextGenerators {
     @Override
     public String toString() {
         return "NextGenerators{" +
-                "activeCount=" + activeCount +
-                ", lastBlock='" + lastBlock + '\'' +
-                ", generators=" + generators +
-                ", height=" + height +
-                ", timestamp=" + timestamp +
-                '}';
+            "activeCount=" + activeCount +
+            ", lastBlock='" + lastBlock + '\'' +
+            ", generators=" + generators +
+            ", height=" + height +
+            ", timestamp=" + timestamp +
+            '}';
     }
 
     public Long getActiveCount() {
@@ -82,15 +92,6 @@ public class NextGenerators {
     }
 
     public void setTimestamp(Long timestamp) {
-        this.timestamp = timestamp;
-    }
-
-    public NextGenerators(Long activeCount, String lastBlock, List<GeneratorInfo> generators, Long height, Long timestamp) {
-
-        this.activeCount = activeCount;
-        this.lastBlock = lastBlock;
-        this.generators = generators;
-        this.height = height;
         this.timestamp = timestamp;
     }
 }

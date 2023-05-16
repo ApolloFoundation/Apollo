@@ -1,32 +1,32 @@
 package com.apollocurrency.aplwallet.apl.exchange.service.graph;
 
-import com.apollocurrency.aplwallet.apl.core.app.Block;
-import com.apollocurrency.aplwallet.apl.core.app.Blockchain;
-import com.apollocurrency.aplwallet.apl.core.app.Convert2;
 import com.apollocurrency.aplwallet.apl.core.app.observer.events.BlockEvent;
 import com.apollocurrency.aplwallet.apl.core.app.observer.events.BlockEventType;
-import com.apollocurrency.aplwallet.apl.core.task.TaskDispatchManager;
+import com.apollocurrency.aplwallet.apl.core.model.Block;
+import com.apollocurrency.aplwallet.apl.core.model.dex.DexOrder;
+import com.apollocurrency.aplwallet.apl.core.service.blockchain.Blockchain;
+import com.apollocurrency.aplwallet.apl.dex.core.model.DexCurrency;
+import com.apollocurrency.aplwallet.apl.dex.core.model.OrderScan;
 import com.apollocurrency.aplwallet.apl.exchange.dao.DexCandlestickDao;
 import com.apollocurrency.aplwallet.apl.exchange.dao.DexOrderDao;
-import com.apollocurrency.aplwallet.apl.exchange.model.DexCurrency;
-import com.apollocurrency.aplwallet.apl.exchange.model.DexOrder;
-import com.apollocurrency.aplwallet.apl.exchange.model.OrderScan;
+import com.apollocurrency.aplwallet.apl.util.Convert2;
 import com.apollocurrency.aplwallet.apl.util.ThreadUtils;
+import com.apollocurrency.aplwallet.apl.util.service.TaskDispatchManager;
 import com.apollocurrency.aplwallet.apl.util.task.Task;
 import lombok.extern.slf4j.Slf4j;
 
-import javax.annotation.PostConstruct;
-import javax.enterprise.event.Observes;
-import javax.inject.Inject;
-import javax.inject.Singleton;
+import jakarta.annotation.PostConstruct;
+import jakarta.enterprise.event.Observes;
+import jakarta.inject.Inject;
+import jakarta.inject.Singleton;
 import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReentrantLock;
 
 @Singleton
 @Slf4j
 public class DexOrderScanningService {
-    private static final int DEFAULT_ORDER_SELECT_LIMIT = 100;
     static final String SERVICE_NAME = "CandlesticksScanner";
+    private static final int DEFAULT_ORDER_SELECT_LIMIT = 100;
     private static final String TASK_NAME = "OrderProcessor";
     private static final int ORDER_SCANNING_HEIGHT_OFFSET = 50_000;
     private static final int ORDER_SCANNING_DELAY = 5 * 60 * 1000; // 5 minutes in ms
@@ -59,11 +59,11 @@ public class DexOrderScanningService {
     @PostConstruct
     public void init() {
         taskDispatchManager.newScheduledDispatcher(SERVICE_NAME)
-                .schedule(Task.builder()
-                        .name(TASK_NAME)
-                        .task(this::tryScan)
-                        .delay(ORDER_SCANNING_DELAY)
-                        .build());
+            .schedule(Task.builder()
+                .name(TASK_NAME)
+                .task(this::tryScan)
+                .delay(ORDER_SCANNING_DELAY)
+                .build());
     }
 
     void tryScan() {
@@ -71,8 +71,7 @@ public class DexOrderScanningService {
         int toHeight = height - ORDER_SCANNING_HEIGHT_OFFSET;
         try {
             startScan(toHeight);
-        }
-        catch (Exception e) {
+        } catch (Exception e) {
             log.error("Error during order scanning, end height - " + toHeight, e);
         }
     }
@@ -94,8 +93,7 @@ public class DexOrderScanningService {
                     return;
                 }
                 orders = scanPerformer.doIteration(currency, toHeight, orderSelectLimit);
-            }
-            finally {
+            } finally {
                 lock.unlock();
             }
             ThreadUtils.sleep(200);
@@ -117,11 +115,10 @@ public class DexOrderScanningService {
                     if (order != null) {
                         dbId = order.getDbId();
                     }
-                    scanPerformer.saveOrderScan(new OrderScan(cur,  dbId));
+                    scanPerformer.saveOrderScan(new OrderScan(cur, dbId));
                 }
             }
-        }
-        finally {
+        } finally {
             lock.unlock();
         }
     }

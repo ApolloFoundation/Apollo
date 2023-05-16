@@ -20,39 +20,41 @@
 
 package com.apollocurrency.aplwallet.apl.core.http.post;
 
-import static com.apollocurrency.aplwallet.apl.core.http.JSONResponses.UNKNOWN_GOODS;
-
-import com.apollocurrency.aplwallet.apl.core.account.Account;
-import com.apollocurrency.aplwallet.apl.core.dgs.DGSService;
-import com.apollocurrency.aplwallet.apl.core.dgs.model.DGSGoods;
+import com.apollocurrency.aplwallet.apl.core.entity.state.account.Account;
+import com.apollocurrency.aplwallet.apl.core.entity.state.dgs.DGSGoods;
 import com.apollocurrency.aplwallet.apl.core.http.APITag;
-import com.apollocurrency.aplwallet.apl.core.http.ParameterParser;
+import com.apollocurrency.aplwallet.apl.core.http.HttpParameterParserUtil;
+import com.apollocurrency.aplwallet.apl.core.service.state.DGSService;
 import com.apollocurrency.aplwallet.apl.core.transaction.messages.Attachment;
-import com.apollocurrency.aplwallet.apl.core.transaction.messages.DigitalGoodsPriceChange;
-import com.apollocurrency.aplwallet.apl.util.AplException;
+import com.apollocurrency.aplwallet.apl.core.transaction.messages.DGSPriceChangeAttachment;
+import com.apollocurrency.aplwallet.apl.util.exception.AplException;
 import org.json.simple.JSONStreamAware;
 
-import javax.enterprise.inject.Vetoed;
-import javax.enterprise.inject.spi.CDI;
-import javax.servlet.http.HttpServletRequest;
+import jakarta.enterprise.inject.Vetoed;
+import jakarta.enterprise.inject.spi.CDI;
+import jakarta.servlet.http.HttpServletRequest;
+
+import static com.apollocurrency.aplwallet.apl.core.http.JSONResponses.UNKNOWN_GOODS;
 
 @Vetoed
-public final class DGSPriceChange extends CreateTransaction {
+public final class DGSPriceChange extends CreateTransactionHandler {
+
+    private DGSService service = CDI.current().select(DGSService.class).get();
 
     public DGSPriceChange() {
-        super(new APITag[] {APITag.DGS, APITag.CREATE_TRANSACTION},
-                "goods", "priceATM");
+        super(new APITag[]{APITag.DGS, APITag.CREATE_TRANSACTION},
+            "goods", "priceATM");
     }
-    private DGSService service = CDI.current().select(DGSService.class).get();
+
     @Override
     public JSONStreamAware processRequest(HttpServletRequest req) throws AplException {
-        Account account = ParameterParser.getSenderAccount(req);
-        DGSGoods goods = ParameterParser.getGoods(service, req);
-        long priceATM = ParameterParser.getPriceATM(req);
+        Account account = HttpParameterParserUtil.getSenderAccount(req);
+        DGSGoods goods = HttpParameterParserUtil.getGoods(service, req);
+        long priceATM = HttpParameterParserUtil.getPriceATM(req);
         if (goods.isDelisted() || goods.getSellerId() != account.getId()) {
             return UNKNOWN_GOODS;
         }
-        Attachment attachment = new DigitalGoodsPriceChange(goods.getId(), priceATM);
+        Attachment attachment = new DGSPriceChangeAttachment(goods.getId(), priceATM);
         return createTransaction(req, account, attachment);
     }
 

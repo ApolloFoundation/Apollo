@@ -1,23 +1,19 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+<project xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns="http://maven.apache.org/POM/4.0.0"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
   <modelVersion>4.0.0</modelVersion>
 
   <parent>
     <groupId>com.apollocurrency</groupId>
-    <artifactId>apollo-wallet</artifactId>
-    <version>1.41.8</version>
+    <artifactId>apollo-blockchain</artifactId>
+    <version>2.0.1</version>
   </parent>
-
   <artifactId>apl-core</artifactId>
   <name>apl-core</name>
   <packaging>jar</packaging>
 
   <dependencies>
-    <dependency>
-      <groupId>com.apollocurrency</groupId>
-      <artifactId>apl-crypto</artifactId>
-      <version>${project.version}</version>
-    </dependency>
+    <!-- CORE BOM DEPENDENCIES -->
     <dependency>
       <groupId>com.apollocurrency</groupId>
       <artifactId>apl-utils</artifactId>
@@ -29,9 +25,41 @@
       <version>${project.version}</version>
     </dependency>
     <dependency>
-      <groupId>io.firstbridge</groupId>
-      <artifactId>cryptolib</artifactId>
+      <groupId>com.apollocurrency</groupId>
+      <artifactId>apl-api2</artifactId>
+      <version>${project.version}</version>
     </dependency>
+    <dependency>
+      <groupId>com.apollocurrency</groupId>
+      <artifactId>apl-db-updater</artifactId>
+      <version>${project.version}</version>
+    </dependency>
+
+    <dependency>
+      <groupId>com.apollocurrency</groupId>
+      <artifactId>apl-dex</artifactId>
+      <version>${project.version}</version>
+    </dependency>
+
+    <dependency>
+      <groupId>com.apollocurrency</groupId>
+      <artifactId>apl-smc</artifactId>
+      <version>${project.version}</version>
+    </dependency>
+
+    <dependency>
+      <groupId>com.apollocurrency</groupId>
+      <artifactId>apl-vault-wallet</artifactId>
+      <version>${project.version}</version>
+    </dependency>
+
+    <dependency>
+      <groupId>com.apollocurrency</groupId>
+      <artifactId>smc-lib</artifactId>
+      <version>${smc-lib.version}</version>
+    </dependency>
+
+    <!-- EXT BOM DEPENDENCIES -->
     <dependency>
       <groupId>ch.qos.logback</groupId>
       <artifactId>logback-classic</artifactId>
@@ -57,17 +85,30 @@
       <groupId>com.fasterxml.jackson.core</groupId>
       <artifactId>jackson-databind</artifactId>
     </dependency>
-    <!-- json-simple should be gone after new REST completion -->
+    <!-- json-simple should be gone after swagger-jaxrs2 new REST completion -->
     <dependency>
       <groupId>com.googlecode.json-simple</groupId>
       <artifactId>json-simple</artifactId>
+    </dependency>
+    <dependency>
+      <groupId>org.json</groupId>
+      <artifactId>json</artifactId>
     </dependency>
     <!-- json-simple should be gone after new REST completion -->
 
     <!-- REST:  Need to put api here because strange things happens without it  -->
     <dependency>
-      <groupId>javax.ws.rs</groupId>
-      <artifactId>javax.ws.rs-api</artifactId>
+      <groupId>jakarta.ws.rs</groupId>
+      <artifactId>jakarta.ws.rs-api</artifactId>
+    </dependency>
+    <dependency>
+      <groupId>com.h2database</groupId>
+      <artifactId>h2</artifactId>
+    </dependency>
+
+    <dependency>
+      <groupId>org.jboss.weld.servlet</groupId>
+      <artifactId>weld-servlet-shaded</artifactId>
     </dependency>
     <!-- RESTEasy runtime dependencies -->
     <dependency>
@@ -78,7 +119,6 @@
     <dependency>
       <groupId>commons-fileupload</groupId>
       <artifactId>commons-fileupload</artifactId>
-      <version>1.4</version>
     </dependency>
 
     <dependency>
@@ -86,12 +126,16 @@
       <artifactId>resteasy-jackson2-provider</artifactId>
     </dependency>
     <!-- we do not need validation at the moment, but keep in mind that it is interface
-         only and requires implementation laso, e.g hybernate-validator
-            <dependency>
-                <groupId>org.jboss.resteasy</groupId>
-                <artifactId>resteasy-validator-provider-11</artifactId>
-            </dependency>
-    -->
+    only and requires implementation also, e.g hybernate-validator -->
+    <dependency>
+      <groupId>org.jboss.resteasy</groupId>
+      <artifactId>resteasy-validator-provider</artifactId>
+    </dependency>
+    <dependency>
+      <groupId>org.jboss.resteasy</groupId>
+      <artifactId>resteasy-multipart-provider</artifactId>
+    </dependency>
+
     <dependency>
       <groupId>org.jboss.resteasy</groupId>
       <artifactId>resteasy-cdi</artifactId>
@@ -109,10 +153,10 @@
       <artifactId>jboss-logging-processor</artifactId>
     </dependency>
 
-  <!--Validation dependencies-->
+    <!--Validation dependencies-->
     <dependency>
-      <groupId>javax.validation</groupId>
-      <artifactId>validation-api</artifactId>
+      <groupId>jakarta.validation</groupId>
+      <artifactId>jakarta.validation-api</artifactId>
     </dependency>
     <dependency>
       <groupId>org.hibernate.validator</groupId>
@@ -123,58 +167,47 @@
       <artifactId>paranamer</artifactId>
     </dependency>
 
+    <!-- This stuff is used by hibernate-validator dynamically in runtime -->
     <dependency>
-      <groupId>javax.el</groupId>
-      <artifactId>javax.el-api</artifactId>
+      <groupId>jakarta.el</groupId>
+      <artifactId>jakarta.el-api</artifactId>
     </dependency>
     <dependency>
-      <groupId>org.glassfish.web</groupId>
-      <artifactId>javax.el</artifactId>
+      <groupId>org.glassfish</groupId>
+      <artifactId>jakarta.el</artifactId>
     </dependency>
 
     <!-- Swagger runtime dependencies -->
     <!-- Swagger annotation for API auto-documenting -->
     <dependency>
       <groupId>io.swagger.core.v3</groupId>
-      <artifactId>swagger-annotations</artifactId>
+      <artifactId>swagger-annotations-jakarta</artifactId>
     </dependency>
     <dependency>
       <groupId>io.swagger.core.v3</groupId>
-      <artifactId>swagger-jaxrs2</artifactId>
+      <artifactId>swagger-jaxrs2-jakarta</artifactId>
     </dependency>
     <dependency>
       <groupId>io.swagger.core.v3</groupId>
-      <artifactId>swagger-models</artifactId>
+      <artifactId>swagger-models-jakarta</artifactId>
+    </dependency>
+    <dependency>
+      <groupId>org.testcontainers</groupId>
+      <artifactId>mariadb</artifactId>
+    </dependency>
+    <!-- https://mvnrepository.com/artifact/org.mariadb.jdbc/mariadb-java-client -->
+    <dependency>
+      <groupId>org.mariadb.jdbc</groupId>
+      <artifactId>mariadb-java-client</artifactId>
     </dependency>
 
     <dependency>
-      <groupId>javax.servlet</groupId>
-      <artifactId>javax.servlet-api</artifactId>
-    </dependency>
-    <dependency>
-      <groupId>org.eclipse.jetty</groupId>
-      <artifactId>jetty-proxy</artifactId>
-    </dependency>
-    <dependency>
-      <groupId>org.eclipse.jetty</groupId>
-      <artifactId>jetty-server</artifactId>
-    </dependency>
-    <dependency>
-      <groupId>org.eclipse.jetty</groupId>
-      <artifactId>jetty-servlet</artifactId>
+      <groupId>org.eclipse.jetty.websocket</groupId>
+      <artifactId>websocket-core-server</artifactId>
     </dependency>
     <dependency>
       <groupId>org.eclipse.jetty.websocket</groupId>
-      <artifactId>websocket-api</artifactId>
-    </dependency>
-    <dependency>
-      <groupId>org.eclipse.jetty.websocket</groupId>
-      <artifactId>websocket-client</artifactId>
-      <classifier>hybrid</classifier>
-    </dependency>
-    <dependency>
-      <groupId>org.eclipse.jetty.websocket</groupId>
-      <artifactId>websocket-server</artifactId>
+      <artifactId>websocket-jetty-client</artifactId>
     </dependency>
     <dependency>
       <groupId>org.eclipse.jetty</groupId>
@@ -193,6 +226,11 @@
     <dependency>
       <groupId>org.junit.platform</groupId>
       <artifactId>junit-platform-engine</artifactId>
+      <scope>test</scope>
+    </dependency>
+    <dependency>
+      <groupId>org.skyscreamer</groupId>
+      <artifactId>jsonassert</artifactId>
       <scope>test</scope>
     </dependency>
     <dependency>
@@ -222,7 +260,7 @@
     </dependency>
     <dependency>
       <groupId>org.mockito</groupId>
-      <artifactId>mockito-core</artifactId>
+      <artifactId>mockito-inline</artifactId>
       <scope>test</scope>
     </dependency>
     <dependency>
@@ -235,11 +273,12 @@
       <artifactId>janino</artifactId>
       <scope>test</scope>
     </dependency>
-
     <dependency>
-      <groupId>com.j256.two-factor-auth</groupId>
-      <artifactId>two-factor-auth</artifactId>
+      <groupId>org.testcontainers</groupId>
+      <artifactId>junit-jupiter</artifactId>
+      <scope>test</scope>
     </dependency>
+
     <dependency>
       <groupId>commons-codec</groupId>
       <artifactId>commons-codec</artifactId>
@@ -251,10 +290,6 @@
     <dependency>
       <groupId>com.googlecode.log4jdbc</groupId>
       <artifactId>log4jdbc</artifactId>
-    </dependency>
-    <dependency>
-      <groupId>com.h2database</groupId>
-      <artifactId>h2</artifactId>
     </dependency>
     <dependency>
       <groupId>com.zaxxer</groupId>
@@ -285,77 +320,38 @@
     <dependency>
       <groupId>com.apollocurrency.antifraud</groupId>
       <artifactId>antifraud</artifactId>
-      <version>1.0.4</version>
-    </dependency>
-
-    <!-- Ethereum API -->
-    <dependency>
-      <groupId>org.web3j</groupId>
-      <artifactId>core</artifactId>
-      <version>4.5.6</version>
-    </dependency>
-
-    <!-- https://mvnrepository.com/artifact/org.ethereum/ethereumj-core -->
-    <dependency>
-      <groupId>org.ethereum</groupId>
-      <artifactId>ethereumj-core</artifactId>
-      <version>1.7.2-RELEASE</version>
-      <exclusions>
-        <exclusion>
-          <groupId>org.springframework</groupId>
-          <artifactId>spring-context</artifactId>
-        </exclusion>
-        <exclusion>
-          <groupId>org.springframework</groupId>
-          <artifactId>spring-orm</artifactId>
-        </exclusion>
-        <exclusion>
-          <groupId>org.springframework</groupId>
-          <artifactId>spring-tx</artifactId>
-        </exclusion>
-        <exclusion>
-          <groupId>com.madgag.spongycastle</groupId>
-          <artifactId>prov</artifactId>
-        </exclusion>
-        <exclusion>
-          <groupId>org.ethereum</groupId>
-          <artifactId>rocksdbjni</artifactId>
-        </exclusion>
-      </exclusions>
     </dependency>
 
     <dependency>
       <groupId>com.fasterxml.jackson.datatype</groupId>
       <artifactId>jackson-datatype-joda</artifactId>
-      <version>2.9.8</version>
-    </dependency>
-
-    <dependency>
-      <groupId>io.swagger</groupId>
-      <artifactId>swagger-annotations</artifactId>
-      <version>1.5.21</version>
-      <type>jar</type>
-    </dependency>
-
-    <dependency>
-      <groupId>p6spy</groupId>
-      <artifactId>p6spy</artifactId>
     </dependency>
   </dependencies>
-
-  <repositories>
-    <repository>
-      <id>binary-repo</id>
-      <url>https://dl.bintray.com/ethereum/maven/</url>
-    </repository>
-  </repositories>
 
   <build>
     <plugins>
       <plugin>
         <artifactId>maven-surefire-plugin</artifactId>
       </plugin>
-
+      <plugin>
+        <groupId>org.codehaus.mojo</groupId>
+        <artifactId>build-helper-maven-plugin</artifactId>
+        <executions>
+          <execution>
+            <id>add-source</id>
+            <phase>generate-sources</phase>
+            <goals>
+              <goal>add-source</goal>
+            </goals>
+            <configuration>
+              <sources>
+                <source>
+                  src/gen/java</source>
+              </sources>
+            </configuration>
+          </execution>
+        </executions>
+      </plugin>
       <plugin>
         <groupId>org.apache.maven.plugins</groupId>
         <artifactId>maven-resources-plugin</artifactId>
@@ -367,7 +363,8 @@
               <goal>copy-resources</goal>
             </goals>
             <configuration>
-              <outputDirectory>${basedir}/src/main/resources/com/apollocurrency/aplwallet/apl/core/rest/i18n</outputDirectory>
+              <outputDirectory>${basedir}/src/main/resources/com/apollocurrency/aplwallet/apl/core/rest/i18n
+              </outputDirectory>
               <resources>
                 <resource>
                   <directory>${basedir}/src/test/resources/i18n</directory>
@@ -387,7 +384,7 @@
         <configuration>
           <filesets>
             <fileset>
-              <directory>${pom.basedir}</directory>
+              <directory>${project.basedir}</directory>
               <includes>
                 <include>unit-test-db/test_db/**</include>
                 <include>**/*.db</include>

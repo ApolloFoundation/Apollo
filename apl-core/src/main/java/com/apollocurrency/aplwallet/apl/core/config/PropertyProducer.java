@@ -5,15 +5,15 @@
 package com.apollocurrency.aplwallet.apl.core.config;
 
 import com.apollocurrency.aplwallet.apl.util.StringUtils;
+import com.apollocurrency.aplwallet.apl.util.cdi.config.Property;
 import com.apollocurrency.aplwallet.apl.util.injectable.PropertiesHolder;
 
-import javax.enterprise.inject.Produces;
-import javax.enterprise.inject.spi.Annotated;
-import javax.enterprise.inject.spi.InjectionPoint;
-import javax.inject.Inject;
+import jakarta.enterprise.inject.Produces;
+import jakarta.enterprise.inject.spi.Annotated;
+import jakarta.enterprise.inject.spi.InjectionPoint;
+import jakarta.inject.Inject;
 import java.util.Arrays;
 import java.util.List;
-import java.util.Random;
 
 public class PropertyProducer {
     private PropertiesHolder propertiesHolder;
@@ -26,6 +26,7 @@ public class PropertyProducer {
     public void setPropertiesHolder(PropertiesHolder propertiesHolder) {
         this.propertiesHolder = propertiesHolder;
     }
+
     @Property
     @Produces
     public String produceString(final InjectionPoint ip) {
@@ -47,7 +48,7 @@ public class PropertyProducer {
     public int produceInt(final InjectionPoint ip) {
         String defaultValue = getDefaultValue(ip);
         if (defaultValue != null) {
-            return propertiesHolder.getIntProperty((getKey(ip)),Integer.parseInt(defaultValue));
+            return propertiesHolder.getIntProperty((getKey(ip)), Integer.parseInt(defaultValue));
         } else {
             return propertiesHolder.getIntProperty((getKey(ip)));
         }
@@ -63,6 +64,7 @@ public class PropertyProducer {
             return propertiesHolder.getBooleanProperty((getKey(ip)));
         }
     }
+
     @Property
     @Produces
     public List<String> produceListOfStrings(final InjectionPoint ip) {
@@ -72,11 +74,6 @@ public class PropertyProducer {
         } else {
             return propertiesHolder.getStringListProperty((getKey(ip)));
         }
-    }
-
-    @Produces
-    public Random produceRandom() {
-        return new Random();
     }
 
     private String getKey(final InjectionPoint ip) {

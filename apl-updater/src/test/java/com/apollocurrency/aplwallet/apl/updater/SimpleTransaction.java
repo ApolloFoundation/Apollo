@@ -1,14 +1,15 @@
 /*
- * Copyright © 2018-2019 Apollo Foundation
+ * Copyright © 2018-2021 Apollo Foundation
  */
 
 package com.apollocurrency.aplwallet.apl.updater;
 
-import com.apollocurrency.aplwallet.apl.core.app.Block;
-import com.apollocurrency.aplwallet.apl.core.app.Transaction;
+import com.apollocurrency.aplwallet.apl.core.model.Block;
+import com.apollocurrency.aplwallet.apl.core.model.Transaction;
+import com.apollocurrency.aplwallet.apl.core.signature.Signature;
 import com.apollocurrency.aplwallet.apl.core.transaction.TransactionType;
+import com.apollocurrency.aplwallet.apl.core.transaction.TransactionTypes;
 import com.apollocurrency.aplwallet.apl.core.transaction.messages.AbstractAppendix;
-import com.apollocurrency.aplwallet.apl.core.transaction.messages.Appendix;
 import com.apollocurrency.aplwallet.apl.core.transaction.messages.Attachment;
 import com.apollocurrency.aplwallet.apl.core.transaction.messages.EncryptToSelfMessageAppendix;
 import com.apollocurrency.aplwallet.apl.core.transaction.messages.EncryptedMessageAppendix;
@@ -17,34 +18,16 @@ import com.apollocurrency.aplwallet.apl.core.transaction.messages.PhasingAppendi
 import com.apollocurrency.aplwallet.apl.core.transaction.messages.PrunableEncryptedMessageAppendix;
 import com.apollocurrency.aplwallet.apl.core.transaction.messages.PrunablePlainMessageAppendix;
 import com.apollocurrency.aplwallet.apl.core.transaction.messages.PublicKeyAnnouncementAppendix;
-import com.apollocurrency.aplwallet.apl.util.AplException;
-import com.apollocurrency.aplwallet.apl.util.Filter;
-import org.json.simple.JSONObject;
 
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 
 public class SimpleTransaction implements Transaction {
     private long id;
     private int height;
     private TransactionType type;
     private Attachment attachment;
-
-    public void setId(long id) {
-        this.id = id;
-    }
-
-    public void setHeight(int height) {
-        this.height = height;
-    }
-
-    public void setType(TransactionType type) {
-        this.type = type;
-    }
-
-    public void setAttachment(Attachment attachment) {
-        this.attachment = attachment;
-    }
 
     public SimpleTransaction(long id, TransactionType type, int height) {
         this.id = id;
@@ -60,29 +43,23 @@ public class SimpleTransaction implements Transaction {
         this(tr.getId(), tr.getType(), tr.getHeight());
     }
 
+    public void setAttachment(Attachment attachment) {
+        this.attachment = attachment;
+    }
+
     @Override
-    public boolean isUnconfirmedDuplicate(Map<TransactionType, Map<String, Integer>> unconfirmedDuplicates) {
+    public Transaction getTransactionImpl() {
+        return this;
+    }
+
+    @Override
+    public boolean isUnconfirmedDuplicate(Map<TransactionTypes.TransactionTypeSpec, Map<String, Integer>> unconfirmedDuplicates) {
         return false;
-    }
-
-    @Override
-    public void setFeeATM(long feeATM) {
-        throw new UnsupportedOperationException();
-    }
-
-    @Override
-    public void sign(byte[] keySeed) throws AplException.NotValidException {
-
     }
 
     @Override
     public long getId() {
         return id;
-    }
-
-    @Override
-    public long getDbId() {
-        throw new UnsupportedOperationException();
     }
 
     @Override
@@ -96,13 +73,13 @@ public class SimpleTransaction implements Transaction {
     }
 
     @Override
-    public byte[] getSenderPublicKey() {
-        return new byte[0];
+    public boolean hasValidSignature() {
+        return true;
     }
 
     @Override
-    public boolean shouldSavePublicKey() {
-        return false;
+    public byte[] getSenderPublicKey() {
+        return new byte[0];
     }
 
     @Override
@@ -115,6 +92,10 @@ public class SimpleTransaction implements Transaction {
         return height;
     }
 
+    public void setHeight(int height) {
+        this.height = height;
+    }
+
     @Override
     public long getBlockId() {
         return 0;
@@ -125,9 +106,11 @@ public class SimpleTransaction implements Transaction {
         return null;
     }
 
+    @Override
     public void setBlock(Block block) {
     }
 
+    @Override
     public void unsetBlock() {
     }
 
@@ -136,6 +119,7 @@ public class SimpleTransaction implements Transaction {
         return 0;
     }
 
+    @Override
     public void setIndex(int index) {
     }
 
@@ -170,6 +154,11 @@ public class SimpleTransaction implements Transaction {
     }
 
     @Override
+    public void setFeeATM(long feeATM) {
+        throw new UnsupportedOperationException();
+    }
+
+    @Override
     public String getReferencedTransactionFullHash() {
         return null;
     }
@@ -180,8 +169,8 @@ public class SimpleTransaction implements Transaction {
     }
 
     @Override
-    public byte[] getSignature() {
-        return new byte[0];
+    public Signature getSignature() {
+        return null;
     }
 
     @Override
@@ -205,41 +194,7 @@ public class SimpleTransaction implements Transaction {
     }
 
     @Override
-    public boolean verifySignature() {
-        return false;
-    }
-
-    @Override
-    public byte[] getBytes() {
-        return new byte[0];
-    }
-
-    public byte[] bytes() {
-        return new byte[0];
-    }
-
-    @Override
-    public byte[] getUnsignedBytes() {
-        return new byte[0];
-    }
-
-    @Override
-    public JSONObject getJSONObject() {
-        return new JSONObject();
-    }
-
-    @Override
-    public JSONObject getPrunableAttachmentJSON() {
-        return null;
-    }
-
-    @Override
     public byte getVersion() {
-        return 0;
-    }
-
-    @Override
-    public int getFullSize() {
         return 0;
     }
 
@@ -273,10 +228,12 @@ public class SimpleTransaction implements Transaction {
         return null;
     }
 
+    @Override
     public boolean hasPrunablePlainMessage() {
         return false;
     }
 
+    @Override
     public boolean hasPrunableEncryptedMessage() {
         return false;
     }
@@ -297,16 +254,6 @@ public class SimpleTransaction implements Transaction {
     }
 
     @Override
-    public List<AbstractAppendix> getAppendages(boolean includeExpiredPrunable) {
-        return null;
-    }
-
-    @Override
-    public List<AbstractAppendix> getAppendages(Filter<Appendix> filter, boolean includeExpiredPrunable) {
-        return null;
-    }
-
-    @Override
     public int getECBlockHeight() {
         return 0;
     }
@@ -314,6 +261,41 @@ public class SimpleTransaction implements Transaction {
     @Override
     public long getECBlockId() {
         return 0;
+    }
+
+    @Override
+    public boolean ofType(TransactionTypes.TransactionTypeSpec spec) {
+        return false;
+    }
+
+    @Override
+    public boolean isNotOfType(TransactionTypes.TransactionTypeSpec spec) {
+        return false;
+    }
+
+    @Override
+    public Optional<String> getErrorMessage() {
+        return Optional.empty();
+    }
+
+    @Override
+    public void fail(String message) {
+
+    }
+
+    @Override
+    public boolean isFailed() {
+        return false;
+    }
+
+    @Override
+    public boolean canFailDuringExecution() {
+        return false;
+    }
+
+    @Override
+    public void resetFail() {
+
     }
 
 }

@@ -22,26 +22,28 @@ package com.apollocurrency.aplwallet.apl.core.http.get;
 
 import com.apollocurrency.aplwallet.apl.core.http.APITag;
 import com.apollocurrency.aplwallet.apl.core.http.AbstractAPIRequestHandler;
-import com.apollocurrency.aplwallet.apl.core.http.ParameterParser;
-import com.apollocurrency.aplwallet.apl.core.phasing.PhasingPollService;
-import com.apollocurrency.aplwallet.apl.util.AplException;
+import com.apollocurrency.aplwallet.apl.core.http.HttpParameterParserUtil;
+import com.apollocurrency.aplwallet.apl.core.service.state.PhasingPollService;
+import com.apollocurrency.aplwallet.apl.util.exception.AplException;
 import org.json.simple.JSONObject;
 import org.json.simple.JSONStreamAware;
 
-import javax.enterprise.inject.Vetoed;
-import javax.enterprise.inject.spi.CDI;
-import javax.servlet.http.HttpServletRequest;
+import jakarta.enterprise.inject.Vetoed;
+import jakarta.enterprise.inject.spi.CDI;
+import jakarta.servlet.http.HttpServletRequest;
 
 @Vetoed
 public class GetAccountPhasedTransactionCount extends AbstractAPIRequestHandler {
 
+    private static PhasingPollService phasingPollService = CDI.current().select(PhasingPollService.class).get();
+
     public GetAccountPhasedTransactionCount() {
         super(new APITag[]{APITag.ACCOUNTS, APITag.PHASING}, "account");
     }
-    private static PhasingPollService phasingPollService = CDI.current().select(PhasingPollService.class).get();
+
     @Override
     public JSONStreamAware processRequest(HttpServletRequest req) throws AplException {
-        long accountId = ParameterParser.getAccountId(req, true);
+        long accountId = HttpParameterParserUtil.getAccountId(req, true);
         JSONObject response = new JSONObject();
         response.put("numberOfPhasedTransactions", phasingPollService.getAccountPhasedTransactionCount(accountId));
         return response;

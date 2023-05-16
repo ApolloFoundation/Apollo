@@ -4,15 +4,19 @@
 package com.apollocurrency.aplwallet.apl.core.transaction.messages;
 
 import com.apollocurrency.aplwallet.apl.crypto.Convert;
-import java.nio.ByteBuffer;
+import lombok.EqualsAndHashCode;
+import lombok.ToString;
 import org.json.simple.JSONObject;
 
+import java.nio.ByteBuffer;
+
 /**
- *
  * @author al
  */
+@EqualsAndHashCode(callSuper = true)
+@ToString
 public abstract class MonetarySystemExchangeAttachment extends AbstractAttachment implements MonetarySystemAttachment {
-    
+
     final long currencyId;
     final long rateATM;
     final long units;
@@ -27,7 +31,7 @@ public abstract class MonetarySystemExchangeAttachment extends AbstractAttachmen
     public MonetarySystemExchangeAttachment(JSONObject attachmentData) {
         super(attachmentData);
         this.currencyId = Convert.parseUnsignedLong((String) attachmentData.get("currency"));
-        this.rateATM = attachmentData.containsKey("rateATM") ? Convert.parseLong(attachmentData.get("rateATM")) : Convert.parseLong(attachmentData.get("rateNQT"));
+        this.rateATM = Convert.parseLong(attachmentData.get("rateATM"));
         this.units = Convert.parseLong(attachmentData.get("units"));
     }
 
@@ -68,5 +72,5 @@ public abstract class MonetarySystemExchangeAttachment extends AbstractAttachmen
     public long getUnits() {
         return units;
     }
-    
+
 }

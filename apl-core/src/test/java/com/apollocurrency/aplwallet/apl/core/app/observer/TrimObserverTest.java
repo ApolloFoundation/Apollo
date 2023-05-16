@@ -4,17 +4,16 @@
 
 package com.apollocurrency.aplwallet.apl.core.app.observer;
 
-import com.apollocurrency.aplwallet.apl.core.app.Block;
-import com.apollocurrency.aplwallet.apl.core.app.Blockchain;
-import com.apollocurrency.aplwallet.apl.core.app.TrimConfig;
-import com.apollocurrency.aplwallet.apl.core.app.TrimService;
 import com.apollocurrency.aplwallet.apl.core.app.observer.events.BlockEvent;
 import com.apollocurrency.aplwallet.apl.core.app.observer.events.BlockEventBinding;
 import com.apollocurrency.aplwallet.apl.core.app.observer.events.BlockEventType;
 import com.apollocurrency.aplwallet.apl.core.app.observer.events.TrimConfigUpdated;
-import com.apollocurrency.aplwallet.apl.core.chainid.BlockchainConfig;
-import com.apollocurrency.aplwallet.apl.core.chainid.HeightConfig;
-import com.apollocurrency.aplwallet.apl.util.Constants;
+import com.apollocurrency.aplwallet.apl.core.model.Block;
+import com.apollocurrency.aplwallet.apl.core.config.PropertyProducer;
+import com.apollocurrency.aplwallet.apl.core.config.TrimEventCommand;
+import com.apollocurrency.aplwallet.apl.core.service.appdata.TrimService;
+import com.apollocurrency.aplwallet.apl.core.service.blockchain.Blockchain;
+import com.apollocurrency.aplwallet.apl.util.ThreadUtils;
 import com.apollocurrency.aplwallet.apl.util.injectable.PropertiesHolder;
 import lombok.extern.slf4j.Slf4j;
 import org.jboss.weld.junit.MockBean;
@@ -27,11 +26,14 @@ import org.junit.jupiter.api.parallel.Execution;
 import org.junit.jupiter.api.parallel.ExecutionMode;
 import org.mockito.Mockito;
 
-import javax.enterprise.event.Event;
-import javax.enterprise.util.AnnotationLiteral;
-import javax.inject.Inject;
+import jakarta.enterprise.event.Event;
+import jakarta.enterprise.util.AnnotationLiteral;
+import jakarta.inject.Inject;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Random;
+import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.atomic.AtomicInteger;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
@@ -39,65 +41,58 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.Mockito.doAnswer;
 import static org.mockito.Mockito.doReturn;
 import static org.mockito.Mockito.mock;
-import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
-import static org.mockito.Mockito.verifyZeroInteractions;
+import static org.mockito.Mockito.verifyNoInteractions;
 
 @Slf4j
 @EnableWeld
 @Execution(ExecutionMode.CONCURRENT)
 class TrimObserverTest {
     TrimService trimService = mock(TrimService.class);
-    BlockchainConfig blockchainConfig = Mockito.mock(BlockchainConfig.class);
     PropertiesHolder propertiesHolder = mock(PropertiesHolder.class);
-    HeightConfig config = Mockito.mock(HeightConfig.class);
     Random random = Mockito.mock(Random.class);
     Blockchain blockchain = mock(Blockchain.class);
-    {
-        doReturn(config).when(blockchainConfig).getCurrentConfig();
-        doReturn(12).doReturn(809).when(random).nextInt(Constants.DEFAULT_TRIM_FREQUENCY - 1); // emulate random
-    }
-
     @WeldSetup
-    WeldInitiator weld = WeldInitiator.from(TrimObserver.class)
-            .addBeans(MockBean.of(trimService, TrimService.class))
-            .addBeans(MockBean.of(blockchainConfig, BlockchainConfig.class))
-            .addBeans(MockBean.of(propertiesHolder, PropertiesHolder.class))
-            .addBeans(MockBean.of(random, Random.class))
-            .addBeans(MockBean.of(blockchain, Blockchain.class))
-            .build();
+    WeldInitiator weld = WeldInitiator.from(TrimObserver.class, PropertyProducer.class)
+        .addBeans(MockBean.of(trimService, TrimService.class))
+        .addBeans(MockBean.of(propertiesHolder, PropertiesHolder.class))
+        .addBeans(MockBean.of(blockchain, Blockchain.class))
+        .addBeans(MockBean.of(new TrimConfig(5, 1000, 50), TrimConfig.class))
+        .build();
     @Inject
     Event<Block> blockEvent;
     @Inject
-    Event<TrimConfig> trimEvent;
+    Event<TrimEventCommand> trimEvent;
     @Inject
     TrimObserver observer;
 
+
+    public TrimObserverTest() {
+        doReturn(2000).when(propertiesHolder).getIntProperty("apl.maxRollback", 720);
+    }
+
     @BeforeEach
     void setUp() {
-        doReturn(true).when(config).isShardingEnabled();
-        doReturn(true).when(propertiesHolder).getBooleanProperty("apl.noshardcreate");
+        observer.setRandom(random);
     }
 
     @Test
     void testOnTrimConfigUpdated() {
-        doReturn(5000).when(config).getShardingFrequency();
-
-        assertTrue(observer.isTrimDerivedTablesEnabled());
+        assertTrue(observer.trimEnabled());
         fireBlockPushed(5000);
         fireBlockPushed(6000);
-        assertEquals(2, observer.getTrimHeights().size());
+        assertEquals(2, observer.getTrimQueue().size());
 
         trimEvent.select(new AnnotationLiteral<TrimConfigUpdated>() {
-        }).fire(new TrimConfig(false, true));
+        }).fire(new TrimEventCommand(false, true));
 
-        assertFalse(observer.isTrimDerivedTablesEnabled());
-        assertEquals(0, observer.getTrimHeights().size());
+        assertFalse(observer.trimEnabled());
+        assertEquals(0, observer.getTrimQueue().size());
 
         trimEvent.select(new AnnotationLiteral<TrimConfigUpdated>() {
-        }).fire(new TrimConfig(true, false));
+        }).fire(new TrimEventCommand(true, false));
 
-        assertTrue(observer.isTrimDerivedTablesEnabled());
+        assertTrue(observer.trimEnabled());
     }
 
     @Test
@@ -107,7 +102,7 @@ class TrimObserverTest {
 
         blockEvent.select(literal(BlockEventType.BLOCK_SCANNED)).fire(block);
 
-        verify(trimService).doTrimDerivedTablesOnBlockchainHeight(5000, false);
+        verify(trimService).trimDerivedTables(5000);
     }
 
     @Test
@@ -115,11 +110,11 @@ class TrimObserverTest {
         Block block = mock(Block.class);
         doReturn(6000).when(block).getHeight();
         trimEvent.select(new AnnotationLiteral<TrimConfigUpdated>() {
-        }).fire(new TrimConfig(false, true));
+        }).fire(new TrimEventCommand(false, true));
 
         blockEvent.select(literal(BlockEventType.BLOCK_SCANNED)).fire(block);
 
-        verifyZeroInteractions(trimService);
+        verifyNoInteractions(trimService);
     }
 
     @Test
@@ -129,54 +124,103 @@ class TrimObserverTest {
 
         blockEvent.select(literal(BlockEventType.BLOCK_SCANNED)).fire(block);
 
-        verifyZeroInteractions(trimService);
+        verifyNoInteractions(trimService);
     }
 
     @Test
     void testOnBlockPushed() {
-        doReturn(5000).when(config).getShardingFrequency();
+        AtomicInteger stepCounter = mockBlockchainHeights(List.of(5000, 6000, 6014));
 
-        fireBlockPushed(4999); // skippped
+        fireBlockPushed(4999); // skipped
         fireBlockPushed(5000); // accepted
         fireBlockPushed(6000); // accepted
         fireBlockPushed(6001); // skipped
-//        waitTrim(List.of(5000, 5190)); // doesn't work, test hangs here
+
+        CompletableFuture.runAsync(() -> {
+            stepCounter.set(1);
+            ThreadUtils.sleep(100);
+            stepCounter.set(2);
+            ThreadUtils.sleep(100);
+            stepCounter.set(3);
+        });
+        waitTrim(List.of(5000, 6000));
     }
 
     @Test
     void testOnBlockPushedWithDisabledTrim() throws InterruptedException {
-        doReturn(5000).when(config).getShardingFrequency();
+        doAnswer(invocation -> {
+            trimEvent.select(new AnnotationLiteral<TrimConfigUpdated>() {
+            }).fire(new TrimEventCommand(false, false));
+            return null;
+        }).when(trimService).trimDerivedTables(5000);
+        AtomicInteger stepCounter = mockBlockchainHeights(List.of(5000, 6000, 7001));
 
         fireBlockPushed(4998);
         fireBlockPushed(4999);
         fireBlockPushed(5000);
         fireBlockPushed(6000);
-        assertEquals(2, observer.getTrimHeights().size());
-        doAnswer(invocation -> {
-            trimEvent.select(new AnnotationLiteral<TrimConfigUpdated>() {
-            }).fire(new TrimConfig(false, false));
-            return null;
-        }).when(trimService).trimDerivedTables(5000, true);
-//        waitTrim(List.of(5000)); // doesn't work, test hangs here
-//        assertFalse(observer.isTrimDerivedTables());
-        Thread.sleep(4000);
-        verify(trimService, times(1)).isTrimming();
+        CompletableFuture.runAsync(() -> {
+            stepCounter.set(1);
+            ThreadUtils.sleep(100);
+            stepCounter.set(2);
+        }).join();
+        waitTrim(List.of(5000));
+        assertFalse(observer.trimEnabled());
+        fireBlockPushed(7000);
+        stepCounter.set(3);
         trimEvent.select(new AnnotationLiteral<TrimConfigUpdated>() {
-        }).fire(new TrimConfig(true, false));
-//        waitTrim(List.of(5190));
+        }).fire(new TrimEventCommand(true, false));
+        waitTrim(List.of(6000, 7000));
+    }
+
+
+    @Test
+    void testOnBlockPushed_trimDelayAdjustements() {
+        long beginningTime = System.currentTimeMillis();
+        doReturn(0).when(random).nextInt(6); // simulating 1s delay
+        observer.setTrimConfig(new TrimConfig(6, 1000, 0));
+        AtomicInteger stepCounter = mockBlockchainHeights(List.of(100000));
+
+        fireBlockPushed(4998);
+        fireBlockPushed(4999);
+        fireBlockPushed(5000);
+        fireBlockPushed(6000);
+        fireBlockPushed(7000);
+
+        assertEquals(List.of(5000, 6000, 7000), observer.getTrimQueue());
+
+        fireBlockPushed(8000);
+        fireBlockPushed(9000);
+        fireBlockPushed(10000);
+        fireBlockPushed(15000);
+        fireBlockPushed(16000);
+        stepCounter.set(1);
+
+        waitTrim(List.of(5000, 6000, 7000, 8000, 9000, 10000, 15000, 16000));
+        // verify at least 3 one second delays between trims, no delays for > 4 trimHeights accumulated
+        assertTrue(System.currentTimeMillis() - beginningTime > 3000);
+    }
+
+    private AtomicInteger mockBlockchainHeights(List<Integer> heights) {
+        AtomicInteger stepCounter = new AtomicInteger();
+        ArrayList<Integer> modifiableHeights = new ArrayList<>(heights);
+        modifiableHeights.add(0, 0);
+        doAnswer(invocationOnMock -> modifiableHeights.get(stepCounter.get())).when(blockchain).getHeight();
+        return stepCounter;
     }
 
     private void waitTrim(List<Integer> heights) {
         log.trace("WAIT for heights = [{}]", heights.size());
         while (true) {
             try {
-                Thread.sleep(500);
+                Thread.sleep(10);
                 for (Integer height : heights) {
-                    verify(trimService).trimDerivedTables(height, true);
+                    verify(trimService).trimDerivedTables(height);
                 }
+                Thread.sleep(10);
                 break;
+            } catch (Throwable ignored) {
             }
-            catch (Throwable ignored) {}
         }
     }
 

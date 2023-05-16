@@ -1,20 +1,24 @@
 /*
- * Copyright © 2018-2019 Apollo Foundation
+ * Copyright © 2018-2021 Apollo Foundation
  */
 
 package com.apollocurrency.aplwallet.apl.core.transaction.messages;
 
-import com.apollocurrency.aplwallet.apl.core.account.Account;
-import com.apollocurrency.aplwallet.apl.core.app.Fee;
-import com.apollocurrency.aplwallet.apl.core.app.Transaction;
-import com.apollocurrency.aplwallet.apl.util.AplException;
+import com.apollocurrency.aplwallet.apl.core.entity.state.account.Account;
+import com.apollocurrency.aplwallet.apl.core.model.Transaction;
+import com.apollocurrency.aplwallet.apl.core.transaction.Fee;
+import com.apollocurrency.aplwallet.apl.util.exception.AplException;
+import com.apollocurrency.aplwallet.apl.util.io.WriteBuffer;
+import lombok.EqualsAndHashCode;
 import org.json.simple.JSONObject;
 
 import java.nio.ByteBuffer;
+import java.nio.ByteOrder;
 
 /**
  *
  */
+@EqualsAndHashCode
 public abstract class AbstractAppendix implements Appendix {
 
     private final byte version;
@@ -35,6 +39,16 @@ public abstract class AbstractAppendix implements Appendix {
         this.version = getVersion() > 0 ? getVersion() : 1;
     }
 
+    public abstract void apply(Transaction transaction, Account senderAccount, Account recipientAccount);
+
+    public abstract void putMyBytes(ByteBuffer buffer);
+
+    public abstract void putMyJSON(JSONObject json);
+
+    public abstract int getMySize();
+
+    public abstract boolean  isPhasable();
+
     public abstract String getAppendixName();
 
     @Override
@@ -47,10 +61,21 @@ public abstract class AbstractAppendix implements Appendix {
         return getMyFullSize() + (version > 0 ? 1 : 0);
     }
 
-    public abstract int getMySize();
 
     public int getMyFullSize() {
         return getMySize();
+    }
+
+    @Override
+    public void putBytes(WriteBuffer buffer) {
+        int size = getSize();
+        if (size > 0) {
+            ByteBuffer appBuffer = ByteBuffer.allocate(size);
+            appBuffer.order(ByteOrder.LITTLE_ENDIAN);
+            putBytes(appBuffer);
+
+            buffer.write(appBuffer.array());
+        }
     }
 
     @Override
@@ -61,8 +86,6 @@ public abstract class AbstractAppendix implements Appendix {
         putMyBytes(buffer);
     }
 
-    public abstract void putMyBytes(ByteBuffer buffer);
-
     @Override
     public final JSONObject getJSONObject() {
         JSONObject json = new JSONObject();
@@ -71,7 +94,6 @@ public abstract class AbstractAppendix implements Appendix {
         return json;
     }
 
-    public abstract void putMyJSON(JSONObject json);
 
     @Override
     public byte getVersion() {
@@ -83,45 +105,25 @@ public abstract class AbstractAppendix implements Appendix {
     }
 
     @Override
-    public int getBaselineFeeHeight() {
-        return 1;
-    }
-
-    @Override
-    public Fee getBaselineFee(Transaction transaction) {
+    public Fee getBaselineFee(Transaction transaction, long oneAPL) {
         return Fee.NONE;
-    }
-
-    @Override
-    public int getNextFeeHeight() {
-        return Integer.MAX_VALUE;
-    }
-
-    @Override
-    public Fee getNextFee(Transaction transaction) {
-        return getBaselineFee(transaction);
     }
 
     public void validateAtFinish(Transaction transaction, int blockHeight) throws AplException.ValidationException {
         if (!isPhased(transaction)) {
             return;
         }
-        validate(transaction, blockHeight);
+        performStateIndependentValidation(transaction, blockHeight);
+        performStateDependentValidation(transaction, blockHeight);
     }
-
-    public abstract void apply(Transaction transaction, Account senderAccount, Account recipientAccount);
-
-    public void loadPrunable(Transaction transaction) {
-        loadPrunable(transaction, false);
-    }
-
-    public void loadPrunable(Transaction transaction, boolean includeExpiredPrunable) {}
-
-    public abstract boolean isPhasable();
 
     @Override
     public final boolean isPhased(Transaction transaction) {
         return isPhasable() && transaction.getPhasing() != null;
     }
 
+    @Override
+    public void undo(Transaction transaction, Account senderAccount, Account recipientAccount) {
+
+    }
 }

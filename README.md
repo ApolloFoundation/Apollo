@@ -1,114 +1,188 @@
-# Apollo Blockchain Platform 
+
+# Apollo Blockchain Platform  Core
 
 Apollo is being developed by the Apollo Foundation and supporting members of the community.
 
+This repository contains core classes of Apollo blockchain platform and main executable of Apollo-blockchain component.
+
+
+There are other components that are parts of Apollo:
+
+1. [Apollo-web-ui](https://github.com/ApolloFoundation/Apollo-web-ui): Web wallet UI that is served by Apollo blockchain node and can be accersed by browser at http://localhost:7876
+2. [Apollo-dektop](https://github.com/ApolloFoundation/Apollo-desktop) Desktop wallet UI. Apollo-web-ui must be installed tobe able to run Apollo desktop wallet.
+3. [Apollo-tools](https://github.com/ApolloFoundation/Apollo-tools): "swiss knife" of tools for node maintenance, transaction signing, etc.
+4. [Apollo-bom-ext](https://github.com/ApolloFoundation/Apollo-bom-ext) This module required in compilation time oly. It contains BOM of all external libraries used by Apollo components. 
+
 
 ## Requirements
-Java 11 is required to run the desktop clients.
 
-# Links #
-- [website](https://Apollocurrency.com)
-- [twitter](https://Twitter.com/Apollocurrency)
-- [telegram](https://T.me/apollocommunity)
-- [facebook](https://www.facebook.com/Apolloprivacycoin)
-- [youtube](https://www.youtube.com/channel/UCZbB3PAUlkSKuBYEMG-l_CQ)
-
-- [releases and installers] (https://github.com/ApolloFoundation/Apollo/releases)
-
-# Specifications #
+Java 17 (JRE) is required to run the most Apollo components.
 
 
-    Concensus: POS (Proof of Stake)
-    
-    Total Supply: 21 Billion
-    
-    Circulating: 15 Billion
-    
-    Mining: Pre-Mined
-    
-    Inflation: 0%
+# Build instruction 
 
-# Build instruction #
+## Disclaimer.
 
-If you have already installed ___jdk 11___ and ___maven___, you can skip __"Preparation steps" section__, but its recommended to __review__ 
-your software versions using instructions from __"Preparation steps" section__
+Apollo team is actively working on modularity of Apollo blockchain so build scripts and source structure is subject of changes. Apollo project consists of several modules written in different programming languages. If you are not an expert in Java and Maven, JavaScript, NodeJs, npm, yarn, C/C++ and Cmakle please use our release builds at [Apollo Releases page](https://github.com/ApolloFoundation/Apollo/releases).
+
+If you feel like an expert, please use build instructions below. But also please note that instructions may be slightly outdated, especially in "development" branches of the Apollo project repositories.
+
+## Java versions
+
+We use LTS JDK version 17 in the development and in the production environments. To be exact, we use openjdk 17 builds from github.com site: [GraalVM Community Edition Java Development Kit v.17](https://github.com/graalvm/graalvm-ce-builds/releases). You can download and install JDK for your platform by the link. 
+
+Apollo code runs well on latest JDKs but is not thoroughly tested. So you can use the latest JDKs, e.g. version 19 or above on your own risk.
+
+If you are developer, we'd like to recommend [SDKMan kit](https://sdkman.io/) to manage installed Java platforms.
+
+
+### GraalVM additional component 'Graal.js engine' for SmartContracts
+When you have GraalVM already installed locally you have to install additional Graal.js component using JDK command in order to run smart contracts on local Apollo node.
+
+Run GraalVM JDK command below to see what is installed locally.
+
+    $ gu list
+
+Probably you'll see a list like that. We see only 'GraalVM Core' component is installed with JDK. 
+
+ComponentId | Version | Component name| Stability | Origin
+|:---|:---:|:---|:---:|:---:|
+graalvm | 22.3.0 | GraalVM Core | Supported ||
+
+
+    $ gu available
+
+'Available' command gives the list of available, additional components for downloading and installing.
+
+If you are missing 'Graal.js' component (most probably) you have to install it by next command.
+
+    $ gu install js
+
+When check the installed component list again.
+
+    $ gu list
+
+ComponentId | Version | Component name| Stability | Origin
+|:---|:---:|:---|:---:|:---:|
+graalvm | 22.3.0 | GraalVM Core | Supported ||
+js | 22.3.0 | Graal.js | Supported | github.com
+
 
 ## Preparation steps ##
-   1. Download [Java Development Kit (jdk), version 11](https://www.oracle.com/technetwork/java/javase/downloads/jdk11-downloads-5066655.html)
-   2. Setup `JAVA_HOME` variable to point on unpacked jdk if not set
-   3. Add to `PATH` variable path to java binaries -> `JAVA_HOME/bin`
-      > NOTE: if your computer has jdk 8, jdk 9 or jdk 10, you should remove it from `PATH` variable
-   4. Open command line and execute: `java -version`. 
-        
+
+   1. Verify your JDK installation by running `java -version` in console:
+   
     Output example: 
 <pre>
-  java version "11.0.2" 2019-01-15 LTS<br>
-  Java(TM) SE Runtime Environment 18.9 (build 11.0.2+9-LTS)<br>
-  Java HotSpot(TM) 64-Bit Server VM 18.9 (build 11.0.2+9-LTS, mixed mode)
+openjdk version "17.0.5" 2022-10-18
+OpenJDK Runtime Environment GraalVM CE 22.3.0 (build 17.0.5+8-jvmci-22.3-b08)
+OpenJDK 64-Bit Server VM GraalVM CE 22.3.0 (build 17.0.5+8-jvmci-22.3-b08, mixed mode, sharing)
 </pre>
 
-   5. If ___version matches___ downloaded version, your ___java___ was __installed successfully__ and you can __proceed with next steps_. If __version
-   does not
-   match__,
-   ___delete old version___, _setup
-    variables_ (`JAVA_HOME`, `PATH`)_ and try again. __PATH should not contain few java bin directories!__
-   6. Download build tool for project - [maven](http://maven.apache.org/download.cgi) from official site
-   7. Unpack maven binaries into convenient folder
-   8. Create `M2_HOME` variable or update existing to point to unpacked maven folder
-   9. Add to `PATH` variable path to maven binaries __M2_HOME/bin__
-   10. Open command line and execute: `mvn -v`. 
+   2. If `version` matches 17.0.x version, your ___java___ was __installed successfully__ and you can __proceed with next steps_. 
+
+   3. Clone this repository	
+
    
+   4. Open command line, change your current directory to this project root and execute
+   
+- for Linux:
+```shell script
+./mvnw -v
+```
+- for Windows cmd:
+```cmd
+mvnw -v
+```
+     
     Output example:
 <pre>
-  Apache Maven 3.6.0 (97c98ec64a1fdfee7767ce5ffb20918da4f719f3; 2018-10-24T21:41:47+03:00)<br>
-  Maven home: /usr/local/maven  Maven home: /usr/local/maven<br>
-  Java version: 11.0.2, vendor: Oracle Corporation, runtime: /usr/java/jdk-11.0.2<br>
-  Default locale: en_US, platform encoding: UTF-8<br>
-  OS name: "linux", version: "4.20.16-200.fc29.x86_64", arch: "amd64", family: "unix"<br>
+Apache Maven 3.6.2 (40f52333136460af0dc0d7232c0dc0bcf0d9e117; 2019-08-27T18:06:16+03:00)
+Maven home: /home/al/.m2/wrapper/dists/apache-maven-3.6.2-bin/795eh28tki48bv3l67maojf0ra/apache-maven-3.6.2
+Java version: 17.0.5, vendor: GraalVM Community, runtime: /usr/lib/jvm/22.3.r17-grl
+Default locale: en_US, platform encoding: UTF-8
+OS name: "linux", version: "5.4.0-137-generic", arch: "amd64", family: "unix"
+
 </pre>
-   11. If ___maven version, javaHome and java_version___ __matches__ your downloaded java and maven -> your maven was __installed successfully__ and
-   you are able to __build and run wallet__! Just choose your OS from the list below and perform specified steps.
+   7. If output looks similar to example, you can perform build step.
 
-## Linux/MacOS
-   * Clone repository using git command `git clone` or download archive file of source code
-   * go to source directory
-   * run ___mvn install___ 
-   * go to bin directory and run ___apl-run-desktop.sh___ 
-   * application should start in desktop mode
-   * if you require command line mode -> use ___apl-run.sh___ instead of ___apl-run-desktop.sh___
+### Linux/MacOS
+   * run `./mvnw clean install` (or `./mvnc -DskipTests clean install` for skipping tests)
 
-## Windows
-   * Clone repository using git command `git clone` or download archive file of source code
-   * go to source directory
-   * run ___mvn install___ 
-   * go to bin directory and run ___apl-run-desktop.bat___
-   * application should start in desktop mode
-   * if you require command line mode -> use ___apl-run.bat___ instead of ___apl-run-desktop.bat___
+### Windows
+   * run `mvnw.bat clean install` (or `mvnw.bat -DskipTests` for skipping tests)  
 
-## Command-line options
+###Other modules required to build Apollo components
 
-apl-exec.jar and all scripts accept command line options. To get list of available options, run with --help switch.
-Most important options:
+    Module  [Apollo-bom-ext](https://github.com/ApolloFoundation/Apollo-bom-ext) contains all external library dependencies used by Apollo blockchain. Usually you do not need to build it because it is in out public artefact repository and downloaded by build scipts authamtically. But if you are developer and have neccessity to change external dependency, please refer to this module.
+    
+### Installation artefacts
 
-        --net, -n index of network to run with. 0 is main net, 1 is 1st public test net with stable release,
-        2 is 2nd testnet with development/staging code and 3 is 3rd test net with experimental features
-        --testnet means run with 1st test net. Higher priority then --net switch
+The final artifact that is ready to install and run located in the ___apl-exec/target___ directory and has name like  ___apollo-blockchain-2.0.1-NoOS-NoArch.zip___.
 
-        --debug, -d  from 0 to 4. 0 is ERROR level of logs, 4 is TRACE
+Unzip it to some location and run by scripts in ___ApolloWallet/apollo-blockchain/bin___ directory.
 
-Example:
+You'll probably need __Apollo-web-ui__ and __Apollo-desktop__ components to use Apollo wallet.
+Please follow instructions in [Apollo-web-ui](https://github.com/ApolloFoundation/Apollo-web-ui) and [Apollo-desktop](https://github.com/ApolloFoundation/Apollo-desktop) project repositories.
 
-    bin/apl-run.sh -d 4 -n 2
-
-This command runs blockchain application with 2nd test net and debug level TRACE
-
-## IDE
+### IDE
 
 Project is entirely on Maven v3 and could be loaded in any IDE that supports Maven.
 
+## GIT branches
 
-## DEX
+We follow GIT FLOW procedure in our development and use following branches:
 
-#### Generate eth smart contract class.
+__master__ branch contains stable code of the latest release. It is also tagged for each public release. Please see "Tags" in the "barcnh" dropdown menu. Please use this branch to compile Apollo components.
 
-`$ web3j solidity generate --javaTypes -b dex.bin -a dex.abi -o $Path/Apollo/apl-core/src/main/java/com/apollocurrency/aplwallet/apl/eth/contracts/ -p com.apollocurrency.aplwallet.apl.eth.contracts`
+__develop__ branch contains latest development version. Use this branch if you are developer/contributor.
+
+__stage__ branch contains release preparation work of the last release. Do not use this branch if you are not release
+engineer
+
+fix/*, feature/*, bugfix/** - temporary branches used by developers. Usually those branches get merged to ___develop___
+and deleted after work is done.
+
+## MariaDB
+
+### Initiate
+
+    1) Open repository https://github.com/ApolloFoundation/dbpackages
+    
+    2) Change directory to mariadb-pkg and Run script depends on OS. 
+        ./maria_db_linux_pkg.sh
+        ./maria_db_osx_pkg.sh
+        ./maria_db_windows_pkg.sh
+        
+    3) Unzip target packege and start db installation process. (<BASE_DIR>/ApolloWallet/apollo-mariadb is a basedir path)
+    
+    4) Change directory to apollo-mariadb and run script 
+        ./install-mariadb.sh
+
+    The default database data directory is <BASE_DIR>/ApolloWallet/apl-blockchain-db. 
+    To specify the custom path of the database data directory use parameter --apl-db-dir, 
+    example: 
+       ./install-mariadb.sh --apl-db-dir /home/user/.apl-blockchain/apl-blockchain-db
+
+## DOCKER Installation
+
+#### On Linux
+https://www.digitalocean.com/community/tutorials/how-to-install-and-use-docker-on-ubuntu-20-04-ru
+should be completed
+
+Article about MariaDB in docker
+https://mariadb.com/kb/en/installing-and-using-mariadb-via-docker/
+
+### How create local docker image for unit tests
+See [creation local Docker image link](/unit-test-Docker-Image/README.md)
+
+#### Check IP table / firewall settings to access docker
+https://github.com/testcontainers/testcontainers-java/issues/572#issuecomment-517831833
+
+$ sudo iptables -L
+```
+Chain INPUT (policy ACCEPT)
+target     prot opt source               destination         
+ACCEPT     all  --  172.17.0.0/24        anywhere
+```            
+    

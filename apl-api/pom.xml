@@ -1,11 +1,12 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+<project xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns="http://maven.apache.org/POM/4.0.0"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
   <modelVersion>4.0.0</modelVersion>
 
   <parent>
     <groupId>com.apollocurrency</groupId>
-    <artifactId>apollo-wallet</artifactId>
-    <version>1.41.8</version>
+    <artifactId>apollo-blockchain</artifactId>
+    <version>2.0.1</version>
   </parent>
 
   <artifactId>apl-api</artifactId>
@@ -13,11 +14,14 @@
   <packaging>jar</packaging>
 
   <dependencies>
-    <!-- TODO: remove this dependency later. API must not depend on anything except JSOM annotations and Swagger -->
+    <!-- EXT BOM DEPENDENCIES -->
     <dependency>
-      <groupId>com.apollocurrency</groupId>
-      <artifactId>apl-crypto</artifactId>
-      <version>${project.version}</version>
+      <groupId>org.jboss.resteasy</groupId>
+      <artifactId>resteasy-multipart-provider</artifactId>
+    </dependency>
+    <dependency>
+      <groupId>jakarta.ws.rs</groupId>
+      <artifactId>jakarta.ws.rs-api</artifactId>
     </dependency>
 
     <!-- POPJO <-> JSON -->
@@ -37,12 +41,11 @@
     <!-- Swagger annotation for API auto-documenting -->
     <dependency>
       <groupId>io.swagger.core.v3</groupId>
-      <artifactId>swagger-annotations</artifactId>
+      <artifactId>swagger-annotations-jakarta</artifactId>
     </dependency>
     <dependency>
       <groupId>io.swagger.core.v3</groupId>
       <artifactId>swagger-models</artifactId>
-      <version>${swagger.version}</version>
     </dependency>
 
     <!-- unit tests -->
@@ -85,6 +88,27 @@
     <dependency>
       <groupId>ch.qos.logback</groupId>
       <artifactId>logback-classic</artifactId>
+      <scope>test</scope>
+    </dependency>
+
+<!--    Hibernate validator dependencies for tests-->
+    <dependency>
+      <groupId>jakarta.validation</groupId>
+      <artifactId>jakarta.validation-api</artifactId>
+    </dependency>
+    <dependency>
+      <groupId>org.hibernate.validator</groupId>
+      <artifactId>hibernate-validator-cdi</artifactId>
+      <scope>test</scope>
+    </dependency>
+    <dependency>
+      <groupId>jakarta.el</groupId>
+      <artifactId>jakarta.el-api</artifactId>
+      <scope>test</scope>
+    </dependency>
+    <dependency>
+      <groupId>org.glassfish</groupId>
+      <artifactId>jakarta.el</artifactId>
       <scope>test</scope>
     </dependency>
 

@@ -4,18 +4,44 @@
 
 package com.apollocurrency.aplwallet.apl.updater;
 
-import static org.slf4j.LoggerFactory.getLogger;
-
 import org.slf4j.Logger;
 
+import jakarta.enterprise.inject.Vetoed;
 import java.io.InputStream;
 import java.util.Properties;
-import javax.enterprise.inject.Vetoed;
+
+import static org.slf4j.LoggerFactory.getLogger;
 
 @Vetoed
 public class UpdaterConstants {
+    // Platform dependent updater constants
+    //TODO: check update scripts executions
+    public static final String WINDOWS_UPDATE_SCRIPT_PATH = "updater\\update.vbs";
+    public static final String LINUX_UPDATE_SCRIPT_PATH = "updater/update.sh";
+    public static final String MAC_OS_UPDATE_SCRIPT_PATH = "updater/update.sh";
+    public static final String TEMP_DIR_PREFIX = "Apollo-update";
+    public static final String DOWNLOADED_FILE_NAME = "Apollo.jar";
+    public static final int MAX_SHUTDOWN_TIMEOUT = 5; //seconds
+    // Certificate constants (AuthorityCheckerImpl)
+    public static final String CERTIFICATE_DIRECTORY = "conf/certs";
+    public static final String FIRST_DECRYPTION_CERTIFICATE_PREFIX = "1_";
+    public static final String SECOND_DECRYPTION_CERTIFICATE_PREFIX = "2_";
+    public static final String CERTIFICATE_SUFFIX = ".crt";
+    public static final String INTERMEDIATE_CERTIFICATE_NAME = "intermediate" + CERTIFICATE_SUFFIX;
+    public static final String CA_CERTIFICATE_NAME = "rootCA" + CERTIFICATE_SUFFIX;
+    public static final String CA_CERTIFICATE_URL = "https://raw.githubusercontent.com/ApolloFoundation/Apollo/master/apl-conf/src/main/resources/conf/certs/" + CA_CERTIFICATE_NAME;
     private static final Logger LOG = getLogger(UpdaterConstants.class);
     private static final Properties updaterProperties;
+    // run tools for update scripts
+    public static final String WINDOWS_RUN_TOOL_PATH = getPropertyOrDefault("updater.platformDependentUpdater.windowsRunToolPath", "cscript.exe");
+    public static final String LINUX_RUN_TOOL_PATH = getPropertyOrDefault("updater.platformDependentUpdater.linuxRunToolPath", "/bin/bash");
+    public static final String MAC_OS_RUN_TOOL_PATH = getPropertyOrDefault("updater.platformDependentUpdater.macOSRunToolPath", "/bin/bash");
+    // Downloader constants
+    public static final int DOWNLOAD_ATTEMPTS = getIntPropertyOrDefault("updater.downloader.numberOfAttempts", 10);
+    public static final int NEXT_ATTEMPT_TIMEOUT = getIntPropertyOrDefault("updater.downloader.attemptTimeout", 60);
+    //'Important update' constants
+    public static final int MIN_BLOCKS_DELAY = getIntPropertyOrDefault("updater.importantUpdate.minBlocksWaiting", 10);
+    public static final int MAX_BLOCKS_DELAY = getIntPropertyOrDefault("updater.importantUpdate.maxBlocksWaiting", 20);
 
     static {
         updaterProperties = new Properties();
@@ -23,42 +49,14 @@ public class UpdaterConstants {
         ClassLoader classloader = Thread.currentThread().getContextClassLoader();
         try (InputStream is = classloader.getResourceAsStream("conf/updater.properties")) {
             updaterProperties.load(is);
-        }
-        catch (Throwable e) {
+        } catch (Throwable e) {
             LOG.error("Unable to load Updater config", e);
         }
     }
-    // Platform dependent updater constants
-    //TODO: check update scripts executions
-   public static final String WINDOWS_UPDATE_SCRIPT_PATH = "updater\\update.vbs";
-   public static final String LINUX_UPDATE_SCRIPT_PATH = "updater/update.sh";
-   public static final String MAC_OS_UPDATE_SCRIPT_PATH = "updater/update.sh";
-   // run tools for update scripts
-   public static final String WINDOWS_RUN_TOOL_PATH = getPropertyOrDefault("updater.platformDependentUpdater.windowsRunToolPath", "cscript.exe");
-   public static final String LINUX_RUN_TOOL_PATH = getPropertyOrDefault("updater.platformDependentUpdater.linuxRunToolPath", "/bin/bash");
-   public static final String MAC_OS_RUN_TOOL_PATH = getPropertyOrDefault("updater.platformDependentUpdater.macOSRunToolPath", "/bin/bash");
 
-   // Downloader constants
-   public static final int DOWNLOAD_ATTEMPTS = getIntPropertyOrDefault("updater.downloader.numberOfAttempts", 10);
-   public static final int NEXT_ATTEMPT_TIMEOUT = getIntPropertyOrDefault("updater.downloader.attemptTimeout", 60);
-   public static final String TEMP_DIR_PREFIX = "Apollo-update";
-   public static final String DOWNLOADED_FILE_NAME = "Apollo.jar";
-   public static final int MAX_SHUTDOWN_TIMEOUT = 5; //seconds
+    private UpdaterConstants() {
+    }
 
-    // Certificate constants (AuthorityCheckerImpl)
-   public static final String CERTIFICATE_DIRECTORY = "conf/certs";
-   public static final String FIRST_DECRYPTION_CERTIFICATE_PREFIX = "1_";
-   public static final String SECOND_DECRYPTION_CERTIFICATE_PREFIX = "2_";
-   public static final String CERTIFICATE_SUFFIX = ".crt";
-   public static final String INTERMEDIATE_CERTIFICATE_NAME = "intermediate" + CERTIFICATE_SUFFIX;
-   public static final String CA_CERTIFICATE_NAME = "rootCA" + CERTIFICATE_SUFFIX;
-   public static final String CA_CERTIFICATE_URL = "https://raw.githubusercontent.com/ApolloFoundation/Apollo/master/apl-conf/src/main/resources/conf/certs/" + CA_CERTIFICATE_NAME;
-
-   //'Important update' constants
-    public static final int MIN_BLOCKS_DELAY = getIntPropertyOrDefault("updater.importantUpdate.minBlocksWaiting", 10);
-    public static final int MAX_BLOCKS_DELAY = getIntPropertyOrDefault("updater.importantUpdate.maxBlocksWaiting", 20);
-
-   private UpdaterConstants() {}
     private static String getPropertyOrDefault(String propertyName, String defaultValue) {
         if (updaterProperties != null) {
             String property = updaterProperties.getProperty(propertyName);

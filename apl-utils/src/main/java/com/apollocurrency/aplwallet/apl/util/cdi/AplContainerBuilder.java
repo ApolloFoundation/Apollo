@@ -1,6 +1,7 @@
 package com.apollocurrency.aplwallet.apl.util.cdi;
 
 import org.jboss.weld.bootstrap.spi.BeanDiscoveryMode;
+import org.jboss.weld.config.ConfigurationKey;
 import org.jboss.weld.environment.se.Weld;
 import org.jboss.weld.environment.se.WeldContainer;
 import org.slf4j.Logger;
@@ -26,6 +27,8 @@ public class AplContainerBuilder {
 
     private List<Class<?>> interceptors;
 
+    private boolean concurrentDeploymentDisabled = false;
+
 //    private List<Class<?>> recursiveScanPackages;
 
     public AplContainerBuilder containerId(String id) {
@@ -45,9 +48,14 @@ public class AplContainerBuilder {
         return this;
     }
 
-    public AplContainerBuilder devMode(){
-        devMode=true;
+    public AplContainerBuilder devMode() {
+        devMode = true;
         System.setProperty("org.jboss.weld.probe.jmxSupport", "true");
+        return this;
+    }
+
+    public AplContainerBuilder disableConcurrentDeployment() {
+        concurrentDeploymentDisabled = true;
         return this;
     }
 
@@ -85,8 +93,12 @@ public class AplContainerBuilder {
             interceptors.forEach(weld::addInterceptor);
         }
 
-        if(devMode){
-          weld.enableDevMode();
+        if (devMode) {
+            weld.enableDevMode();
+        }
+
+        if (concurrentDeploymentDisabled) {
+            weld.property(ConfigurationKey.CONCURRENT_DEPLOYMENT.get(), "false");
         }
 
         WeldContainer newContainer = weld.initialize();

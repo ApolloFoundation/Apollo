@@ -20,22 +20,22 @@
 
 package com.apollocurrency.aplwallet.apl.core.http.get;
 
-import com.apollocurrency.aplwallet.apl.core.app.Transaction;
 import com.apollocurrency.aplwallet.apl.core.app.VoteWeighting;
-import com.apollocurrency.aplwallet.apl.core.db.DbIterator;
+import com.apollocurrency.aplwallet.apl.core.model.Transaction;
 import com.apollocurrency.aplwallet.apl.core.http.APITag;
 import com.apollocurrency.aplwallet.apl.core.http.AbstractAPIRequestHandler;
+import com.apollocurrency.aplwallet.apl.core.http.HttpParameterParserUtil;
 import com.apollocurrency.aplwallet.apl.core.http.JSONData;
 import com.apollocurrency.aplwallet.apl.core.http.ParameterException;
-import com.apollocurrency.aplwallet.apl.core.http.ParameterParser;
-import com.apollocurrency.aplwallet.apl.core.phasing.PhasingPollService;
+import com.apollocurrency.aplwallet.apl.core.service.state.PhasingPollService;
 import org.json.simple.JSONArray;
 import org.json.simple.JSONObject;
 import org.json.simple.JSONStreamAware;
 
-import javax.enterprise.inject.Vetoed;
-import javax.enterprise.inject.spi.CDI;
-import javax.servlet.http.HttpServletRequest;
+import jakarta.enterprise.inject.Vetoed;
+import jakarta.enterprise.inject.spi.CDI;
+import jakarta.servlet.http.HttpServletRequest;
+import java.util.List;
 
 @Vetoed
 public class GetAssetPhasedTransactions extends AbstractAPIRequestHandler {
@@ -48,20 +48,18 @@ public class GetAssetPhasedTransactions extends AbstractAPIRequestHandler {
 
     @Override
     public JSONStreamAware processRequest(HttpServletRequest req) throws ParameterException {
-        long assetId = ParameterParser.getUnsignedLong(req, "asset", true);
-        long accountId = ParameterParser.getAccountId(req, false);
-        int firstIndex = ParameterParser.getFirstIndex(req);
-        int lastIndex = ParameterParser.getLastIndex(req);
+        long assetId = HttpParameterParserUtil.getUnsignedLong(req, "asset", true);
+        long accountId = HttpParameterParserUtil.getAccountId(req, false);
+        int firstIndex = HttpParameterParserUtil.getFirstIndex(req);
+        int lastIndex = HttpParameterParserUtil.getLastIndex(req);
         boolean withoutWhitelist = "true".equalsIgnoreCase(req.getParameter("withoutWhitelist"));
 
         JSONArray transactions = new JSONArray();
-        try (DbIterator<? extends Transaction> iterator = phasingPollService.getHoldingPhasedTransactions(assetId, VoteWeighting.VotingModel.ASSET,
-                accountId, withoutWhitelist, firstIndex, lastIndex)) {
-            while (iterator.hasNext()) {
-                Transaction transaction = iterator.next();
-                transactions.add(JSONData.transaction(false, transaction));
-            }
-        }
+        List<Transaction> holdingPhasedTransactions = phasingPollService.getHoldingPhasedTransactions(assetId, VoteWeighting.VotingModel.ASSET,
+            accountId, withoutWhitelist, firstIndex, lastIndex);
+        holdingPhasedTransactions.forEach(e-> {
+            transactions.add(JSONData.transaction(false, e));
+        });
         JSONObject response = new JSONObject();
         response.put("transactions", transactions);
         return response;

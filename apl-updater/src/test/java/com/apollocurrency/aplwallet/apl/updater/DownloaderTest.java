@@ -12,7 +12,7 @@ import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
 import org.slf4j.Logger;
 
-import javax.xml.bind.DatatypeConverter;
+import jakarta.xml.bind.DatatypeConverter;
 import java.io.IOException;
 import java.nio.file.Path;
 
@@ -22,7 +22,7 @@ import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.slf4j.LoggerFactory.getLogger;
 
 public class DownloaderTest {
-        private static final Logger LOG = getLogger(DownloaderTest.class);
+    private static final Logger LOG = getLogger(DownloaderTest.class);
 
     /**
      * Pre-calculated sha256 of "test-downloader-payload";
@@ -30,7 +30,7 @@ public class DownloaderTest {
      * in resources/testDownloaderPayload.txt
      */
     private static final byte[] TEST_PAYLOAD_SHA256 =
-            DatatypeConverter.parseHexBinary("fbfb91711bdba87aebb3b6011c99ba3d84823ec729695c348a42b41393046a9c");
+        DatatypeConverter.parseHexBinary("fbfb91711bdba87aebb3b6011c99ba3d84823ec729695c348a42b41393046a9c");
 
     /**
      * test with failing download scenario

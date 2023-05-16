@@ -15,27 +15,27 @@
  */
 
 /*
- * Copyright © 2018-2019 Apollo Foundation
+ * Copyright © 2018-2020 Apollo Foundation
  */
 
 package com.apollocurrency.aplwallet.apl.core.http.get;
 
-import com.apollocurrency.aplwallet.apl.core.account.PhasingOnly;
+import com.apollocurrency.aplwallet.apl.core.entity.state.account.AccountControlPhasing;
 import com.apollocurrency.aplwallet.apl.core.http.APITag;
 import com.apollocurrency.aplwallet.apl.core.http.AbstractAPIRequestHandler;
+import com.apollocurrency.aplwallet.apl.core.http.HttpParameterParserUtil;
 import com.apollocurrency.aplwallet.apl.core.http.JSONData;
 import com.apollocurrency.aplwallet.apl.core.http.ParameterException;
-import com.apollocurrency.aplwallet.apl.core.http.ParameterParser;
 import com.apollocurrency.aplwallet.apl.core.http.post.SetPhasingOnlyControl;
 import com.apollocurrency.aplwallet.apl.util.JSON;
-import javax.enterprise.inject.Vetoed;
 import org.json.simple.JSONStreamAware;
 
-import javax.servlet.http.HttpServletRequest;
+import jakarta.enterprise.inject.Vetoed;
+import jakarta.servlet.http.HttpServletRequest;
 
 /**
  * Returns the phasing control certain account. The result contains the following entries similar to the control* parameters of {@link SetPhasingOnlyControl}
- * 
+ *
  * <ul>
  * <li>votingModel - See {@link SetPhasingOnlyControl} for possible values. NONE(-1) means not control is set</li>
  * <li>quorum</li>
@@ -44,28 +44,29 @@ import javax.servlet.http.HttpServletRequest;
  * <li>holding</li>
  * <li>whitelisted - array of whitelisted voter account IDs</li>
  * </ul>
- * 
+ *
  * <p>
  * Parameters
  * <ul>
  * <li>account - the account for which the phasing control is queried</li>
  * </ul>
- * 
- * 
+ *
  * @see SetPhasingOnlyControl
- * 
  */
+
+@Deprecated
 @Vetoed
 public final class GetPhasingOnlyControl extends AbstractAPIRequestHandler {
 
     public GetPhasingOnlyControl() {
-        super(new APITag[] {APITag.ACCOUNT_CONTROL}, "account");
+        super(new APITag[]{APITag.ACCOUNT_CONTROL}, "account");
     }
 
     @Override
     public JSONStreamAware processRequest(HttpServletRequest req) throws ParameterException {
-        long accountId = ParameterParser.getAccountId(req, true);
-        PhasingOnly phasingOnly = PhasingOnly.get(accountId);
+        long accountId = HttpParameterParserUtil.getAccountId(req, true);
+//        PhasingOnly phasingOnly = PhasingOnly.get(accountId);
+        AccountControlPhasing phasingOnly = lookupAccountControlPhasingService().get(accountId);
         return phasingOnly == null ? JSON.emptyJSON : JSONData.phasingOnly(phasingOnly);
     }
 

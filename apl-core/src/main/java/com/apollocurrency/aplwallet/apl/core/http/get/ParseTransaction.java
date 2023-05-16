@@ -20,21 +20,22 @@
 
 package com.apollocurrency.aplwallet.apl.core.http.get;
 
+import com.apollocurrency.aplwallet.apl.core.exception.AplTransactionValidationException;
+import com.apollocurrency.aplwallet.apl.core.model.Transaction;
 import com.apollocurrency.aplwallet.apl.core.http.APITag;
 import com.apollocurrency.aplwallet.apl.core.http.AbstractAPIRequestHandler;
+import com.apollocurrency.aplwallet.apl.core.http.HttpParameterParserUtil;
 import com.apollocurrency.aplwallet.apl.core.http.JSONData;
-import com.apollocurrency.aplwallet.apl.core.http.ParameterParser;
 import com.apollocurrency.aplwallet.apl.core.transaction.TransactionValidator;
-import com.apollocurrency.aplwallet.apl.util.AplException;
-import com.apollocurrency.aplwallet.apl.core.app.Transaction;
 import com.apollocurrency.aplwallet.apl.crypto.Convert;
-import javax.enterprise.inject.Vetoed;
+import com.apollocurrency.aplwallet.apl.util.exception.AplException;
 import org.json.simple.JSONObject;
 import org.json.simple.JSONStreamAware;
 import org.slf4j.Logger;
 
-import javax.enterprise.inject.spi.CDI;
-import javax.servlet.http.HttpServletRequest;
+import jakarta.enterprise.inject.Vetoed;
+import jakarta.enterprise.inject.spi.CDI;
+import jakarta.servlet.http.HttpServletRequest;
 
 import static org.slf4j.LoggerFactory.getLogger;
 
@@ -44,7 +45,7 @@ public final class ParseTransaction extends AbstractAPIRequestHandler {
     private static TransactionValidator validator = CDI.current().select(TransactionValidator.class).get();
 
     public ParseTransaction() {
-        super(new APITag[] {APITag.TRANSACTIONS}, "transactionJSON", "transactionBytes", "prunableAttachmentJSON");
+        super(new APITag[]{APITag.TRANSACTIONS}, "transactionJSON", "transactionBytes", "prunableAttachmentJSON");
     }
 
     @Override
@@ -54,16 +55,16 @@ public final class ParseTransaction extends AbstractAPIRequestHandler {
         String transactionJSON = Convert.emptyToNull(req.getParameter("transactionJSON"));
         String prunableAttachmentJSON = Convert.emptyToNull(req.getParameter("prunableAttachmentJSON"));
 
-        Transaction transaction = ParameterParser.parseTransaction(transactionJSON, transactionBytes, prunableAttachmentJSON).build();
+        Transaction transaction = HttpParameterParserUtil.parseTransaction(transactionJSON, transactionBytes, prunableAttachmentJSON);
         JSONObject response = JSONData.unconfirmedTransaction(transaction);
         try {
-            validator.validate(transaction);
-        } catch (AplException.ValidationException | RuntimeException e) {
+            validator.validateFully(transaction);
+        } catch (AplTransactionValidationException e) {
             LOG.debug(e.getMessage(), e);
             response.put("validate", false);
             JSONData.putException(response, e, "Invalid transaction");
         }
-        response.put("verify", transaction.verifySignature());
+        response.put("verify", validator.verifySignature(transaction));
         return response;
     }
 

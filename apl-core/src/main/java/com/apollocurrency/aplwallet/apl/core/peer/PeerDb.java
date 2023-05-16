@@ -20,12 +20,13 @@
 
 package com.apollocurrency.aplwallet.apl.core.peer;
 
-import javax.inject.Inject;
-import javax.inject.Singleton;
-
 import com.apollocurrency.aplwallet.apl.core.db.DatabaseManager;
-import com.apollocurrency.aplwallet.apl.core.db.TransactionalDataSource;
+import com.apollocurrency.aplwallet.apl.util.annotation.DatabaseSpecificDml;
+import com.apollocurrency.aplwallet.apl.util.annotation.DmlMarker;
+import com.apollocurrency.aplwallet.apl.util.db.TransactionalDataSource;
 
+import jakarta.inject.Inject;
+import jakarta.inject.Singleton;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
@@ -37,11 +38,94 @@ import java.util.List;
 @Singleton
 public class PeerDb {
 
-    private static DatabaseManager databaseManager;
+    private final DatabaseManager databaseManager;
 
     @Inject
     public PeerDb(DatabaseManager databaseManagerParam) {
         databaseManager = databaseManagerParam;
+    }
+
+    public List<Entry> loadPeers() {
+        List<Entry> peers = new ArrayList<>();
+        TransactionalDataSource dataSource = databaseManager.getDataSource();
+        try (Connection con = dataSource.getConnection();
+             PreparedStatement pstmt = con.prepareStatement("SELECT * FROM peer");
+             ResultSet rs = pstmt.executeQuery()) {
+            while (rs.next()) {
+                peers.add(new Entry(rs.getString("address"), rs.getLong("services"), rs.getInt("last_updated")));
+            }
+        } catch (SQLException e) {
+            throw new RuntimeException(e.toString(), e);
+        }
+        return peers;
+    }
+
+    public void deletePeer(Entry peer) {
+        TransactionalDataSource dataSource = databaseManager.getDataSource();
+        try (Connection con = dataSource.getConnection()) {
+            PreparedStatement pstmt = con.prepareStatement("DELETE FROM peer WHERE address = ?");
+            pstmt.setString(1, peer.getAddress());
+            pstmt.executeUpdate();
+        } catch (SQLException e) {
+            throw new RuntimeException(e.toString(), e);
+        }
+    }
+
+    public void deletePeers(Collection<Entry> peers) {
+        TransactionalDataSource dataSource = databaseManager.getDataSource();
+        try (Connection con = dataSource.getConnection();
+             PreparedStatement pstmt = con.prepareStatement("DELETE FROM peer WHERE address = ?")) {
+            for (Entry peer : peers) {
+                pstmt.setString(1, peer.getAddress());
+                pstmt.executeUpdate();
+            }
+        } catch (SQLException e) {
+            throw new RuntimeException(e.toString(), e);
+        }
+    }
+
+    public void updatePeers(Collection<Entry> peers) {
+        TransactionalDataSource dataSource = databaseManager.getDataSource();
+        dataSource.begin();
+        try (Connection con = dataSource.getConnection();
+             @DatabaseSpecificDml(DmlMarker.MERGE)
+             PreparedStatement pstmt = con.prepareStatement("INSERT INTO peer "
+                 + "(address, services, last_updated) "
+                 + "VALUES(?, ?, ?) "
+                 + "ON DUPLICATE KEY UPDATE "
+                 + "address = VALUES(address), services = VALUES(services), last_updated = VALUES(last_updated)")
+        ) {
+            for (Entry peer : peers) {
+                pstmt.setString(1, peer.getAddress());
+                pstmt.setLong(2, peer.getServices());
+                pstmt.setInt(3, peer.getLastUpdated());
+                pstmt.executeUpdate();
+            }
+            dataSource.commit();
+        } catch (SQLException e) {
+            dataSource.rollback();
+            throw new RuntimeException(e.toString(), e);
+        }
+    }
+
+    public void updatePeer(PeerImpl peer) {
+        TransactionalDataSource dataSource = databaseManager.getDataSource();
+        dataSource.begin();
+        try (Connection con = dataSource.getConnection();
+             @DatabaseSpecificDml(DmlMarker.MERGE)
+             PreparedStatement pstmt = con.prepareStatement("INSERT INTO peer "
+                 + "(address, services, last_updated) VALUES(?, ?, ?) "
+                 + "ON DUPLICATE KEY UPDATE "
+                 + "address = VALUES(address), services = VALUES(services), last_updated = VALUES(last_updated)")) {
+            pstmt.setString(1, peer.getAnnouncedAddress());
+            pstmt.setLong(2, peer.getServices());
+            pstmt.setInt(3, peer.getLastUpdated());
+            pstmt.executeUpdate();
+            dataSource.commit();
+        } catch (SQLException e) {
+            dataSource.rollback();
+            throw new RuntimeException(e.toString(), e);
+        }
     }
 
     static class Entry {
@@ -74,89 +158,16 @@ public class PeerDb {
 
         @Override
         public boolean equals(Object obj) {
-            return (obj != null && (obj instanceof Entry) && address.equals(((Entry)obj).address));
+            return (obj != null && (obj instanceof Entry) && address.equals(((Entry) obj).address));
         }
 
         @Override
         public String toString() {
             return "PeerEntry{" +
-                    "address='" + address + '\'' +
-                    ", services=" + services +
-                    ", lastUpdated=" + lastUpdated +
-                    '}';
-        }
-    }
-
-    static List<Entry> loadPeers() {
-        List<Entry> peers = new ArrayList<>();
-        TransactionalDataSource dataSource = databaseManager.getDataSource();
-        try (Connection con = dataSource.getConnection();
-             PreparedStatement pstmt = con.prepareStatement("SELECT * FROM peer");
-             ResultSet rs = pstmt.executeQuery()) {
-            while (rs.next()) {
-                peers.add(new Entry(rs.getString("address"), rs.getLong("services"), rs.getInt("last_updated")));
-            }
-        } catch (SQLException e) {
-            throw new RuntimeException(e.toString(), e);
-        }
-        return peers;
-    }
-    public static void deletePeer(Entry peer){        
-        TransactionalDataSource dataSource = databaseManager.getDataSource();
-        try (Connection con = dataSource.getConnection()){
-            PreparedStatement pstmt = con.prepareStatement("DELETE FROM peer WHERE address = ?");
-            pstmt.setString(1, peer.getAddress());
-            pstmt.executeUpdate();
-        } catch (SQLException e) {
-            throw new RuntimeException(e.toString(), e);
-        }
-    }
-    static void deletePeers(Collection<Entry> peers) {
-        TransactionalDataSource dataSource = databaseManager.getDataSource();
-        try (Connection con = dataSource.getConnection();
-             PreparedStatement pstmt = con.prepareStatement("DELETE FROM peer WHERE address = ?")) {
-            for (Entry peer : peers) {
-                pstmt.setString(1, peer.getAddress());
-                pstmt.executeUpdate();
-            }
-        } catch (SQLException e) {
-            throw new RuntimeException(e.toString(), e);
-        }
-    }
-
-    static void updatePeers(Collection<Entry> peers) {
-        TransactionalDataSource dataSource = databaseManager.getDataSource();
-        dataSource.begin();   
-        try (Connection con = dataSource.getConnection();
-             PreparedStatement pstmt = con.prepareStatement("MERGE INTO peer "
-                        + "(address, services, last_updated) KEY(address) VALUES(?, ?, ?)")) {
-            for (Entry peer : peers) {
-                pstmt.setString(1, peer.getAddress());
-                pstmt.setLong(2, peer.getServices());
-                pstmt.setInt(3, peer.getLastUpdated());
-                pstmt.executeUpdate();
-            }
-            dataSource.commit();
-        } catch (SQLException e) {
-            dataSource.rollback();
-            throw new RuntimeException(e.toString(), e);
-        }
-    }
-
-    static void updatePeer(PeerImpl peer) {
-        TransactionalDataSource dataSource = databaseManager.getDataSource();
-        dataSource.begin();        
-        try (Connection con = dataSource.getConnection();
-             PreparedStatement pstmt = con.prepareStatement("MERGE INTO peer "
-                        + "(address, services, last_updated) KEY(address) VALUES(?, ?, ?)")) {
-            pstmt.setString(1, peer.getAnnouncedAddress());
-            pstmt.setLong(2, peer.getServices());
-            pstmt.setInt(3, peer.getLastUpdated());
-            pstmt.executeUpdate();
-            dataSource.commit();
-        } catch (SQLException e) {
-            dataSource.rollback();
-            throw new RuntimeException(e.toString(), e);
+                "address='" + address + '\'' +
+                ", services=" + services +
+                ", lastUpdated=" + lastUpdated +
+                '}';
         }
     }
 }

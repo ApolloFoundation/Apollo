@@ -6,7 +6,7 @@ package com.apollocurrency.aplwallet.apl.core.files.statcheck;
 import lombok.Getter;
 import lombok.Setter;
 import lombok.ToString;
-import org.spongycastle.util.Arrays;
+import org.bouncycastle.util.Arrays;
 
 /**
  * Entity that have hash and could be sorted by it
@@ -16,12 +16,12 @@ import org.spongycastle.util.Arrays;
 @ToString(exclude = {"hash"})
 public class PeerFileHashSum {
     @Getter
-    @Setter
-    private byte[] hash;
-    @Getter
     private final String peerId;
     @Getter
     private final String fileId;
+    @Getter
+    @Setter
+    private byte[] hash;
 
     public PeerFileHashSum(String peerId, String fileId) {
         this.peerId = peerId;

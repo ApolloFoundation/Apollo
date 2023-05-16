@@ -18,28 +18,36 @@
  */
 package com.apollocurrency.aplwallet.apl.util.env;
 
+import com.apollocurrency.aplwallet.apl.util.env.dirprovider.DirProvider;
+
 import java.io.PrintStream;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.util.prefs.Preferences;
 
-import com.apollocurrency.aplwallet.apl.util.env.dirprovider.DirProvider;
-import javax.enterprise.inject.Vetoed;
-
-@Vetoed
 public class RuntimeEnvironment {
 
     public static final String RUNTIME_MODE_ARG = "apl.runtime.mode";
     public static final String DIRPROVIDER_ARG = "apl.runtime.dirProvider";
 
     private static final String osname = System.getProperty("os.name").toLowerCase();
-    private  boolean isHeadless;
-    protected boolean hasJavaFX;
     private static boolean isServiceMode = false;
     private static RuntimeEnvironment instance = null;
-    private Class mainClass=null;
+    private boolean isHeadless;
+    private Class mainClass = null;
     private DirProvider dirProvider;
-    
+
+    private RuntimeEnvironment() {
+        setup();
+    }
+
+    public static RuntimeEnvironment getInstance() {
+        if (instance == null) {
+            instance = new RuntimeEnvironment();
+        }
+        return instance;
+    }
+
     void setup() {
         boolean b;
         try {
@@ -51,27 +59,8 @@ public class RuntimeEnvironment {
             b = true;
         }
         isHeadless = b;
-        try {
-            Class.forName("javafx.application.Application");
-            b = true;
-        } catch (ClassNotFoundException e) {
-            System.out.println("javafx not supported");
-            b = false;
-        }
-        hasJavaFX = b;
         isServiceMode = isServiceMode();
 
-    }
-
-    public static RuntimeEnvironment getInstance(){
-        if(instance==null){
-            instance = new RuntimeEnvironment();
-        }
-        return instance;
-    }
-
-    private RuntimeEnvironment(){
-         setup();
     }
 
     public boolean isWindowsRuntime() {
@@ -82,22 +71,23 @@ public class RuntimeEnvironment {
         return osname.contains("nux") || osname.contains("nix") || osname.contains("aix") || osname.contains("bsd") || osname.contains("sunos");
     }
 
-    public  boolean isMacRuntime() {
+    public boolean isMacRuntime() {
         return osname.contains("mac");
     }
 
-    public  boolean isServiceMode() {
+    public boolean isServiceMode() {
         return "service".equalsIgnoreCase(System.getProperty(RUNTIME_MODE_ARG));
     }
 
     public boolean isHeadless() {
         return isHeadless;
     }
-    
-/**
- * Not very good but working method to get info about user super privileges
- * @return true if current user has admin/root provilieges
- */
+
+    /**
+     * Not very good but working method to get info about user super privileges
+     *
+     * @return true if current user has admin/root provilieges
+     */
     public boolean isAdmin() {
         Preferences prefs = Preferences.systemRoot();
         PrintStream systemErr = System.err;
@@ -125,12 +115,8 @@ public class RuntimeEnvironment {
     }
 
     public boolean isDesktopEnabled() {
-       
-        return "desktop".equalsIgnoreCase(System.getProperty(RUNTIME_MODE_ARG)) && !isHeadless();
-    }
 
-    public boolean isDesktopApplicationEnabled() {
-        return isDesktopEnabled() && hasJavaFX;
+        return "desktop".equalsIgnoreCase(System.getProperty(RUNTIME_MODE_ARG)) && !isHeadless();
     }
 
     public DirProvider getDirProvider() {
@@ -141,10 +127,11 @@ public class RuntimeEnvironment {
         this.dirProvider = dirProvider;
     }
 
-    public void setMain(Class aClass) {
-        mainClass=aClass;
-    }
-    public Class getMain(){
+    public Class getMain() {
         return mainClass;
+    }
+
+    public void setMain(Class aClass) {
+        mainClass = aClass;
     }
 }

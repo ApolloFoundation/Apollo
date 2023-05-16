@@ -4,15 +4,15 @@
 package com.apollocurrency.aplwallet.apl.exchange.service;
 
 import com.apollocurrency.aplwallet.apl.core.http.APITag;
-import com.apollocurrency.aplwallet.apl.core.http.post.CreateTransaction;
-import com.apollocurrency.aplwallet.apl.util.AplException;
+import com.apollocurrency.aplwallet.apl.core.http.post.CreateTransactionHandler;
+import com.apollocurrency.aplwallet.apl.util.exception.AplException;
 import org.json.simple.JSONStreamAware;
 
-import javax.inject.Singleton;
-import javax.servlet.http.HttpServletRequest;
+import jakarta.inject.Singleton;
+import jakarta.servlet.http.HttpServletRequest;
 
 @Singleton
-public class DexOrderTransactionCreator extends CreateTransaction {
+public class DexOrderTransactionCreator extends CreateTransactionHandler {
 
     private DexOrderTransactionCreator() {
         super(new APITag[]{APITag.CREATE_TRANSACTION}, "orderType", "offerAmount", "offerCurrency", "pairCurrency", "pairRate", "finishTime");

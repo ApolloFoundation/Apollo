@@ -1,11 +1,10 @@
 /*
- * Copyright © 2018-2019 Apollo Foundation
+ * Copyright © 2018-2021 Apollo Foundation
  */
 package com.apollocurrency.aplwallet.apl.core.transaction.messages;
 
-import com.apollocurrency.aplwallet.apl.core.app.Transaction;
-import com.apollocurrency.aplwallet.apl.core.phasing.model.PhasingParams;
-import com.apollocurrency.aplwallet.apl.util.AplException;
+import com.apollocurrency.aplwallet.apl.core.model.Transaction;
+import com.apollocurrency.aplwallet.apl.core.model.PhasingParams;
 import org.json.simple.JSONObject;
 
 import java.nio.ByteBuffer;
@@ -24,7 +23,7 @@ public class PhasingAppendixV2 extends PhasingAppendix {
 
     public PhasingAppendixV2(JSONObject attachmentData) {
         super(attachmentData);
-        Long phasingFinishTime = (Long) attachmentData.get("phasingFinishTime");
+        Number phasingFinishTime = (Number) attachmentData.get("phasingFinishTime");
 
         this.finishTime = phasingFinishTime != null ? phasingFinishTime.intValue() : -1;
     }
@@ -34,10 +33,14 @@ public class PhasingAppendixV2 extends PhasingAppendix {
         this.finishTime = finishTime;
     }
 
-    //TODO think it over how to change it (magic numbers).
     @Override
     public byte getVersion() {
-        return Byte.valueOf("2");
+        return 2;
+    }
+
+    @Override
+    public boolean verifyVersion() {
+        return getVersion() == 2;
     }
 
     //TODO think it over how to change it (magic numbers).
@@ -64,10 +67,8 @@ public class PhasingAppendixV2 extends PhasingAppendix {
     }
 
     @Override
-    public void validate(Transaction transaction, int blockHeight) throws AplException.ValidationException {
-       super.generalValidation(transaction);
-
-       validateFinishHeightAndTime(blockHeight, this.getFinishTime());
+    public void performStateDependentValidation(Transaction transaction, int blockHeight) {
+        throw new UnsupportedOperationException("Validate for PhasingV2 is not supported, use separate class");
     }
 
     public int getFinishTime() {

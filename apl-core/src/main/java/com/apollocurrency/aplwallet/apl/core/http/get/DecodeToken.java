@@ -26,18 +26,18 @@ import com.apollocurrency.aplwallet.apl.core.http.AbstractAPIRequestHandler;
 import com.apollocurrency.aplwallet.apl.core.http.JSONData;
 import org.json.simple.JSONStreamAware;
 
-import javax.servlet.http.HttpServletRequest;
+import jakarta.enterprise.inject.Vetoed;
+import jakarta.servlet.http.HttpServletRequest;
 
 import static com.apollocurrency.aplwallet.apl.core.http.JSONResponses.INCORRECT_WEBSITE;
 import static com.apollocurrency.aplwallet.apl.core.http.JSONResponses.MISSING_TOKEN;
 import static com.apollocurrency.aplwallet.apl.core.http.JSONResponses.MISSING_WEBSITE;
-import javax.enterprise.inject.Vetoed;
 
 @Vetoed
 public final class DecodeToken extends AbstractAPIRequestHandler {
 
     public DecodeToken() {
-        super(new APITag[] {APITag.TOKENS}, "website", "token");
+        super(new APITag[]{APITag.TOKENS}, "website", "token");
     }
 
     @Override

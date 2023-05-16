@@ -3,23 +3,22 @@
  */
 package com.apollocurrency.aplwallet.apl.core.transaction.messages;
 
-import com.apollocurrency.aplwallet.apl.core.transaction.Messaging;
-import com.apollocurrency.aplwallet.apl.core.transaction.TransactionType;
+import com.apollocurrency.aplwallet.apl.core.transaction.TransactionTypes;
 import com.apollocurrency.aplwallet.apl.crypto.Convert;
-import com.apollocurrency.aplwallet.apl.util.AplException;
 import com.apollocurrency.aplwallet.apl.util.Constants;
-import java.nio.ByteBuffer;
-import java.util.ArrayList;
-import java.util.List;
+import com.apollocurrency.aplwallet.apl.util.exception.AplException;
 import org.json.simple.JSONArray;
 import org.json.simple.JSONObject;
 
+import java.nio.ByteBuffer;
+import java.util.ArrayList;
+import java.util.List;
+
 /**
- *
  * @author al
  */
 public final class MessagingPhasingVoteCasting extends AbstractAttachment {
-    
+
     final List<byte[]> transactionFullHashes;
     final byte[] revealedSecret;
 
@@ -46,7 +45,7 @@ public final class MessagingPhasingVoteCasting extends AbstractAttachment {
 
     public MessagingPhasingVoteCasting(JSONObject attachmentData) {
         super(attachmentData);
-        JSONArray hashes = (JSONArray) attachmentData.get("transactionFullHashes");
+        List<?> hashes = (List<?>) attachmentData.get("transactionFullHashes");
         transactionFullHashes = new ArrayList<>(hashes.size());
         hashes.forEach((hash) -> transactionFullHashes.add(Convert.parseHexString((String) hash)));
         String revealedSecret = Convert.emptyToNull((String) attachmentData.get("revealedSecret"));
@@ -82,8 +81,8 @@ public final class MessagingPhasingVoteCasting extends AbstractAttachment {
     }
 
     @Override
-    public TransactionType getTransactionType() {
-        return Messaging.PHASING_VOTE_CASTING;
+    public TransactionTypes.TransactionTypeSpec getTransactionTypeSpec() {
+        return TransactionTypes.TransactionTypeSpec.PHASING_VOTE_CASTING;
     }
 
     public List<byte[]> getTransactionFullHashes() {
@@ -93,5 +92,5 @@ public final class MessagingPhasingVoteCasting extends AbstractAttachment {
     public byte[] getRevealedSecret() {
         return revealedSecret;
     }
-    
+
 }

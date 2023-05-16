@@ -26,13 +26,13 @@ import org.json.simple.JSONArray;
 import org.json.simple.JSONObject;
 import org.json.simple.JSONStreamAware;
 
-import javax.servlet.http.HttpServletRequest;
+import jakarta.enterprise.inject.Vetoed;
+import jakarta.servlet.http.HttpServletRequest;
 import java.lang.management.LockInfo;
 import java.lang.management.ManagementFactory;
 import java.lang.management.MonitorInfo;
 import java.lang.management.ThreadInfo;
 import java.lang.management.ThreadMXBean;
-import javax.enterprise.inject.Vetoed;
 
 /**
  * <p>The GetStackTraces API will return the current stack trace for
@@ -81,14 +81,14 @@ public class GetStackTraces extends AbstractAPIRequestHandler {
      * Create the GetStackTraces instance
      */
     public GetStackTraces() {
-        super(new APITag[] {APITag.DEBUG}, "depth");
+        super(new APITag[]{APITag.DEBUG}, "depth");
     }
 
     /**
      * Process the GetStackTraces API request
      *
-     * @param   req                 API request
-     * @return                      API response
+     * @param req API request
+     * @return API response
      */
     @Override
     public JSONStreamAware processRequest(HttpServletRequest req) {
@@ -147,8 +147,8 @@ public class GetStackTraces extends AbstractAPIRequestHandler {
                         lockJSON.put("thread", tInfo.getLockOwnerId());
                         threadJSON.put("blocked", lockJSON);
                         boolean addLock = true;
-                        for (Object lock : locksJSON){
-                            if (((JSONObject)lock).get("name").equals(lInfo.getClassName())) {
+                        for (Object lock : locksJSON) {
+                            if (((JSONObject) lock).get("name").equals(lInfo.getClassName())) {
                                 addLock = false;
                                 break;
                             }
@@ -187,7 +187,7 @@ public class GetStackTraces extends AbstractAPIRequestHandler {
     /**
      * Require the administrator password
      *
-     * @return                      TRUE if the admin password is required
+     * @return TRUE if the admin password is required
      */
     @Override
     protected boolean requirePassword() {

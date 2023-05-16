@@ -20,41 +20,35 @@
 
 package com.apollocurrency.aplwallet.apl.core.http.post;
 
-import com.apollocurrency.aplwallet.apl.core.account.Account;
-import com.apollocurrency.aplwallet.apl.core.monetary.Asset;
-import com.apollocurrency.aplwallet.apl.core.transaction.messages.Attachment;
-import com.apollocurrency.aplwallet.apl.core.transaction.messages.ColoredCoinsAskOrderPlacement;
+import com.apollocurrency.aplwallet.apl.core.entity.state.account.Account;
+import com.apollocurrency.aplwallet.apl.core.entity.state.asset.Asset;
 import com.apollocurrency.aplwallet.apl.core.http.APITag;
-import com.apollocurrency.aplwallet.apl.core.http.ParameterParser;
-import com.apollocurrency.aplwallet.apl.util.AplException;
+import com.apollocurrency.aplwallet.apl.core.http.HttpParameterParserUtil;
+import com.apollocurrency.aplwallet.apl.core.transaction.messages.Attachment;
+import com.apollocurrency.aplwallet.apl.core.transaction.messages.CCAskOrderPlacementAttachment;
+import com.apollocurrency.aplwallet.apl.util.exception.AplException;
 import org.json.simple.JSONStreamAware;
 
-import javax.servlet.http.HttpServletRequest;
-
-import static com.apollocurrency.aplwallet.apl.core.http.JSONResponses.NOT_ENOUGH_ASSETS;
-import javax.enterprise.inject.Vetoed;
+import jakarta.enterprise.inject.Vetoed;
+import jakarta.servlet.http.HttpServletRequest;
 
 @Vetoed
-public final class PlaceAskOrder extends CreateTransaction {
+public final class PlaceAskOrder extends CreateTransactionHandler {
 
     public PlaceAskOrder() {
-        super(new APITag[] {APITag.AE, APITag.CREATE_TRANSACTION}, "asset", "quantityATU", "priceATM");
+        super(new APITag[]{APITag.AE, APITag.CREATE_TRANSACTION}, "asset", "quantityATU", "priceATM");
     }
 
     @Override
     public JSONStreamAware processRequest(HttpServletRequest req) throws AplException {
 
-        Asset asset = ParameterParser.getAsset(req);
-        long priceATM = ParameterParser.getPriceATM(req);
-        long quantityATU = ParameterParser.getQuantityATU(req);
-        Account account = ParameterParser.getSenderAccount(req);
+        Asset asset = HttpParameterParserUtil.getAsset(req);
+        long priceATM = HttpParameterParserUtil.getPriceATM(req);
+        long quantityATU = HttpParameterParserUtil.getQuantityATU(req);
+        Account account = HttpParameterParserUtil.getSenderAccount(req);
 
-        Attachment attachment = new ColoredCoinsAskOrderPlacement(asset.getId(), quantityATU, priceATM);
-        try {
-            return createTransaction(req, account, attachment);
-        } catch (AplException.InsufficientBalanceException e) {
-            return NOT_ENOUGH_ASSETS;
-        }
+        Attachment attachment = new CCAskOrderPlacementAttachment(asset.getId(), quantityATU, priceATM);
+        return createTransaction(req, account, attachment);
     }
 
 }

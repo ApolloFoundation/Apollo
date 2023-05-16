@@ -20,9 +20,13 @@
 
 package com.apollocurrency.aplwallet.apl.core.http;
 
-import javax.servlet.http.HttpServlet;
-import javax.servlet.http.HttpServletRequest;
-import javax.servlet.http.HttpServletResponse;
+import com.apollocurrency.aplwallet.apl.crypto.Convert;
+import com.apollocurrency.aplwallet.apl.util.injectable.PropertiesHolder;
+
+import jakarta.enterprise.inject.spi.CDI;
+import jakarta.servlet.http.HttpServlet;
+import jakarta.servlet.http.HttpServletRequest;
+import jakarta.servlet.http.HttpServletResponse;
 import java.io.IOException;
 import java.io.PrintWriter;
 import java.util.ArrayList;
@@ -36,14 +40,10 @@ import java.util.SortedSet;
 import java.util.TreeMap;
 import java.util.TreeSet;
 
-import com.apollocurrency.aplwallet.apl.crypto.Convert;
-import com.apollocurrency.aplwallet.apl.util.injectable.PropertiesHolder;
-import javax.enterprise.inject.spi.CDI;
-
 public class APITestServlet extends HttpServlet {
-    private static final PropertiesHolder propertiesHolder = CDI.current().select(PropertiesHolder.class).get(); 
+    private static final PropertiesHolder propertiesHolder = CDI.current().select(PropertiesHolder.class).get();
     private static final String HEADER1 =
-            "<!DOCTYPE html>\n" +
+        "<!DOCTYPE html>\n" +
             "<html>\n" +
             "<head>\n" +
             "    <meta charset='UTF-8'/>\n" +
@@ -63,7 +63,9 @@ public class APITestServlet extends HttpServlet {
             "<div class='navbar navbar-default' role='navigation'>\n" +
             "   <div class='container' style='min-width: 90%;'>\n" +
             "       <div class='navbar-header'>\n" +
-            "           <a class='navbar-brand' href='/test'>Apollo http API</a>\n" +
+            "           <a class='navbar-brand' href='/test'>Apollo HTTP API Console (deprecated). New API is located under</a>\n" +
+            "           <a style=\"line-height: 20px; padding: 15px 0px; float: left; height: 50px; font-size: 18px\" href=\"/swagger\">url</a>" +
+            "\n" +
             "       </div>\n" +
             "       <div class='navbar-collapse collapse'>\n" +
             "           <ul class='nav navbar-nav navbar-right'>\n" +
@@ -102,13 +104,13 @@ public class APITestServlet extends HttpServlet {
             "<div class='col-xs-4 col-sm-3 col-md-2'>\n" +
             "<ul class='nav nav-pills nav-stacked'>\n";
     private static final String HEADER2 =
-            "</ul>\n" +
+        "</ul>\n" +
             "</div> <!-- col -->" +
             "<div  class='col-xs-8 col-sm-9 col-md-10'>\n" +
             "<div class='panel-group' id='accordion'>\n";
 
     private static final String FOOTER1 =
-            "</div> <!-- panel-group -->\n" +
+        "</div> <!-- panel-group -->\n" +
             "</div> <!-- col -->\n" +
             "</div> <!-- row -->\n" +
             "</div> <!-- container -->\n" +
@@ -121,19 +123,20 @@ public class APITestServlet extends HttpServlet {
             "$(document).ready(function() {";
 
     private static final String FOOTER2 =
-            "});\n" +
+        "});\n" +
             "</script>\n" +
             "</body>\n" +
             "</html>\n";
-    
+
     private static final APIServlet api = CDI.current().select(APIServlet.class).get();
-    
+
     private static final List<String> allRequestTypes = new ArrayList<>(api.apiRequestHandlers.keySet());
+    private static final SortedMap<String, SortedSet<String>> requestTags = new TreeMap<>();
+
     static {
         Collections.sort(allRequestTypes);
     }
 
-    private static final SortedMap<String, SortedSet<String>> requestTags = new TreeMap<>();
     static {
         for (Map.Entry<String, AbstractAPIRequestHandler> entry : api.apiRequestHandlers.entrySet()) {
             String requestType = entry.getKey();
@@ -149,9 +152,9 @@ public class APITestServlet extends HttpServlet {
         StringBuilder buf = new StringBuilder();
         String requestTag = Convert.nullToEmpty(req.getParameter("requestTag"));
         buf.append("<li");
-        if (requestTag.equals("") 
-                & !req.getParameterMap().containsKey("requestType")
-                & !req.getParameterMap().containsKey("requestTypes")) {
+        if (requestTag.equals("")
+            & !req.getParameterMap().containsKey("requestType")
+            & !req.getParameterMap().containsKey("requestTypes")) {
             buf.append(" class='active'");
         }
         buf.append("><a href='/test'>ALL</a></li>\n");
@@ -171,64 +174,6 @@ public class APITestServlet extends HttpServlet {
             }
         }
         return buf.toString();
-    }
-
-    protected void doGet(HttpServletRequest req, HttpServletResponse resp) throws IOException {
-
-        resp.setHeader("Cache-Control", "no-cache, no-store, must-revalidate, private");
-        resp.setHeader("Pragma", "no-cache");
-        resp.setDateHeader("Expires", 0);
-        resp.setContentType("text/html; charset=UTF-8");
-
-        if (! API.isAllowed(req.getRemoteHost())) {
-            resp.sendError(HttpServletResponse.SC_FORBIDDEN);
-            return;
-        }
-
-        try (PrintWriter writer = resp.getWriter()) {
-            writer.print(HEADER1);
-            writer.print(buildLinks(req));
-            writer.print(HEADER2);
-            String requestType = Convert.nullToEmpty(req.getParameter("requestType"));
-            AbstractAPIRequestHandler requestHandler = APIServlet.apiRequestHandlers.get(requestType);
-            StringBuilder bufJSCalls = new StringBuilder();
-            String nodeType = "Full Node";
-            if (propertiesHolder.isLightClient()) {
-                nodeType = "Light Client";
-            } else if (APIProxy.enableAPIProxy) {
-                nodeType = "Roaming Client";
-            }
-            bufJSCalls.append("    $('#nodeType').val('").append(nodeType).append("');");
-            bufJSCalls.append("    $('#servletPath').val('").append(req.getServletPath()).append("');");
-            if (requestHandler != null) {
-                writer.print(form(req, requestType, true, requestHandler));
-                bufJSCalls.append("    ATS.apiCalls.push('").append(requestType).append("');\n");
-            } else if (!req.getParameterMap().containsKey("requestTypes")) {
-                String requestTag = Convert.nullToEmpty(req.getParameter("requestTag"));
-                Set<String> taggedTypes = requestTags.get(requestTag);
-                for (String type : (taggedTypes != null ? taggedTypes : allRequestTypes)) {
-                    requestHandler = api.apiRequestHandlers.get(type);
-                    writer.print(form(req, type, false, requestHandler));
-                    bufJSCalls.append("    ATS.apiCalls.push('").append(type).append("');\n");
-                }
-            } else {
-                String requestTypes = Convert.nullToEmpty(req.getParameter("requestTypes"));
-                if (!requestTypes.equals("")) {
-                    Set<String> selectedRequestTypes = new TreeSet<>(Arrays.asList(requestTypes.split("_")));
-                    for (String type: selectedRequestTypes) {
-                        requestHandler = APIServlet.apiRequestHandlers.get(type);
-                        writer.print(form(req, type, false, requestHandler));
-                        bufJSCalls.append("    ATS.apiCalls.push('").append(type).append("');\n");
-                    }
-                } else {
-                    writer.print(fullTextMessage("No API calls selected.", "info"));
-                }
-            }
-            writer.print(FOOTER1);
-            writer.print(bufJSCalls.toString());
-            writer.print(FOOTER2);
-        }
-
     }
 
     private static String fullTextMessage(String msg, String msgType) {
@@ -352,10 +297,68 @@ public class APITestServlet extends HttpServlet {
             }
             buf.append(c);
             if (i < className.length() - 2 && Character.isUpperCase(className.charAt(i + 1))
-                    && (Character.isLowerCase(c) || Character.isLowerCase(className.charAt(i + 2)))) {
+                && (Character.isLowerCase(c) || Character.isLowerCase(className.charAt(i + 2)))) {
                 buf.append('_');
             }
         }
+    }
+
+    protected void doGet(HttpServletRequest req, HttpServletResponse resp) throws IOException {
+
+        resp.setHeader("Cache-Control", "no-cache, no-store, must-revalidate, private");
+        resp.setHeader("Pragma", "no-cache");
+        resp.setDateHeader("Expires", 0);
+        resp.setContentType("text/html; charset=UTF-8");
+
+        if (!API.isAllowed(req.getRemoteHost())) {
+            resp.sendError(HttpServletResponse.SC_FORBIDDEN);
+            return;
+        }
+
+        try (PrintWriter writer = resp.getWriter()) {
+            writer.print(HEADER1);
+            writer.print(buildLinks(req));
+            writer.print(HEADER2);
+            String requestType = Convert.nullToEmpty(req.getParameter("requestType"));
+            AbstractAPIRequestHandler requestHandler = APIServlet.apiRequestHandlers.get(requestType);
+            StringBuilder bufJSCalls = new StringBuilder();
+            String nodeType = "Full Node";
+            if (propertiesHolder.isLightClient()) {
+                nodeType = "Light Client";
+            } else if (APIProxy.enableAPIProxy) {
+                nodeType = "Roaming Client";
+            }
+            bufJSCalls.append("    $('#nodeType').val('").append(nodeType).append("');");
+            bufJSCalls.append("    $('#servletPath').val('").append(req.getServletPath()).append("');");
+            if (requestHandler != null) {
+                writer.print(form(req, requestType, true, requestHandler));
+                bufJSCalls.append("    ATS.apiCalls.push('").append(requestType).append("');\n");
+            } else if (!req.getParameterMap().containsKey("requestTypes")) {
+                String requestTag = Convert.nullToEmpty(req.getParameter("requestTag"));
+                Set<String> taggedTypes = requestTags.get(requestTag);
+                for (String type : (taggedTypes != null ? taggedTypes : allRequestTypes)) {
+                    requestHandler = api.apiRequestHandlers.get(type);
+                    writer.print(form(req, type, false, requestHandler));
+                    bufJSCalls.append("    ATS.apiCalls.push('").append(type).append("');\n");
+                }
+            } else {
+                String requestTypes = Convert.nullToEmpty(req.getParameter("requestTypes"));
+                if (!requestTypes.equals("")) {
+                    Set<String> selectedRequestTypes = new TreeSet<>(Arrays.asList(requestTypes.split("_")));
+                    for (String type : selectedRequestTypes) {
+                        requestHandler = APIServlet.apiRequestHandlers.get(type);
+                        writer.print(form(req, type, false, requestHandler));
+                        bufJSCalls.append("    ATS.apiCalls.push('").append(type).append("');\n");
+                    }
+                } else {
+                    writer.print(fullTextMessage("No API calls selected.", "info"));
+                }
+            }
+            writer.print(FOOTER1);
+            writer.print(bufJSCalls.toString());
+            writer.print(FOOTER2);
+        }
+
     }
 
 

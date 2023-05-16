@@ -24,13 +24,13 @@ package com.apollocurrency.aplwallet.apl.core.addons;
 import com.apollocurrency.aplwallet.apl.util.injectable.PropertiesHolder;
 import org.slf4j.Logger;
 
-import javax.enterprise.inject.spi.CDI;
+import jakarta.enterprise.inject.spi.CDI;
 import java.util.Map;
 
 import static org.slf4j.LoggerFactory.getLogger;
 
 public final class BeforeShutdown implements AddOn {
-        private static final Logger LOG = getLogger(BeforeShutdown.class);
+    private static final Logger LOG = getLogger(BeforeShutdown.class);
 
     // TODO: YL put into constructor
     private static PropertiesHolder propertiesHolder = CDI.current().select(PropertiesHolder.class).get();

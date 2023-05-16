@@ -12,6 +12,7 @@ import lombok.NoArgsConstructor;
 import lombok.Setter;
 import lombok.ToString;
 
+import java.util.ArrayList;
 import java.util.List;
 
 @AllArgsConstructor
@@ -23,13 +24,13 @@ import java.util.List;
 @JsonIgnoreProperties(ignoreUnknown = true)
 public class BlockDTO extends BaseDTO {
     private String block; //block id
-    private int height;
+    private Integer height;
     private String generator;
     private String generatorRS;
     private String generatorPublicKey;
     private Integer timestamp; //time in seconds since genesis block
     private Integer timeout;
-    private Integer numberOfTransactions;
+    private Long numberOfTransactions;
     private String totalFeeATM;
     private Integer payloadLength;
     private Integer version;
@@ -42,6 +43,8 @@ public class BlockDTO extends BaseDTO {
     private String previousBlockHash;
     private String blockSignature;
     private String totalAmountATM;
+    private Integer numberOfFailedTxs;
+    private List<TxErrorHashDTO> txErrorHashes = new ArrayList<>();
 
     private List<TransactionDTO> transactions;
     private List executedPhasedTransactions;

@@ -15,25 +15,26 @@
  */
 
  /*
- * Copyright © 2018 Apollo Foundation
+ * Copyright © 2018-2021 Apollo Foundation
  */
 package com.apollocurrency.aplwallet.apl.util;
 
+import java.math.BigDecimal;
 import java.math.BigInteger;
 
 public final class Constants {
 
-    public static final Version VERSION = new Version("1.41.8");
+    public static final Version VERSION = new Version("2.0.1");
 
     public static final String APPLICATION = "Apollo";
     public static final String APPLICATION_DIR_NAME = "apl-blockchain";
+    public static final String APPLICATION_DB_NAME = "apl_blockchain";
     public static final String DESKTOP_APPLICATION_NAME = "apl-desktop";
     public static final int DEFAULT_TRIM_FREQUENCY = 1000;
     public static final long LONG_TIME_TWO_SECONDS = 2000L;
     public static final long LONG_TIME_FIVE_SECONDS = 5000L;
     public static final int MAX_AUTO_ROLLBACK = 720; //number of blocks that forms fork
 
-    public static final long ONE_APL = 100000000;
     public static final long APL_COMMISSION = 10;
     public static final long ETH_GAS_MULTIPLIER = 5;
 
@@ -53,9 +54,9 @@ public final class Constants {
 
     public static final int ONE_DAY_SECS = 24 * 3600;
 
-    public static final int MIN_TRANSACTION_SIZE = 176;
+    public static final int MIN_TRANSACTION_SIZE = 176; // the transaction HEADER size (without Appendages)
     public static final int BASE_TARGET_GAMMA = 64;
-    public static final long MIN_FORGING_BALANCE_ATM = 1000 * ONE_APL;
+    public static final long MIN_FORGING_BALANCE = 1000;
 
     public static final int MAX_TIMEDRIFT = 15; // allow up to 15 s clock difference
 
@@ -73,8 +74,8 @@ public final class Constants {
     public static final int MAX_ALIAS_URI_LENGTH = 1000;
     public static final int MAX_ALIAS_LENGTH = 100;
 
-    public static final int MAX_ARBITRARY_MESSAGE_LENGTH = 160;
-    public static final int MAX_ENCRYPTED_MESSAGE_LENGTH = 160 + 16;
+    public static final int MIN_VALUE_FOR_MAX_ARBITRARY_MESSAGE_LENGTH = 160;
+    public static final int MAX_ENCRYPTED_MESSAGE_HEADER_LENGTH = 16;
 
     public static final int MAX_PRUNABLE_MESSAGE_LENGTH = 42 * 1024;
     public static final int MAX_PRUNABLE_ENCRYPTED_MESSAGE_LENGTH = 42 * 1024;
@@ -90,7 +91,6 @@ public final class Constants {
     public static final int MAX_ACCOUNT_PROPERTY_NAME_LENGTH = 32;
     public static final int MAX_ACCOUNT_PROPERTY_VALUE_LENGTH = 160;
 
-    public static final long MAX_ASSET_QUANTITY_ATU = 30000000000L * 100000000L;
     public static final int MIN_ASSET_NAME_LENGTH = 3;
     public static final int MAX_ASSET_NAME_LENGTH = 10;
     public static final int MAX_ASSET_DESCRIPTION_LENGTH = 1000;
@@ -119,7 +119,6 @@ public final class Constants {
     public static final int MIN_CURRENCY_CODE_LENGTH = 3;
     public static final int MAX_CURRENCY_CODE_LENGTH = 5;
     public static final int MAX_CURRENCY_DESCRIPTION_LENGTH = 1000;
-    public static final long MAX_CURRENCY_TOTAL_SUPPLY = 30000000000L * 100000000L;
     public static final int MAX_MINTING_RATIO = 10000; // per mint units not more than 0.01% of total supply
     public static final byte MIN_NUMBER_OF_SHUFFLING_PARTICIPANTS = 3;
     public static final byte MAX_NUMBER_OF_SHUFFLING_PARTICIPANTS = 30; // max possible at current block payload limit is 51
@@ -132,7 +131,7 @@ public final class Constants {
     public static final int MAX_TAGGED_DATA_CHANNEL_LENGTH = 100;
     public static final int MAX_TAGGED_DATA_FILENAME_LENGTH = 100;
     public static final int MAX_TAGGED_DATA_DATA_LENGTH = 42 * 1024;
-//    Update
+    //    Update
     public static final int UPDATE_URL_PART_LENGTH = 512;
     public static final int MAX_UPDATE_PLATFORM_LENGTH = 10;
     public static final int MAX_UPDATE_ARCHITECTURE_LENGTH = 10;
@@ -166,24 +165,22 @@ public final class Constants {
     public static final BigInteger GAS_LIMIT_FOR_ERC20 = BigInteger.valueOf(300_000);
     public static final BigInteger GAS_LIMIT_FOR_ETH_ATOMIC_SWAP_CONTRACT = BigInteger.valueOf(400_000);
     public static final Integer MAX_ADDRESS_LENGTH = 110;
-
-    public static String ETH_DEFAULT_ADDRESS = "0x0000000000000000000000000000000000000000";
-
-    //DEX
-    public static String ETH_STATION_GAS_INFO_URL = "https://www.ethgasstation.info/json/ethgasAPI.json";
-    public static String ETH_CHAIN_GAS_INFO_URL = "https://www.etherchain.org/api/gasPriceOracle";
-    public static String ETH_GAS_INFO_URL = "https://ethgasstation.info/json/ethgasAPI.json";
-
-    public static BigInteger ETH_MAX_POS_INT = new BigInteger("7fffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff", 16);
-
     //168h
     public static final int DEX_MAX_CONTRACT_TIME_WAITING_TO_REPLY = 7 * 24 * 60 * 60;
-
     public static final int DEX_NUMBER_OF_PENDING_ORDER_CONFIRMATIONS = 1000;
-
     public static final int DEX_GRAPH_INTERVAL_MIN = 60;
     public static final int DEX_GRAPH_INTERVAL_HOUR = 60 * 60;
     public static final int DEX_GRAPH_INTERVAL_DAY = 60 * 60 * 24;
+    public static final int HEALTH_CHECK_INTERVAL = 30 * 1000; //milliseconds
+    public static final int MEMPOOL_CHECK_INTERVAL = 10 * 1000; //milliseconds
+    public static String ETH_DEFAULT_ADDRESS = "0x0000000000000000000000000000000000000000";
+    //DEX
+    public static String ETH_STATION_GAS_INFO_URL = "https://www.ethgasstation.info/json/ethgasAPI.json";
+    public static String ETH_CHAIN_GAS_INFO_URL = "https://www.etherchain.org/api/gasnow";
+    public static String ETH_GAS_INFO_URL = "https://ethgasstation.info/json/ethgasAPI.json";
+    public static BigInteger ETH_MAX_POS_INT = new BigInteger("7fffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff", 16);
+    //TODO calculate this value on the future.
+    public static BigDecimal DEX_MIN_ETH_FEE = BigDecimal.valueOf(0.002);
 
     private Constants() {
     } // never

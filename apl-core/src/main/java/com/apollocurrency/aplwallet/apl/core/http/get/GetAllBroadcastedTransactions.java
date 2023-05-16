@@ -20,22 +20,23 @@
 
 package com.apollocurrency.aplwallet.apl.core.http.get;
 
-import com.apollocurrency.aplwallet.apl.core.app.Transaction;
+import com.apollocurrency.aplwallet.apl.core.model.Transaction;
 import com.apollocurrency.aplwallet.apl.core.http.APITag;
 import com.apollocurrency.aplwallet.apl.core.http.AbstractAPIRequestHandler;
 import com.apollocurrency.aplwallet.apl.core.http.JSONData;
-import javax.enterprise.inject.Vetoed;
 import org.json.simple.JSONArray;
 import org.json.simple.JSONObject;
 import org.json.simple.JSONStreamAware;
 
-import javax.servlet.http.HttpServletRequest;
+import jakarta.enterprise.inject.Vetoed;
+import jakarta.servlet.http.HttpServletRequest;
+import java.util.Collection;
 
 @Vetoed
 public final class GetAllBroadcastedTransactions extends AbstractAPIRequestHandler {
 
     public GetAllBroadcastedTransactions() {
-        super(new APITag[] {APITag.DEBUG});
+        super(new APITag[]{APITag.DEBUG});
     }
 
     @Override
@@ -43,13 +44,13 @@ public final class GetAllBroadcastedTransactions extends AbstractAPIRequestHandl
         JSONObject response = new JSONObject();
         JSONArray jsonArray = new JSONArray();
         response.put("transactions", jsonArray);
-        Transaction[] transactions = lookupTransactionProcessor().getAllBroadcastedTransactions();
+        Collection<Transaction> transactions = lookupMemPool().getAllBroadcasted();
         for (Transaction transaction : transactions) {
             jsonArray.add(JSONData.unconfirmedTransaction(transaction));
         }
         return response;
     }
-    
+
     @Override
     protected boolean requirePassword() {
         return true;

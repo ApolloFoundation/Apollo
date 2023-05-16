@@ -20,30 +20,37 @@
 
 package com.apollocurrency.aplwallet.apl.core.http.get;
 
+import com.apollocurrency.aplwallet.apl.core.entity.state.order.AskOrder;
 import com.apollocurrency.aplwallet.apl.core.http.APITag;
 import com.apollocurrency.aplwallet.apl.core.http.AbstractAPIRequestHandler;
+import com.apollocurrency.aplwallet.apl.core.http.HttpParameterParserUtil;
 import com.apollocurrency.aplwallet.apl.core.http.JSONData;
-import com.apollocurrency.aplwallet.apl.core.http.ParameterParser;
-import com.apollocurrency.aplwallet.apl.util.AplException;
-import com.apollocurrency.aplwallet.apl.core.app.Order;
+import com.apollocurrency.aplwallet.apl.core.service.state.order.OrderService;
+import com.apollocurrency.aplwallet.apl.core.service.state.order.impl.AskOrderServiceImpl;
+import com.apollocurrency.aplwallet.apl.core.service.state.qualifier.AskOrderService;
+import com.apollocurrency.aplwallet.apl.core.transaction.messages.CCAskOrderPlacementAttachment;
+import com.apollocurrency.aplwallet.apl.util.exception.AplException;
 import org.json.simple.JSONStreamAware;
 
-import javax.servlet.http.HttpServletRequest;
+import jakarta.enterprise.inject.Vetoed;
+import jakarta.enterprise.inject.spi.CDI;
+import jakarta.servlet.http.HttpServletRequest;
 
 import static com.apollocurrency.aplwallet.apl.core.http.JSONResponses.UNKNOWN_ORDER;
-import javax.enterprise.inject.Vetoed;
 
 @Vetoed
 public final class GetAskOrder extends AbstractAPIRequestHandler {
+    private final OrderService<AskOrder, CCAskOrderPlacementAttachment> askOrderService =
+        CDI.current().select(AskOrderServiceImpl.class, AskOrderService.Literal.INSTANCE).get();
 
     public GetAskOrder() {
-        super(new APITag[] {APITag.AE}, "order");
+        super(new APITag[]{APITag.AE}, "order");
     }
 
     @Override
     public JSONStreamAware processRequest(HttpServletRequest req) throws AplException {
-        long orderId = ParameterParser.getUnsignedLong(req, "order", true);
-        Order.Ask askOrder = Order.Ask.getAskOrder(orderId);
+        long orderId = HttpParameterParserUtil.getUnsignedLong(req, "order", true);
+        AskOrder askOrder = askOrderService.getOrder(orderId);
         if (askOrder == null) {
             return UNKNOWN_ORDER;
         }

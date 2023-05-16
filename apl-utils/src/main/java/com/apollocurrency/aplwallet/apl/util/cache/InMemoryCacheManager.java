@@ -4,6 +4,7 @@
 
 package com.apollocurrency.aplwallet.apl.util.cache;
 
+import com.apollocurrency.aplwallet.apl.util.StringUtils;
 import com.google.common.base.Preconditions;
 import com.google.common.cache.Cache;
 import com.google.common.cache.CacheBuilder;
@@ -11,40 +12,31 @@ import com.google.common.cache.CacheLoader;
 import com.google.common.cache.CacheStats;
 import lombok.Getter;
 import lombok.extern.slf4j.Slf4j;
-import org.apache.commons.lang3.StringUtils;
 import org.jboss.weld.environment.util.Collections;
 
-import javax.enterprise.inject.Produces;
-import javax.enterprise.inject.spi.Annotated;
-import javax.enterprise.inject.spi.InjectionPoint;
-import javax.inject.Inject;
-import javax.inject.Singleton;
 import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.concurrent.ConcurrentHashMap;
 
 @Slf4j
-@Singleton
 public class InMemoryCacheManager {
 
     private static final long MIN_MEMORY_SIZE_FOR_CACHES = 16 * 1024 * 1024;//in bytes
 
     private ConcurrentHashMap<String, Cache> inMemoryCaches;
 
-    @Inject
     public InMemoryCacheManager(InMemoryCacheConfigurator configurator) {
         Objects.requireNonNull(configurator, "Configurator is NULL.");
         validateConfigurations(configurator);
         allocateAllCaches(configurator);
     }
 
-    @Produces
-    @CacheProducer
-    public <K, V> Cache<K, V> acquireCache(InjectionPoint injectionPoint) {
-        Annotated annotated = injectionPoint.getAnnotated();
-        CacheType cacheTypeAnnotation = annotated.getAnnotation(CacheType.class);
-        return acquireCache(cacheTypeAnnotation.value());
+    /**
+     * Return new instance of memory calculator
+     */
+    public static MemoryUsageCalculator newCalc() {
+        return new MemoryUsageCalculator().startObject();
     }
 
     @SuppressWarnings("unchecked")
@@ -58,10 +50,10 @@ public class InMemoryCacheManager {
 
     private void validateConfigurations(InMemoryCacheConfigurator cfg) {
         Preconditions.checkState(cfg.getAvailableMemory() >= MIN_MEMORY_SIZE_FOR_CACHES
-                , "The available memory is less than %s bytes.", MIN_MEMORY_SIZE_FOR_CACHES);
+            , "The available memory is less than %s bytes.", MIN_MEMORY_SIZE_FOR_CACHES);
 
         cfg.getConfiguredCaches().stream().forEach(cacheConfiguration -> {
-            Preconditions.checkArgument(StringUtils.isNotEmpty(cacheConfiguration.getCacheName()), "Cache name cant be empty.");
+            Preconditions.checkArgument(StringUtils.isNotBlank(cacheConfiguration.getCacheName()), "Cache name cant be empty.");
             Preconditions.checkArgument(cacheConfiguration.getExpectedElementSize() > 0, "Element size must not be negative or zero.");
             Preconditions.checkArgument(cacheConfiguration.getCachePriority() > 0, "Cache priority must be greater than zero.");
         });
@@ -72,27 +64,38 @@ public class InMemoryCacheManager {
         inMemoryCaches = new ConcurrentHashMap<>();
         final int sumPriority = configurator.getConfiguredCaches().stream().mapToInt(CacheConfiguration::getCachePriority).sum();
         configurator.getConfiguredCaches().forEach(config -> {
-            CacheBuilder builder = configureCache(config, configurator.getAvailableMemory(), sumPriority);
-            log.debug("Configured builder={}", builder);
-            Cache cache;
-            Optional<CacheLoader> loader = config.getCacheLoader();
-            if (loader.isPresent()) {
-                cache = builder.build(loader.get());
+            configureCacheSize(config, configurator.getAvailableMemory(), sumPriority);
+            Cache<?,?> cache;
+            if (config.shouldBeSynchronized()) {
+                cache = new SynchronizedCache<>(config.getMaxSize());
             } else {
-                cache = builder.build();
+                CacheBuilder<?, ?> builder = prepareCacheBuilder(config);
+                log.debug("Configured builder={}", builder);
+                Optional<CacheLoader> loader = config.getCacheLoader();
+                if (loader.isPresent()) {
+                    cache = builder.build(loader.get());
+                } else {
+                    cache = builder.build();
+                }
             }
             inMemoryCaches.put(config.getCacheName(), cache);
             log.debug("Allocated cache={}", config);
         });
     }
 
-    private CacheBuilder configureCache(CacheConfiguration config, long availableMemory, int sumPriority) {
+    private CacheBuilder<?, ?> prepareCacheBuilder(CacheConfiguration<?,?> config) {
+        CacheBuilder<?,?> builder = config.cacheBuilder();
+        builder.maximumSize(config.getMaxSize());
+        builder.recordStats();
+        return builder;
+    }
+
+    private void configureCacheSize(CacheConfiguration<?,?> config, long availableMemory, int sumPriority) {
         //  key#hashCode:int + value#reference
         int extra = 4 + newCalc().refExtra;
         int size = Math.max((int) (availableMemory / sumPriority * config.getCachePriority() / (config.getExpectedElementSize() + extra)), 1) + 1;
         log.debug("Recalculate and set maxSize={} for cache {}", size, config.getCacheName());
         config.setMaxSize(size);
-        return config.cacheBuilder().maximumSize(size);
     }
 
     public List<String> getAllocatedCacheNames() {
@@ -101,18 +104,11 @@ public class InMemoryCacheManager {
 
     public CacheStats getStats(String cacheName) {
         CacheStats stats = null;
-        Cache cache = inMemoryCaches.get(cacheName);
+        Cache<?,?> cache = inMemoryCaches.get(cacheName);
         if (cache != null) {
             stats = cache.stats();
         }
         return stats;
-    }
-
-    /**
-     * Return new instance of memory calculator
-     */
-    public static MemoryUsageCalculator newCalc() {
-        return new MemoryUsageCalculator().startObject();
     }
 
     /**

@@ -4,10 +4,9 @@
 
 package com.apollocurrency.aplwallet.apl.util.env.dirprovider;
 
-import java.util.UUID;
-
 import com.apollocurrency.aplwallet.apl.util.env.RuntimeEnvironment;
-import javax.enterprise.inject.Produces;
+
+import java.util.UUID;
 
 /**
  * Simple factory for DirProvider creation
@@ -17,15 +16,14 @@ public class DirProviderFactory {
     private static String applicationName;
     private static PredefinedDirLocations dirLocations;
     private static UUID chainId;
-    
-    public static void setup(boolean isServiceP, UUID chainIdP, String applicationNameP, PredefinedDirLocations dirLocationsP){
-        isService=isServiceP;
-        applicationName=applicationNameP;
-        chainId=chainIdP;
-        dirLocations=dirLocationsP;
+
+    public static void setup(boolean isServiceP, UUID chainIdP, String applicationNameP, PredefinedDirLocations dirLocationsP) {
+        isService = isServiceP;
+        applicationName = applicationNameP;
+        chainId = chainIdP;
+        dirLocations = dirLocationsP;
     }
-    
-    @Produces
+
     public static DirProvider getProvider() {
         if (!isService) {
             return new UserModeDirProvider(applicationName, chainId, dirLocations);

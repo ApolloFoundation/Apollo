@@ -20,54 +20,51 @@
 
 package com.apollocurrency.aplwallet.apl.core.http.get;
 
-import com.apollocurrency.aplwallet.apl.core.app.Transaction;
-import com.apollocurrency.aplwallet.apl.core.db.DbIterator;
-import com.apollocurrency.aplwallet.apl.core.db.FilteringIterator;
+import com.apollocurrency.aplwallet.apl.core.model.UnconfirmedTransaction;
 import com.apollocurrency.aplwallet.apl.core.http.APITag;
 import com.apollocurrency.aplwallet.apl.core.http.AbstractAPIRequestHandler;
+import com.apollocurrency.aplwallet.apl.core.http.HttpParameterParserUtil;
 import com.apollocurrency.aplwallet.apl.core.http.ParameterException;
-import com.apollocurrency.aplwallet.apl.core.http.ParameterParser;
+import com.apollocurrency.aplwallet.apl.core.utils.CollectionUtil;
 import com.apollocurrency.aplwallet.apl.crypto.Convert;
+import com.apollocurrency.aplwallet.apl.util.db.DbUtils;
 import org.json.simple.JSONArray;
 import org.json.simple.JSONObject;
 import org.json.simple.JSONStreamAware;
 
-import javax.servlet.http.HttpServletRequest;
+import jakarta.enterprise.inject.Vetoed;
+import jakarta.servlet.http.HttpServletRequest;
 import java.util.Set;
-import javax.enterprise.inject.Vetoed;
+import java.util.stream.Collectors;
 
 @Vetoed
 public final class GetUnconfirmedTransactionIds extends AbstractAPIRequestHandler {
 
     public GetUnconfirmedTransactionIds() {
-        super(new APITag[] {APITag.TRANSACTIONS, APITag.ACCOUNTS}, "account", "account", "account", "firstIndex", "lastIndex");
+        super(new APITag[]{APITag.TRANSACTIONS, APITag.ACCOUNTS}, "account", "account", "account", "firstIndex", "lastIndex");
     }
 
     @Override
     public JSONStreamAware processRequest(HttpServletRequest req) throws ParameterException {
 
-        Set<Long> accountIds = Convert.toSet(ParameterParser.getAccountIds(req, false));
-        int firstIndex = ParameterParser.getFirstIndex(req);
-        int lastIndex = ParameterParser.getLastIndex(req);
+        Set<Long> accountIds = Convert.toSet(HttpParameterParserUtil.getAccountIds(req, false));
+        int firstIndex = HttpParameterParserUtil.getFirstIndex(req);
+        int lastIndex = HttpParameterParserUtil.getLastIndex(req);
 
         JSONArray transactionIds = new JSONArray();
         if (accountIds.isEmpty()) {
-            try (DbIterator<? extends Transaction> transactionsIterator = lookupTransactionProcessor().getAllUnconfirmedTransactions(firstIndex, lastIndex)) {
-                while (transactionsIterator.hasNext()) {
-                    Transaction transaction = transactionsIterator.next();
-                    transactionIds.add(transaction.getStringId());
-                }
-            }
+            transactionIds.addAll(lookupMemPool().getAllStream(firstIndex, lastIndex)
+                    .map(UnconfirmedTransaction::getStringId)
+                    .collect(Collectors.toList()));
         } else {
-            try (FilteringIterator<? extends Transaction> transactionsIterator = new FilteringIterator<> (
-                    lookupTransactionProcessor().getAllUnconfirmedTransactions(0, -1),
-                    transaction -> accountIds.contains(transaction.getSenderId()) || accountIds.contains(transaction.getRecipientId()),
-                    firstIndex, lastIndex)) {
-                while (transactionsIterator.hasNext()) {
-                    Transaction transaction = transactionsIterator.next();
-                    transactionIds.add(transaction.getStringId());
-                }
+            int limit = DbUtils.calculateLimit(firstIndex, lastIndex);
+            if (limit == 0) {
+                limit = Integer.MAX_VALUE;
             }
+                CollectionUtil.forEach(lookupMemPool().getAllStream()
+                .filter(transaction -> accountIds.contains(transaction.getSenderId()) || accountIds.contains(transaction.getRecipientId()))
+                .limit(limit)
+                .skip(firstIndex), e-> transactionIds.add(e.getStringId()));
         }
 
         JSONObject response = new JSONObject();

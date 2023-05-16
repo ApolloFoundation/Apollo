@@ -4,10 +4,10 @@
     "active": true,
     "wellKnownPeers": [
       "51.15.37.165",
-      "51.15.209.252",
-      "51.15.228.90",
       "51.15.228.126",
       "51.15.228.171",
+      "51.15.209.252",
+      "51.15.228.90",
       "51.15.46.25",
       "51.15.72.23"
     ],
@@ -16,15 +16,20 @@
     "symbol": "Apollo",
     "prefix": "APL",
     "project": "Apollo",
-    "genesisLocation": "conf/data/genesisAccounts-testnet.json",
+    "initialSupply": 30000000000,
+    "decimals": 8,
     "featuresHeightRequirement": {
-      "dexReopenPendingOrdersHeight": 300000,
-      "dexExpiredContractWithFinishedPhasingHeight": 800000
+      "dexReopenPendingOrdersHeight": 0,
+      "dexExpiredContractWithFinishedPhasingHeightAndStep3": 0,
+      "failedTransactionsAcceptanceHeight": 0,
+      "transactionV2Height": 0,
+      "smartContractTransactionsHeight": 0
     },
     "blockchainProperties": [
       {
         "height": 0,
         "maxNumberOfTransactions": 255,
+        "maxArbitraryMessageLength": 160,
         "blockTime": 60,
         "maxBlockTimeLimit": 67,
         "minBlockTimeLimit": 53,
@@ -33,6 +38,8 @@
       {
         "height": 1,
         "maxNumberOfTransactions": 255,
+        "maxArbitraryMessageLength": 160,
+        "maxNumberOfChildAccounts": 10,
         "blockTime": 2,
         "maxBlockTimeLimit": 3,
         "minBlockTimeLimit": 1,
@@ -45,12 +52,45 @@
         },
         "shardingSettings": {
           "enabled": true,
-          "frequency": 100000
+          "frequency": 250000
+        },
+        "smcSettings": {
+          "masterAccountPublicKey": "f9c6cd2cebff46137f3ea611683026b94f4bd1b39abbab480478e10766b2c608",
+          "fuelLimitMinValue": 10000000,
+          "fuelLimitMaxValue": 30000000000,
+          "fuelPriceMinValue": 10000,
+          "fuelPriceMaxValue": 100000000
+        },
+        "transactionFeeSettings": {
+          "feeRates": [
+            {
+              "type": 1,
+              "subType": 1,
+              "baseFee": "1000"
+            },
+            {
+              "type": 1,
+              "subType": 6,
+              "baseFee": "5"
+            },
+            {
+              "type": 1,
+              "subType": 7,
+              "baseFee": "5"
+            },
+            {
+              "type": 1,
+              "subType": 8,
+              "baseFee": "5"
+            }
+          ]
         }
       },
       {
-        "height": 600000,
+        "height": 1250000,
         "maxNumberOfTransactions": 255,
+        "maxArbitraryMessageLength": 160,
+        "maxNumberOfChildAccounts": 10,
         "blockTime": 2,
         "maxBlockTimeLimit": 3,
         "minBlockTimeLimit": 1,
@@ -63,7 +103,38 @@
         },
         "shardingSettings": {
           "enabled": true,
-          "frequency": 10000
+          "frequency": 50000
+        },
+        "smcSettings": {
+          "masterAccountPublicKey": "f9c6cd2cebff46137f3ea611683026b94f4bd1b39abbab480478e10766b2c608",
+          "fuelLimitMinValue": 10000000,
+          "fuelLimitMaxValue": 30000000000,
+          "fuelPriceMinValue": 10000,
+          "fuelPriceMaxValue": 100000000
+        },
+        "transactionFeeSettings": {
+          "feeRates": [
+            {
+              "type": 1,
+              "subType": 1,
+              "baseFee": "1000"
+            },
+            {
+              "type": 1,
+              "subType": 6,
+              "baseFee": "5"
+            },
+            {
+              "type": 1,
+              "subType": 7,
+              "baseFee": "5"
+            },
+            {
+              "type": 1,
+              "subType": 8,
+              "baseFee": "5"
+            }
+          ]
         }
       }
     ]

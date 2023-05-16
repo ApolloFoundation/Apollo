@@ -4,14 +4,13 @@ import com.apollocurrency.aplwallet.api.dto.SymbolsOutputDTO;
 import com.apollocurrency.aplwallet.api.dto.TradingDataOutputDTO;
 import com.apollocurrency.aplwallet.api.dto.TradingViewConfigDTO;
 import com.apollocurrency.aplwallet.api.trading.TradingDataOutput;
-import com.apollocurrency.aplwallet.apl.core.app.TimeService;
-import com.apollocurrency.aplwallet.apl.core.rest.ApiErrors;
 import com.apollocurrency.aplwallet.apl.core.rest.converter.TradingDataOutputToDtoConverter;
-import com.apollocurrency.aplwallet.apl.core.rest.utils.ResponseBuilder;
-import com.apollocurrency.aplwallet.apl.exchange.model.DexCurrency;
-import com.apollocurrency.aplwallet.apl.exchange.service.DexService;
+import com.apollocurrency.aplwallet.apl.dex.core.model.DexCurrency;
 import com.apollocurrency.aplwallet.apl.exchange.service.graph.DexTradingDataService;
 import com.apollocurrency.aplwallet.apl.exchange.service.graph.TimeFrame;
+import com.apollocurrency.aplwallet.apl.exchange.utils.TradingViewService;
+import com.apollocurrency.aplwallet.apl.util.builder.ResponseBuilder;
+import com.apollocurrency.aplwallet.apl.util.exception.ApiErrors;
 import io.swagger.v3.oas.annotations.OpenAPIDefinition;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
@@ -22,22 +21,20 @@ import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import lombok.extern.slf4j.Slf4j;
 
-import javax.inject.Inject;
-import javax.inject.Singleton;
-import javax.servlet.http.HttpServletRequest;
-import javax.ws.rs.GET;
-import javax.ws.rs.NotFoundException;
-import javax.ws.rs.Path;
-import javax.ws.rs.Produces;
-import javax.ws.rs.QueryParam;
-import javax.ws.rs.core.Context;
-import javax.ws.rs.core.MediaType;
-import javax.ws.rs.core.Response;
+import jakarta.inject.Inject;
+import jakarta.inject.Singleton;
+import jakarta.servlet.http.HttpServletRequest;
+import jakarta.ws.rs.GET;
+import jakarta.ws.rs.NotFoundException;
+import jakarta.ws.rs.Path;
+import jakarta.ws.rs.Produces;
+import jakarta.ws.rs.QueryParam;
+import jakarta.ws.rs.core.Context;
+import jakarta.ws.rs.core.MediaType;
+import jakarta.ws.rs.core.Response;
 import java.util.ArrayList;
 import java.util.Calendar;
 import java.util.TimeZone;
-
-import static com.apollocurrency.aplwallet.apl.exchange.utils.TradingViewUtils.getUpdatedDataForIntervalFromOffers;
 
 @Singleton
 @Path("/dex")
@@ -47,34 +44,32 @@ public class TradingDataController {
     public static final String FROM_PARAM = "from";
     public static final String TO_PARAM = "to";
 
+    private TradingViewService tradingViewService;
     private DexTradingDataService dataService;
-    private TimeService timeService;
-    private DexService dexService;
+    private TradingDataOutputToDtoConverter converter = new TradingDataOutputToDtoConverter();
 
     public TradingDataController() { // required for resteasy
     }
 
     @Inject
-    public TradingDataController(DexTradingDataService dataService, TimeService timeService, DexService dexService) {
+    public TradingDataController(DexTradingDataService dataService, TradingViewService tradingViewService) {
         this.dataService = dataService;
-        this.timeService = timeService;
-        this.dexService = dexService;
+        this.tradingViewService = tradingViewService;
     }
 
-    private TradingDataOutputToDtoConverter converter = new TradingDataOutputToDtoConverter();
     @GET
     @Path("/chart")
     @Produces(MediaType.APPLICATION_JSON)
     @Operation(tags = {"dex"}, summary = "Get candlesticks, APL/ETH, APL/PAX",
-            description = "Retrieve candlesticks using buy orders history and stored candlesticks for specified currency pair. Time bounds are represented by unix seconds. Entirely UDF compatible.",
-            responses = @ApiResponse(description = "trading data output with request parameters and candlesticks data",
-                    content = @Content(schema = @Schema(implementation = TradingDataOutputDTO.class), mediaType = "application/json"))
+        description = "Retrieve candlesticks using buy orders history and stored candlesticks for specified currency pair. Time bounds are represented by unix seconds. Entirely UDF compatible.",
+        responses = @ApiResponse(description = "trading data output with request parameters and candlesticks data",
+            content = @Content(schema = @Schema(implementation = TradingDataOutputDTO.class), mediaType = "application/json"))
     )
     public Response getCandlesticks(
-                                    @Parameter(description = "Second currency symbol in the trading pair, for example - ETH, PAX OR entire currency pair, for example APL_ETH or APL/ETH (second symbol will be resolved as paired currency)", required = true) @QueryParam("symbol") DexCurrency symbol,
-                                    @Parameter(description = "Upper timestamp bound for candlesticks", required = true) @QueryParam(TO_PARAM) Integer toTs,
-                                    @Parameter(description = "Lower timestamp bound for candlesticks", required = true) @QueryParam(FROM_PARAM) Integer fromTs,
-                                    @Parameter(description = "Time frame for which trading candlesticks should be returned. Possible values: QUARTER, HOUR, FOUR_HOURS, DAY or tv compatible 15, 60, 240, D ", required = true)  @QueryParam("resolution") TimeFrame timeFrame
+        @Parameter(description = "Second currency symbol in the trading pair, for example - ETH, PAX OR entire currency pair, for example APL_ETH or APL/ETH (second symbol will be resolved as paired currency)", required = true) @QueryParam("symbol") DexCurrency symbol,
+        @Parameter(description = "Upper timestamp bound for candlesticks", required = true) @QueryParam(TO_PARAM) Integer toTs,
+        @Parameter(description = "Lower timestamp bound for candlesticks", required = true) @QueryParam(FROM_PARAM) Integer fromTs,
+        @Parameter(description = "Time frame for which trading candlesticks should be returned. Possible values: QUARTER, HOUR, FOUR_HOURS, DAY or tv compatible 15, 60, 240, D ", required = true) @QueryParam("resolution") TimeFrame timeFrame
     ) {
 
         if (symbol == DexCurrency.APL) {
@@ -84,7 +79,7 @@ public class TradingDataController {
             return ResponseBuilder.apiError(ApiErrors.PARAM_GREATER_OR_EQUAL_ERROR, FROM_PARAM, TO_PARAM).build();
         }
         TradingDataOutput tradingDataOutput = dataService.getBars(fromTs, toTs, symbol, timeFrame);
-        return Response.ok( converter.apply(tradingDataOutput) ) .build();
+        return Response.ok(converter.apply(tradingDataOutput)).build();
 
     }
 
@@ -94,12 +89,12 @@ public class TradingDataController {
     @Operation(tags = {"dex"}, summary = "Get history", description = "getting history")
     @ApiResponses(value = {
         @ApiResponse(responseCode = "200", description = "Exchange offers"),
-        @ApiResponse(responseCode = "200", description = "Unexpected error") })
-    public Response getHistoday2(   @Parameter(description = "Cryptocurrency identifier") @QueryParam("symbol") String symbol,
-                                    @Parameter(description = "resolution") @QueryParam("resolution") String resolution,
-                                    @Parameter(description = FROM_PARAM) @QueryParam(FROM_PARAM) Integer from,
-                                    @Parameter(description = TO_PARAM) @QueryParam(TO_PARAM) Integer to,
-                                    @Context HttpServletRequest req) throws NotFoundException {
+        @ApiResponse(responseCode = "200", description = "Unexpected error")})
+    public Response getHistoday2(@Parameter(description = "Cryptocurrency identifier") @QueryParam("symbol") String symbol,
+                                 @Parameter(description = "resolution") @QueryParam("resolution") String resolution,
+                                 @Parameter(description = FROM_PARAM) @QueryParam(FROM_PARAM) Integer from,
+                                 @Parameter(description = TO_PARAM) @QueryParam(TO_PARAM) Integer to,
+                                 @Context HttpServletRequest req) throws NotFoundException {
 
         log.debug("getHistory:  fsym: {}, resolution: {}, to: {}, from: {}", symbol, resolution, to, from);
 
@@ -108,7 +103,7 @@ public class TradingDataController {
         //1569369600
         //Is equivalent to: 09/25/2019 @ 12:00am (UTC)
 
-        if (to <= 1569369600){
+        if (to <= 1569369600) {
             log.debug("flushing: ");
             TradingDataOutput tdo = new TradingDataOutput();
             tdo.setC(null);
@@ -119,12 +114,11 @@ public class TradingDataController {
             tdo.setV(null);
             tdo.setNextTime(null);
             tdo.setS("no_data");
-            return Response.ok( converter.apply(tdo) ) .build();
+            return Response.ok(converter.apply(tdo)).build();
         }
 
-
-        TradingDataOutput tradingDataOutput = getUpdatedDataForIntervalFromOffers(symbol,resolution,to,from, dexService, timeService);
-        return Response.ok( new TradingDataOutputToDtoConverter().apply(tradingDataOutput) ) .build();
+        TradingDataOutput tradingDataOutput = tradingViewService.getUpdatedDataForIntervalFromOffers(symbol, resolution, to, from);
+        return Response.ok(new TradingDataOutputToDtoConverter().apply(tradingDataOutput)).build();
     }
 
 
@@ -134,11 +128,11 @@ public class TradingDataController {
     @Operation(tags = {"dex"}, summary = "Get history", description = "getting history")
     @ApiResponses(value = {
         @ApiResponse(responseCode = "200", description = "Exchange offers"),
-        @ApiResponse(responseCode = "200", description = "Unexpected error") })
-    public Response getSymbols(   @Parameter(description = "Cryptocurrency identifier") @QueryParam("symbol") String symbol,
-                                  @Context HttpServletRequest req) throws NotFoundException {
+        @ApiResponse(responseCode = "200", description = "Unexpected error")})
+    public Response getSymbols(@Parameter(description = "Cryptocurrency identifier") @QueryParam("symbol") String symbol,
+                               @Context HttpServletRequest req) throws NotFoundException {
 
-        log.debug("getSymbols:  fsym: {}", symbol );
+        log.debug("getSymbols:  fsym: {}", symbol);
         TimeZone tz = Calendar.getInstance().getTimeZone();
         SymbolsOutputDTO symbolsOutputDTO = new SymbolsOutputDTO();
         symbolsOutputDTO.name = symbol;
@@ -156,7 +150,7 @@ public class TradingDataController {
         symbolsOutputDTO.type = "cryptocurrency";
         symbolsOutputDTO.has_empty_bars = true;
         symbolsOutputDTO.has_weekly_and_monthly = false;
-        symbolsOutputDTO.supported_resolutions = new ArrayList<>();;
+        symbolsOutputDTO.supported_resolutions = new ArrayList<>();
         symbolsOutputDTO.supported_resolutions.add("15");
         symbolsOutputDTO.supported_resolutions.add("60");
         symbolsOutputDTO.supported_resolutions.add("240");
@@ -164,7 +158,7 @@ public class TradingDataController {
         symbolsOutputDTO.pricescale = 1000000000;
         symbolsOutputDTO.ticker = symbol;
 
-        return Response.ok( symbolsOutputDTO ) .build();
+        return Response.ok(symbolsOutputDTO).build();
     }
 
     @GET
@@ -173,13 +167,12 @@ public class TradingDataController {
     @Operation(tags = {"dex"}, summary = "Get time for trading vies", description = "getting time")
     @ApiResponses(value = {
         @ApiResponse(responseCode = "200", description = "Exchange offers"),
-        @ApiResponse(responseCode = "200", description = "Unexpected error") })
-    public Response getTime(  ) throws NotFoundException {
+        @ApiResponse(responseCode = "200", description = "Unexpected error")})
+    public Response getTime() throws NotFoundException {
 
-        Long time = System.currentTimeMillis()/1000L;
-        return Response.ok( time ) .build();
+        Long time = System.currentTimeMillis() / 1000L;
+        return Response.ok(time).build();
     }
-
 
 
     @GET
@@ -188,8 +181,8 @@ public class TradingDataController {
     @Operation(tags = {"dex"}, summary = "Get configuration", description = "getting TV configuration")
     @ApiResponses(value = {
         @ApiResponse(responseCode = "200", description = "Exchange offers"),
-        @ApiResponse(responseCode = "200", description = "Unexpected error") })
-    public Response getConfig(  ) throws NotFoundException {
+        @ApiResponse(responseCode = "200", description = "Unexpected error")})
+    public Response getConfig() throws NotFoundException {
 
         log.debug("getConfig entry point");
         TradingViewConfigDTO tradingViewConfigDTO = new TradingViewConfigDTO();
@@ -199,12 +192,12 @@ public class TradingDataController {
         tradingViewConfigDTO.supports_timescale_marks = false;
         tradingViewConfigDTO.supports_time = false;
         // resolutions
-        tradingViewConfigDTO.supported_resolutions =  new ArrayList<>();
+        tradingViewConfigDTO.supported_resolutions = new ArrayList<>();
         tradingViewConfigDTO.supported_resolutions.add("15");
         tradingViewConfigDTO.supported_resolutions.add("60");
         tradingViewConfigDTO.supported_resolutions.add("240");
         tradingViewConfigDTO.supported_resolutions.add("D");
 
-        return Response.ok( tradingViewConfigDTO ) .build();
+        return Response.ok(tradingViewConfigDTO).build();
     }
 }

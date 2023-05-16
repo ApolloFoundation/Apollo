@@ -3,18 +3,17 @@
  */
 package com.apollocurrency.aplwallet.apl.core.transaction.messages;
 
-import com.apollocurrency.aplwallet.apl.core.monetary.MonetarySystem;
-import com.apollocurrency.aplwallet.apl.core.transaction.TransactionType;
+import com.apollocurrency.aplwallet.apl.core.transaction.TransactionTypes;
 import com.apollocurrency.aplwallet.apl.crypto.Convert;
-import java.nio.ByteBuffer;
 import org.json.simple.JSONObject;
 
+import java.nio.ByteBuffer;
+
 /**
- *
  * @author al
  */
 public final class MonetarySystemCurrencyDeletion extends AbstractAttachment implements MonetarySystemAttachment {
-    
+
     final long currencyId;
 
     public MonetarySystemCurrencyDeletion(ByteBuffer buffer) {
@@ -47,13 +46,13 @@ public final class MonetarySystemCurrencyDeletion extends AbstractAttachment imp
     }
 
     @Override
-    public TransactionType getTransactionType() {
-        return MonetarySystem.CURRENCY_DELETION;
+    public TransactionTypes.TransactionTypeSpec getTransactionTypeSpec() {
+        return TransactionTypes.TransactionTypeSpec.MS_CURRENCY_DELETION;
     }
 
     @Override
     public long getCurrencyId() {
         return currencyId;
     }
-    
+
 }

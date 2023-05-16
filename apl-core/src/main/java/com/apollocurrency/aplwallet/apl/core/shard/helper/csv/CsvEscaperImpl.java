@@ -6,7 +6,7 @@ package com.apollocurrency.aplwallet.apl.core.shard.helper.csv;
 
 import org.apache.commons.lang3.StringUtils;
 
-import javax.inject.Singleton;
+import jakarta.inject.Singleton;
 import java.util.Base64;
 import java.util.HashMap;
 import java.util.Map;
@@ -26,18 +26,18 @@ public class CsvEscaperImpl implements CsvEscaper {
             ctrlCharacters[0] = fieldDelimiter;
         }
         this.translateMap = new HashMap<>(CTRL_CHARS_ESCAPE);
-        translateMap.put(fieldDelimiter, String.valueOf(DEFAULT_ESCAPE_CHARACTER)+fieldDelimiter);
+        translateMap.put(fieldDelimiter, String.valueOf(DEFAULT_ESCAPE_CHARACTER) + fieldDelimiter);
     }
 
     /**
      * {@inheritDoc}
      */
     @Override
-    public String escape(String data){
-        if (data == null){
+    public String escape(String data) {
+        if (data == null) {
             return null;
         }
-        if (!StringUtils.containsAny(data, ctrlCharacters)){
+        if (!StringUtils.containsAny(data, ctrlCharacters)) {
             return data;
         }
 
@@ -48,7 +48,7 @@ public class CsvEscaperImpl implements CsvEscaper {
             CharSequence seq = translateMap.get(ch);
             if (seq != null) {
                 buff.append(seq);
-            }else {
+            } else {
                 buff.append(ch);
             }
         }
@@ -59,19 +59,19 @@ public class CsvEscaperImpl implements CsvEscaper {
      * {@inheritDoc}
      */
     @Override
-    public String unEscape(String data){
-        if (data == null){
+    public String unEscape(String data) {
+        if (data == null) {
             return null;
         }
         int idx = data.indexOf(DEFAULT_ESCAPE_CHARACTER);
-        if( idx <0 ){
+        if (idx < 0) {
             return data;
         }
         StringBuilder buff = new StringBuilder(data.length());
         int start = 0;
         char ch;
         char[] chars = data.toCharArray();
-        do{
+        do {
             buff.append(chars, start, idx - start);
             if (idx == data.length() - 1) {
                 start = data.length();
@@ -79,14 +79,14 @@ public class CsvEscaperImpl implements CsvEscaper {
             }
             ch = chars[idx + 1];
             CharSequence seq = CTRL_CHARS_UNESCAPE.get(ch);
-            if(seq != null) {
+            if (seq != null) {
                 buff.append(seq);
-            }else {
+            } else {
                 buff.append(ch);
             }
             start = idx + 2;
             idx = data.indexOf(DEFAULT_ESCAPE_CHARACTER, start);
-        }while (idx >= 0 );
+        } while (idx >= 0);
 
         buff.append(data.substring(start));
         return buff.toString();
@@ -101,14 +101,14 @@ public class CsvEscaperImpl implements CsvEscaper {
     }
 
     @Override
-    public String quotedText(String o){
+    public String quotedText(String o) {
         return QUOTE + escapeQuote(o) + QUOTE;
     }
 
-    private String escapeQuote(String o){
-        if(o == null) {
+    private String escapeQuote(String o) {
+        if (o == null) {
             return "";
-        }else {
+        } else {
             return o.replace(QUOTE, DOUBLE_QUOTE);
         }
     }

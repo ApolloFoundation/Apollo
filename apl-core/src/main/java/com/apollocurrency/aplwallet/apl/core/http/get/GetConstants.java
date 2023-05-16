@@ -20,26 +20,26 @@
 
 package com.apollocurrency.aplwallet.apl.core.http.get;
 
-import static org.slf4j.LoggerFactory.getLogger;
-
-import com.apollocurrency.aplwallet.apl.core.app.Blockchain;
 import com.apollocurrency.aplwallet.apl.core.app.GenesisImporter;
-import com.apollocurrency.aplwallet.apl.core.app.Shuffling;
-import com.apollocurrency.aplwallet.apl.core.app.ShufflingParticipant;
 import com.apollocurrency.aplwallet.apl.core.app.VoteWeighting;
-import com.apollocurrency.aplwallet.apl.core.app.mint.CurrencyMinting;
 import com.apollocurrency.aplwallet.apl.core.chainid.BlockchainConfig;
+import com.apollocurrency.aplwallet.apl.core.entity.state.currency.CurrencyType;
+import com.apollocurrency.aplwallet.apl.core.entity.state.shuffling.ShufflingParticipantState;
+import com.apollocurrency.aplwallet.apl.core.entity.state.shuffling.ShufflingStage;
 import com.apollocurrency.aplwallet.apl.core.http.API;
 import com.apollocurrency.aplwallet.apl.core.http.APIProxy;
 import com.apollocurrency.aplwallet.apl.core.http.APIServlet;
 import com.apollocurrency.aplwallet.apl.core.http.APITag;
 import com.apollocurrency.aplwallet.apl.core.http.AbstractAPIRequestHandler;
 import com.apollocurrency.aplwallet.apl.core.http.JSONData;
-import com.apollocurrency.aplwallet.apl.core.monetary.CurrencyType;
-import com.apollocurrency.aplwallet.apl.core.monetary.HoldingType;
+import com.apollocurrency.aplwallet.apl.core.model.HoldingType;
 import com.apollocurrency.aplwallet.apl.core.peer.PeerState;
-import com.apollocurrency.aplwallet.apl.core.phasing.PhasingPollService;
+import com.apollocurrency.aplwallet.apl.core.service.blockchain.Blockchain;
+import com.apollocurrency.aplwallet.apl.core.service.state.PhasingPollService;
+import com.apollocurrency.aplwallet.apl.core.service.state.currency.MonetaryCurrencyMintingService;
 import com.apollocurrency.aplwallet.apl.core.transaction.TransactionType;
+import com.apollocurrency.aplwallet.apl.core.transaction.TransactionTypeFactory;
+import com.apollocurrency.aplwallet.apl.core.transaction.TransactionTypes;
 import com.apollocurrency.aplwallet.apl.crypto.HashFunction;
 import com.apollocurrency.aplwallet.apl.util.Constants;
 import com.apollocurrency.aplwallet.apl.util.JSON;
@@ -49,15 +49,42 @@ import org.json.simple.JSONObject;
 import org.json.simple.JSONStreamAware;
 import org.slf4j.Logger;
 
+import jakarta.enterprise.inject.Vetoed;
+import jakarta.enterprise.inject.spi.CDI;
+import jakarta.servlet.http.HttpServletRequest;
 import java.util.Collections;
 import java.util.Map;
-import javax.enterprise.inject.Vetoed;
-import javax.enterprise.inject.spi.CDI;
-import javax.servlet.http.HttpServletRequest;
 
+import static org.slf4j.LoggerFactory.getLogger;
+
+@Deprecated
 @Vetoed
 public final class GetConstants extends AbstractAPIRequestHandler {
     private static final Logger LOG = getLogger(GetConstants.class);
+
+
+    public GetConstants() {
+        super(new APITag[]{APITag.INFO});
+    }
+
+    public static JSONStreamAware getConstants() {
+        return Holder.CONSTANTS;
+    }
+
+    @Override
+    public JSONStreamAware processRequest(HttpServletRequest req) {
+        return Holder.CONSTANTS;
+    }
+
+    @Override
+    protected boolean allowRequiredBlockParameters() {
+        return false;
+    }
+
+    @Override
+    protected boolean requireBlockchain() {
+        return false;
+    }
 
     private static final class Holder {
 
@@ -68,21 +95,25 @@ public final class GetConstants extends AbstractAPIRequestHandler {
                 JSONObject response = new JSONObject();
                 Blockchain blockchain = CDI.current().select(Blockchain.class).get();
                 PropertiesHolder propertiesLoader = CDI.current().select(PropertiesHolder.class).get();
+                BlockchainConfig blockchainConfig = CDI.current().select(BlockchainConfig.class).get();
+                TransactionTypeFactory transactionTypeFactory = CDI.current().select(TransactionTypeFactory.class).get();
                 if (blockchain.isInitialized()) {
                     response.put("genesisBlockId", Long.toUnsignedString(blockchain.getBlockIdAtHeight(0)));
                 }
                 response.put("genesisAccountId", Long.toUnsignedString(GenesisImporter.CREATOR_ID));
                 response.put("epochBeginning", GenesisImporter.EPOCH_BEGINNING);
-                response.put("maxArbitraryMessageLength", Constants.MAX_ARBITRARY_MESSAGE_LENGTH);
+                response.put("maxArbitraryMessageLength", blockchainConfig.getCurrentConfig().getMaxArbitraryMessageLength());
                 response.put("maxPrunableMessageLength", Constants.MAX_PRUNABLE_MESSAGE_LENGTH);
-                BlockchainConfig blockchainConfig = CDI.current().select(BlockchainConfig.class).get();
                 response.put("coinSymbol", blockchainConfig.getCoinSymbol());
                 response.put("accountPrefix", blockchainConfig.getAccountPrefix());
                 response.put("projectName", blockchainConfig.getProjectName());
 
                 response.put("maxImportSecretFileLength", propertiesLoader.getIntProperty("apl.maxKeyStoreFileSize"));
+                // Exchange
                 response.put("gasLimitEth", Constants.GAS_LIMIT_ETHER_TX);
                 response.put("gasLimitERC20", Constants.GAS_LIMIT_FOR_ERC20);
+                // Mixer
+                response.put("mixerUrl", propertiesLoader.getStringProperty("apl.mixer.url"));
 
                 JSONObject transactionJSON = new JSONObject();
                 JSONObject transactionSubTypesJSON = new JSONObject();
@@ -93,7 +124,7 @@ public final class GetConstants extends AbstractAPIRequestHandler {
                     for (int subtype = 0; ; subtype++) {
                         TransactionType transactionType;
                         try {
-                            transactionType = TransactionType.findTransactionType((byte) type, (byte) subtype);
+                            transactionType = transactionTypeFactory.findTransactionType((byte) type, (byte) subtype);
                         } catch (IllegalArgumentException ignore) {
                             continue;
                         }
@@ -101,6 +132,12 @@ public final class GetConstants extends AbstractAPIRequestHandler {
                             if (subtype == 0) {
                                 break outer;
                             } else {
+                                try {
+                                    TransactionTypes.find(type, subtype);
+                                    //There is the specification but doesn't exist an TransactionType instance of the given type and subtype, ex. type=1, subtype=4
+                                    continue;
+                                } catch (IllegalArgumentException ignored) {
+                                }
                                 break;
                             }
                         }
@@ -154,7 +191,7 @@ public final class GetConstants extends AbstractAPIRequestHandler {
                 response.put("maxPhasingDuration", Constants.MAX_PHASING_DURATION);
 
                 JSONObject mintingHashFunctions = new JSONObject();
-                for (HashFunction hashFunction : CurrencyMinting.acceptedHashFunctions) {
+                for (HashFunction hashFunction : MonetaryCurrencyMintingService.acceptedHashFunctions) {
                     mintingHashFunctions.put(hashFunction.toString(), hashFunction.getId());
                 }
                 response.put("mintingHashAlgorithms", mintingHashFunctions);
@@ -166,6 +203,7 @@ public final class GetConstants extends AbstractAPIRequestHandler {
                 response.put("peerStates", peerStates);
                 response.put("maxTaggedDataDataLength", Constants.MAX_TAGGED_DATA_DATA_LENGTH);
 
+                // Tha part is SKIPPED for generation in NEW REST API
                 JSONObject requestTypes = new JSONObject();
                 for (Map.Entry<String, AbstractAPIRequestHandler> handlerEntry : APIServlet.apiRequestHandlers.entrySet()) {
                     JSONObject handlerJSON = JSONData.apiRequestHandler(handlerEntry.getValue());
@@ -177,7 +215,7 @@ public final class GetConstants extends AbstractAPIRequestHandler {
                     handlerJSON.put("enabled", false);
                     requestTypes.put(handlerEntry.getKey(), handlerJSON);
                 }
-                response.put("requestTypes", requestTypes);
+                response.put("requestTypes", requestTypes); // Tha part is SKIPPED for generation in NEW REST API
 
                 JSONObject holdingTypes = new JSONObject();
                 for (HoldingType holdingType : HoldingType.values()) {
@@ -186,13 +224,13 @@ public final class GetConstants extends AbstractAPIRequestHandler {
                 response.put("holdingTypes", holdingTypes);
 
                 JSONObject shufflingStages = new JSONObject();
-                for (Shuffling.Stage stage : Shuffling.Stage.values()) {
+                for (ShufflingStage stage : ShufflingStage.values()) {
                     shufflingStages.put(stage.toString(), stage.getCode());
                 }
                 response.put("shufflingStages", shufflingStages);
 
                 JSONObject shufflingParticipantStates = new JSONObject();
-                for (ShufflingParticipant.State state : ShufflingParticipant.State.values()) {
+                for (ShufflingParticipantState state : ShufflingParticipantState.values()) {
                     shufflingParticipantStates.put(state.toString(), state.getCode());
                 }
                 response.put("shufflingParticipantStates", shufflingParticipantStates);
@@ -206,14 +244,16 @@ public final class GetConstants extends AbstractAPIRequestHandler {
                 }
                 response.put("apiTags", apiTags);
 
+                // we will not disable new REST API, so skip that
                 JSONArray disabledAPIs = new JSONArray();
                 Collections.addAll(disabledAPIs, API.disabledAPIs);
                 response.put("disabledAPIs", disabledAPIs);
 
                 JSONArray disabledAPITags = new JSONArray();
                 API.disabledAPITags.forEach(apiTag -> disabledAPITags.add(apiTag.getDisplayName()));
-                response.put("disabledAPITags", disabledAPITags);
+                response.put("disabledAPITags", disabledAPITags); // we will not disable new REST API, so skip that
 
+                // that we will not be implemented in NEW REST API
                 JSONArray notForwardedRequests = new JSONArray();
                 notForwardedRequests.addAll(APIProxy.NOT_FORWARDED_REQUESTS);
                 response.put("proxyNotForwardedRequests", notForwardedRequests);
@@ -223,28 +263,5 @@ public final class GetConstants extends AbstractAPIRequestHandler {
                 throw e;
             }
         }
-    }
-
-    public GetConstants() {
-        super(new APITag[] {APITag.INFO});
-    }
-
-    @Override
-    public JSONStreamAware processRequest(HttpServletRequest req) {
-        return Holder.CONSTANTS;
-    }
-
-    @Override
-    protected boolean allowRequiredBlockParameters() {
-        return false;
-    }
-
-    @Override
-    protected boolean requireBlockchain() {
-        return false;
-    }
-
-    public static JSONStreamAware getConstants() {
-        return Holder.CONSTANTS;
     }
 }

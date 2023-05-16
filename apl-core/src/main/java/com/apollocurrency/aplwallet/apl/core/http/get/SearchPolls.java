@@ -20,27 +20,26 @@
 
 package com.apollocurrency.aplwallet.apl.core.http.get;
 
-import com.apollocurrency.aplwallet.apl.core.app.Poll;
-import com.apollocurrency.aplwallet.apl.core.db.DbIterator;
 import com.apollocurrency.aplwallet.apl.core.http.APITag;
 import com.apollocurrency.aplwallet.apl.core.http.AbstractAPIRequestHandler;
+import com.apollocurrency.aplwallet.apl.core.http.HttpParameterParserUtil;
 import com.apollocurrency.aplwallet.apl.core.http.JSONData;
 import com.apollocurrency.aplwallet.apl.core.http.JSONResponses;
 import com.apollocurrency.aplwallet.apl.core.http.ParameterException;
-import com.apollocurrency.aplwallet.apl.core.http.ParameterParser;
+import com.apollocurrency.aplwallet.apl.core.utils.CollectorUtils;
 import com.apollocurrency.aplwallet.apl.crypto.Convert;
-import javax.enterprise.inject.Vetoed;
 import org.json.simple.JSONArray;
 import org.json.simple.JSONObject;
 import org.json.simple.JSONStreamAware;
 
-import javax.servlet.http.HttpServletRequest;
+import jakarta.enterprise.inject.Vetoed;
+import jakarta.servlet.http.HttpServletRequest;
 
 @Vetoed
 public final class SearchPolls extends AbstractAPIRequestHandler {
 
     public SearchPolls() {
-        super(new APITag[] {APITag.VS, APITag.SEARCH}, "query", "firstIndex", "lastIndex", "includeFinished");
+        super(new APITag[]{APITag.VS, APITag.SEARCH}, "query", "firstIndex", "lastIndex", "includeFinished");
     }
 
     @Override
@@ -49,17 +48,15 @@ public final class SearchPolls extends AbstractAPIRequestHandler {
         if (query.isEmpty()) {
             return JSONResponses.missing("query");
         }
-        int firstIndex = ParameterParser.getFirstIndex(req);
-        int lastIndex = ParameterParser.getLastIndex(req);
+        int firstIndex = HttpParameterParserUtil.getFirstIndex(req);
+        int lastIndex = HttpParameterParserUtil.getLastIndex(req);
         boolean includeFinished = "true".equalsIgnoreCase(req.getParameter("includeFinished"));
 
         JSONObject response = new JSONObject();
-        JSONArray jsonArray = new JSONArray();
-        try (DbIterator<Poll> polls = Poll.searchPolls(query, includeFinished, firstIndex, lastIndex)) {
-            while (polls.hasNext()) {
-                jsonArray.add(JSONData.poll(polls.next()));
-            }
-        }
+        JSONArray jsonArray = pollService.searchPolls(query, includeFinished, firstIndex, lastIndex)
+            .map(JSONData::poll)
+            .collect(CollectorUtils.jsonCollector());
+
         response.put("polls", jsonArray);
         return response;
     }

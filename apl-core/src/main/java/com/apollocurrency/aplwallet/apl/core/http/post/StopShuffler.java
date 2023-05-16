@@ -20,51 +20,52 @@
 
 package com.apollocurrency.aplwallet.apl.core.http.post;
 
-import javax.servlet.http.HttpServletRequest;
-
-import com.apollocurrency.aplwallet.apl.core.account.Account;
-import com.apollocurrency.aplwallet.apl.core.app.Shuffler;
-import com.apollocurrency.aplwallet.apl.core.http.API;
+import com.apollocurrency.aplwallet.apl.core.entity.state.shuffling.Shuffler;
 import com.apollocurrency.aplwallet.apl.core.http.APITag;
 import com.apollocurrency.aplwallet.apl.core.http.AbstractAPIRequestHandler;
+import com.apollocurrency.aplwallet.apl.core.http.HttpParameterParserUtil;
 import com.apollocurrency.aplwallet.apl.core.http.JSONResponses;
 import com.apollocurrency.aplwallet.apl.core.http.ParameterException;
-import com.apollocurrency.aplwallet.apl.core.http.ParameterParser;
+import com.apollocurrency.aplwallet.apl.core.service.state.ShufflerService;
+import com.apollocurrency.aplwallet.apl.core.service.state.account.AccountService;
 import com.apollocurrency.aplwallet.apl.crypto.Crypto;
-import javax.enterprise.inject.Vetoed;
 import org.json.simple.JSONObject;
 import org.json.simple.JSONStreamAware;
+
+import jakarta.enterprise.inject.Vetoed;
+import jakarta.servlet.http.HttpServletRequest;
 
 @Vetoed
 public final class StopShuffler extends AbstractAPIRequestHandler {
 
     public StopShuffler() {
-        super(new APITag[] {APITag.SHUFFLING}, "shufflingFullHash", "secretPhrase", "adminPassword");
+        super(new APITag[]{APITag.SHUFFLING}, "shufflingFullHash", "secretPhrase", "adminPassword");
     }
 
     @Override
     public JSONStreamAware processRequest(HttpServletRequest req) throws ParameterException {
-        byte[] shufflingFullHash = ParameterParser.getBytes(req, "shufflingFullHash", false);
-        long accountId = ParameterParser.getAccountId(req, false);
-        byte[] keySeed = ParameterParser.getKeySeed(req,accountId, false);
+        ShufflerService shufflerService = lookupShufflerService();
+        byte[] shufflingFullHash = HttpParameterParserUtil.getBytes(req, "shufflingFullHash", false);
+        long accountId = HttpParameterParserUtil.getAccountId(req, false);
+        byte[] keySeed = HttpParameterParserUtil.getKeySeed(req, accountId, false);
         JSONObject response = new JSONObject();
         if (keySeed != null) {
-            if (accountId != 0 && Account.getId(Crypto.getPublicKey(keySeed)) != accountId) {
+            if (accountId != 0 && AccountService.getId(Crypto.getPublicKey(keySeed)) != accountId) {
                 return JSONResponses.INCORRECT_ACCOUNT;
             }
-            accountId = Account.getId(Crypto.getPublicKey(keySeed));
+            accountId = AccountService.getId(Crypto.getPublicKey(keySeed));
             if (shufflingFullHash.length == 0) {
                 return JSONResponses.missing("shufflingFullHash");
             }
-            Shuffler shuffler = Shuffler.stopShuffler(accountId, shufflingFullHash);
+            Shuffler shuffler = shufflerService.stopShuffler(accountId, shufflingFullHash);
             response.put("stoppedShuffler", shuffler != null);
         } else {
             apw.verifyPassword(req);
             if (accountId != 0 && shufflingFullHash.length != 0) {
-                Shuffler shuffler = Shuffler.stopShuffler(accountId, shufflingFullHash);
+                Shuffler shuffler = shufflerService.stopShuffler(accountId, shufflingFullHash);
                 response.put("stoppedShuffler", shuffler != null);
             } else if (accountId == 0 && shufflingFullHash.length == 0) {
-                Shuffler.stopAllShufflers();
+                shufflerService.stopAllShufflers();
                 response.put("stoppedAllShufflers", true);
             } else if (accountId != 0) {
                 return JSONResponses.missing("shufflingFullHash");

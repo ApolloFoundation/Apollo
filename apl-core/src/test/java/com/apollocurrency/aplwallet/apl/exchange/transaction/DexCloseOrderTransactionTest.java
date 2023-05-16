@@ -1,34 +1,36 @@
 /*
- * Copyright © 2018-2019 Apollo Foundation
+ * Copyright © 2018-2021 Apollo Foundation
  */
 
 package com.apollocurrency.aplwallet.apl.exchange.transaction;
 
-import com.apollocurrency.aplwallet.apl.core.account.Account;
-import com.apollocurrency.aplwallet.apl.core.app.Blockchain;
-import com.apollocurrency.aplwallet.apl.core.app.BlockchainImpl;
-import com.apollocurrency.aplwallet.apl.core.app.TimeService;
-import com.apollocurrency.aplwallet.apl.core.app.Transaction;
 import com.apollocurrency.aplwallet.apl.core.chainid.BlockchainConfig;
-import com.apollocurrency.aplwallet.apl.core.transaction.TransactionType;
+import com.apollocurrency.aplwallet.apl.core.model.Transaction;
+import com.apollocurrency.aplwallet.apl.core.entity.state.account.Account;
+import com.apollocurrency.aplwallet.apl.core.entity.state.phasing.PhasingPollResult;
+import com.apollocurrency.aplwallet.apl.core.model.dex.DexOrder;
+import com.apollocurrency.aplwallet.apl.core.model.dex.ExchangeContract;
+import com.apollocurrency.aplwallet.apl.core.service.blockchain.Blockchain;
+import com.apollocurrency.aplwallet.apl.core.service.state.PhasingPollService;
+import com.apollocurrency.aplwallet.apl.core.service.state.account.AccountService;
+import com.apollocurrency.aplwallet.apl.core.transaction.TransactionTypes;
 import com.apollocurrency.aplwallet.apl.core.transaction.messages.AbstractAttachment;
 import com.apollocurrency.aplwallet.apl.core.transaction.messages.DexCloseOrderAttachment;
-import com.apollocurrency.aplwallet.apl.exchange.DexConfig;
-import com.apollocurrency.aplwallet.apl.exchange.model.DexCurrency;
-import com.apollocurrency.aplwallet.apl.exchange.model.DexOrder;
-import com.apollocurrency.aplwallet.apl.exchange.model.ExchangeContract;
-import com.apollocurrency.aplwallet.apl.exchange.model.ExchangeContractStatus;
-import com.apollocurrency.aplwallet.apl.exchange.model.OrderStatus;
-import com.apollocurrency.aplwallet.apl.exchange.model.OrderType;
+import com.apollocurrency.aplwallet.apl.core.transaction.messages.DexControlOfFrozenMoneyAttachment;
+import com.apollocurrency.aplwallet.apl.core.transaction.types.dex.DexCloseOrderTransactionType;
+import com.apollocurrency.aplwallet.apl.core.transaction.types.dex.DexTransferMoneyTransactionType;
+import com.apollocurrency.aplwallet.apl.dex.core.model.DexCurrency;
+import com.apollocurrency.aplwallet.apl.dex.core.model.ExchangeContractStatus;
+import com.apollocurrency.aplwallet.apl.dex.core.model.OrderStatus;
+import com.apollocurrency.aplwallet.apl.dex.core.model.OrderType;
 import com.apollocurrency.aplwallet.apl.exchange.service.DexService;
-import com.apollocurrency.aplwallet.apl.util.AplException;
-import org.jboss.weld.junit.MockBean;
-import org.jboss.weld.junit5.EnableWeld;
-import org.jboss.weld.junit5.WeldInitiator;
-import org.jboss.weld.junit5.WeldSetup;
+import com.apollocurrency.aplwallet.apl.util.exception.AplException;
 import org.json.simple.JSONObject;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.Mock;
+import org.mockito.junit.jupiter.MockitoExtension;
 
 import java.math.BigDecimal;
 import java.nio.ByteBuffer;
@@ -42,32 +44,31 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.Mockito.doReturn;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.verify;
-
-@EnableWeld
+@ExtendWith(MockitoExtension.class)
 class DexCloseOrderTransactionTest {
 
     DexCloseOrderAttachment attachment = new DexCloseOrderAttachment(10);
     ExchangeContract contract = new ExchangeContract(
-            1L, 10L, 200L, 300L, 1000L, 2000L,
-            ExchangeContractStatus.STEP_2, new byte[32], null, null, new byte[32],
-            7200, null, true);
+        1L, 10L, 200L, 300L, 1000L, 2000L,
+        ExchangeContractStatus.STEP_2, new byte[32], "100", null, new byte[32],
+        7200, null, true);
     DexOrder order = new DexOrder(200L, 100L, "from", "to", OrderType.BUY, OrderStatus.OPEN, DexCurrency.APL, 250L, DexCurrency.ETH, BigDecimal.ONE, 500);
-    DexService dexService = mock(DexService.class);
-    @WeldSetup
-    WeldInitiator weld = WeldInitiator.from()
-            .addBeans(
-                    MockBean.of(mock(DexConfig.class), DexConfig.class),
-                    MockBean.of(mock(BlockchainConfig.class), BlockchainConfig.class),
-                    MockBean.of(mock(BlockchainImpl.class), Blockchain.class, BlockchainImpl.class),
-                    MockBean.of(dexService, DexService.class),
-                    MockBean.of(mock(TimeService.class), TimeService.class)
-            ).build();
+    @Mock
+    BlockchainConfig blockchainConfig;
+    @Mock
+    AccountService accountService;
+    @Mock
+    DexService dexService;
 
-    DexCloseOrderTransaction transactionType;
+    @Mock
+    Blockchain blockchain;
+    @Mock
+    PhasingPollService phasingPollService;
+    DexCloseOrderTransactionType transactionType;
 
     @BeforeEach
     void setUp() {
-        transactionType = new DexCloseOrderTransaction();
+        transactionType = new DexCloseOrderTransactionType(blockchainConfig, accountService, dexService, blockchain, phasingPollService);
     }
 
     @Test
@@ -84,6 +85,7 @@ class DexCloseOrderTransactionTest {
     @Test
     void testParseAttachmentFromJson() throws AplException.NotValidException {
         JSONObject object = new JSONObject();
+        //TODO Resolve json format definition after discussion
         object.put("version.DexCloseOrder", 1);
         object.put("contractId", "10");
 
@@ -117,36 +119,59 @@ class DexCloseOrderTransactionTest {
         // sender
         Transaction tx = mock(Transaction.class);
         doReturn(attachment).when(tx).getAttachment();
-        assertThrows(AplException.NotValidException.class, () -> transactionType.validateAttachment(tx));
+        assertThrows(AplException.NotCurrentlyValidException.class, () -> transactionType.doStateDependentValidation(tx));
 
         doReturn(contract).when(dexService).getDexContractById(10);
-        assertThrows(AplException.NotValidException.class, () -> transactionType.validateAttachment(tx));
+        assertThrows(AplException.NotCurrentlyValidException.class, () -> transactionType.doStateDependentValidation(tx));
 
         doReturn(1000L).when(tx).getSenderId();
-        assertThrows(AplException.NotValidException.class, () -> transactionType.validateAttachment(tx));
+        assertThrows(AplException.NotCurrentlyValidException.class, () -> transactionType.doStateDependentValidation(tx));
 
         contract.setContractStatus(ExchangeContractStatus.STEP_3);
-        assertThrows(AplException.NotValidException.class, () -> transactionType.validateAttachment(tx));
+        assertThrows(AplException.NotCurrentlyValidException.class, () -> transactionType.doStateDependentValidation(tx));
 
         doReturn(order).when(dexService).getOrder(200L);
-        assertThrows(AplException.NotValidException.class, () -> transactionType.validateAttachment(tx));
+        assertThrows(AplException.NotCurrentlyValidException.class, () -> transactionType.doStateDependentValidation(tx));
 
         order.setAccountId(1000L);
-        assertThrows(AplException.NotValidException.class, () -> transactionType.validateAttachment(tx));
+        assertThrows(AplException.NotCurrentlyValidException.class, () -> transactionType.doStateDependentValidation(tx));
 
         order.setType(OrderType.SELL);
-        assertThrows(AplException.NotValidException.class, () -> transactionType.validateAttachment(tx));
+        assertThrows(AplException.NotCurrentlyValidException.class, () -> transactionType.doStateDependentValidation(tx));
 
         order.setStatus(OrderStatus.WAITING_APPROVAL);
 
-        transactionType.validateAttachment(tx);
+        assertThrows(AplException.NotCurrentlyValidException.class, () -> transactionType.doStateDependentValidation(tx));
+
+        Transaction transferTx = mock(Transaction.class);
+        doReturn(new DexTransferMoneyTransactionType(blockchainConfig, accountService, dexService)).when(transferTx).getType();
+
+        doReturn(transferTx).when(blockchain).getTransaction(100);
+        assertThrows(AplException.NotCurrentlyValidException.class, () -> transactionType.doStateDependentValidation(tx));
+
+        doReturn(transactionType).when(transferTx).getType();
+        assertThrows(AplException.NotCurrentlyValidException.class, () -> transactionType.doStateDependentValidation(tx));
+
+        doReturn(new DexTransferMoneyTransactionType(blockchainConfig, accountService, dexService)).when(transferTx).getType();
+        doReturn(1000L).when(transferTx).getSenderId();
+        DexControlOfFrozenMoneyAttachment attachment = new DexControlOfFrozenMoneyAttachment(11L, 100000L);
+        doReturn(attachment).when(transferTx).getAttachment();
+        assertThrows(AplException.NotCurrentlyValidException.class, () -> transactionType.doStateDependentValidation(tx));
+
+        attachment = new DexControlOfFrozenMoneyAttachment(10L, 100000);
+        doReturn(attachment).when(transferTx).getAttachment();
+
+        assertThrows(AplException.NotCurrentlyValidException.class, () -> transactionType.doStateDependentValidation(tx));
+        doReturn(new PhasingPollResult(1L, 1, 1L, 1L, true)).when(phasingPollService).getResult(100);
+        transactionType.doStateDependentValidation(tx);
 
         // recipient
         order.setAccountId(2000L);
         doReturn(2000L).when(tx).getSenderId();
         doReturn(order).when(dexService).getOrder(300L);
-
-        transactionType.validateAttachment(tx);
+        contract.setCounterTransferTxId("100");
+        doReturn(2000L).when(transferTx).getSenderId();
+        transactionType.doStateDependentValidation(tx);
     }
 
     @Test
@@ -162,7 +187,6 @@ class DexCloseOrderTransactionTest {
         verify(dexService).closeOrder(200);
 
 
-
         doReturn(2000L).when(sender).getId();
 
         transactionType.applyAttachment(tx, sender, null);
@@ -174,7 +198,7 @@ class DexCloseOrderTransactionTest {
     void testIsDuplicate() {
         Transaction tx = mock(Transaction.class);
         doReturn(attachment).when(tx).getAttachment();
-        HashMap<TransactionType, Map<String, Integer>> duplicates = new HashMap<>();
+        HashMap<TransactionTypes.TransactionTypeSpec, Map<String, Integer>> duplicates = new HashMap<>();
         assertFalse(transactionType.isDuplicate(tx, duplicates));
         assertTrue(transactionType.isDuplicate(tx, duplicates));
         assertTrue(transactionType.isDuplicate(tx, duplicates));

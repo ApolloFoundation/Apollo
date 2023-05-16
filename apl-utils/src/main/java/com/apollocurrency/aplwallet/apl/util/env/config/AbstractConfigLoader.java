@@ -13,6 +13,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 public abstract class AbstractConfigLoader<T> implements ConfigLoader<T> {
+
     private static final String DEFAULT_CONF_DIR = "conf";
     private ConfigDirProvider dirProvider;
     private boolean ignoreResources;
@@ -29,11 +30,11 @@ public abstract class AbstractConfigLoader<T> implements ConfigLoader<T> {
         StringValidator.requireNonBlank(resourceName, "Resource name is blank or empty");
         this.ignoreUserConfig = dirProvider == null && StringUtils.isBlank(configDir);
         if (ignoreUserConfig && ignoreResources) {
-                throw new IllegalArgumentException("No locations for config loading provided. Resources and user defined configs ignored");
+            throw new IllegalArgumentException("No locations for config loading provided. Resources and user defined configs ignored");
         }
         this.dirProvider = dirProvider;
         this.ignoreResources = ignoreResources;
-        if(!StringUtils.isBlank(configDir)){
+        if (!StringUtils.isBlank(configDir)) {
             this.configDir = configDir;
         }
         this.resourceName = resourceName;
@@ -55,7 +56,7 @@ public abstract class AbstractConfigLoader<T> implements ConfigLoader<T> {
             System.out.println("Will ignore resources!");
         }
         if (!ignoreUserConfig) {
-            loadFromUserDefinedDirectory();
+            loadFromDirectories();
         } else {
             System.out.println("Will ignore user defined config!");
         }
@@ -64,44 +65,41 @@ public abstract class AbstractConfigLoader<T> implements ConfigLoader<T> {
 
     protected abstract T read(InputStream is) throws IOException;
 
-
     private void loadFromResources() {
         // using '/' as separator instead of platform dependent File.separator
-        String fn = (dirProvider == null ? DEFAULT_CONF_DIR : dirProvider.getConfigDirectoryName()) + "/" + resourceName;
+        String fn = (dirProvider == null ? DEFAULT_CONF_DIR : dirProvider.getConfigName()) + "/" + resourceName;
         ClassLoader classloader = Thread.currentThread().getContextClassLoader();
         try (InputStream is = classloader.getResourceAsStream(fn)) {
-            if (is == null){
+            if (is == null) {
                 System.err.println("The resource could not be found: " + fn);
             } else {
                 T defaultConfig = read(is);
                 config = merge(config, defaultConfig);
             }
-        }
-        catch (IOException|IllegalArgumentException e) {
+        } catch (IOException | IllegalArgumentException e) {
             System.err.println("Can not load resource: " + fn);
             e.printStackTrace();
         }
     }
 
-    private void loadFromUserDefinedDirectory() {
+    //TODO: load from zip
+    private void loadFromDirectories() {
         List<String> searchDirs = new ArrayList<>();
         if (!StringUtils.isBlank(configDir)) { //load just from confDir
             searchDirs.add(configDir);
         } else { //go trough standard search order and load all
-            searchDirs.add(dirProvider.getInstallationConfigDirectory());
-            searchDirs.add(dirProvider.getSysConfigDirectory());
-            searchDirs.add(dirProvider.getUserConfigDirectory());
+            searchDirs.add(dirProvider.getInstallationConfigLocation() + File.separator + dirProvider.getConfigName());
+            searchDirs.add(dirProvider.getSysConfigLocation() + File.separator + dirProvider.getConfigName());
+            searchDirs.add(dirProvider.getUserConfigLocation() + File.separator + dirProvider.getConfigName());
         }
         for (String dir : searchDirs) {
             String p = dir + File.separator + resourceName;
             try (FileInputStream is = new FileInputStream(p)) {
                 T userConfig = read(is);
                 config = merge(config, userConfig);
-            }
-            catch (FileNotFoundException ignored) {
+            } catch (FileNotFoundException ignored) {
                 System.err.println("File not found: " + p); // do not use logger (we should init it before using)
-            }
-            catch (IOException e) {
+            } catch (IOException e) {
                 System.err.println("Config IO error " + e.toString());
             }
         }

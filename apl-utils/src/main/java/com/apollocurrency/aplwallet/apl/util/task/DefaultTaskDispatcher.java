@@ -42,8 +42,16 @@ public class DefaultTaskDispatcher implements TaskDispatcher {
     private static final AtomicInteger groupNumber = new AtomicInteger(1);
 
     @Getter
-    protected final Map<String,String> initParameters;
-
+    protected final Map<String, String> initParameters;
+    /**
+     * The executor that runs INIT and BEFORE tasks
+     */
+    private final ExecutorService onStartExecutor;
+    /**
+     * The tasks queue
+     */
+    private final HashMap<TaskOrder, List<Task>> tasks = new HashMap<>();
+    private final Object taskMonitor = new Object();
     protected ExecutorServiceFactory executorServiceFactory;
     /**
      * The main executor
@@ -51,45 +59,38 @@ public class DefaultTaskDispatcher implements TaskDispatcher {
     protected TaskExecutorService backgroundThread;
     @Getter
     protected String serviceName;
-
     protected volatile boolean started = false;
 
     /**
-     * The executor that runs INIT and BEFORE tasks
-     */
-    private final ExecutorService onStartExecutor;
-
-    /**
-     * The tasks queue
-     */
-    private final HashMap<TaskOrder, List<Task>> tasks = new HashMap<>();
-
-    private final Object taskMonitor = new Object();
-
-    /**
      * Create dispatcher with initial parameters
+     *
      * @param executorServiceFactory the factory
-     * @param name the dispatcher name
+     * @param name                   the dispatcher name
      */
     public DefaultTaskDispatcher(ExecutorServiceFactory executorServiceFactory, String name) {
         this.executorServiceFactory = Objects.requireNonNull(executorServiceFactory, "ExecutorFactory is NULL");
-        this.serviceName = APL_BG_WORKERS +"-"+Objects.requireNonNull(name, "Service name is NULL");
+        this.serviceName = APL_BG_WORKERS + "-" + Objects.requireNonNull(name, "Service name is NULL");
         this.initParameters = new HashMap<>(3);
         this.onStartExecutor = Executors.newFixedThreadPool(DEFAULT_THREAD_POOL_SIZE,
-                    new NamedThreadFactory(new ThreadGroup(APL_BG_WORKERS), APL_POOL_NAME+"-workers", false));
+            new NamedThreadFactory(new ThreadGroup(APL_BG_WORKERS), APL_POOL_NAME + "-workers", false));
+    }
+
+    private static String nextGroupName() {
+        return APL_BG_WORKERS + "-" + groupNumber.getAndIncrement();
     }
 
     @Override
-    public String getName(){
+    public String getName() {
         return serviceName;
     }
 
     /**
      * Create main executor for all periodical background tasks
+     *
      * @return
      */
-    protected TaskExecutorService createMainExecutor(){
-        if(backgroundThread == null) {
+    protected TaskExecutorService createMainExecutor() {
+        if (backgroundThread == null) {
             //TODO: adjust code using init parameters and min/max constraints
             //String corePoolSize = getInitParameter(TaskInitParameters.APL_CORE_POOL_SIZE);
             //String maxPoolSize = getInitParameter(TaskInitParameters.APL_MAX_POOL_SIZE);
@@ -108,7 +109,7 @@ public class DefaultTaskDispatcher implements TaskDispatcher {
     }
 
     @Override
-    public void invoke(Task task) throws RejectedExecutionException{
+    public void invoke(Task task) throws RejectedExecutionException {
         if (task == null) {
             log.debug("SKIPPING, task is 'NULL'");
             return;
@@ -118,6 +119,7 @@ public class DefaultTaskDispatcher implements TaskDispatcher {
 
     /**
      * Submit all tasks from collection
+     *
      * @param tasks the collection of tasks to submit
      * @throws RejectedExecutionException
      */
@@ -149,7 +151,8 @@ public class DefaultTaskDispatcher implements TaskDispatcher {
 
     /**
      * Submit a background task for execution. This task is put in queue and will be executed in the specified order
-     * @param task the task to execute
+     *
+     * @param task     the task to execute
      * @param position the task order
      * @return {@code true} if the task is put into a queue
      * @throws RejectedExecutionException if this dispatcher has been shut down
@@ -162,8 +165,8 @@ public class DefaultTaskDispatcher implements TaskDispatcher {
                 throw new RejectedExecutionException("Dispatcher is shutdown.");
             }
             return false;
-        }else {
-            if (validate(task)){
+        } else {
+            if (validate(task)) {
                 return put(position, task);
             } else {
                 throw new IllegalArgumentException(String.format("The task contains the wrong field values, task=%s", task.toString()));
@@ -193,11 +196,12 @@ public class DefaultTaskDispatcher implements TaskDispatcher {
 
     /**
      * Put the task into the queue
+     *
      * @param position the task order
-     * @param task the task to put
+     * @param task     the task to put
      * @return
      */
-    private boolean put(TaskOrder position, Task task){
+    private boolean put(TaskOrder position, Task task) {
         List<Task> taskList = tasks.getOrDefault(position, new ArrayList<>());
         taskList.add(task);
         tasks.put(position, taskList);
@@ -288,14 +292,15 @@ public class DefaultTaskDispatcher implements TaskDispatcher {
 
     /**
      * Set dispatcher to the Started state
+     *
      * @return false if dispatcher is already started otherwise return true
      */
-    private boolean setStarted(){
+    private boolean setStarted() {
         if (started) {
             log.warn("The {} dispatcher already started.", serviceName);
             return false;
         }
-        started=true;
+        started = true;
         return started;
     }
 
@@ -307,6 +312,7 @@ public class DefaultTaskDispatcher implements TaskDispatcher {
     /**
      * Runs all tasks from the collection and Blocks until all tasks have completed execution, or
      * the timeout occurs, or the current thread is interrupted, whichever happens first.
+     *
      * @param tasks the tasks collection to run
      */
     private void runAllAndWait(final Collection<Task> tasks) {
@@ -332,7 +338,7 @@ public class DefaultTaskDispatcher implements TaskDispatcher {
                     }, task.getName());
                     log.trace("{} thread started.", task.getName());
                 });
-            }catch (Throwable e){
+            } catch (Throwable e) {
                 log.error("Unexpected Exception in runAndWait:", e);
             }
             try {
@@ -347,9 +353,8 @@ public class DefaultTaskDispatcher implements TaskDispatcher {
         }
     }
 
-
     @Override
-    public String info(){
+    public String info() {
         StringBuilder info = new StringBuilder("Dispatcher={");
         info.append("name:").append(serviceName);
         info.append(",tasks:[");
@@ -361,48 +366,44 @@ public class DefaultTaskDispatcher implements TaskDispatcher {
         return info.toString();
     }
 
-    private int getTasksCount(TaskOrder order){
-        return tasks.containsKey(order)?tasks.get(order).size():0;
+    private int getTasksCount(TaskOrder order) {
+        return tasks.containsKey(order) ? tasks.get(order).size() : 0;
     }
 
-    public String getInitParameter(String param){
+    public String getInitParameter(String param) {
         if (initParameters == null) return null;
         return initParameters.get(param);
     }
 
-    public Enumeration<String> getInitParameterNames(){
+    public Enumeration<String> getInitParameterNames() {
         if (initParameters == null) return Collections.enumeration(Collections.EMPTY_LIST);
         return Collections.enumeration(initParameters.keySet());
     }
 
-    public void setInitParameter(String param, String value){
-        initParameters.put(param,value);
+    public void setInitParameter(String param, String value) {
+        initParameters.put(param, value);
     }
 
-    public void setInitParameters(Map<String,String> map){
+    public void setInitParameters(Map<String, String> map) {
         initParameters.clear();
         initParameters.putAll(map);
-    }
-
-    private static String nextGroupName(){
-        return APL_BG_WORKERS+"-"+groupNumber.getAndIncrement();
     }
 
     public static class ScheduledExecutorServiceFactory implements ExecutorServiceFactory {
         @Override
         public TaskExecutorService newExecutor(String poolName, int poolSize, boolean daemon) {
-            return  new ScheduledTaskExecutorService(
-                    new PausableScheduledThreadPoolExecutor(poolSize,
-                            new NamedThreadFactory(new ThreadGroup(nextGroupName()), poolName, daemon)));
+            return new ScheduledTaskExecutorService(
+                new PausableScheduledThreadPoolExecutor(poolSize,
+                    new NamedThreadFactory(new ThreadGroup(nextGroupName()), poolName, daemon)));
         }
     }
 
     public static class BackgroundExecutorServiceFactory implements ExecutorServiceFactory {
         @Override
         public TaskExecutorService newExecutor(String poolName, int poolSize, boolean daemon) {
-            return  new BackgroundTaskExecutorService(
-                        new PausableScheduledThreadPoolExecutor(poolSize,
-                            new NamedThreadFactory(new ThreadGroup(nextGroupName()), poolName, daemon)));
+            return new BackgroundTaskExecutorService(
+                new PausableScheduledThreadPoolExecutor(poolSize,
+                    new NamedThreadFactory(new ThreadGroup(nextGroupName()), poolName, daemon)));
         }
     }
 
@@ -417,10 +418,10 @@ public class DefaultTaskDispatcher implements TaskDispatcher {
         }
     }*/
 
-    private static class PausableScheduledThreadPoolExecutor extends ScheduledThreadPoolExecutor implements PausableExecutorService{
+    private static class PausableScheduledThreadPoolExecutor extends ScheduledThreadPoolExecutor implements PausableExecutorService {
         private boolean isPaused;
-        private ReentrantLock pauseLock = new ReentrantLock();
-        private Condition condition = pauseLock.newCondition();
+        private final ReentrantLock pauseLock = new ReentrantLock();
+        private final Condition condition = pauseLock.newCondition();
 
         public PausableScheduledThreadPoolExecutor(int corePoolSize, ThreadFactory threadFactory) {
             super(corePoolSize, threadFactory);
@@ -432,7 +433,7 @@ public class DefaultTaskDispatcher implements TaskDispatcher {
             pauseLock.lock();
             try {
                 while (isPaused) condition.await();
-            } catch(InterruptedException ie) {
+            } catch (InterruptedException ie) {
                 t.interrupt();
             } finally {
                 pauseLock.unlock();
@@ -466,7 +467,7 @@ public class DefaultTaskDispatcher implements TaskDispatcher {
         }
     }
 
-    private static abstract class AbstractTaskExecutorService implements TaskExecutorService{
+    private static abstract class AbstractTaskExecutorService implements TaskExecutorService {
         protected PausableExecutorService service;
 
         AbstractTaskExecutorService(PausableExecutorService service) {
@@ -497,18 +498,18 @@ public class DefaultTaskDispatcher implements TaskDispatcher {
 
         @Override
         public boolean validate(Task task) {
-            return task.getTask() != null && task.getName() != null && task.getInitialDelay() >=0;
+            return task.getTask() != null && task.getName() != null && task.getInitialDelay() >= 0;
         }
 
         @Override
         public void invoke(Task task) throws RejectedExecutionException {
             try {
-                ((ScheduledExecutorService)service).scheduleWithFixedDelay(
-                        task,
-                        task.getInitialDelay(),
-                        task.getDelay(),
-                        TimeUnit.MILLISECONDS);
-            }catch (Exception e){
+                ((ScheduledExecutorService) service).scheduleWithFixedDelay(
+                    task,
+                    task.getInitialDelay(),
+                    task.getDelay(),
+                    TimeUnit.MILLISECONDS);
+            } catch (Exception e) {
                 log.error("The task {} can't be scheduled, cause:{}", task.getName(), e.getMessage());
                 throw new RejectedExecutionException(e);
             }
@@ -523,18 +524,18 @@ public class DefaultTaskDispatcher implements TaskDispatcher {
 
         @Override
         public boolean validate(Task task) {
-            return task.getTask() != null && task.getName() != null && task.getInitialDelay() >=0 && task.getDelay()>0 ;
+            return task.getTask() != null && task.getName() != null && task.getInitialDelay() >= 0 && task.getDelay() > 0;
         }
 
         @Override
         public void invoke(Task task) throws RejectedExecutionException {
             try {
-                ((ScheduledExecutorService)service).scheduleAtFixedRate(
-                        task,
-                        task.getInitialDelay(),
-                        task.getDelay(),
-                        TimeUnit.MILLISECONDS);
-            }catch (Exception e){
+                ((ScheduledExecutorService) service).scheduleAtFixedRate(
+                    task,
+                    task.getInitialDelay(),
+                    task.getDelay(),
+                    TimeUnit.MILLISECONDS);
+            } catch (Exception e) {
                 log.error("The task {} can't be scheduled, cause:{}", task.getName(), e.getMessage());
                 throw new RejectedExecutionException(e);
             }
@@ -546,6 +547,7 @@ public class DefaultTaskDispatcher implements TaskDispatcher {
         FixedSizeTaskExecutorService(PausableExecutorService service) {
             super(service);
         }
+
         @Override
         public boolean validate(Task task) {
             return task.getTask() != null && task.getName() != null;
@@ -555,7 +557,7 @@ public class DefaultTaskDispatcher implements TaskDispatcher {
         public void invoke(Task task) throws RejectedExecutionException {
             try {
                 service.submit(task);
-            }catch (Exception e){
+            } catch (Exception e) {
                 log.error("The task {} can't be submitted, cause:{}", task.getName(), e.getMessage());
                 throw new RejectedExecutionException(e);
             }

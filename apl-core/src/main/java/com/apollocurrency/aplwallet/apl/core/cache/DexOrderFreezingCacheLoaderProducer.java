@@ -1,14 +1,15 @@
 package com.apollocurrency.aplwallet.apl.core.cache;
 
+import com.apollocurrency.aplwallet.apl.core.model.dex.DexOrder;
+import com.apollocurrency.aplwallet.apl.dex.core.model.OrderFreezing;
 import com.apollocurrency.aplwallet.apl.exchange.dao.DexOrderTable;
-import com.apollocurrency.aplwallet.apl.exchange.model.DexOrder;
-import com.apollocurrency.aplwallet.apl.exchange.model.OrderFreezing;
 import com.apollocurrency.aplwallet.apl.exchange.service.DexSmartContractService;
 import com.google.common.cache.CacheLoader;
 
-import javax.enterprise.inject.Produces;
-import javax.inject.Inject;
-import javax.inject.Singleton;
+import jakarta.enterprise.inject.Produces;
+import jakarta.inject.Inject;
+import jakarta.inject.Singleton;
+
 @Singleton
 public class DexOrderFreezingCacheLoaderProducer {
     private DexOrderTable table;

@@ -1,43 +1,56 @@
 /*
- * Copyright © 2018-2019 Apollo Foundation
+ * Copyright © 2019-2020 Apollo Foundation
  */
 package com.apollocurrency.aplwallet.apl.core.app;
 
+import com.apollocurrency.aplwallet.api.p2p.request.GetNextBlocksRequest;
 import com.apollocurrency.aplwallet.apl.core.chainid.BlockchainConfig;
+import com.apollocurrency.aplwallet.apl.core.model.Block;
 import com.apollocurrency.aplwallet.apl.core.peer.Peer;
 import com.apollocurrency.aplwallet.apl.core.peer.PeerNotConnectedException;
-import com.apollocurrency.aplwallet.apl.util.AplException;
-import com.apollocurrency.aplwallet.apl.util.JSON;
+import com.apollocurrency.aplwallet.apl.core.peer.parser.GetNextBlocksResponseParser;
+import com.apollocurrency.aplwallet.apl.core.peer.respons.GetNextBlocksResponse;
+import lombok.extern.slf4j.Slf4j;
+
 import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.Callable;
 import java.util.concurrent.Future;
-import java.util.logging.Level;
-import org.json.simple.JSONArray;
-import org.json.simple.JSONObject;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 /**
  * Callable method to get the next block segment from the selected peer
  */
-public class GetNextBlocksTask implements Callable<List<BlockImpl>> {
-    private static final Logger log = LoggerFactory.getLogger(GetNextBlocksTask.class);
-    
-    private BlockchainConfig blockchainConfig;   
-    /** Callable future */
-    private Future<List<BlockImpl>> future;
-    /** Peer */
-    private Peer peer;
-    /** Block identifier list */
+@Slf4j
+public class GetNextBlocksTask implements Callable<List<Block>> {
+    /**
+     * Block identifier list
+     */
     private final List<Long> blockIds;
-    /** Start index */
+    private final BlockchainConfig blockchainConfig;
+    private final GetNextBlocksResponseParser getNextBlocksResponseParser;
+    /**
+     * Callable future
+     */
+    private Future<List<Block>> future;
+    /**
+     * Peer
+     */
+    private Peer peer;
+    /**
+     * Start index
+     */
     private int start;
-    /** Stop index */
+    /**
+     * Stop index
+     */
     private int stop;
-    /** Request count */
+    /**
+     * Request count
+     */
     private int requestCount;
-    /** Time it took to return getNextBlocks */
+    /**
+     * Time it took to return getNextBlocks
+     */
     private long responseTime;
     /**
      * height of the block from which we will start to download next blocks
@@ -47,13 +60,16 @@ public class GetNextBlocksTask implements Callable<List<BlockImpl>> {
     /**
      * Create the callable future
      *
-     * @param   blockIds            Block identifier list
-     * @param   start               Start index within the list
-     * @param   stop                Stop index within the list
-     * @param   startHeight         Height of the block from which we will start to download blockchain
+     * @param blockIds    Block identifier list
+     * @param start       Start index within the list
+     * @param stop        Stop index within the list
+     * @param startHeight Height of the block from which we will start to download blockchain
      */
-    public GetNextBlocksTask(List<Long> blockIds, int start, int stop, int startHeight, BlockchainConfig blockchainConfig) {
+    public GetNextBlocksTask(List<Long> blockIds, int start, int stop, int startHeight,
+                             BlockchainConfig blockchainConfig,
+                             GetNextBlocksResponseParser getNextBlocksResponseParser) {
         this.blockchainConfig = blockchainConfig;
+        this.getNextBlocksResponseParser = getNextBlocksResponseParser;
         this.blockIds = blockIds;
         this.start = start;
         this.stop = stop;
@@ -64,87 +80,76 @@ public class GetNextBlocksTask implements Callable<List<BlockImpl>> {
     /**
      * Return the result
      *
-     * @return                      List of blocks or null if an error occurred
+     * @return List of blocks or null if an error occurred
      */
     @Override
-    public List<BlockImpl> call() {
+    public List<Block> call() {
         requestCount++;
         //
         // Build the block request list
         //
-        JSONArray idList = new JSONArray();
+        List<String> idList = new ArrayList<>();
         for (int i = start + 1; i <= stop; i++) {
             idList.add(Long.toUnsignedString(blockIds.get(i)));
         }
-        JSONObject request = new JSONObject();
-        request.put("requestType", "getNextBlocks");
-        request.put("blockIds", idList);
-        request.put("blockId", Long.toUnsignedString(blockIds.get(start)));
-        request.put("chainId", blockchainConfig.getChain().getChainId());
+
+        GetNextBlocksRequest request = new GetNextBlocksRequest(
+            idList,
+            Long.toUnsignedString(blockIds.get(start)), // common block (skipped during peer block fetch)
+            blockchainConfig.getChain().getChainId()
+        );
+
+        GetNextBlocksResponse response;
         long startTime = System.currentTimeMillis();
-        JSONObject response;
         try {
-            response = peer.send(JSON.prepareRequest(request), blockchainConfig.getChain().getChainId());
+            response = peer.send(request, getNextBlocksResponseParser);
         } catch (PeerNotConnectedException ex) {
-            response=null;
+            return null;
+        } finally {
+            responseTime = System.currentTimeMillis() - startTime;
         }
-        responseTime = System.currentTimeMillis() - startTime;
+
         if (response == null) {
+            log.debug("NULL GetNextBlocks response from peer: {}", peer.getAnnouncedAddress());
             return null;
         }
-        //
-        // Get the list of blocks.  We will stop parsing blocks if we encounter
-        // an invalid block.  We will return the valid blocks and reset the stop
-        // index so no more blocks will be processed.
-        //
-        List<JSONObject> nextBlocks = (List<JSONObject>) response.get("nextBlocks");
-        if (nextBlocks == null) {
-            return null;
+
+        if (response.getErrorCode() != 0) {
+            log.debug("Failed to parse block(s) from {} cause: {}", peer.getAnnouncedAddress(), response.getCause());
+            peer.blacklist(response.getCause());
+            stop = start + response.getNextBlocks().size();
         }
-        if (nextBlocks.size() > 36) {
-            log.debug("Obsolete or rogue peer " + peer.getHost() + " sends too many nextBlocks, blacklisting");
-            peer.blacklist("Too many nextBlocks");
-            return null;
+
+        int count = stop - start;
+        if (response.getNextBlocks().size() > count) {
+            return response.getNextBlocks().subList(0, count);
+        } else {
+            return response.getNextBlocks();
         }
-        List<BlockImpl> blockList = new ArrayList<>(nextBlocks.size());
-        try {
-            int count = stop - start;
-            for (JSONObject blockData : nextBlocks) {
-                blockList.add(BlockImpl.parseBlock(blockData));
-                if (--count <= 0) {
-                    break;
-                }
-            }
-        } catch (AplException.NotValidException | RuntimeException e) {
-            log.debug("Failed to parse block: " + e.toString(), e);
-            peer.blacklist(e);
-            stop = start + blockList.size();
-        }
-        return blockList;
     }
 
     /**
      * Return the callable future
      *
-     * @return                      Callable future
+     * @return Callable future
      */
-    public Future<List<BlockImpl>> getFuture() {
+    public Future<List<Block>> getFuture() {
         return future;
     }
 
     /**
      * Set the callable future
      *
-     * @param   future              Callable future
+     * @param future Callable future
      */
-    public void setFuture(Future<List<BlockImpl>> future) {
+    public void setFuture(Future<List<Block>> future) {
         this.future = future;
     }
 
     /**
      * Return the peer
      *
-     * @return                      Peer
+     * @return Peer
      */
     public Peer getPeer() {
         return peer;
@@ -153,7 +158,7 @@ public class GetNextBlocksTask implements Callable<List<BlockImpl>> {
     /**
      * Set the peer
      *
-     * @param   peer                Peer
+     * @param peer Peer
      */
     public void setPeer(Peer peer) {
         this.peer = peer;
@@ -162,7 +167,7 @@ public class GetNextBlocksTask implements Callable<List<BlockImpl>> {
     /**
      * Return the start index
      *
-     * @return                      Start index
+     * @return Start index
      */
     public int getStart() {
         return start;
@@ -171,7 +176,7 @@ public class GetNextBlocksTask implements Callable<List<BlockImpl>> {
     /**
      * Set the start index
      *
-     * @param   start               Start index
+     * @param start Start index
      */
     public void setStart(int start) {
         this.start = start;
@@ -180,7 +185,7 @@ public class GetNextBlocksTask implements Callable<List<BlockImpl>> {
     /**
      * Return the stop index
      *
-     * @return                      Stop index
+     * @return Stop index
      */
     public int getStop() {
         return stop;
@@ -189,7 +194,7 @@ public class GetNextBlocksTask implements Callable<List<BlockImpl>> {
     /**
      * Return the request count
      *
-     * @return                      Request count
+     * @return Request count
      */
     public int getRequestCount() {
         return requestCount;
@@ -198,10 +203,10 @@ public class GetNextBlocksTask implements Callable<List<BlockImpl>> {
     /**
      * Return the response time
      *
-     * @return                      Response time
+     * @return Response time
      */
     public long getResponseTime() {
         return responseTime;
     }
-    
+
 }

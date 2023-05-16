@@ -20,35 +20,37 @@
 
 package com.apollocurrency.aplwallet.apl.core.http.get;
 
-import com.apollocurrency.aplwallet.apl.core.account.Account;
+import com.apollocurrency.aplwallet.apl.core.entity.state.account.Account;
 import com.apollocurrency.aplwallet.apl.core.http.APITag;
 import com.apollocurrency.aplwallet.apl.core.http.AbstractAPIRequestHandler;
-import com.apollocurrency.aplwallet.apl.core.http.ParameterParser;
-import com.apollocurrency.aplwallet.apl.util.AplException;
-import javax.enterprise.inject.Vetoed;
+import com.apollocurrency.aplwallet.apl.core.http.HttpParameterParserUtil;
+import com.apollocurrency.aplwallet.apl.util.exception.AplException;
 import org.json.simple.JSONObject;
 import org.json.simple.JSONStreamAware;
 
-import javax.servlet.http.HttpServletRequest;
+import jakarta.enterprise.inject.Vetoed;
+import jakarta.servlet.http.HttpServletRequest;
 
 @Vetoed
 public final class GetGuaranteedBalance extends AbstractAPIRequestHandler {
 
     public GetGuaranteedBalance() {
-        super(new APITag[] {APITag.ACCOUNTS, APITag.FORGING}, "account", "numberOfConfirmations");
+        super(new APITag[]{APITag.ACCOUNTS, APITag.FORGING}, "account", "numberOfConfirmations");
     }
 
     @Override
     public JSONStreamAware processRequest(HttpServletRequest req) throws AplException {
 
-        Account account = ParameterParser.getAccount(req);
-        int numberOfConfirmations = ParameterParser.getNumberOfConfirmations(req);
+        Account account = HttpParameterParserUtil.getAccount(req);
+        int numberOfConfirmations = HttpParameterParserUtil.getNumberOfConfirmations(req);
 
         JSONObject response = new JSONObject();
         if (account == null) {
             response.put("guaranteedBalanceATM", "0");
         } else {
-            response.put("guaranteedBalanceATM", String.valueOf(account.getGuaranteedBalanceATM(numberOfConfirmations, lookupBlockchain().getHeight())));
+            response.put("guaranteedBalanceATM", String.valueOf(
+                lookupAccountService().getGuaranteedBalanceATM(account, numberOfConfirmations,
+                    lookupBlockchain().getHeight())));
         }
 
         return response;

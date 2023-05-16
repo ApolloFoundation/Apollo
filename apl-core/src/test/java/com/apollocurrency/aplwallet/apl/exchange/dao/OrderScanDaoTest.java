@@ -1,11 +1,20 @@
+/*
+ *  Copyright © 2018-2020 Apollo Foundation
+ */
+
 package com.apollocurrency.aplwallet.apl.exchange.dao;
 
-import com.apollocurrency.aplwallet.apl.core.db.cdi.transaction.JdbiTransactionalSqlObjectDaoProxyInvocationHandler;
+import com.apollocurrency.aplwallet.apl.core.dao.DbContainerBaseTest;
+import com.apollocurrency.aplwallet.apl.core.config.JdbiConfiguration;
 import com.apollocurrency.aplwallet.apl.data.DbTestData;
-import com.apollocurrency.aplwallet.apl.exchange.model.DexCurrency;
-import com.apollocurrency.aplwallet.apl.exchange.model.OrderScan;
+import com.apollocurrency.aplwallet.apl.dex.core.model.DexCurrency;
+import com.apollocurrency.aplwallet.apl.dex.core.model.OrderScan;
 import com.apollocurrency.aplwallet.apl.extension.DbExtension;
+import com.apollocurrency.aplwallet.apl.util.cdi.transaction.JdbiHandleFactory;
+import com.apollocurrency.aplwallet.apl.util.cdi.transaction.JdbiTransactionalSqlObjectDaoProxyInvocationHandler;
+import lombok.extern.slf4j.Slf4j;
 import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.RegisterExtension;
 
@@ -14,15 +23,21 @@ import java.lang.reflect.UndeclaredThrowableException;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 
-class OrderScanDaoTest {
+@Slf4j
+
+@Tag("slow")
+class OrderScanDaoTest extends DbContainerBaseTest {
+
     @RegisterExtension
-    DbExtension extension = new DbExtension(DbTestData.getInMemDbProps(), "db/dex-order-scan-data.sql", null);
+    static DbExtension extension = new DbExtension(mariaDBContainer, DbTestData.getInMemDbProps(), "db/dex-order-scan-data.sql", null);
     private OrderScanDao dao;
 
     @BeforeEach
     void setUp() {
-        dao = JdbiTransactionalSqlObjectDaoProxyInvocationHandler.createProxy(
-                extension.getDatabaseManager().getJdbiHandleFactory(), OrderScanDao.class);
+        JdbiConfiguration jdbiConfiguration = new JdbiConfiguration(extension.getDatabaseManager());
+        jdbiConfiguration.init();
+        JdbiHandleFactory jdbiHandleFactory = new JdbiHandleFactory(jdbiConfiguration.jdbi());
+        dao = JdbiTransactionalSqlObjectDaoProxyInvocationHandler.createProxy(jdbiHandleFactory, OrderScanDao.class);
     }
 
     @Test
@@ -40,7 +55,7 @@ class OrderScanDaoTest {
         dao.update(expected);
         OrderScan actual = dao.get(DexCurrency.PAX);
 
-        assertEquals(expected , actual);
+        assertEquals(expected, actual);
     }
 
     @Test

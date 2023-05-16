@@ -15,42 +15,45 @@
  */
 
 /*
- * Copyright © 2018-2019 Apollo Foundation
+ * Copyright © 2018-2020 Apollo Foundation
  */
 
 package com.apollocurrency.aplwallet.apl.core.http.get;
 
-import com.apollocurrency.aplwallet.apl.core.monetary.Asset;
-import com.apollocurrency.aplwallet.apl.core.db.DbIterator;
+import com.apollocurrency.aplwallet.apl.util.db.DbIterator;
 import com.apollocurrency.aplwallet.apl.core.http.APITag;
 import com.apollocurrency.aplwallet.apl.core.http.AbstractAPIRequestHandler;
+import com.apollocurrency.aplwallet.apl.core.http.HttpParameterParserUtil;
 import com.apollocurrency.aplwallet.apl.core.http.JSONData;
-import com.apollocurrency.aplwallet.apl.core.http.ParameterParser;
-import javax.enterprise.inject.Vetoed;
+import com.apollocurrency.aplwallet.apl.core.entity.state.asset.Asset;
+import com.apollocurrency.aplwallet.apl.core.service.state.asset.AssetService;
 import org.json.simple.JSONArray;
 import org.json.simple.JSONObject;
 import org.json.simple.JSONStreamAware;
 
-import javax.servlet.http.HttpServletRequest;
+import jakarta.enterprise.inject.Vetoed;
+import jakarta.enterprise.inject.spi.CDI;
+import jakarta.servlet.http.HttpServletRequest;
 
 @Vetoed
 public final class GetAllAssets extends AbstractAPIRequestHandler {
 
     public GetAllAssets() {
-        super(new APITag[] {APITag.AE}, "firstIndex", "lastIndex", "includeCounts");
+        super(new APITag[]{APITag.AE}, "firstIndex", "lastIndex", "includeCounts");
     }
 
     @Override
     public JSONStreamAware processRequest(HttpServletRequest req) {
 
-        int firstIndex = ParameterParser.getFirstIndex(req);
-        int lastIndex = ParameterParser.getLastIndex(req);
+        int firstIndex = HttpParameterParserUtil.getFirstIndex(req);
+        int lastIndex = HttpParameterParserUtil.getLastIndex(req);
         boolean includeCounts = "true".equalsIgnoreCase(req.getParameter("includeCounts"));
 
         JSONObject response = new JSONObject();
         JSONArray assetsJSONArray = new JSONArray();
         response.put("assets", assetsJSONArray);
-        try (DbIterator<Asset> assets = Asset.getAllAssets(firstIndex, lastIndex)) {
+        AssetService assetService = CDI.current().select(AssetService.class).get();
+        try (DbIterator<Asset> assets = assetService.getAllAssets(firstIndex, lastIndex)) {
             while (assets.hasNext()) {
                 assetsJSONArray.add(JSONData.asset(assets.next(), includeCounts));
             }

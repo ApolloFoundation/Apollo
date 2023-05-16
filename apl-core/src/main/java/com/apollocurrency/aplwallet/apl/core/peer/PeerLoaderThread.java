@@ -3,54 +3,61 @@
  */
 package com.apollocurrency.aplwallet.apl.core.peer;
 
-import com.apollocurrency.aplwallet.apl.core.app.TimeService;
+import com.apollocurrency.aplwallet.apl.core.service.appdata.TimeService;
+import lombok.extern.slf4j.Slf4j;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import javax.enterprise.inject.spi.CDI;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 import java.util.concurrent.Future;
 
 /**
- *
  * @author alukin@gmail.com
  */
+@Slf4j
 class PeerLoaderThread implements Runnable {
     private static final Logger LOG = LoggerFactory.getLogger(PeerLoaderThread.class);
     private final List<String> defaultPeers;
-    private TimeService timeService;
     private final List<Future<String>> unresolvedPeers;
-    private PeersService peers;
+    private final Set<PeerDb.Entry> entries = new HashSet<>();
+    private final TimeService timeService;
+    private final PeersService peersService;
+    private final PeerDb peerDb;
 
-    public PeerLoaderThread(List<String> defaultPeers, List<Future<String>> unresolvedPeers, TimeService timeService, PeersService peers) {
+    public PeerLoaderThread(List<String> defaultPeers,
+                            List<Future<String>> unresolvedPeers,
+                            TimeService timeService,
+                            PeersService peersService) {
         this.defaultPeers = defaultPeers;
         this.unresolvedPeers = unresolvedPeers;
-        this.timeService=timeService;
-        this.peers = peers;
+        this.timeService = timeService;
+        this.peersService = peersService;
+        this.peerDb = peersService.getPeerDb();
     }
-    private final Set<PeerDb.Entry> entries = new HashSet<>();
-    private PeerDb peerDb;
 
     @Override
     public void run() {
         LOG.trace("'Peer loader': thread starting...");
-        if (peerDb == null) {
-            peerDb = CDI.current().select(PeerDb.class).get();
+        if (this.peerDb == null) {
+//            peerDb = CDI.current().select(PeerDb.class).get();
+            String error = "ERROR, the peerDb instance was not initialized inside peerService";
+            log.error(error);
+            throw new RuntimeException(error);
         }
         final int now = timeService.getEpochTime();
-        peers.wellKnownPeers.forEach((address) -> {
+        peersService.wellKnownPeers.forEach((address) -> {
             PeerAddress pa = new PeerAddress(address);
             entries.add(new PeerDb.Entry(pa.getAddrWithPort(), 0, now));
         });
-        if (peers.usePeersDb) {
+        if (PeersService.usePeersDb) {
             LOG.debug("'Peer loader': Loading 'well known' peers from the database...");
             defaultPeers.forEach((address) -> {
                 PeerAddress pa = new PeerAddress(address);
                 entries.add(new PeerDb.Entry(pa.getAddrWithPort(), 0, now));
             });
-            if (peers.savePeers) {
+            if (PeersService.savePeers) {
                 List<PeerDb.Entry> dbPeers = peerDb.loadPeers();
                 dbPeers.forEach((entry) -> {
                     if (!entries.add(entry)) {
@@ -62,16 +69,16 @@ class PeerLoaderThread implements Runnable {
                 });
             }
         }
-        if (entries.size() > 0) {
+        if (!entries.isEmpty()) {
             LOG.debug("'Peer loader': findOrCreatePeer() 'known peers'...");
         }
         entries.forEach((entry) -> {
-            Future<String> unresolvedAddress = peers.peersExecutorService.submit(() -> {
-                PeerImpl peer = peers.findOrCreatePeer(null, entry.getAddress(), true);
+            Future<String> unresolvedAddress = peersService.peersExecutorService.submit(() -> {
+                Peer peer = peersService.findOrCreatePeer(null, entry.getAddress(), true);
                 if (peer != null) {
                     peer.setLastUpdated(entry.getLastUpdated());
                     peer.setServices(entry.getServices());
-                    peers.addPeer(peer);
+                    peersService.addPeer(peer);
                     LOG.trace("'Peer loader': Put 'well known' Peer from db into 'Peers Map' = {}", entry);
                     return null;
                 }
@@ -80,7 +87,7 @@ class PeerLoaderThread implements Runnable {
             unresolvedPeers.add(unresolvedAddress);
         });
         LOG.trace("'Peer loader': thread finished. Peers [{}]", entries.size());
-        peers.getAllPeers().stream().forEach((peerHost) -> LOG.trace("'Peer loader': dump = {}", peerHost));
+        peersService.getAllPeers().stream().forEach((peerHost) -> LOG.trace("'Peer loader': dump = {}", peerHost));
     }
-    
+
 }

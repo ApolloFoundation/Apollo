@@ -20,27 +20,29 @@
 
 package com.apollocurrency.aplwallet.apl.core.http.get;
 
-import com.apollocurrency.aplwallet.apl.core.monetary.Asset;
-import com.apollocurrency.aplwallet.apl.core.db.DbIterator;
+import com.apollocurrency.aplwallet.apl.util.db.DbIterator;
+import com.apollocurrency.aplwallet.apl.core.entity.state.asset.Asset;
 import com.apollocurrency.aplwallet.apl.core.http.APITag;
 import com.apollocurrency.aplwallet.apl.core.http.AbstractAPIRequestHandler;
+import com.apollocurrency.aplwallet.apl.core.http.HttpParameterParserUtil;
 import com.apollocurrency.aplwallet.apl.core.http.JSONData;
 import com.apollocurrency.aplwallet.apl.core.http.JSONResponses;
 import com.apollocurrency.aplwallet.apl.core.http.ParameterException;
-import com.apollocurrency.aplwallet.apl.core.http.ParameterParser;
+import com.apollocurrency.aplwallet.apl.core.service.state.asset.AssetService;
 import com.apollocurrency.aplwallet.apl.crypto.Convert;
-import javax.enterprise.inject.Vetoed;
 import org.json.simple.JSONArray;
 import org.json.simple.JSONObject;
 import org.json.simple.JSONStreamAware;
 
-import javax.servlet.http.HttpServletRequest;
+import jakarta.enterprise.inject.Vetoed;
+import jakarta.enterprise.inject.spi.CDI;
+import jakarta.servlet.http.HttpServletRequest;
 
 @Vetoed
 public final class SearchAssets extends AbstractAPIRequestHandler {
 
     public SearchAssets() {
-        super(new APITag[] {APITag.AE, APITag.SEARCH}, "query", "firstIndex", "lastIndex", "includeCounts");
+        super(new APITag[]{APITag.AE, APITag.SEARCH}, "query", "firstIndex", "lastIndex", "includeCounts");
     }
 
     @Override
@@ -49,13 +51,14 @@ public final class SearchAssets extends AbstractAPIRequestHandler {
         if (query.isEmpty()) {
             return JSONResponses.missing("query");
         }
-        int firstIndex = ParameterParser.getFirstIndex(req);
-        int lastIndex = ParameterParser.getLastIndex(req);
+        int firstIndex = HttpParameterParserUtil.getFirstIndex(req);
+        int lastIndex = HttpParameterParserUtil.getLastIndex(req);
         boolean includeCounts = "true".equalsIgnoreCase(req.getParameter("includeCounts"));
 
         JSONObject response = new JSONObject();
         JSONArray assetsJSONArray = new JSONArray();
-        try (DbIterator<Asset> assets = Asset.searchAssets(query, firstIndex, lastIndex)) {
+        AssetService assetService = CDI.current().select(AssetService.class).get();
+        try (DbIterator<Asset> assets = assetService.searchAssets(query, firstIndex, lastIndex)) {
             while (assets.hasNext()) {
                 assetsJSONArray.add(JSONData.asset(assets.next(), includeCounts));
             }

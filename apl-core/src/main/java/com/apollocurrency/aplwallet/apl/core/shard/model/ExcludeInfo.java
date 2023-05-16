@@ -4,7 +4,7 @@
 
 package com.apollocurrency.aplwallet.apl.core.shard.model;
 
-import com.apollocurrency.aplwallet.apl.core.phasing.TransactionDbInfo;
+import com.apollocurrency.aplwallet.apl.core.model.TransactionDbInfo;
 import lombok.Data;
 
 import java.util.List;
@@ -25,6 +25,7 @@ public class ExcludeInfo {
     public Set<Long> getNotCopyDbIds() {
         return Stream.concat(deleteNotExportNotCopy.stream().map(TransactionDbInfo::getDbId), notDeleteExportNotCopy.stream().map(TransactionDbInfo::getDbId)).collect(Collectors.toSet());
     }
+
     public Set<Long> getExportDbIds() {
         return Stream.concat(notDeleteExportNotCopy.stream().map(TransactionDbInfo::getDbId), notDeleteExportCopy.stream().map(TransactionDbInfo::getDbId)).collect(Collectors.toSet());
     }

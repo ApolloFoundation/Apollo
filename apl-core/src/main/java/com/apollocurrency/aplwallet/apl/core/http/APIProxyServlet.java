@@ -20,25 +20,9 @@
 
 package com.apollocurrency.aplwallet.apl.core.http;
 
-import static com.apollocurrency.aplwallet.apl.core.http.JSONResponses.ERROR_NOT_ALLOWED;
-import static org.slf4j.LoggerFactory.getLogger;
-
-import javax.servlet.ServletConfig;
-import javax.servlet.ServletException;
-import javax.servlet.http.HttpServletRequest;
-import javax.servlet.http.HttpServletResponse;
-import java.io.ByteArrayOutputStream;
-import java.io.IOException;
-import java.io.Writer;
-import java.net.URI;
-import java.nio.ByteBuffer;
-import java.util.List;
-
 import com.apollocurrency.aplwallet.apl.core.peer.Peer;
 import com.apollocurrency.aplwallet.apl.crypto.Convert;
 import com.apollocurrency.aplwallet.apl.util.JSON;
-import javax.enterprise.inject.Vetoed;
-import javax.inject.Inject;
 import org.eclipse.jetty.client.HttpClient;
 import org.eclipse.jetty.client.api.Request;
 import org.eclipse.jetty.client.api.Response;
@@ -49,14 +33,28 @@ import org.eclipse.jetty.util.UrlEncoded;
 import org.json.simple.JSONStreamAware;
 import org.slf4j.Logger;
 
+import jakarta.enterprise.inject.Vetoed;
+import jakarta.servlet.ServletConfig;
+import jakarta.servlet.ServletException;
+import jakarta.servlet.http.HttpServletRequest;
+import jakarta.servlet.http.HttpServletResponse;
+import java.io.ByteArrayOutputStream;
+import java.io.IOException;
+import java.io.Writer;
+import java.net.URI;
+import java.nio.ByteBuffer;
+import java.util.List;
+
+import static com.apollocurrency.aplwallet.apl.core.http.JSONResponses.ERROR_NOT_ALLOWED;
+import static org.slf4j.LoggerFactory.getLogger;
+
 @Vetoed
 public final class APIProxyServlet extends AsyncMiddleManServlet {
+    static final int PROXY_IDLE_TIMEOUT_DELTA = 5000;
     private static final Logger LOG = getLogger(APIProxyServlet.class);
-
     private static final String REMOTE_URL = APIProxyServlet.class.getName() + ".remoteUrl";
     private static final String REMOTE_SERVER_IDLE_TIMEOUT = APIProxyServlet.class.getName() + ".remoteServerIdleTimeout";
-    static final int PROXY_IDLE_TIMEOUT_DELTA = 5000;
-    
+
 
     public APIProxyServlet() {
     }
@@ -87,7 +85,7 @@ public final class APIProxyServlet extends AsyncMiddleManServlet {
                     super.service(request, response);
                 }
             } else {
-                APIServlet apiServlet = (APIServlet)request.getServletContext().getAttribute("apiServlet");
+                APIServlet apiServlet = (APIServlet) request.getServletContext().getAttribute("apiServlet");
                 apiServlet.service(request, response);
             }
         } catch (ParameterException e) {
@@ -98,7 +96,7 @@ public final class APIProxyServlet extends AsyncMiddleManServlet {
                     try (Writer writer = response.getWriter()) {
                         JSON.writeJSONString(responseJson, writer);
                     }
-                } catch(IOException e) {
+                } catch (IOException e) {
                     LOG.info("Failed to write response to client", e);
                 }
             }
@@ -197,7 +195,7 @@ public final class APIProxyServlet extends AsyncMiddleManServlet {
     private boolean isForwardable(String requestType) {
         AbstractAPIRequestHandler apiRequestHandler = APIServlet.apiRequestHandlers.get(requestType);
         return
-                apiRequestHandler.requireBlockchain()
+            apiRequestHandler.requireBlockchain()
                 && !apiRequestHandler.requireFullClient()
                 && !APIProxy.NOT_FORWARDED_REQUESTS.contains(requestType);
     }
@@ -205,21 +203,6 @@ public final class APIProxyServlet extends AsyncMiddleManServlet {
     @Override
     protected Response.Listener newProxyResponseListener(HttpServletRequest request, HttpServletResponse response) {
         return new APIProxyResponseListener(request, response);
-    }
-   
-    @Vetoed
-    private class APIProxyResponseListener extends AsyncMiddleManServlet.ProxyResponseListener {
-
-        APIProxyResponseListener(HttpServletRequest request, HttpServletResponse response) {
-            super(request, response);
-        }
-
-        @Override
-        public void onFailure(Response response, Throwable failure) {
-            super.onFailure(response, failure);
-            LOG.error("proxy failed", failure);
-            APIProxy.getInstance().blacklistHost(response.getRequest().getHost());
-        }
     }
 
     @Override
@@ -244,8 +227,8 @@ public final class APIProxyServlet extends AsyncMiddleManServlet {
             this.errorResponse = errorResponse;
         }
     }
-    
-@Vetoed
+
+    @Vetoed
     static class PasswordFinder {
 
         static int process(ByteBuffer buffer, String[] secrets) {
@@ -275,7 +258,7 @@ public final class APIProxyServlet extends AsyncMiddleManServlet {
         }
     }
 
-@Vetoed
+    @Vetoed
     private static class PasswordFilteringContentTransformer implements AsyncMiddleManServlet.ContentTransformer {
 
         private ByteArrayOutputStream os;
@@ -292,7 +275,7 @@ public final class APIProxyServlet extends AsyncMiddleManServlet {
                     os.write(b);
                     allInput = ByteBuffer.wrap(os.toByteArray());
                 }
-                int tokenPos = PasswordFinder.process(allInput, new String[] { "secretPhrase=", "adminPassword=", "sharedKey=", "passphrase=" });
+                int tokenPos = PasswordFinder.process(allInput, new String[]{"secretPhrase=", "adminPassword=", "sharedKey=", "passphrase="});
                 if (tokenPos >= 0) {
                     JSONStreamAware error = JSONResponses.PROXY_SECRET_DATA_DETECTED;
                     throw new PasswordDetectedException(error);
@@ -306,6 +289,21 @@ public final class APIProxyServlet extends AsyncMiddleManServlet {
                 input.get(b);
                 os.write(b);
             }
+        }
+    }
+
+    @Vetoed
+    private class APIProxyResponseListener extends AsyncMiddleManServlet.ProxyResponseListener {
+
+        APIProxyResponseListener(HttpServletRequest request, HttpServletResponse response) {
+            super(request, response);
+        }
+
+        @Override
+        public void onFailure(Response response, Throwable failure) {
+            super.onFailure(response, failure);
+            LOG.error("proxy failed", failure);
+            APIProxy.getInstance().blacklistHost(response.getRequest().getHost());
         }
     }
 }

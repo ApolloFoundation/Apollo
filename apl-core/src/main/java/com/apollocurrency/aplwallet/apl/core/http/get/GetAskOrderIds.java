@@ -20,39 +20,43 @@
 
 package com.apollocurrency.aplwallet.apl.core.http.get;
 
+import com.apollocurrency.aplwallet.apl.core.entity.state.order.AskOrder;
 import com.apollocurrency.aplwallet.apl.core.http.APITag;
 import com.apollocurrency.aplwallet.apl.core.http.AbstractAPIRequestHandler;
-import com.apollocurrency.aplwallet.apl.core.http.ParameterParser;
-import com.apollocurrency.aplwallet.apl.util.AplException;
-import com.apollocurrency.aplwallet.apl.core.app.Order;
-import com.apollocurrency.aplwallet.apl.core.db.DbIterator;
-import javax.enterprise.inject.Vetoed;
+import com.apollocurrency.aplwallet.apl.core.http.HttpParameterParserUtil;
+import com.apollocurrency.aplwallet.apl.core.service.state.order.OrderService;
+import com.apollocurrency.aplwallet.apl.core.service.state.order.impl.AskOrderServiceImpl;
+import com.apollocurrency.aplwallet.apl.core.service.state.qualifier.AskOrderService;
+import com.apollocurrency.aplwallet.apl.core.transaction.messages.CCAskOrderPlacementAttachment;
+import com.apollocurrency.aplwallet.apl.core.utils.CollectorUtils;
+import com.apollocurrency.aplwallet.apl.util.exception.AplException;
 import org.json.simple.JSONArray;
 import org.json.simple.JSONObject;
 import org.json.simple.JSONStreamAware;
 
-import javax.servlet.http.HttpServletRequest;
+import jakarta.enterprise.inject.Vetoed;
+import jakarta.enterprise.inject.spi.CDI;
+import jakarta.servlet.http.HttpServletRequest;
 
 @Vetoed
 public final class GetAskOrderIds extends AbstractAPIRequestHandler {
+    private final OrderService<AskOrder, CCAskOrderPlacementAttachment> askOrderService =
+        CDI.current().select(AskOrderServiceImpl.class, AskOrderService.Literal.INSTANCE).get();
 
     public GetAskOrderIds() {
-        super(new APITag[] {APITag.AE}, "asset", "firstIndex", "lastIndex");
+        super(new APITag[]{APITag.AE}, "asset", "firstIndex", "lastIndex");
     }
 
     @Override
     public JSONStreamAware processRequest(HttpServletRequest req) throws AplException {
 
-        long assetId = ParameterParser.getUnsignedLong(req, "asset", true);
-        int firstIndex = ParameterParser.getFirstIndex(req);
-        int lastIndex = ParameterParser.getLastIndex(req);
+        long assetId = HttpParameterParserUtil.getUnsignedLong(req, "asset", true);
+        int firstIndex = HttpParameterParserUtil.getFirstIndex(req);
+        int lastIndex = HttpParameterParserUtil.getLastIndex(req);
 
-        JSONArray orderIds = new JSONArray();
-        try (DbIterator<Order.Ask> askOrders = Order.Ask.getSortedOrders(assetId, firstIndex, lastIndex)) {
-            while (askOrders.hasNext()) {
-                orderIds.add(Long.toUnsignedString(askOrders.next().getId()));
-            }
-        }
+        JSONArray orderIds = askOrderService.getSortedOrders(assetId, firstIndex, lastIndex)
+            .map(a -> Long.toUnsignedString(a.getId()))
+            .collect(CollectorUtils.jsonCollector());
 
         JSONObject response = new JSONObject();
         response.put("askOrderIds", orderIds);

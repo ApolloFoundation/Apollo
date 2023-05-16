@@ -31,9 +31,9 @@ import org.json.simple.JSONObject;
 import org.json.simple.JSONStreamAware;
 import org.slf4j.LoggerFactory;
 
-import javax.servlet.http.HttpServletRequest;
+import jakarta.enterprise.inject.Vetoed;
+import jakarta.servlet.http.HttpServletRequest;
 import java.util.Iterator;
-import javax.enterprise.inject.Vetoed;
 
 /**
  * <p>The GetLog API will return log messages from the ring buffer
@@ -58,14 +58,14 @@ public final class GetLog extends AbstractAPIRequestHandler {
      * Create the GetLog instance
      */
     public GetLog() {
-        super(new APITag[] {APITag.DEBUG}, "count");
+        super(new APITag[]{APITag.DEBUG}, "count");
     }
 
     /**
      * Process the GetLog API request
      *
-     * @param   req                 API request
-     * @return                      API response
+     * @param req API request
+     * @return API response
      */
     @Override
     public JSONStreamAware processRequest(HttpServletRequest req) {
@@ -84,9 +84,9 @@ public final class GetLog extends AbstractAPIRequestHandler {
         JSONArray logJSON = new JSONArray();
         LoggerContext context = (LoggerContext) LoggerFactory.getILoggerFactory();
         for (ch.qos.logback.classic.Logger logger : context.getLoggerList()) {
-            for (Iterator<Appender<ILoggingEvent>> index = logger.iteratorForAppenders(); index.hasNext();) {
+            for (Iterator<Appender<ILoggingEvent>> index = logger.iteratorForAppenders(); index.hasNext(); ) {
                 Appender<ILoggingEvent> appender = index.next();
-                if(appender.getName().equalsIgnoreCase("inMemory")){
+                if (appender.getName().equalsIgnoreCase("inMemory")) {
                     MemoryAppender memoryAppender = (MemoryAppender) appender;
                     logJSON.addAll(memoryAppender.getMessages(count));
                 }
@@ -103,7 +103,7 @@ public final class GetLog extends AbstractAPIRequestHandler {
     /**
      * Require the administrator password
      *
-     * @return                      TRUE if the admin password is required
+     * @return TRUE if the admin password is required
      */
     @Override
     protected boolean requirePassword() {

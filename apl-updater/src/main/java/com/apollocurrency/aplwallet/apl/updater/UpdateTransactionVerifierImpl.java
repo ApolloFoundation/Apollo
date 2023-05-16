@@ -4,29 +4,28 @@
 
 package com.apollocurrency.aplwallet.apl.updater;
 
-import static org.slf4j.LoggerFactory.getLogger;
-
-import com.apollocurrency.aplwallet.apl.core.app.Transaction;
+import com.apollocurrency.aplwallet.apl.core.model.Transaction;
 import com.apollocurrency.aplwallet.apl.core.transaction.messages.Attachment;
-import com.apollocurrency.aplwallet.apl.core.transaction.messages.UpdateAttachment;
+import com.apollocurrency.aplwallet.apl.core.transaction.messages.update.UpdateAttachment;
 import com.apollocurrency.aplwallet.apl.udpater.intfce.UpdateData;
 import com.apollocurrency.aplwallet.apl.udpater.intfce.UpdaterMediator;
 import com.apollocurrency.aplwallet.apl.updater.service.UpdaterService;
-import com.apollocurrency.aplwallet.apl.util.Architecture;
 import com.apollocurrency.aplwallet.apl.util.DoubleByteArrayTuple;
-import com.apollocurrency.aplwallet.apl.util.Platform;
 import com.apollocurrency.aplwallet.apl.util.Version;
+import com.apollocurrency.aplwallet.apl.util.env.Arch;
+import com.apollocurrency.aplwallet.apl.util.env.OS;
 import org.slf4j.Logger;
 
+import jakarta.inject.Inject;
 import java.util.regex.Pattern;
-import javax.inject.Inject;
+
+import static org.slf4j.LoggerFactory.getLogger;
 
 
 public class UpdateTransactionVerifierImpl implements UpdateTransactionVerifier {
-        private static final Logger LOG = getLogger(UpdateTransactionVerifierImpl.class);
-
     public static final String VERSION_PLACEHOLDER = "$version$";
     public static final String PLATFORM_PLACEHOLDER = "$platform$";
+    private static final Logger LOG = getLogger(UpdateTransactionVerifierImpl.class);
     private static final String DEFAULT_URL_TEMPLATE = "((http)|(https))://.+/Apollo.*-" + VERSION_PLACEHOLDER + "-" + PLATFORM_PLACEHOLDER + ".jar";
     private UpdaterMediator updaterMediator;
     private UpdaterService updaterService;
@@ -58,10 +57,10 @@ public class UpdateTransactionVerifierImpl implements UpdateTransactionVerifier 
 
             UpdateAttachment updateAttachment = (UpdateAttachment) attachment;
             if (updateAttachment.getAppVersion().greaterThan(updaterMediator.getWalletVersion())) {
-                Platform currentPlatform = Platform.current();
-                Architecture currentArchitecture = Architecture.current();
-                if (currentPlatform != null && currentPlatform.isAppropriate(updateAttachment.getPlatform()) && updateAttachment.getArchitecture() == currentArchitecture) {
-                    Pattern urlPattern = getUrlPattern(updateAttachment.getAppVersion(), updateAttachment.getPlatform());
+                OS currentOS = OS.current();
+                Arch currentArchitecture = Arch.current();
+                if (currentOS.isAppropriate(updateAttachment.getOS()) && updateAttachment.getArchitecture() == currentArchitecture) {
+                    Pattern urlPattern = getUrlPattern(updateAttachment.getAppVersion(), updateAttachment.getOS());
                     DoubleByteArrayTuple encryptedUrl = updateAttachment.getUrl();
                     byte[] urlEncryptedBytes = UpdaterUtil.concatArrays(encryptedUrl.getFirst(), encryptedUrl.getSecond());
                     String url = updaterService.extractUrl(urlEncryptedBytes, urlPattern);
@@ -84,14 +83,14 @@ public class UpdateTransactionVerifierImpl implements UpdateTransactionVerifier 
         return null;
     }
 
-    private Pattern getUrlPattern(Version version, Platform platform) {
+    private Pattern getUrlPattern(Version version, OS OS) {
         String resultUrl = urlTemplate;
         if (resultUrl.contains(PLATFORM_PLACEHOLDER)) {
-            resultUrl = resultUrl.replace(PLATFORM_PLACEHOLDER, String.valueOf(platform));
+            resultUrl = resultUrl.replace(PLATFORM_PLACEHOLDER, String.valueOf(OS));
         }
         if (resultUrl.contains(VERSION_PLACEHOLDER)) {
             resultUrl = resultUrl.replace(VERSION_PLACEHOLDER, version.toString());
         }
         return Pattern.compile(resultUrl);
     }
-    }
+}

@@ -4,8 +4,6 @@
 
 package com.apollocurrency.aplwallet.apl.util;
 
-import static org.slf4j.LoggerFactory.getLogger;
-
 import com.apollocurrency.aplwallet.apl.util.task.NamedThreadFactory;
 import org.apache.commons.net.ntp.NTPUDPClient;
 import org.apache.commons.net.ntp.TimeInfo;
@@ -19,12 +17,10 @@ import java.net.UnknownHostException;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
-import javax.annotation.PostConstruct;
-import javax.annotation.PreDestroy;
-import javax.inject.Singleton;
 
-@Singleton
-public class NtpTime {
+import static org.slf4j.LoggerFactory.getLogger;
+
+public class NtpTime implements TimeSource {
 
     private static final Logger LOG = getLogger(NtpTime.class);
 
@@ -44,30 +40,27 @@ public class NtpTime {
             String delay = (delayValue == null) ? "N/A" : delayValue.toString();
             String offset = (offsetValue == null) ? "N/A" : offsetValue.toString();
 
-            LOG.debug(" Roundtrip delay(ms)=" + delay
-                    + ", clock offset(ms)=" + offset); // offset in ms
-            if(offsetValue!=null){
-               timeOffset = offsetValue;
+            LOG.debug("Roundtrip delay(ms)={}, clock offset(ms)={}", delay, offset); // offset in ms
+            if (offsetValue != null) {
+                timeOffset = offsetValue;
             }
-        }
-        catch (SocketTimeoutException | UnknownHostException e) {
-            LOG.debug("Exception: "+e.getMessage() + ". Keep prev offset: " + timeOffset);
-        }
-        catch (IOException e) {
-            LOG.debug("NTP exception: {}",e.getMessage());
+        } catch (SocketTimeoutException | UnknownHostException e) {
+            LOG.debug("Exception: {}. Keep prev offset: {}", e.getMessage(), timeOffset);
+        } catch (IOException e) {
+            LOG.debug("NTP exception: {}", e.getMessage());
         }
     }
 
     /**
-     * @return current time in Millis.
+     * {@inheritDoc}
+     * This implemetation uses received from NTP time offset in millis to adjust time to the global clock when system
+     * time is out of sync for some reason
      */
-    public long getTime() {
+    @Override
+    public long currentTime() {
         return System.currentTimeMillis() + timeOffset;
     }
 
-    public NtpTime() {}
-
-    @PostConstruct
     public void start() {
         setUpClient();
         Runnable timeUpdate = this::setTimeDrift;
@@ -80,13 +73,11 @@ public class NtpTime {
             client = new NTPUDPClient();
             client.setDefaultTimeout(DEFAULT_TIMEOUT);
             client.open();
-        }
-        catch (SocketException e) {
+        } catch (SocketException e) {
             throw new RuntimeException(e.toString(), e);
         }
     }
 
-    @PreDestroy
     public void shutdown() {
         client.close();
     }

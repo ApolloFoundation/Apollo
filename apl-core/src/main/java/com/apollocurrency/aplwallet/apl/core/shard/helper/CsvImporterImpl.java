@@ -7,8 +7,6 @@ package com.apollocurrency.aplwallet.apl.core.shard.helper;
 import com.apollocurrency.aplwallet.api.dto.DurableTaskInfo;
 import com.apollocurrency.aplwallet.apl.core.app.AplAppStatus;
 import com.apollocurrency.aplwallet.apl.core.db.DatabaseManager;
-import com.apollocurrency.aplwallet.apl.core.db.DbUtils;
-import com.apollocurrency.aplwallet.apl.core.db.TransactionalDataSource;
 import com.apollocurrency.aplwallet.apl.core.shard.helper.csv.CsvAbstractBase;
 import com.apollocurrency.aplwallet.apl.core.shard.helper.csv.CsvEscaper;
 import com.apollocurrency.aplwallet.apl.core.shard.helper.csv.CsvImportException;
@@ -16,12 +14,14 @@ import com.apollocurrency.aplwallet.apl.core.shard.helper.csv.CsvReader;
 import com.apollocurrency.aplwallet.apl.core.shard.helper.csv.CsvReaderImpl;
 import com.apollocurrency.aplwallet.apl.core.shard.helper.csv.ValueParser;
 import com.apollocurrency.aplwallet.apl.core.shard.helper.jdbc.SimpleResultSet;
+import com.apollocurrency.aplwallet.apl.util.db.DbUtils;
+import com.apollocurrency.aplwallet.apl.util.db.TransactionalDataSource;
 import lombok.SneakyThrows;
 import org.slf4j.Logger;
 
-import javax.inject.Inject;
-import javax.inject.Named;
-import javax.inject.Singleton;
+import jakarta.inject.Inject;
+import jakarta.inject.Named;
+import jakarta.inject.Singleton;
 import java.io.ByteArrayInputStream;
 import java.io.File;
 import java.io.IOException;
@@ -33,7 +33,9 @@ import java.sql.ResultSet;
 import java.sql.ResultSetMetaData;
 import java.sql.SQLException;
 import java.sql.Types;
+import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
@@ -52,7 +54,7 @@ public class CsvImporterImpl implements CsvImporter {
     private final Path dataExportPath; // path to folder with CSV files
     private final DatabaseManager databaseManager;
     private final Set<String> excludeTables; // skipped tables,
-    private final  AplAppStatus aplAppStatus;
+    private final AplAppStatus aplAppStatus;
     private final ValueParser parser;
     private final CsvEscaper translator;
 
@@ -106,7 +108,12 @@ public class CsvImporterImpl implements CsvImporter {
      * @throws SQLException
      */
     private boolean isBinaryColumn(final ResultSetMetaData meta, final int columnIdx) throws SQLException {
-        return (meta.getColumnType(columnIdx + 1) == Types.BINARY || meta.getColumnType(columnIdx + 1) == Types.VARBINARY);
+        return (meta.getColumnType(columnIdx) == Types.BINARY
+            || meta.getColumnType(columnIdx) == Types.VARBINARY
+            || meta.getColumnType(columnIdx) == Types.LONGVARBINARY
+            || meta.getColumnType(columnIdx) == Types.BLOB
+            || meta.getColumnType(columnIdx) == Types.JAVA_OBJECT
+        );
     }
 
     /**
@@ -118,7 +125,7 @@ public class CsvImporterImpl implements CsvImporter {
      * @throws SQLException
      */
     private boolean isArrayColumn(final ResultSetMetaData meta, final int columnIdx) throws SQLException {
-        return (meta.getColumnType(columnIdx + 1) == Types.ARRAY);
+        return (meta.getColumnType(columnIdx) == Types.ARRAY);
     }
 
     /**
@@ -130,7 +137,15 @@ public class CsvImporterImpl implements CsvImporter {
      * @throws SQLException
      */
     private boolean isVarcharColumn(final ResultSetMetaData meta, final int columnIdx) throws SQLException {
-        return (meta.getColumnType(columnIdx + 1) == Types.VARCHAR || meta.getColumnType(columnIdx + 1) == Types.NVARCHAR);
+        return (meta.getColumnType(columnIdx) == Types.VARCHAR
+            || meta.getColumnType(columnIdx) == Types.NVARCHAR
+            || meta.getColumnType(columnIdx) == Types.CHAR
+            || meta.getColumnType(columnIdx) == Types.NCHAR
+            || meta.getColumnType(columnIdx) == Types.LONGVARCHAR
+            || meta.getColumnType(columnIdx) == Types.LONGNVARCHAR
+            || meta.getColumnType(columnIdx) == Types.CLOB
+            || meta.getColumnType(columnIdx) == Types.NCLOB
+        );
     }
 
     /**
@@ -154,7 +169,7 @@ public class CsvImporterImpl implements CsvImporter {
         // file 'extension' should be checked on file instance actually
         String inputFileName = tableName + CsvAbstractBase.CSV_FILE_EXTENSION; // getFileNameExtension() would be better
         File file = new File(this.dataExportPath.toString(), inputFileName);
-        if(!file.exists()) {
+        if (!file.exists()) {
             log.warn("Table/File is not found/exist, skipping : {}", file);
             return -1;
         }
@@ -171,32 +186,35 @@ public class CsvImporterImpl implements CsvImporter {
         // open CSV Reader and db connection
         try (CsvReader csvReader = new CsvReaderImpl(this.dataExportPath, translator);
              ResultSet rs = csvReader.read(
-                inputFileName, null, null);
-             Connection con = dataSource.isInTransaction() ? dataSource.getConnection() : dataSource.begin()) {
+                 inputFileName, null, null);
+             Connection con = dataSource.isInTransaction() ? dataSource.getConnection() : dataSource.begin();
+             ResultSet targetTableRs = con.prepareStatement("SELECT * FROM  " + tableName + " LIMIT 1").executeQuery()) {
             csvReader.setOptions("fieldDelimiter="); // do not remove, setting = do not put "" around column/values
-
             // get CSV meta data info
-            ResultSetMetaData meta = rs.getMetaData();
-            columnsCount = meta.getColumnCount(); // columns count is main
+            ResultSetMetaData targetMetaData = targetTableRs.getMetaData();
+            ResultSetMetaData sourceMetaData = rs.getMetaData();
+            columnsCount = sourceMetaData.getColumnCount(); // columns count is main
             // precompile insert SQL
-            preparedInsertStatement = con.prepareStatement(generateInsertStatement(tableName, meta, defaultParams));
+            preparedInsertStatement = con.prepareStatement(generateInsertStatement(tableName, sourceMetaData, defaultParams));
 
             // loop over CSV data reading line by line, column by column
             while (rs.next()) {
                 row = new HashMap<>();
                 for (int i = 0; i < columnsCount; i++) {
                     Object object = rs.getObject(i + 1);
-                    String columnName = meta.getColumnName(i + 1);
-                    log.trace("{}[{} : {}] = {}", columnName, i + 1, meta.getColumnTypeName(i + 1), object);
 
-                    if (object != null && isBinaryColumn(meta, i)) {
-                        row.put(columnName.toLowerCase(), prepareBinaryObject( object, preparedInsertStatement, i+1, meta.getPrecision(i + 1)));
-                    } else if (object != null && isArrayColumn(meta, i)) {
-                        row.put(columnName.toLowerCase(), prepareArrayObject(object, preparedInsertStatement, i+1));
-                    } else if (object != null && isVarcharColumn(meta, i)) {
-                        row.put(columnName.toLowerCase(), prepareVarcharObject(object, preparedInsertStatement, i+1));
+                    String columnName = sourceMetaData.getColumnName(i + 1);
+                    int targetColumnIndex = columnIndex(targetMetaData, columnName);
+                    log.trace("{}[{} : {}] = {}", columnName, i + 1, targetMetaData.getColumnTypeName(i + 1), object);
+
+                    if (object != null && isBinaryColumn(targetMetaData, targetColumnIndex)) {
+                        row.put(columnName.toLowerCase(), prepareBinaryObject(object, preparedInsertStatement, i + 1, columnPrecision(targetMetaData, columnName.toLowerCase())));
+                    } else if (object != null && isArrayColumn(targetMetaData, targetColumnIndex)) {
+                        row.put(columnName.toLowerCase(), prepareArrayObject(object, preparedInsertStatement, i + 1));
+                    } else if (object != null && isVarcharColumn(targetMetaData, targetColumnIndex)) {
+                        row.put(columnName.toLowerCase(), prepareVarcharObject(object, preparedInsertStatement, i + 1));
                     } else {
-                        row.put(columnName.toLowerCase(), prepareObject(object, preparedInsertStatement, i+1));
+                        row.put(columnName.toLowerCase(), prepareObject(object, preparedInsertStatement, i + 1));
                     }
                 }
                 int i = columnsCount + 1;
@@ -222,7 +240,7 @@ public class CsvImporterImpl implements CsvImporter {
         } catch (Exception e) {
             dataSource.rollback(false);
             log.error("Imported so far={}, rsCounter={}, row={}", importedCount, rsCounter, row);
-            throw new CsvImportException("Error during importing '" + tableName + "'",e);
+            throw new CsvImportException("Error during importing '" + tableName + "'", e);
         } finally {
             if (preparedInsertStatement != null) {
                 DbUtils.close(preparedInsertStatement);
@@ -230,6 +248,33 @@ public class CsvImporterImpl implements CsvImporter {
         }
         return importedCount;
     }
+
+    private int columnPrecision(ResultSetMetaData metadata, String column) throws SQLException {
+        int columnCount = metadata.getColumnCount();
+        List<String> columnNames = new ArrayList<>();
+        for (int i = 0; i < columnCount; i++) {
+            String columnNameCandidate = metadata.getColumnName(i + 1);
+            columnNames.add(columnNameCandidate);
+            if (column.equalsIgnoreCase(columnNameCandidate)) {
+                return metadata.getPrecision(i + 1);
+            }
+        }
+        throw new RuntimeException("Unable to find precision for the column: '" + column + "' inside the target dataSource metadata: " + columnNames);
+    }
+
+    private int columnIndex(ResultSetMetaData metadata, String column) throws SQLException {
+        int columnCount = metadata.getColumnCount();
+        List<String> columnNames = new ArrayList<>();
+        for (int i = 0; i < columnCount; i++) {
+            String columnNameCandidate = metadata.getColumnName(i + 1);
+            columnNames.add(columnNameCandidate);
+            if (column.equalsIgnoreCase(columnNameCandidate)) {
+                return i + 1;
+            }
+        }
+        throw new RuntimeException("Unable to find position for the column: '" + column + "' inside the target dataSource metadata: " + columnNames);
+    }
+
 
     @SneakyThrows
     private String generateInsertStatement(String tableName, ResultSetMetaData meta, Map<String, Object> defaultParams) {
@@ -241,7 +286,7 @@ public class CsvImporterImpl implements CsvImporter {
         // create SQL insert statement
         sqlInsert.append("INSERT INTO ").append(tableName).append(" (");
         for (int i = 0; i < columnsCount; i++) {
-            columnNames.append( meta.getColumnLabel(i + 1));
+            columnNames.append(meta.getColumnLabel(i + 1));
             columnsValues.append("?");
             if (!defaultParams.isEmpty() || i != columnsCount - 1) {
                 columnNames.append(",");
@@ -268,7 +313,7 @@ public class CsvImporterImpl implements CsvImporter {
         }
     }
 
-    private Object prepareBinaryObject(Object object, PreparedStatement preparedInsertStatement, int index, int precision){
+    private Object prepareBinaryObject(Object object, PreparedStatement preparedInsertStatement, int index, int precision) {
         final byte[] decodedBytes = parser.parseBinaryObject(object);
         try (InputStream is = new ByteArrayInputStream(decodedBytes)) {
             preparedInsertStatement.setBinaryStream(index, is, precision);
@@ -279,7 +324,7 @@ public class CsvImporterImpl implements CsvImporter {
     }
 
     @SneakyThrows
-    private Object prepareArrayObject(Object object, PreparedStatement preparedInsertStatement, int index){
+    private Object prepareArrayObject(Object object, PreparedStatement preparedInsertStatement, int index) {
         Object[] actualArray = parser.parseArrayObject(object);
         SimpleResultSet.SimpleArray simpleArray = new SimpleResultSet.SimpleArray(actualArray);
         preparedInsertStatement.setArray(index, simpleArray);
@@ -287,14 +332,14 @@ public class CsvImporterImpl implements CsvImporter {
     }
 
     @SneakyThrows
-    private Object prepareVarcharObject(Object object, PreparedStatement preparedInsertStatement, int index){
+    private Object prepareVarcharObject(Object object, PreparedStatement preparedInsertStatement, int index) {
         String value = parser.parseStringObject(object);
         preparedInsertStatement.setString(index, value);
         return value;
     }
 
     @SneakyThrows
-    private Object prepareObject(Object object, PreparedStatement preparedInsertStatement, int index){
+    private Object prepareObject(Object object, PreparedStatement preparedInsertStatement, int index) {
         Object value = parser.parseObject(object);
         preparedInsertStatement.setObject(index, value);
         return value;

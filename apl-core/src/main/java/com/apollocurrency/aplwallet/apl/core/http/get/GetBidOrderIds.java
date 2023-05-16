@@ -15,44 +15,49 @@
  */
 
 /*
- * Copyright © 2018-2019 Apollo Foundation
+ * Copyright © 2018-2021 Apollo Foundation
  */
 
 package com.apollocurrency.aplwallet.apl.core.http.get;
 
+import com.apollocurrency.aplwallet.apl.core.entity.state.order.BidOrder;
 import com.apollocurrency.aplwallet.apl.core.http.APITag;
 import com.apollocurrency.aplwallet.apl.core.http.AbstractAPIRequestHandler;
-import com.apollocurrency.aplwallet.apl.core.http.ParameterParser;
-import com.apollocurrency.aplwallet.apl.util.AplException;
-import com.apollocurrency.aplwallet.apl.core.app.Order;
-import com.apollocurrency.aplwallet.apl.core.db.DbIterator;
-import javax.enterprise.inject.Vetoed;
+import com.apollocurrency.aplwallet.apl.core.http.HttpParameterParserUtil;
+import com.apollocurrency.aplwallet.apl.core.service.state.order.OrderService;
+import com.apollocurrency.aplwallet.apl.core.service.state.order.impl.BidOrderServiceImpl;
+import com.apollocurrency.aplwallet.apl.core.service.state.qualifier.BidOrderService;
+import com.apollocurrency.aplwallet.apl.core.transaction.messages.CCBidOrderPlacementAttachment;
+import com.apollocurrency.aplwallet.apl.core.utils.CollectorUtils;
+import com.apollocurrency.aplwallet.apl.util.exception.AplException;
 import org.json.simple.JSONArray;
 import org.json.simple.JSONObject;
 import org.json.simple.JSONStreamAware;
 
-import javax.servlet.http.HttpServletRequest;
+import jakarta.enterprise.inject.Vetoed;
+import jakarta.enterprise.inject.spi.CDI;
+import jakarta.servlet.http.HttpServletRequest;
 
 @Vetoed
 public final class GetBidOrderIds extends AbstractAPIRequestHandler {
+    private final OrderService<BidOrder, CCBidOrderPlacementAttachment> bidOrderService =
+        CDI.current().select(BidOrderServiceImpl.class, BidOrderService.Literal.INSTANCE).get();
 
     public GetBidOrderIds() {
-        super(new APITag[] {APITag.AE}, "asset", "firstIndex", "lastIndex");
+        super(new APITag[]{APITag.AE}, "asset", "firstIndex", "lastIndex");
     }
 
     @Override
     public JSONStreamAware processRequest(HttpServletRequest req) throws AplException {
 
-        long assetId = ParameterParser.getUnsignedLong(req, "asset", true);
-        int firstIndex = ParameterParser.getFirstIndex(req);
-        int lastIndex = ParameterParser.getLastIndex(req);
+        long assetId = HttpParameterParserUtil.getUnsignedLong(req, "asset", true);
+        int firstIndex = HttpParameterParserUtil.getFirstIndex(req);
+        int lastIndex = HttpParameterParserUtil.getLastIndex(req);
 
-        JSONArray orderIds = new JSONArray();
-        try (DbIterator<Order.Bid> bidOrders = Order.Bid.getSortedOrders(assetId, firstIndex, lastIndex)) {
-            while (bidOrders.hasNext()) {
-                orderIds.add(Long.toUnsignedString(bidOrders.next().getId()));
-            }
-        }
+        JSONArray orderIds = bidOrderService.getSortedOrders(assetId, firstIndex, lastIndex)
+            .map(b -> Long.toUnsignedString(b.getId()))
+            .collect(CollectorUtils.jsonCollector());
+
         JSONObject response = new JSONObject();
         response.put("bidOrderIds", orderIds);
         return response;

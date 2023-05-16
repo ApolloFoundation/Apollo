@@ -4,14 +4,14 @@
 
 package com.apollocurrency.aplwallet.apl.data;
 
-import com.apollocurrency.aplwallet.apl.core.app.Transaction;
-import com.apollocurrency.aplwallet.apl.core.phasing.model.PhasingCreator;
-import com.apollocurrency.aplwallet.apl.core.phasing.model.PhasingParams;
-import com.apollocurrency.aplwallet.apl.core.phasing.model.PhasingPoll;
-import com.apollocurrency.aplwallet.apl.core.phasing.model.PhasingPollLinkedTransaction;
-import com.apollocurrency.aplwallet.apl.core.phasing.model.PhasingPollResult;
-import com.apollocurrency.aplwallet.apl.core.phasing.model.PhasingPollVoter;
-import com.apollocurrency.aplwallet.apl.core.phasing.model.PhasingVote;
+import com.apollocurrency.aplwallet.apl.core.model.Transaction;
+import com.apollocurrency.aplwallet.apl.core.entity.state.phasing.PhasingPoll;
+import com.apollocurrency.aplwallet.apl.core.entity.state.phasing.PhasingPollLinkedTransaction;
+import com.apollocurrency.aplwallet.apl.core.entity.state.phasing.PhasingPollResult;
+import com.apollocurrency.aplwallet.apl.core.entity.state.phasing.PhasingPollVoter;
+import com.apollocurrency.aplwallet.apl.core.entity.state.phasing.PhasingVote;
+import com.apollocurrency.aplwallet.apl.core.model.PhasingCreator;
+import com.apollocurrency.aplwallet.apl.core.model.PhasingParams;
 import com.apollocurrency.aplwallet.apl.core.transaction.messages.PhasingAppendixV2;
 import com.apollocurrency.aplwallet.apl.crypto.Convert;
 
@@ -32,7 +32,7 @@ public class PhasingTestData {
     public final PhasingPollVoter NEW_VOTER_0;
     public final PhasingPollVoter NEW_VOTER_1;
     public final PhasingPollVoter NEW_VOTER_2;
-    public final int NUMBER_OF_PHASED_TRANSACTIONS = 8;
+    public final int NUMBER_OF_PHASED_TRANSACTIONS = 10;
     public final byte[] LINKED_TRANSACTION_0_HASH = Convert.parseHexString("6400000000000000cc6f17193477209ca5821d37d391e70ae668dd1c11dd798e");
     public final byte[] LINKED_TRANSACTION_1_HASH;
     public final byte[] LINKED_TRANSACTION_2_HASH;
@@ -49,14 +49,14 @@ public class PhasingTestData {
     public final PhasingPollLinkedTransaction NEW_LINKED_TRANSACTION_1;
     public final PhasingPollLinkedTransaction NEW_LINKED_TRANSACTION_2;
     public final PhasingPollLinkedTransaction NEW_LINKED_TRANSACTION_3;
-
-    private final TransactionTestData td;
     public final PhasingPoll POLL_0;
     public final PhasingPoll POLL_1;
     public final PhasingPoll POLL_2;
     public final PhasingPoll POLL_3;
+    public final PhasingPoll POLL_35;
     public final PhasingPoll POLL_4;
     public final PhasingPoll POLL_5;
+    public final PhasingPoll POLL_55;
     public final PhasingPollResult SHARD_RESULT_0;
     public final PhasingPollResult RESULT_0;
     public final PhasingPollResult RESULT_1;
@@ -71,20 +71,23 @@ public class PhasingTestData {
     public final PhasingVote NEW_VOTE;
     public final PhasingVote NEW_LINKED_TX_VOTE;
     public final PhasingPollResult NEW_RESULT;
+    private final TransactionTestData td;
 
     public PhasingTestData() {
         td = new TransactionTestData();
         LINKED_TRANSACTION_1_HASH = td.TRANSACTION_11.getFullHash();
         LINKED_TRANSACTION_2_HASH = td.NOT_SAVED_TRANSACTION.getFullHash();
         POLL_0 = PhasingCreator.createPoll(10, td.TRANSACTION_6.getId(), td.TRANSACTION_6.getSenderId(), null, td.TRANSACTION_6.getFullHash(), 4000, -1, (byte) 5, 1, 0, 0, (byte) 0, Convert.parseHexString("be65fff0fd321e40fa5857815c457669d0afdb9c3823445140a9f0a40f9d4414"), (byte) 2, null, td.TRANSACTION_6.getHeight());
-        POLL_1 = PhasingCreator.createPoll(20, td.TRANSACTION_8.getId(), td.TRANSACTION_8.getSenderId(), new long[] {POLL_1_VOTER_0_ID, POLL_1_VOTER_1_ID}, td.TRANSACTION_8.getFullHash(), 10000, -1, (byte) 0, 1, 0, 0, (byte) 0, null, (byte) 0, null, td.TRANSACTION_8.getHeight());
+        POLL_1 = PhasingCreator.createPoll(20, td.TRANSACTION_8.getId(), td.TRANSACTION_8.getSenderId(), new long[]{POLL_1_VOTER_0_ID, POLL_1_VOTER_1_ID}, td.TRANSACTION_8.getFullHash(), 15001, -1, (byte) 0, 1, 0, 0, (byte) 0, null, (byte) 0, null, td.TRANSACTION_8.getHeight());
         POLL_2 = PhasingCreator.createPoll(30, td.TRANSACTION_7.getId(), td.TRANSACTION_7.getSenderId(), null, td.TRANSACTION_7.getFullHash(), 9500, -1, (byte) 0, 1, 0, 0, (byte) 0, null, (byte) 0, null, td.TRANSACTION_7.getHeight());
+        POLL_35 = PhasingCreator.createPoll(35, 7, td.TRANSACTION_6.getSenderId(), null, Convert.parseHexString("863e0c0752c6380be76354bd861be0705711e0ee2bc0b84d9f0d71b5a4271af6"), -1, 180_000, (byte) 5, 1, 0, 0, (byte) 0, Convert.parseHexString("56d5dd35e0469d075d781998f1e5141f518fdd7583b2c4b3814a53c44c24228d"), (byte) 2, null, 14_000);
         POLL_3 = PhasingCreator.createPoll(40, td.TRANSACTION_12.getId(), td.TRANSACTION_12.getSenderId(), null, td.TRANSACTION_12.getFullHash(), 17000, -1, (byte) 4, 3, 0, 0, (byte) 0, null, (byte) 0, new byte[][]{LINKED_TRANSACTION_0_HASH, LINKED_TRANSACTION_1_HASH, LINKED_TRANSACTION_2_HASH}, td.TRANSACTION_12.getHeight());
         POLL_4 = PhasingCreator.createPoll(50, td.TRANSACTION_11.getId(), td.TRANSACTION_11.getSenderId(), new long[]{POLL_4_VOTER_0_ID}, td.TRANSACTION_11.getFullHash(), 18000, -1, (byte) 0, 3, 0, 0, (byte) 0, null, (byte) 0, null, td.TRANSACTION_11.getHeight());
-        POLL_5 = PhasingCreator.createPoll(60, td.TRANSACTION_13.getId(), td.TRANSACTION_13.getSenderId(), new long[]{POLL_5_VOTER_0_ID, POLL_5_VOTER_1_ID }, td.TRANSACTION_13.getFullHash(), 537000, -1, (byte) 2, 50, 10, 4826028362757542803L, (byte) 2, null, (byte) 0, null, td.TRANSACTION_13.getHeight());
+        POLL_55 = PhasingCreator.createPoll(55, 8, td.TRANSACTION_6.getSenderId(), null, Convert.parseHexString("1176e5d5aa6381995be14c90babf89a914d30167eec51894f19cd7c95e2c97ed"), -1, 1_000_000, (byte) 5, 1, 0, 0, (byte) 0, Convert.parseHexString("5938c5b616fc0eb6bbea809771aa99d2af3c15b40374765d9e0b140e26409ff0"), (byte) 2, null, 510_000);
+        POLL_5 = PhasingCreator.createPoll(60, td.TRANSACTION_13.getId(), td.TRANSACTION_13.getSenderId(), new long[]{POLL_5_VOTER_0_ID, POLL_5_VOTER_1_ID}, td.TRANSACTION_13.getFullHash(), 537000, -1, (byte) 2, 50, 10, 4826028362757542803L, (byte) 2, null, (byte) 0, null, td.TRANSACTION_13.getHeight());
 
         POLL_1_VOTER_0 = new PhasingPollVoter(20L, POLL_1.getHeight(), POLL_1.getId(), POLL_1_VOTER_0_ID);
-        POLL_1_VOTER_1 = new PhasingPollVoter(30L,POLL_1.getHeight(), POLL_1.getId(), POLL_1_VOTER_1_ID);
+        POLL_1_VOTER_1 = new PhasingPollVoter(30L, POLL_1.getHeight(), POLL_1.getId(), POLL_1_VOTER_1_ID);
         POLL_4_VOTER_0 = new PhasingPollVoter(40L, POLL_4.getHeight(), POLL_4.getId(), POLL_4_VOTER_0_ID);
 
         FAKE_VOTER_0 = new PhasingPollVoter(50L, POLL_4.getHeight() + 1, 128, 102);
@@ -102,20 +105,20 @@ public class PhasingTestData {
         POLL_1_VOTE_0 = new PhasingVote(30L, 8500, POLL_1.getId(), POLL_1_VOTER_0_ID, td.TRANSACTION_9.getId());
         POLL_1_VOTE_1 = new PhasingVote(40L, 8999, POLL_1.getId(), POLL_1_VOTER_1_ID, td.TRANSACTION_10.getId());
         //real linked transactions
-        LINKED_TRANSACTION_0 = new PhasingPollLinkedTransaction(10L, POLL_3.getHeight(), POLL_3.getId(), Convert.fullHashToId(LINKED_TRANSACTION_0_HASH), LINKED_TRANSACTION_0_HASH);
-        LINKED_TRANSACTION_1 = new PhasingPollLinkedTransaction(20L, POLL_3.getHeight(), POLL_3.getId(), Convert.fullHashToId(LINKED_TRANSACTION_1_HASH), LINKED_TRANSACTION_1_HASH);
-        LINKED_TRANSACTION_2 = new PhasingPollLinkedTransaction(30L, POLL_3.getHeight(), POLL_3.getId(), Convert.fullHashToId(LINKED_TRANSACTION_2_HASH), LINKED_TRANSACTION_2_HASH);
+        LINKED_TRANSACTION_0 = new PhasingPollLinkedTransaction(10L, POLL_3.getHeight(), POLL_3.getId(), Convert.transactionFullHashToId(LINKED_TRANSACTION_0_HASH), LINKED_TRANSACTION_0_HASH);
+        LINKED_TRANSACTION_1 = new PhasingPollLinkedTransaction(20L, POLL_3.getHeight(), POLL_3.getId(), Convert.transactionFullHashToId(LINKED_TRANSACTION_1_HASH), LINKED_TRANSACTION_1_HASH);
+        LINKED_TRANSACTION_2 = new PhasingPollLinkedTransaction(30L, POLL_3.getHeight(), POLL_3.getId(), Convert.transactionFullHashToId(LINKED_TRANSACTION_2_HASH), LINKED_TRANSACTION_2_HASH);
         //fake linked transactions
-        FAKE_LINKED_TRANSACTION_0 = new PhasingPollLinkedTransaction(40L, POLL_3.getHeight() + 1, 100, Convert.fullHashToId(LINKED_TRANSACTION_3_HASH), LINKED_TRANSACTION_3_HASH);
-        FAKE_LINKED_TRANSACTION_1 = new PhasingPollLinkedTransaction(50L, POLL_3.getHeight() + 1, 100, Convert.fullHashToId(LINKED_TRANSACTION_4_HASH), LINKED_TRANSACTION_4_HASH);
-        FAKE_LINKED_TRANSACTION_2 = new PhasingPollLinkedTransaction(60L, POLL_3.getHeight() + 2, 200, Convert.fullHashToId(LINKED_TRANSACTION_5_HASH), LINKED_TRANSACTION_5_HASH);
+        FAKE_LINKED_TRANSACTION_0 = new PhasingPollLinkedTransaction(40L, POLL_3.getHeight() + 1, 100, Convert.transactionFullHashToId(LINKED_TRANSACTION_3_HASH), LINKED_TRANSACTION_3_HASH);
+        FAKE_LINKED_TRANSACTION_1 = new PhasingPollLinkedTransaction(50L, POLL_3.getHeight() + 1, 100, Convert.transactionFullHashToId(LINKED_TRANSACTION_4_HASH), LINKED_TRANSACTION_4_HASH);
+        FAKE_LINKED_TRANSACTION_2 = new PhasingPollLinkedTransaction(60L, POLL_3.getHeight() + 2, 200, Convert.transactionFullHashToId(LINKED_TRANSACTION_5_HASH), LINKED_TRANSACTION_5_HASH);
 
-        NEW_POLL_PARAMS     = new PhasingParams((byte) 0, 0, 3, 0, (byte)0, new long[] {1, 2, 3});
-        NEW_POLL_APPENDIX = new PhasingAppendixV2(td.TRANSACTION_10.getHeight(), 20000, NEW_POLL_PARAMS, new byte[][] {td.TRANSACTION_4.getFullHash(), td.TRANSACTION_5.getFullHash()}, null, (byte) 0);
+        NEW_POLL_PARAMS = new PhasingParams((byte) 0, 0, 3, 0, (byte) 0, new long[]{1, 2, 3});
+        NEW_POLL_APPENDIX = new PhasingAppendixV2(td.TRANSACTION_10.getHeight(), 20000, NEW_POLL_PARAMS, new byte[][]{td.TRANSACTION_4.getFullHash(), td.TRANSACTION_5.getFullHash()}, null, (byte) 0);
         NEW_POLL = PhasingCreator.createPoll(td.TRANSACTION_10, NEW_POLL_APPENDIX);
         NEW_POLL.setDbId(POLL_5.getDbId() + 1);
         NEW_VOTE_TX = td.TRANSACTION_3;
-        NEW_VOTE = new PhasingVote(POLL_1_VOTE_1.getDbId() + 1,  NEW_VOTE_TX.getHeight(), POLL_1.getId(), NEW_VOTE_TX.getSenderId(), NEW_VOTE_TX.getId());
+        NEW_VOTE = new PhasingVote(POLL_1_VOTE_1.getDbId() + 1, NEW_VOTE_TX.getHeight(), POLL_1.getId(), NEW_VOTE_TX.getSenderId(), NEW_VOTE_TX.getId());
         NEW_LINKED_TX_VOTE = new PhasingVote(POLL_1_VOTE_1.getDbId() + 1, td.NOT_SAVED_TRANSACTION.getHeight(), POLL_3.getId(), td.NOT_SAVED_TRANSACTION.getSenderId(), td.NOT_SAVED_TRANSACTION.getId());
         NEW_LINKED_TRANSACTION_1 = new PhasingPollLinkedTransaction(FAKE_LINKED_TRANSACTION_2.getDbId() + 1, td.TRANSACTION_8.getHeight(), POLL_1.getId(), td.TRANSACTION_0.getId(), td.TRANSACTION_0.getFullHash());
         NEW_LINKED_TRANSACTION_2 = new PhasingPollLinkedTransaction(FAKE_LINKED_TRANSACTION_2.getDbId() + 2, td.TRANSACTION_8.getHeight(), POLL_1.getId(), td.TRANSACTION_2.getId(), td.TRANSACTION_2.getFullHash());

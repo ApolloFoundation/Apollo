@@ -1,8 +1,6 @@
-
 package com.apollocurrency.aplwallet.apl.crypto;
 
 /**
- *
  * @author al
  */
 public class NotValidException extends Exception {

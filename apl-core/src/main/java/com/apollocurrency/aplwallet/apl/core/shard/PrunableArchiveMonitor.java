@@ -4,20 +4,20 @@
 
 package com.apollocurrency.aplwallet.apl.core.shard;
 
-import com.apollocurrency.aplwallet.apl.core.app.TimeService;
-import com.apollocurrency.aplwallet.apl.core.app.TrimService;
 import com.apollocurrency.aplwallet.apl.core.app.observer.events.BlockchainEvent;
 import com.apollocurrency.aplwallet.apl.core.app.observer.events.BlockchainEventType;
 import com.apollocurrency.aplwallet.apl.core.chainid.BlockchainConfig;
-import com.apollocurrency.aplwallet.apl.core.task.TaskDispatchManager;
+import com.apollocurrency.aplwallet.apl.core.service.appdata.TimeService;
+import com.apollocurrency.aplwallet.apl.core.service.appdata.TrimService;
+import com.apollocurrency.aplwallet.apl.util.service.TaskDispatchManager;
 import com.apollocurrency.aplwallet.apl.util.task.Task;
 import com.apollocurrency.aplwallet.apl.util.task.TaskDispatcher;
 import lombok.extern.slf4j.Slf4j;
 
-import javax.annotation.PostConstruct;
-import javax.enterprise.event.Observes;
-import javax.inject.Inject;
-import javax.inject.Singleton;
+import jakarta.annotation.PostConstruct;
+import jakarta.enterprise.event.Observes;
+import jakarta.inject.Inject;
+import jakarta.inject.Singleton;
 import java.util.Objects;
 
 import static com.apollocurrency.aplwallet.apl.util.Constants.DEFAULT_PRUNABLE_UPDATE_PERIOD;
@@ -48,33 +48,33 @@ public class PrunableArchiveMonitor {
     public void init() {
         taskDispatcher = taskManager.newScheduledDispatcher("PrunableArchiveMonitor");
         taskDispatcher.schedule(Task.builder()
-                .name("RecalculatePrunableZipHash")
-                .initialDelay(PRUNABLE_MONITOR_INITIAL_DELAY)
-                .task(this::processPrunableDataArchive)
-                .delay(PRUNABLE_MONITOR_DELAY)
-                .build());
+            .name("RecalculatePrunableZipHash")
+            .initialDelay(PRUNABLE_MONITOR_INITIAL_DELAY)
+            .task(this::processPrunableDataArchive)
+            .delay(PRUNABLE_MONITOR_DELAY)
+            .build());
         log.info("PrunableArchiveMonitor initialized, initial delay={} ms, delay={} ms.",
-                PRUNABLE_MONITOR_INITIAL_DELAY,
-                PRUNABLE_MONITOR_DELAY );
+            PRUNABLE_MONITOR_INITIAL_DELAY,
+            PRUNABLE_MONITOR_DELAY);
     }
 
-    public void onResumeBlockchainEvent(@Observes @BlockchainEvent(BlockchainEventType.RESUME_DOWNLOADING) BlockchainConfig cfg){
+    public void onResumeBlockchainEvent(@Observes @BlockchainEvent(BlockchainEventType.RESUME_DOWNLOADING) BlockchainConfig cfg) {
         resumeMonitor();
     }
 
-    public void onSuspendBlockchainEvent(@Observes @BlockchainEvent(BlockchainEventType.SUSPEND_DOWNLOADING) BlockchainConfig cfg){
+    public void onSuspendBlockchainEvent(@Observes @BlockchainEvent(BlockchainEventType.SUSPEND_DOWNLOADING) BlockchainConfig cfg) {
         suspendMonitor();
     }
 
-    public void resumeMonitor(){
+    public void resumeMonitor() {
         taskDispatcher.resume();
     }
 
-    public void suspendMonitor(){
+    public void suspendMonitor() {
         taskDispatcher.suspend();
     }
 
-    private void processPrunableDataArchive(){
+    private void processPrunableDataArchive() {
         int epochTime = timeService.getEpochTime();
         int pruningTime = epochTime - epochTime % DEFAULT_PRUNABLE_UPDATE_PERIOD;
         log.debug("processPrunableDataArchive started pruningTime={} ", pruningTime);
@@ -82,7 +82,7 @@ public class PrunableArchiveMonitor {
         processing = true;
         try {
             hashCalculator.tryRecalculatePrunableArchiveHashes(pruningTime);
-        }finally {
+        } finally {
             processing = false;
         }
         log.debug("processPrunableDataArchive finished");

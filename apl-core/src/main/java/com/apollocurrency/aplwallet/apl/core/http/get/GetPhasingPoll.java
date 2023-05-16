@@ -20,31 +20,32 @@
 
 package com.apollocurrency.aplwallet.apl.core.http.get;
 
+import com.apollocurrency.aplwallet.apl.core.entity.state.phasing.PhasingPoll;
+import com.apollocurrency.aplwallet.apl.core.entity.state.phasing.PhasingPollResult;
 import com.apollocurrency.aplwallet.apl.core.http.APITag;
 import com.apollocurrency.aplwallet.apl.core.http.AbstractAPIRequestHandler;
+import com.apollocurrency.aplwallet.apl.core.http.HttpParameterParserUtil;
 import com.apollocurrency.aplwallet.apl.core.http.JSONData;
 import com.apollocurrency.aplwallet.apl.core.http.JSONResponses;
-import com.apollocurrency.aplwallet.apl.core.http.ParameterParser;
-import com.apollocurrency.aplwallet.apl.core.phasing.model.PhasingPoll;
-import com.apollocurrency.aplwallet.apl.core.phasing.model.PhasingPollResult;
-import com.apollocurrency.aplwallet.apl.core.phasing.PhasingPollService;
-import com.apollocurrency.aplwallet.apl.util.AplException;
+import com.apollocurrency.aplwallet.apl.core.service.state.PhasingPollService;
+import com.apollocurrency.aplwallet.apl.util.exception.AplException;
 import org.json.simple.JSONStreamAware;
 
-import javax.enterprise.inject.Vetoed;
-import javax.enterprise.inject.spi.CDI;
-import javax.servlet.http.HttpServletRequest;
+import jakarta.enterprise.inject.Vetoed;
+import jakarta.enterprise.inject.spi.CDI;
+import jakarta.servlet.http.HttpServletRequest;
 
 @Vetoed
 public class GetPhasingPoll extends AbstractAPIRequestHandler {
+    private PhasingPollService phasingPollService = CDI.current().select(PhasingPollService.class).get();
+
     public GetPhasingPoll() {
         super(new APITag[]{APITag.PHASING}, "transaction", "countVotes");
     }
 
-    private PhasingPollService phasingPollService = CDI.current().select(PhasingPollService.class).get();
     @Override
     public JSONStreamAware processRequest(HttpServletRequest req) throws AplException {
-        long transactionId = ParameterParser.getUnsignedLong(req, "transaction", true);
+        long transactionId = HttpParameterParserUtil.getUnsignedLong(req, "transaction", true);
         boolean countVotes = "true".equalsIgnoreCase(req.getParameter("countVotes"));
         PhasingPoll phasingPoll = phasingPollService.getPoll(transactionId);
         if (phasingPoll != null) {

@@ -4,10 +4,9 @@
 
   <parent>
     <groupId>com.apollocurrency</groupId>
-    <artifactId>apollo-wallet</artifactId>
-    <version>1.41.8</version>
+    <artifactId>apollo-blockchain</artifactId>
+    <version>2.0.1</version>
   </parent>
-
   <artifactId>apl-conf</artifactId>
   <name>apl-conf</name>
   <packaging>jar</packaging>

@@ -3,21 +3,20 @@
  */
 package com.apollocurrency.aplwallet.apl.core.transaction.messages;
 
-import com.apollocurrency.aplwallet.apl.core.transaction.Messaging;
-import com.apollocurrency.aplwallet.apl.core.transaction.TransactionType;
+import com.apollocurrency.aplwallet.apl.core.transaction.TransactionTypes;
 import com.apollocurrency.aplwallet.apl.crypto.Convert;
 import com.apollocurrency.aplwallet.apl.crypto.NotValidException;
-import com.apollocurrency.aplwallet.apl.util.AplException;
 import com.apollocurrency.aplwallet.apl.util.Constants;
-import java.nio.ByteBuffer;
+import com.apollocurrency.aplwallet.apl.util.exception.AplException;
 import org.json.simple.JSONObject;
 
+import java.nio.ByteBuffer;
+
 /**
- *
  * @author al
  */
 public final class MessagingAliasAssignment extends AbstractAttachment {
-    
+
     final String aliasName;
     final String aliasURI;
 
@@ -64,8 +63,8 @@ public final class MessagingAliasAssignment extends AbstractAttachment {
     }
 
     @Override
-    public TransactionType getTransactionType() {
-        return Messaging.ALIAS_ASSIGNMENT;
+    public TransactionTypes.TransactionTypeSpec getTransactionTypeSpec() {
+        return TransactionTypes.TransactionTypeSpec.ALIAS_ASSIGNMENT;
     }
 
     public String getAliasName() {
@@ -75,5 +74,5 @@ public final class MessagingAliasAssignment extends AbstractAttachment {
     public String getAliasURI() {
         return aliasURI;
     }
-    
+
 }

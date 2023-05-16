@@ -4,23 +4,24 @@
 
 package com.apollocurrency.aplwallet.apl.core.http;
 
-import javax.servlet.http.HttpServletRequest;
-import javax.servlet.http.HttpServletResponse;
+import org.apache.commons.io.IOUtils;
+import org.eclipse.jetty.server.Request;
+import org.eclipse.jetty.servlet.ErrorPageErrorHandler;
+
+import jakarta.servlet.ServletException;
+import jakarta.servlet.http.HttpServletRequest;
+import jakarta.servlet.http.HttpServletResponse;
 import java.io.FileReader;
 import java.io.IOException;
 import java.io.PrintWriter;
 import java.net.HttpURLConnection;
-import javax.servlet.ServletException;
-
-import org.apache.commons.io.IOUtils;
-import org.eclipse.jetty.servlet.ErrorPageErrorHandler;
 
 public class APIErrorHandler extends ErrorPageErrorHandler {
 
 
     @Override
-    public void handle(String target, org.eclipse.jetty.server.Request baseRequest, HttpServletRequest request, HttpServletResponse response) throws IOException, ServletException {
-        if(response.getStatus() == HttpURLConnection.HTTP_NOT_FOUND){
+    public void handle(String target, Request baseRequest, HttpServletRequest request, HttpServletResponse response) throws IOException, ServletException {
+        if (response.getStatus() == HttpURLConnection.HTTP_NOT_FOUND) {
             String apiResourceBase = API.findWebUiDir();
 //propertiesLoader.getStringProperty("apl.apiResourceBase");
             String apiWelcomePage = API.propertiesHolder.getStringProperty("apl.apiWelcomeFile");

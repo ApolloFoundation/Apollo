@@ -20,8 +20,8 @@
 
 package com.apollocurrency.aplwallet.apl.core.http.get;
 
-import com.apollocurrency.aplwallet.apl.core.monetary.Exchange;
-import com.apollocurrency.aplwallet.apl.core.db.DbIterator;
+import com.apollocurrency.aplwallet.apl.util.db.DbIterator;
+import com.apollocurrency.aplwallet.apl.core.entity.state.exchange.Exchange;
 import com.apollocurrency.aplwallet.apl.core.http.APITag;
 import com.apollocurrency.aplwallet.apl.core.http.AbstractAPIRequestHandler;
 import com.apollocurrency.aplwallet.apl.core.http.JSONData;
@@ -30,16 +30,16 @@ import org.json.simple.JSONArray;
 import org.json.simple.JSONObject;
 import org.json.simple.JSONStreamAware;
 
-import javax.servlet.http.HttpServletRequest;
+import jakarta.enterprise.inject.Vetoed;
+import jakarta.servlet.http.HttpServletRequest;
 
 import static com.apollocurrency.aplwallet.apl.core.http.JSONResponses.MISSING_TRANSACTION;
-import javax.enterprise.inject.Vetoed;
 
 @Vetoed
 public final class GetExchangesByExchangeRequest extends AbstractAPIRequestHandler {
 
     public GetExchangesByExchangeRequest() {
-        super(new APITag[] {APITag.MS}, "transaction", "includeCurrencyInfo");
+        super(new APITag[]{APITag.MS}, "transaction", "includeCurrencyInfo");
     }
 
     @Override
@@ -52,7 +52,7 @@ public final class GetExchangesByExchangeRequest extends AbstractAPIRequestHandl
         boolean includeCurrencyInfo = "true".equalsIgnoreCase(req.getParameter("includeCurrencyInfo"));
         JSONObject response = new JSONObject();
         JSONArray exchangesData = new JSONArray();
-        try (DbIterator<Exchange> exchanges = Exchange.getExchanges(transactionId)) {
+        try (DbIterator<Exchange> exchanges = exchangeService.getExchanges(transactionId)) {
             while (exchanges.hasNext()) {
                 exchangesData.add(JSONData.exchange(exchanges.next(), includeCurrencyInfo));
             }

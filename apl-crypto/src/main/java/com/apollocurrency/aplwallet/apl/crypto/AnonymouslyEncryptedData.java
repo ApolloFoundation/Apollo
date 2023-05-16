@@ -26,6 +26,14 @@ import java.util.Arrays;
 
 public final class AnonymouslyEncryptedData {
 
+    private final byte[] data;
+    private final byte[] publicKey;
+
+    public AnonymouslyEncryptedData(byte[] data, byte[] publicKey) {
+        this.data = data;
+        this.publicKey = publicKey;
+    }
+
     public static AnonymouslyEncryptedData encrypt(byte[] plaintext, byte[] secretBytes, byte[] theirPublicKey, byte[] nonce) {
         byte[] keySeed = Crypto.getKeySeed(secretBytes, theirPublicKey, nonce);
         byte[] myPrivateKey = Crypto.getPrivateKey(keySeed);
@@ -36,7 +44,7 @@ public final class AnonymouslyEncryptedData {
     }
 
     public static AnonymouslyEncryptedData readEncryptedData(ByteBuffer buffer, int length, int maxLength)
-            throws NotValidException {
+        throws NotValidException {
         if (length > maxLength) {
             throw new NotValidException("Max encrypted data length exceeded: " + length);
         }
@@ -55,14 +63,6 @@ public final class AnonymouslyEncryptedData {
         } catch (NotValidException e) {
             throw new RuntimeException(e.toString(), e); // never
         }
-    }
-
-    private final byte[] data;
-    private final byte[] publicKey;
-
-    public AnonymouslyEncryptedData(byte[] data, byte[] publicKey) {
-        this.data = data;
-        this.publicKey = publicKey;
     }
 
     public byte[] decrypt(byte[] secretBytes) {

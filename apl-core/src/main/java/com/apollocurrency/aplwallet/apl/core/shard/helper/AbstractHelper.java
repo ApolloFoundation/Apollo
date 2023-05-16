@@ -4,10 +4,10 @@
 
 package com.apollocurrency.aplwallet.apl.core.shard.helper;
 
-import static org.slf4j.LoggerFactory.getLogger;
-
-import com.apollocurrency.aplwallet.apl.core.db.ShardRecoveryDaoJdbc;
-import com.apollocurrency.aplwallet.apl.core.db.dao.model.ShardRecovery;
+import com.apollocurrency.aplwallet.apl.core.dao.appdata.ShardRecoveryDaoJdbc;
+import com.apollocurrency.aplwallet.apl.core.entity.appdata.ShardRecovery;
+import com.apollocurrency.aplwallet.apl.util.annotation.DatabaseSpecificDml;
+import com.apollocurrency.aplwallet.apl.util.annotation.DmlMarker;
 import org.slf4j.Logger;
 
 import java.sql.Connection;
@@ -21,13 +21,14 @@ import java.util.Objects;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
+import static org.slf4j.LoggerFactory.getLogger;
+
 /**
  * Common fields and methods used by inherited classes.
  */
 public abstract class AbstractHelper implements BatchedPaginationOperation {
-    private static final Logger log = getLogger(AbstractHelper.class);
-
     protected static final SimpleDateFormat dateFormat = new SimpleDateFormat("yyyy/MM/dd HH:mm:ss");
+    private static final Logger log = getLogger(AbstractHelper.class);
     protected ShardRecoveryDaoJdbc shardRecoveryDao;
 
     String currentTableName; // processed table name
@@ -42,17 +43,36 @@ public abstract class AbstractHelper implements BatchedPaginationOperation {
 
     Long totalSelectedRows = 0L;
     Long totalProcessedCount = 0L;
-    String BASE_COLUMN_NAME = "DB_ID";
+    String BASE_COLUMN_NAME = "db_id";
     PreparedStatement preparedInsertStatement = null;
 
     String sqlToExecuteWithPaging;
+    @DatabaseSpecificDml(DmlMarker.RESERVED_KEYWORD_USE)
+    @DatabaseSpecificDml(DmlMarker.IFNULL_USE)
     String sqlSelectUpperBound;
+    @DatabaseSpecificDml(DmlMarker.IFNULL_USE)
     String sqlSelectBottomBound;
     String sqlDeleteFromBottomBound;
 
     Long upperBoundIdValue;
     Long lowerBoundIdValue;
     ShardRecovery recoveryValue; // updated on every loop
+
+    /**
+     * Method to match existing table name as full name but not a substring
+     *
+     * @param sourceString source string to find in
+     * @param itemToFind   what to be found
+     * @return true if full separate itemToFind exists
+     */
+    public static boolean isContain(String sourceString, String itemToFind) {
+        if (sourceString == null || sourceString.isEmpty()) return false;
+        if (itemToFind == null || itemToFind.isEmpty()) return false;
+        String pattern = "\\b" + itemToFind + "\\b";
+        Pattern p = Pattern.compile(pattern);
+        Matcher m = p.matcher(sourceString);
+        return m.find();
+    }
 
     public void reset() {
         this.currentTableName = null;
@@ -78,7 +98,7 @@ public abstract class AbstractHelper implements BatchedPaginationOperation {
 
     @Override
     public void setShardRecoveryDao(ShardRecoveryDaoJdbc dao) {
-        this.shardRecoveryDao = Objects.requireNonNull(dao, "shard Recovery Dao is NULL");;
+        this.shardRecoveryDao = Objects.requireNonNull(dao, "shard Recovery Dao is NULL");
     }
 
     protected void checkMandatoryParameters(Connection sourceConnect, TableOperationParams operationParams) {
@@ -114,10 +134,11 @@ public abstract class AbstractHelper implements BatchedPaginationOperation {
         Long highDbIdValue = 0L;
         try (PreparedStatement selectStatement = sourceConnect.prepareStatement(selectValueSql)) {
             selectStatement.setInt(1, snapshotBlockHeight);
-            ResultSet rs = selectStatement.executeQuery();
-            if (rs.next()) {
-                highDbIdValue = rs.getLong("DB_ID");
-                log.trace("FOUND Upper DB_ID value = {}", highDbIdValue);
+            try (ResultSet rs = selectStatement.executeQuery()) {
+                if (rs.next()) {
+                    highDbIdValue = rs.getLong("db_id");
+                    log.trace("FOUND Upper DB_ID value = {}", highDbIdValue);
+                }
             }
         } catch (Exception e) {
             log.error("Error finding Upper DB_ID by snapshot block height = " + snapshotBlockHeight, e);
@@ -136,11 +157,11 @@ public abstract class AbstractHelper implements BatchedPaginationOperation {
         Objects.requireNonNull(selectValueSql, "selectValueSql is NULL");
         // select DB_ID as = (min(DB_ID) - 1)  OR  = 0 if value is missing
         Long bottomDbIdValue = 0L;
-        try (PreparedStatement selectStatement = sourceConnect.prepareStatement(sqlSelectBottomBound)) {
-            ResultSet rs = selectStatement.executeQuery();
+        try (PreparedStatement selectStatement = sourceConnect.prepareStatement(sqlSelectBottomBound);
+             ResultSet rs = selectStatement.executeQuery()) {
             if (rs.next()) {
-                bottomDbIdValue = rs.getLong("DB_ID");
-                log.trace("FOUND Bottom DB_ID value = {}", bottomDbIdValue);
+                bottomDbIdValue = rs.getLong("db_id");
+                log.trace("FOUND Bottom db_id value = {}", bottomDbIdValue);
             }
         } catch (Exception e) {
             log.error("Error finding Bottom DB_ID", e);
@@ -174,14 +195,14 @@ public abstract class AbstractHelper implements BatchedPaginationOperation {
             log.debug("START object '{}' from = {}", operationParams.tableName, recoveryValue);
 
         } else if (recoveryValue.getProcessedObject() != null && !recoveryValue.getProcessedObject().isEmpty()
-                && isContain(recoveryValue.getProcessedObject(), currentTableName)) {
+            && isContain(recoveryValue.getProcessedObject(), currentTableName)) {
             // skip current table
             log.debug("SKIP object '{}' by = {}", operationParams.tableName, recoveryValue);
             return true;
         } else {
             if (recoveryValue.getObjectName() != null
-                    && recoveryValue.getObjectName().equalsIgnoreCase(currentTableName)
-                    && !isContain(recoveryValue.getProcessedObject(), currentTableName)) {
+                && recoveryValue.getObjectName().equalsIgnoreCase(currentTableName)
+                && !isContain(recoveryValue.getProcessedObject(), currentTableName)) {
                 // process current table because it was not finished
                 this.lowerBoundIdValue = recoveryValue.getLastColumnValue(); // last saved/processed value
                 log.debug("RESTORED object '{}' from = {}", operationParams.tableName, recoveryValue);
@@ -192,21 +213,6 @@ public abstract class AbstractHelper implements BatchedPaginationOperation {
             }
         }
         return false;
-    }
-
-    /**
-     * Method to match existing table name as full name but not a substring
-     * @param sourceString source string to find in
-     * @param itemToFind what to be found
-     * @return true if full separate itemToFind exists
-     */
-    public static boolean isContain(String sourceString, String itemToFind){
-        if (sourceString == null || sourceString.isEmpty()) return false;
-        if (itemToFind == null || itemToFind.isEmpty()) return false;
-        String pattern = "\\b"+itemToFind+"\\b";
-        Pattern p = Pattern.compile(pattern);
-        Matcher m = p.matcher(sourceString);
-        return m.find();
     }
 
 }

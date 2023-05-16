@@ -26,11 +26,14 @@ import org.json.simple.JSONArray;
 import org.json.simple.JSONObject;
 import org.json.simple.JSONStreamAware;
 
+import jakarta.inject.Singleton;
 import java.util.List;
 
-public final class GetNextBlockIds extends PeerRequestHandler {
+@Singleton
+public class GetNextBlockIds extends PeerRequestHandler {
 
-    public GetNextBlockIds() {}
+    public GetNextBlockIds() {
+    }
 
 
     @Override
@@ -40,7 +43,7 @@ public final class GetNextBlockIds extends PeerRequestHandler {
 
         JSONArray nextBlockIds = new JSONArray();
         long blockId = Convert.parseUnsignedLong((String) request.get("blockId"));
-        int limit = (int)Convert.parseLong(request.get("limit"));
+        int limit = (int) Convert.parseLong(request.get("limit"));
         if (limit > 1440) {
             return GetNextBlocks.TOO_MANY_BLOCKS_REQUESTED;
         }

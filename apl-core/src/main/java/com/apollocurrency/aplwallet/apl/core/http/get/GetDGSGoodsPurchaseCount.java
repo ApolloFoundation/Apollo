@@ -20,17 +20,17 @@
 
 package com.apollocurrency.aplwallet.apl.core.http.get;
 
-import com.apollocurrency.aplwallet.apl.core.dgs.DGSService;
 import com.apollocurrency.aplwallet.apl.core.http.APITag;
 import com.apollocurrency.aplwallet.apl.core.http.AbstractAPIRequestHandler;
-import com.apollocurrency.aplwallet.apl.core.http.ParameterParser;
-import com.apollocurrency.aplwallet.apl.util.AplException;
-import javax.enterprise.inject.Vetoed;
+import com.apollocurrency.aplwallet.apl.core.http.HttpParameterParserUtil;
+import com.apollocurrency.aplwallet.apl.core.service.state.DGSService;
+import com.apollocurrency.aplwallet.apl.util.exception.AplException;
 import org.json.simple.JSONObject;
 import org.json.simple.JSONStreamAware;
 
-import javax.enterprise.inject.spi.CDI;
-import javax.servlet.http.HttpServletRequest;
+import jakarta.enterprise.inject.Vetoed;
+import jakarta.enterprise.inject.spi.CDI;
+import jakarta.servlet.http.HttpServletRequest;
 
 @Vetoed
 public final class GetDGSGoodsPurchaseCount extends AbstractAPIRequestHandler {
@@ -38,13 +38,13 @@ public final class GetDGSGoodsPurchaseCount extends AbstractAPIRequestHandler {
     private DGSService service = CDI.current().select(DGSService.class).get();
 
     public GetDGSGoodsPurchaseCount() {
-        super(new APITag[] {APITag.DGS}, "goods", "withPublicFeedbacksOnly", "completed");
+        super(new APITag[]{APITag.DGS}, "goods", "withPublicFeedbacksOnly", "completed");
     }
 
     @Override
     public JSONStreamAware processRequest(HttpServletRequest req) throws AplException {
 
-        long goodsId = ParameterParser.getUnsignedLong(req, "goods", true);
+        long goodsId = HttpParameterParserUtil.getUnsignedLong(req, "goods", true);
         final boolean withPublicFeedbacksOnly = "true".equalsIgnoreCase(req.getParameter("withPublicFeedbacksOnly"));
         final boolean completed = "true".equalsIgnoreCase(req.getParameter("completed"));
 

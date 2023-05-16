@@ -4,10 +4,11 @@
 
 package com.apollocurrency.aplwallet.apl.core.shard;
 
-import com.apollocurrency.aplwallet.apl.core.db.DbVersion;
-import com.apollocurrency.aplwallet.apl.core.db.TransactionalDataSource;
+import com.apollocurrency.aplwallet.apl.db.updater.DBUpdater;
+import com.apollocurrency.aplwallet.apl.util.db.TransactionalDataSource;
 
 import java.util.Collection;
+import java.util.Comparator;
 import java.util.Iterator;
 import java.util.List;
 
@@ -45,13 +46,13 @@ public interface ShardManagement {
 
     /**
      * That is preferred way to retrieve cached shard data source or create it fully or partially initialized.
-     * The initialization schema is specified by dbVersion implementation class.
+     * The initialization schema is specified by dbUpdater implementation class.
      *
-     * @param shardId shard Id to be added, can be NULL then an next shardId is selected from 'SHARD' table
-     * @param dbVersion 'partial' or 'full' kind of 'schema script' implementation class can be supplied
+     * @param shardId   shard Id to be added, can be NULL then an next shardId is selected from 'SHARD' table
+     * @param dbUpdater 'partial' or 'full' kind of 'schema script' implementation class can be supplied
      * @return shard database connection pool instance is put into internal cache
      */
-    TransactionalDataSource getOrCreateShardDataSourceById(Long shardId, DbVersion dbVersion);
+    TransactionalDataSource getOrCreateShardDataSourceById(Long shardId, DBUpdater dbUpdater);
 
     /**
      * Return already initialized or init and then return transactional datasource for full shard specified by shardId
@@ -60,15 +61,6 @@ public interface ShardManagement {
      * @return datasource for full shard if exist, otherwise - null
      */
     TransactionalDataSource getOrInitFullShardDataSourceById(long shardId);
-
-    /**
-     * Method gives ability to create 'temporary database' file with fully initialized internal schema.
-     * The datasource is cached by -1L long value.
-     *
-     * @param temporaryDatabaseName temp database name
-     * @return temp database data source
-     */
-    TransactionalDataSource createAndAddTemporaryDb(String temporaryDatabaseName);
 
     /**
      * @param shardId id of shard datasorce
@@ -81,27 +73,39 @@ public interface ShardManagement {
      * It opens existing shard file and adds it into cached shard data source list.
      * Partial schema is specified by dbVersion implementation
      *
-     * @param shardId shard Id to be added, can be NULL then an next shardId is selected from 'SHARD' table
-     * @param dbVersion 'partial' or 'full' kind of 'schema script' implementation class can be supplied
+     * @param shardId   shard Id to be added, can be NULL then an next shardId is selected from 'SHARD' table
+     * @param dbUpdater 'partial' or 'full' kind of 'schema script' implementation class can be supplied
      * @return shard database connection pool instance is put into internal cache
      */
-    TransactionalDataSource createOrUpdateShard(Long shardId, DbVersion dbVersion);
+    TransactionalDataSource createOrUpdateShard(Long shardId, DBUpdater dbUpdater);
 
 
     /**
      * Return list of data sources with state = FULL. Each datasource point to not empty shard db, which store blocks and transactions for specific shard
+     *
      * @return list of full shard data sources
      */
     List<TransactionalDataSource> getAllFullDataSources(Long numberOfShards);
 
     /**
      * Return Iterator of data sources with state = FULL. Each datasource point to not empty shard db, which store blocks and transactions for specific shard
+     *
      * @return list of full shard data sources
      */
     Iterator<TransactionalDataSource> getAllFullDataSourcesIterator();
 
+
+    /**
+     * Return Iterator for all data sources, including full shard data sources with the current data source, sorted using
+     * specified comparator.
+     * <p>Default order is from earlier shards to recent, last is current datasource</p>
+     * @return all data sources iterator sorted using specified comparator
+     */
+    Iterator<TransactionalDataSource> getAllSortedDataSourcesIterator(Comparator<TransactionalDataSource> comparator);
+
     /**
      * Close all datasources related to shards, this method will close all opened datasources excluding current main datasource
+     *
      * @return number of closed datasources
      */
     long closeAllShardDataSources();

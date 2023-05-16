@@ -20,45 +20,37 @@
 
 package com.apollocurrency.aplwallet.apl.core.http.post;
 
-import com.apollocurrency.aplwallet.apl.core.account.Account;
-import com.apollocurrency.aplwallet.apl.core.transaction.messages.Attachment;
+import com.apollocurrency.aplwallet.apl.core.entity.state.account.Account;
+import com.apollocurrency.aplwallet.apl.core.entity.state.account.AccountControlType;
 import com.apollocurrency.aplwallet.apl.core.http.APITag;
+import com.apollocurrency.aplwallet.apl.core.http.HttpParameterParserUtil;
 import com.apollocurrency.aplwallet.apl.core.http.JSONResponses;
-import com.apollocurrency.aplwallet.apl.core.http.ParameterParser;
-import com.apollocurrency.aplwallet.apl.util.AplException;
-import com.apollocurrency.aplwallet.apl.core.app.Shuffling;
-import com.apollocurrency.aplwallet.apl.core.transaction.messages.ShufflingRegistration;
-import javax.enterprise.inject.Vetoed;
+import com.apollocurrency.aplwallet.apl.core.transaction.messages.Attachment;
+import com.apollocurrency.aplwallet.apl.core.transaction.messages.ShufflingRegistrationAttachment;
+import com.apollocurrency.aplwallet.apl.util.exception.AplException;
 import org.json.simple.JSONStreamAware;
 
-import javax.servlet.http.HttpServletRequest;
+import jakarta.enterprise.inject.Vetoed;
+import jakarta.servlet.http.HttpServletRequest;
 
 @Vetoed
-public final class ShufflingRegister extends CreateTransaction {
+public final class ShufflingRegister extends CreateTransactionHandler {
 
     public ShufflingRegister() {
-        super(new APITag[] {APITag.SHUFFLING, APITag.CREATE_TRANSACTION}, "shufflingFullHash");
+        super(new APITag[]{APITag.SHUFFLING, APITag.CREATE_TRANSACTION}, "shufflingFullHash");
     }
 
     @Override
     public JSONStreamAware processRequest(HttpServletRequest req) throws AplException {
-        byte[] shufflingFullHash = ParameterParser.getBytes(req, "shufflingFullHash", true);
+        byte[] shufflingFullHash = HttpParameterParserUtil.getBytes(req, "shufflingFullHash", true);
 
-        Attachment attachment = new ShufflingRegistration(shufflingFullHash);
+        Attachment attachment = new ShufflingRegistrationAttachment(shufflingFullHash);
 
-        Account account = ParameterParser.getSenderAccount(req);
-        if (account.getControls().contains(Account.ControlType.PHASING_ONLY)) {
+        Account account = HttpParameterParserUtil.getSenderAccount(req);
+        if (account.getControls().contains(AccountControlType.PHASING_ONLY)) {
             return JSONResponses.error("Accounts under phasing only control cannot join a shuffling");
         }
-        try {
-            return createTransaction(req, account, attachment);
-        } catch (AplException.InsufficientBalanceException e) {
-            Shuffling shuffling = Shuffling.getShuffling(shufflingFullHash);
-            if (shuffling == null) {
-                return JSONResponses.NOT_ENOUGH_APL;
-            }
-            return JSONResponses.notEnoughHolding(shuffling.getHoldingType());
-        }
+        return createTransaction(req, account, attachment);
     }
 
 }

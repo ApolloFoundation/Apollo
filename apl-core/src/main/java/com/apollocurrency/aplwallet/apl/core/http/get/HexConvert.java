@@ -24,17 +24,18 @@ import com.apollocurrency.aplwallet.apl.core.http.APITag;
 import com.apollocurrency.aplwallet.apl.core.http.AbstractAPIRequestHandler;
 import com.apollocurrency.aplwallet.apl.crypto.Convert;
 import com.apollocurrency.aplwallet.apl.util.JSON;
-import javax.enterprise.inject.Vetoed;
 import org.json.simple.JSONObject;
 import org.json.simple.JSONStreamAware;
 
-import javax.servlet.http.HttpServletRequest;
+import jakarta.enterprise.inject.Vetoed;
+import jakarta.servlet.http.HttpServletRequest;
 
+@Deprecated
 @Vetoed
 public final class HexConvert extends AbstractAPIRequestHandler {
 
     public HexConvert() {
-        super(new APITag[] {APITag.UTILS}, "string");
+        super(new APITag[]{APITag.UTILS}, "string");
     }
 
     @Override
@@ -49,11 +50,13 @@ public final class HexConvert extends AbstractAPIRequestHandler {
             if (asHex.length > 0) {
                 response.put("text", Convert.toString(asHex));
             }
-        } catch (RuntimeException ignore) {}
+        } catch (RuntimeException ignore) {
+        }
         try {
             byte[] asText = Convert.toBytes(string);
             response.put("binary", Convert.toHexString(asText));
-        } catch (RuntimeException ignore) {}
+        } catch (RuntimeException ignore) {
+        }
         return response;
     }
 

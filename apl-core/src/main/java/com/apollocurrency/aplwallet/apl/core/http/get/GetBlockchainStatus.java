@@ -20,27 +20,28 @@
 
 package com.apollocurrency.aplwallet.apl.core.http.get;
 
-import com.apollocurrency.aplwallet.apl.core.account.AccountLedger;
-import com.apollocurrency.aplwallet.apl.core.app.Block;
-import com.apollocurrency.aplwallet.apl.core.app.BlockchainProcessor;
 import com.apollocurrency.aplwallet.apl.core.chainid.BlockchainConfig;
+import com.apollocurrency.aplwallet.apl.core.model.Block;
 import com.apollocurrency.aplwallet.apl.core.http.API;
 import com.apollocurrency.aplwallet.apl.core.http.APIProxy;
 import com.apollocurrency.aplwallet.apl.core.http.APITag;
 import com.apollocurrency.aplwallet.apl.core.http.AbstractAPIRequestHandler;
 import com.apollocurrency.aplwallet.apl.core.peer.Peer;
+import com.apollocurrency.aplwallet.apl.core.service.blockchain.BlockchainProcessor;
 import com.apollocurrency.aplwallet.apl.util.Constants;
 import org.json.simple.JSONArray;
 import org.json.simple.JSONObject;
 
-import javax.enterprise.inject.Vetoed;
-import javax.enterprise.inject.spi.CDI;
-import javax.servlet.http.HttpServletRequest;
+import jakarta.enterprise.inject.Vetoed;
+import jakarta.enterprise.inject.spi.CDI;
+import jakarta.servlet.http.HttpServletRequest;
+
+@Deprecated
 @Vetoed
 public final class GetBlockchainStatus extends AbstractAPIRequestHandler {
 
     public GetBlockchainStatus() {
-        super(new APITag[] {APITag.BLOCKS, APITag.INFO});
+        super(new APITag[]{APITag.BLOCKS, APITag.INFO});
     }
 
     @Override
@@ -76,7 +77,7 @@ public final class GetBlockchainStatus extends AbstractAPIRequestHandler {
         response.put("maxPrunableLifetime", blockchainConfig.getMaxPrunableLifetime());
         response.put("includeExpiredPrunable", propertiesHolder.INCLUDE_EXPIRED_PRUNABLE());
         response.put("correctInvalidFees", propertiesHolder.correctInvalidFees());
-        response.put("ledgerTrimKeep", AccountLedger.trimKeep);
+        response.put("ledgerTrimKeep", lookupAccountLedgerService().getTrimKeep());
         response.put("chainId", blockchainConfig.getChain().getChainId());
         response.put("chainName", blockchainConfig.getChain().getName());
         response.put("chainDescription", blockchainConfig.getChain().getDescription());

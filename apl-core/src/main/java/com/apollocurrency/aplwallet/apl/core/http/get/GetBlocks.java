@@ -20,50 +20,52 @@
 
 package com.apollocurrency.aplwallet.apl.core.http.get;
 
-import com.apollocurrency.aplwallet.apl.core.app.Block;
+import com.apollocurrency.aplwallet.apl.core.model.Block;
 import com.apollocurrency.aplwallet.apl.core.http.APITag;
 import com.apollocurrency.aplwallet.apl.core.http.AbstractAPIRequestHandler;
+import com.apollocurrency.aplwallet.apl.core.http.HttpParameterParserUtil;
 import com.apollocurrency.aplwallet.apl.core.http.JSONData;
-import com.apollocurrency.aplwallet.apl.core.http.ParameterParser;
-import com.apollocurrency.aplwallet.apl.util.AplException;
-import com.apollocurrency.aplwallet.apl.core.db.DbIterator;
-import javax.enterprise.inject.Vetoed;
-
+import com.apollocurrency.aplwallet.apl.util.api.parameter.FirstLastIndexBeanParam;
+import com.apollocurrency.aplwallet.apl.util.exception.AplException;
 import lombok.extern.slf4j.Slf4j;
 import org.json.simple.JSONArray;
 import org.json.simple.JSONObject;
 import org.json.simple.JSONStreamAware;
 
-import javax.servlet.http.HttpServletRequest;
+import jakarta.enterprise.inject.Vetoed;
+import jakarta.servlet.http.HttpServletRequest;
+import java.util.List;
 
+/**
+ * Deprecated, see {@link com.apollocurrency.aplwallet.apl.core.rest.endpoint.BlockController#getBlocks(FirstLastIndexBeanParam, int, boolean, boolean)} instead
+ */
+@Deprecated
 @Slf4j
 @Vetoed
 public final class GetBlocks extends AbstractAPIRequestHandler {
 
     public GetBlocks() {
-        super(new APITag[] {APITag.BLOCKS}, "firstIndex", "lastIndex", "timestamp", "includeTransactions", "includeExecutedPhased");
+        super(new APITag[]{APITag.BLOCKS}, "firstIndex", "lastIndex", "timestamp", "includeTransactions", "includeExecutedPhased");
     }
 
     @Override
     public JSONStreamAware processRequest(HttpServletRequest req) throws AplException {
 
-        int firstIndex = ParameterParser.getFirstIndex(req);
-        int lastIndex = ParameterParser.getLastIndex(req);
-        final int timestamp = ParameterParser.getTimestamp(req);
+        int firstIndex = HttpParameterParserUtil.getFirstIndex(req);
+        int lastIndex = HttpParameterParserUtil.getLastIndex(req);
+        final int timestamp = HttpParameterParserUtil.getTimestamp(req);
         boolean includeTransactions = "true".equalsIgnoreCase(req.getParameter("includeTransactions"));
         boolean includeExecutedPhased = "true".equalsIgnoreCase(req.getParameter("includeExecutedPhased"));
 
         JSONArray blocks = new JSONArray();
         Block lastBlock = lookupBlockchain().getLastBlock();
         if (lastBlock != null) {
-            try (DbIterator<? extends Block> iterator = lookupBlockchain().getBlocks(firstIndex, lastIndex)) {
-                while (iterator.hasNext()) {
-                    Block block = iterator.next();
-                    if (block.getTimestamp() < timestamp) {
-                        break;
-                    }
-                    blocks.add(JSONData.block(block, includeTransactions, includeExecutedPhased));
+            List<Block> blockchainBlocks = lookupBlockchain().getBlocks(firstIndex, lastIndex, timestamp);
+            for (Block blockchainBlock : blockchainBlocks) {
+                if (blockchainBlock.getTimestamp() < timestamp) { // not needed after 'timestamp' is added as SQL param above
+                    break;
                 }
+                blocks.add(JSONData.block(blockchainBlock, includeTransactions, includeExecutedPhased));
             }
         } else {
             log.warn("Still no any blocks in db...");

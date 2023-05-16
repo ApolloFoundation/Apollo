@@ -12,7 +12,9 @@ import lombok.ToString;
 
 import java.util.List;
 
-@Getter @Setter @ToString
+@Getter
+@Setter
+@ToString
 @JsonInclude(JsonInclude.Include.NON_NULL)
 @JsonIgnoreProperties(ignoreUnknown = true)
 public class PeerDTO extends BaseDTO {

@@ -3,7 +3,7 @@
 <html lang="en">
   <head>
     <meta charset="UTF-8">
-    <title>Swagger UI</title>
+    <title>Apollo Swagger UI</title>
     <link rel="stylesheet" type="text/css" href="./swagger-ui.css" >
     <link rel="icon" type="image/png" href="./favicon-32x32.png" sizes="32x32" />
     <link rel="icon" type="image/png" href="./favicon-16x16.png" sizes="16x16" />
@@ -31,33 +31,32 @@
   </head>
 
   <body>
-    <div id="swagger-ui"></div>
+  <div id="swagger-ui"></div>
 
-    <script src="./swagger-ui-bundle.js"> </script>
-    <script src="./swagger-ui-standalone-preset.js"> </script>
-    <script>
-    window.onload = function() {
-//--- begin apollo changes    
-      var host = window.location.hostname;
-      var proto = window.location.protocol;
-      var port =  window.location.port;
-      var sw_url=proto+"//"+host+":"+port+"/rest/openapi.json";
-      // Begin Swagger UI call region
-      const ui = SwaggerUIBundle({
-        url: sw_url,
-//--- end apollo changes    
-//        url: "https://petstore.swagger.io/v2/swagger.json",
-        dom_id: '#swagger-ui',
-        deepLinking: true,
-        presets: [
-          SwaggerUIBundle.presets.apis,
-          SwaggerUIStandalonePreset
-        ],
-        plugins: [
-          SwaggerUIBundle.plugins.DownloadUrl
-        ],
-        layout: "StandaloneLayout"
-      })
+  <script src="./swagger-ui-bundle.js" charset="UTF-8"></script>
+  <script src="./swagger-ui-standalone-preset.js" charset="UTF-8"></script>
+  <script>
+      window.onload = function () {
+          //--- begin apollo changes
+          let host = window.location.hostname;
+          let proto = window.location.protocol;
+          let port = window.location.port;
+          let sw_url = proto + "//" + host + ":" + port + "/rest/openapi.json";
+          // Begin Swagger UI call region
+          const ui = SwaggerUIBundle({
+              url: sw_url,
+              //--- end apollo changes
+              dom_id: '#swagger-ui',
+              deepLinking: true,
+              presets: [
+                  SwaggerUIBundle.presets.apis,
+                  SwaggerUIStandalonePreset
+              ],
+              plugins: [
+                  SwaggerUIBundle.plugins.DownloadUrl
+              ],
+              layout: "StandaloneLayout"
+          })
       // End Swagger UI call region
 
       window.ui = ui

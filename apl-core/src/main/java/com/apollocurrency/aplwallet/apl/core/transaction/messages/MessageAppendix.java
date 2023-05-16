@@ -1,38 +1,24 @@
 /*
- * Copyright © 2018-2019 Apollo Foundation
+ * Copyright © 2018-2021 Apollo Foundation
  */
 
 package com.apollocurrency.aplwallet.apl.core.transaction.messages;
 
+import com.apollocurrency.aplwallet.apl.core.entity.state.account.Account;
+import com.apollocurrency.aplwallet.apl.core.model.Transaction;
+import com.apollocurrency.aplwallet.apl.core.transaction.Fee;
+import com.apollocurrency.aplwallet.apl.crypto.Convert;
+import com.apollocurrency.aplwallet.apl.util.exception.AplException;
+import lombok.EqualsAndHashCode;
+import org.json.simple.JSONObject;
+
 import java.nio.ByteBuffer;
 import java.util.Arrays;
 
-import com.apollocurrency.aplwallet.apl.core.account.Account;
-import com.apollocurrency.aplwallet.apl.util.Constants;
-import com.apollocurrency.aplwallet.apl.core.app.Fee;
-import com.apollocurrency.aplwallet.apl.core.app.Transaction;
-import com.apollocurrency.aplwallet.apl.crypto.Convert;
-import com.apollocurrency.aplwallet.apl.util.AplException;
-import org.json.simple.JSONObject;
-
+@EqualsAndHashCode(callSuper = true)
 public class MessageAppendix extends AbstractAppendix {
 
-    private static final String appendixName = "Message";
-
-    public static MessageAppendix parse(JSONObject attachmentData) {
-        if (!Appendix.hasAppendix(appendixName, attachmentData)) {
-            return null;
-        }
-        return new MessageAppendix(attachmentData);
-    }
-
-    private static final Fee MESSAGE_FEE = new Fee.SizeBasedFee(0, Constants.ONE_APL, 32) {
-        @Override
-        public int getSize(Transaction transaction, Appendix appendage) {
-            return ((MessageAppendix)appendage).getMessage().length;
-        }
-    };
-
+    static final String appendixName = "Message";
     private final byte[] message;
     private final boolean isText;
 
@@ -55,7 +41,7 @@ public class MessageAppendix extends AbstractAppendix {
 
     public MessageAppendix(JSONObject attachmentData) {
         super(attachmentData);
-        String messageString = (String)attachmentData.get("message");
+        String messageString = (String) attachmentData.get("message");
         this.isText = Boolean.TRUE.equals(attachmentData.get("messageIsText"));
         this.message = isText ? Convert.toBytes(messageString) : Convert.parseHexString(messageString);
     }
@@ -75,6 +61,13 @@ public class MessageAppendix extends AbstractAppendix {
     public MessageAppendix(byte[] message, boolean isText) {
         this.message = message;
         this.isText = isText;
+    }
+
+    public static MessageAppendix parse(JSONObject attachmentData) {
+        if (!Appendix.hasAppendix(appendixName, attachmentData)) {
+            return null;
+        }
+        return new MessageAppendix(attachmentData);
     }
 
     @Override
@@ -99,20 +92,35 @@ public class MessageAppendix extends AbstractAppendix {
         json.put("messageIsText", isText);
     }
 
+
     @Override
-    public Fee getBaselineFee(Transaction transaction) {
-        return MESSAGE_FEE;
+    public Fee getBaselineFee(Transaction transaction, long oneAPL) {
+        return new Fee.SizeBasedFee(0, oneAPL, 32) {
+            @Override
+            public int getSize(Transaction transaction, Appendix appendage) {
+                return ((MessageAppendix) appendage).getMessage().length;
+            }
+        };
     }
 
     @Override
-    public void validate(Transaction transaction, int blockHeight) throws AplException.ValidationException {
-        if (message.length > Constants.MAX_ARBITRARY_MESSAGE_LENGTH) {
-            throw new AplException.NotValidException("Invalid arbitrary message length: " + message.length);
-        }
+    public void performStateDependentValidation(Transaction transaction, int blockHeight) throws AplException.ValidationException {
+        throw new UnsupportedOperationException("Validation for message appendix is not supported, use separate class");
     }
 
     @Override
-    public void apply(Transaction transaction, Account senderAccount, Account recipientAccount) {}
+    public void performStateIndependentValidation(Transaction transaction, int blockHeight) throws AplException.ValidationException {
+        throw new UnsupportedOperationException("Validation for message appendix is not supported, use separate class");
+    }
+
+    @Override
+    public void apply(Transaction transaction, Account senderAccount, Account recipientAccount) {
+    }
+
+    @Override
+    public int getAppendixFlag() {
+        return 0x01;
+    }
 
     public byte[] getMessage() {
         return message;
@@ -130,8 +138,8 @@ public class MessageAppendix extends AbstractAppendix {
     @Override
     public String toString() {
         return "MessageAppendix{" +
-                "message=" + new String(message) +
-                ", isText=" + isText +
-                '}';
+            "message=" + new String(message) +
+            ", isText=" + isText +
+            '}';
     }
 }

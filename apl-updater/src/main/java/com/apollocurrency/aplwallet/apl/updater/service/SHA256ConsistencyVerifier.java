@@ -4,8 +4,8 @@
 
 package com.apollocurrency.aplwallet.apl.updater.service;
 
-import com.apollocurrency.aplwallet.apl.updater.ConsistencyVerifier;
 import com.apollocurrency.aplwallet.apl.crypto.Convert;
+import com.apollocurrency.aplwallet.apl.updater.ConsistencyVerifier;
 
 import java.io.IOException;
 import java.io.InputStream;
@@ -33,8 +33,7 @@ public class SHA256ConsistencyVerifier implements ConsistencyVerifier {
         try {
             byte[] actualHash = calculateHash(file);
             return Convert.toHexString(actualHash).equalsIgnoreCase(Convert.toHexString(hash));
-        }
-        catch (Exception e) {
+        } catch (Exception e) {
             throw new RuntimeException(e.toString(), e);
         }
     }

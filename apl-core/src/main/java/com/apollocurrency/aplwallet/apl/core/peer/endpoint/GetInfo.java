@@ -21,7 +21,7 @@
 package com.apollocurrency.aplwallet.apl.core.peer.endpoint;
 
 import com.apollocurrency.aplwallet.api.p2p.PeerInfo;
-import com.apollocurrency.aplwallet.apl.core.app.TimeService;
+import com.apollocurrency.aplwallet.apl.core.service.appdata.TimeService;
 import com.apollocurrency.aplwallet.apl.core.peer.Peer;
 import com.apollocurrency.aplwallet.apl.core.peer.PeerImpl;
 import com.apollocurrency.aplwallet.apl.core.peer.PeersService;
@@ -33,39 +33,42 @@ import org.json.simple.JSONStreamAware;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import javax.inject.Inject;
+import jakarta.inject.Inject;
+import jakarta.inject.Singleton;
 import java.io.IOException;
 import java.io.StringWriter;
 
-public final class GetInfo extends PeerRequestHandler {
+@Singleton
+public class GetInfo extends PeerRequestHandler {
     private static final Logger log = LoggerFactory.getLogger(GetInfo.class);
-    private final TimeService timeService;
-
     private static final JSONStreamAware INVALID_ANNOUNCED_ADDRESS;
     private static final JSONStreamAware INVALID_APPLICATION;
     private static final JSONStreamAware INVALID_CHAINID;
+
     static {
         JSONObject response = new JSONObject();
         response.put("error", Errors.INVALID_ANNOUNCED_ADDRESS);
         INVALID_ANNOUNCED_ADDRESS = JSON.prepare(response);
-    
+
         response = new JSONObject();
         response.put("error", Errors.INVALID_CHAINID);
         INVALID_CHAINID = JSON.prepare(response);
-        
+
         response = new JSONObject();
         response.put("error", Errors.INVALID_APPLICATION);
         INVALID_APPLICATION = JSON.prepare(response);
     }
-    
+
+    private final TimeService timeService;
+
     @Inject
     public GetInfo(TimeService timeService) {
-       this.timeService = timeService;
+        this.timeService = timeService;
     }
 
     @Override
     public JSONStreamAware processRequest(JSONObject req, Peer peer) {
-        PeerImpl peerImpl = (PeerImpl)peer;
+        PeerImpl peerImpl = (PeerImpl) peer;
         PeerInfo pi = mapper.convertValue(req, PeerInfo.class);
         log.trace("GetInfo - PeerInfo from request = {}", pi);
         peerImpl.setLastUpdated(timeService.getEpochTime());
@@ -75,7 +78,7 @@ public final class GetInfo extends PeerRequestHandler {
         peerImpl.setServices(servicesString != null ? Long.parseUnsignedLong(servicesString) : 0);
         peerImpl.analyzeHallmark(pi.getHallmark());
         if (!PeersService.ignorePeerAnnouncedAddress) {
-           announcedAddress = Convert.emptyToNull(pi.getAnnouncedAddress());
+            announcedAddress = Convert.emptyToNull(pi.getAnnouncedAddress());
             if (announcedAddress != null) {
                 announcedAddress = announcedAddress.toLowerCase();
                 if (announcedAddress != null) {
@@ -85,7 +88,7 @@ public final class GetInfo extends PeerRequestHandler {
                             log.trace("GetInfo: old announced address for " + peerImpl.getHost() + " no longer valid");
                             lookupPeersService().setAnnouncedAddress(peerImpl, null);
                         }
-                        peer.deactivate("Invalid announced address: "+announcedAddress);
+                        peer.deactivate("Invalid announced address: " + announcedAddress);
                         return INVALID_ANNOUNCED_ADDRESS;
                     }
                     if (!announcedAddress.equals(peerImpl.getAnnouncedAddress())) {
@@ -99,7 +102,7 @@ public final class GetInfo extends PeerRequestHandler {
             }
         }
 
-        if(!peerImpl.setApplication(pi.getApplication().trim())){
+        if (!peerImpl.setApplication(pi.getApplication().trim())) {
             log.trace("Invalid application. IP: {}, application value: '{}', removing", peerImpl.getHost(), pi.getApplication());
 //            log.debug("Peer = {} Received Invalid App in PI = \n{}", peerImpl, pi);
             peerImpl.remove();
@@ -110,12 +113,11 @@ public final class GetInfo extends PeerRequestHandler {
             peerImpl.remove();
             return INVALID_CHAINID;
         }
-        
+
         Version version = null;
         try {
             version = new Version(pi.getVersion());
-        }
-        catch (Exception e) {
+        } catch (Exception e) {
             log.error("Cannot parse version = '{}'", pi.getVersion(), e);
             version = new Version(1, 0, 0);
         }
@@ -126,7 +128,7 @@ public final class GetInfo extends PeerRequestHandler {
             log.warn("Setting Platform = '?' instead of Platform Value...");
             pi.setPlatform("?");
         }
-        
+
         peerImpl.setPlatform(pi.getPlatform().trim());
 
         peerImpl.setShareAddress(pi.getShareAddress());
@@ -158,7 +160,7 @@ public final class GetInfo extends PeerRequestHandler {
     }
 
     @Override
-   public  boolean rejectWhileDownloading() {
+    public boolean rejectWhileDownloading() {
         return false;
     }
 

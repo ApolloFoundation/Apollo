@@ -4,21 +4,21 @@
 
 package com.apollocurrency.aplwallet.apl.core.shard;
 
+import com.apollocurrency.aplwallet.apl.core.model.TransactionDbInfo;
+import com.apollocurrency.aplwallet.apl.core.service.blockchain.Blockchain;
+import com.apollocurrency.aplwallet.apl.core.service.state.PhasingPollService;
+import com.apollocurrency.aplwallet.apl.core.shard.model.ExcludeInfo;
+import org.junit.jupiter.api.Test;
+
+import java.util.List;
+import java.util.Set;
+
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.mockito.Mockito.doReturn;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.only;
 import static org.mockito.Mockito.verify;
-
-import com.apollocurrency.aplwallet.apl.core.app.Blockchain;
-import com.apollocurrency.aplwallet.apl.core.phasing.PhasingPollService;
-import com.apollocurrency.aplwallet.apl.core.phasing.TransactionDbInfo;
-import com.apollocurrency.aplwallet.apl.core.shard.model.ExcludeInfo;
-import org.junit.jupiter.api.Test;
-
-import java.util.List;
-import java.util.Set;
 
 
 class ExcludedTransactionDbIdExtractorTest {
@@ -34,7 +34,7 @@ class ExcludedTransactionDbIdExtractorTest {
         ExcludeInfo excludeInfo = extractor.getExcludeInfo(100, 120);
 
         assertEquals(Set.of(3L, 2L), excludeInfo.getExportDbIds());
-        assertEquals(Set.of(1L, 2L,5L), excludeInfo.getNotCopyDbIds());
+        assertEquals(Set.of(1L, 2L, 5L), excludeInfo.getNotCopyDbIds());
         assertEquals(Set.of(2L, 3L), excludeInfo.getNotDeleteDbIds());
 
         verify(blockchain, only()).getTransactionsBeforeHeight(100);

@@ -20,47 +20,49 @@
 
 package com.apollocurrency.aplwallet.apl.core.http.post;
 
+import com.apollocurrency.aplwallet.apl.core.chainid.BlockchainConfig;
+import com.apollocurrency.aplwallet.apl.core.entity.state.account.Account;
+import com.apollocurrency.aplwallet.apl.core.entity.state.dgs.DGSPurchase;
+import com.apollocurrency.aplwallet.apl.core.http.APITag;
+import com.apollocurrency.aplwallet.apl.core.http.HttpParameterParserUtil;
+import com.apollocurrency.aplwallet.apl.core.http.JSONResponses;
+import com.apollocurrency.aplwallet.apl.core.http.ParameterException;
+import com.apollocurrency.aplwallet.apl.core.service.state.DGSService;
+import com.apollocurrency.aplwallet.apl.core.transaction.messages.Attachment;
+import com.apollocurrency.aplwallet.apl.core.transaction.messages.DGSDeliveryAttachment;
+import com.apollocurrency.aplwallet.apl.crypto.Convert;
+import com.apollocurrency.aplwallet.apl.crypto.EncryptedData;
+import com.apollocurrency.aplwallet.apl.util.exception.AplException;
+import org.json.simple.JSONStreamAware;
+
+import jakarta.enterprise.inject.Vetoed;
+import jakarta.enterprise.inject.spi.CDI;
+import jakarta.servlet.http.HttpServletRequest;
+
 import static com.apollocurrency.aplwallet.apl.core.http.JSONResponses.ALREADY_DELIVERED;
 import static com.apollocurrency.aplwallet.apl.core.http.JSONResponses.INCORRECT_DGS_DISCOUNT;
 import static com.apollocurrency.aplwallet.apl.core.http.JSONResponses.INCORRECT_DGS_GOODS;
 import static com.apollocurrency.aplwallet.apl.core.http.JSONResponses.INCORRECT_PURCHASE;
 
-import com.apollocurrency.aplwallet.apl.core.account.Account;
-import com.apollocurrency.aplwallet.apl.core.chainid.BlockchainConfig;
-import com.apollocurrency.aplwallet.apl.core.dgs.DGSService;
-import com.apollocurrency.aplwallet.apl.core.dgs.model.DGSPurchase;
-import com.apollocurrency.aplwallet.apl.core.http.APITag;
-import com.apollocurrency.aplwallet.apl.core.http.ParameterParser;
-import com.apollocurrency.aplwallet.apl.core.transaction.messages.Attachment;
-import com.apollocurrency.aplwallet.apl.core.transaction.messages.DigitalGoodsDelivery;
-import com.apollocurrency.aplwallet.apl.core.transaction.messages.UnencryptedDigitalGoodsDelivery;
-import com.apollocurrency.aplwallet.apl.crypto.Convert;
-import com.apollocurrency.aplwallet.apl.crypto.EncryptedData;
-import com.apollocurrency.aplwallet.apl.util.AplException;
-import org.json.simple.JSONStreamAware;
-
-import javax.enterprise.inject.Vetoed;
-import javax.enterprise.inject.spi.CDI;
-import javax.servlet.http.HttpServletRequest;
-
 @Vetoed
-public final class DGSDelivery extends CreateTransaction {
+public final class DGSDelivery extends CreateTransactionHandler {
+
+    private DGSService service = CDI.current().select(DGSService.class).get();
 
     public DGSDelivery() {
-        super(new APITag[] {APITag.DGS, APITag.CREATE_TRANSACTION},
+        super(new APITag[]{APITag.DGS, APITag.CREATE_TRANSACTION},
                 "purchase", "discountATM", "goodsToEncrypt", "goodsIsText", "goodsData", "goodsNonce");
     }
 
-    private DGSService service = CDI.current().select(DGSService.class).get();
     @Override
     public JSONStreamAware processRequest(HttpServletRequest req) throws AplException {
 
-        Account sellerAccount = ParameterParser.getSenderAccount(req);
-        DGSPurchase purchase = ParameterParser.getPurchase(service, req);
+        Account sellerAccount = HttpParameterParserUtil.getSenderAccount(req);
+        DGSPurchase purchase = HttpParameterParserUtil.getPurchase(service, req);
         if (sellerAccount.getId() != purchase.getSellerId()) {
             return INCORRECT_PURCHASE;
         }
-        if (! purchase.isPending()) {
+        if (!purchase.isPending()) {
             return ALREADY_DELIVERED;
         }
 
@@ -74,14 +76,14 @@ public final class DGSDelivery extends CreateTransaction {
             return INCORRECT_DGS_DISCOUNT;
         }
         if (discountATM < 0
-                || discountATM > CDI.current().select(BlockchainConfig.class).get().getCurrentConfig().getMaxBalanceATM()
-                || discountATM > Math.multiplyExact(purchase.getPriceATM(), (long) purchase.getQuantity())) {
+            || discountATM > CDI.current().select(BlockchainConfig.class).get().getCurrentConfig().getMaxBalanceATM()
+            || discountATM > Math.multiplyExact(purchase.getPriceATM(), (long) purchase.getQuantity())) {
             return INCORRECT_DGS_DISCOUNT;
         }
 
-        Account buyerAccount = Account.getAccount(purchase.getBuyerId());
+        Account buyerAccount = lookupAccountService().getAccount(purchase.getBuyerId());
         boolean goodsIsText = !"false".equalsIgnoreCase(req.getParameter("goodsIsText"));
-        EncryptedData encryptedGoods = ParameterParser.getEncryptedData(req, "goods");
+        EncryptedData encryptedGoods = HttpParameterParserUtil.getEncryptedData(req, "goods");
         byte[] goodsBytes = null;
         boolean broadcast = !"false".equalsIgnoreCase(req.getParameter("broadcast"));
 
@@ -95,17 +97,15 @@ public final class DGSDelivery extends CreateTransaction {
             } catch (RuntimeException e) {
                 return INCORRECT_DGS_GOODS;
             }
-            byte[] keySeed = ParameterParser.getKeySeed(req, sellerAccount.getId(),broadcast);
+            byte[] keySeed = HttpParameterParserUtil.getKeySeed(req, sellerAccount.getId(), broadcast);
             if (keySeed != null) {
-                encryptedGoods = buyerAccount.encryptTo(goodsBytes, keySeed, true);
+                encryptedGoods = lookupAccountPublickKeyService().encryptTo(buyerAccount.getId(), goodsBytes, keySeed, true);
             }
         }
-
-        Attachment attachment = encryptedGoods == null ?
-                new UnencryptedDigitalGoodsDelivery(purchase.getId(), goodsBytes,
-                        goodsIsText, discountATM, Account.getPublicKey(buyerAccount.getId())) :
-                new DigitalGoodsDelivery(purchase.getId(), encryptedGoods,
-                        goodsIsText, discountATM);
+        if (encryptedGoods == null) {
+            throw new ParameterException(JSONResponses.missing("encryptedGoods"));
+        }
+        Attachment attachment = new DGSDeliveryAttachment(purchase.getId(), encryptedGoods, goodsIsText, discountATM);
         return createTransaction(req, sellerAccount, buyerAccount.getId(), 0, attachment);
 
     }

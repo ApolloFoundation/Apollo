@@ -1,13 +1,12 @@
 package com.apollocurrency.aplwallet.apl.core.transaction.messages;
 
-import com.apollocurrency.aplwallet.apl.core.transaction.TransactionType;
+import com.apollocurrency.aplwallet.apl.core.model.dex.ExchangeContract;
+import com.apollocurrency.aplwallet.apl.core.transaction.TransactionTypes;
 import com.apollocurrency.aplwallet.apl.crypto.Convert;
 import com.apollocurrency.aplwallet.apl.crypto.NotValidException;
-import com.apollocurrency.aplwallet.apl.exchange.model.ExchangeContract;
-import com.apollocurrency.aplwallet.apl.exchange.model.ExchangeContractStatus;
-import com.apollocurrency.aplwallet.apl.exchange.transaction.DEX;
-import com.apollocurrency.aplwallet.apl.util.AplException;
+import com.apollocurrency.aplwallet.apl.dex.core.model.ExchangeContractStatus;
 import com.apollocurrency.aplwallet.apl.util.Constants;
+import com.apollocurrency.aplwallet.apl.util.exception.AplException;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
@@ -93,11 +92,11 @@ public class DexContractAttachment extends AbstractAttachment {
     @Override
     public int getMySize() {
         return 8 + 8
-                + 1 + (this.secretHash != null ? 32 + 64 : 0)
-                + 1
-                + 2 + (this.transferTxId != null ? Convert.toBytes(transferTxId).length : 0)
-                + 2 + (this.counterTransferTxId != null ? Convert.toBytes(counterTransferTxId).length : 0)
-                + 4;
+            + 1 + (this.secretHash != null ? 32 + 64 : 0)
+            + 1
+            + 2 + (this.transferTxId != null ? Convert.toBytes(transferTxId).length : 0)
+            + 2 + (this.counterTransferTxId != null ? Convert.toBytes(counterTransferTxId).length : 0)
+            + 4;
     }
 
     @Override
@@ -106,7 +105,7 @@ public class DexContractAttachment extends AbstractAttachment {
         buffer.putLong(this.counterOrderId);
 
         //32
-        if(this.secretHash != null) {
+        if (this.secretHash != null) {
             buffer.put((byte) 1);
             buffer.put(this.secretHash);
             buffer.put(this.encryptedSecret);
@@ -147,7 +146,7 @@ public class DexContractAttachment extends AbstractAttachment {
     }
 
     @Override
-    public TransactionType getTransactionType() {
-        return DEX.DEX_CONTRACT_TRANSACTION;
+    public TransactionTypes.TransactionTypeSpec getTransactionTypeSpec() {
+        return TransactionTypes.TransactionTypeSpec.DEX_CONTRACT;
     }
 }

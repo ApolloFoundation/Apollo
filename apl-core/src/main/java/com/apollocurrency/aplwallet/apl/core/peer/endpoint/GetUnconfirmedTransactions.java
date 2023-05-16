@@ -20,36 +20,45 @@
 
 package com.apollocurrency.aplwallet.apl.core.peer.endpoint;
 
-import com.apollocurrency.aplwallet.apl.core.app.Transaction;
+import com.apollocurrency.aplwallet.apl.core.model.Transaction;
+import com.apollocurrency.aplwallet.apl.core.model.UnconfirmedTransaction;
 import com.apollocurrency.aplwallet.apl.core.peer.Peer;
+import com.apollocurrency.aplwallet.apl.core.transaction.TransactionJsonSerializer;
 import com.apollocurrency.aplwallet.apl.util.JSON;
+import lombok.extern.slf4j.Slf4j;
 import org.json.simple.JSONArray;
 import org.json.simple.JSONObject;
 import org.json.simple.JSONStreamAware;
 
+import jakarta.enterprise.inject.spi.CDI;
+import jakarta.inject.Singleton;
 import java.util.List;
-import java.util.SortedSet;
-
+import java.util.Set;
+@Slf4j
+@Singleton
 public final class GetUnconfirmedTransactions extends PeerRequestHandler {
+    private final TransactionJsonSerializer transactionJsonSerializer = CDI.current().select(TransactionJsonSerializer.class).get();
 
-    public GetUnconfirmedTransactions() {}
+    public GetUnconfirmedTransactions() {
+    }
 
 
     @Override
     public JSONStreamAware processRequest(JSONObject request, Peer peer) {
 
-        List<String> exclude = (List<String>)request.get("exclude");
+        List<String> exclude = (List<String>) request.get("exclude");
         if (exclude == null) {
             return JSON.emptyJSON;
         }
 
-        SortedSet<? extends Transaction> transactionSet = lookupTransactionProcessor().getCachedUnconfirmedTransactions(exclude);
+        Set<UnconfirmedTransaction> transactionSet = lookupMemPool().getCached(exclude);
+        log.trace("Return {} txs to peer {}", transactionSet.size(), peer.getHost());
         JSONArray transactionsData = new JSONArray();
         for (Transaction transaction : transactionSet) {
-            if (transactionsData.size() >= 100) {
+            if (transactionsData.size() >= 200) {
                 break;
             }
-            transactionsData.add(transaction.getJSONObject());
+            transactionsData.add(transactionJsonSerializer.toJson(transaction));
         }
         JSONObject response = new JSONObject();
         response.put("unconfirmedTransactions", transactionsData);
@@ -59,7 +68,7 @@ public final class GetUnconfirmedTransactions extends PeerRequestHandler {
 
     @Override
     public boolean rejectWhileDownloading() {
-        return true;
+        return false;
     }
 
 }

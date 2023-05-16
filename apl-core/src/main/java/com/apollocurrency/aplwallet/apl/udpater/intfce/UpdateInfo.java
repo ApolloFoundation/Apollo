@@ -6,10 +6,10 @@ package com.apollocurrency.aplwallet.apl.udpater.intfce;
 import com.apollocurrency.aplwallet.apl.util.Version;
 import org.json.simple.JSONObject;
 
-import javax.inject.Singleton;
+import jakarta.inject.Singleton;
 
 @Singleton
-public class UpdateInfo implements Cloneable{
+public class UpdateInfo implements Cloneable {
     private long id;
     private boolean isUpdate;
     private Level level;
@@ -24,6 +24,7 @@ public class UpdateInfo implements Cloneable{
         this.version = version;
         this.updateState = updateState;
     }
+
     public UpdateInfo(boolean isUpdate, long id, Level level, Version version) {
         this(isUpdate, id, level, version, UpdateState.NONE);
     }
@@ -41,6 +42,10 @@ public class UpdateInfo implements Cloneable{
 
     public synchronized DownloadInfo getDownloadInfo() {
         return downloadInfo;
+    }
+
+    public synchronized void setDownloadInfo(DownloadInfo downloadInfo) {
+        this.downloadInfo = downloadInfo;
     }
 
     public synchronized boolean isUpdate() {
@@ -88,21 +93,12 @@ public class UpdateInfo implements Cloneable{
         this.id = id;
     }
 
-    public synchronized void setDownloadInfo(DownloadInfo downloadInfo) {
-        this.downloadInfo = downloadInfo;
-    }
-
-    public enum UpdateState {
-        NONE, IN_PROGRESS, REQUIRED_START, REQUIRED_MANUAL_INSTALL, RE_PLANNING, FINISHED, FAILED_REQUIRED_START
-    }
-
     @Override
     public UpdateInfo clone() {
         UpdateInfo clone;
         try {
             clone = (UpdateInfo) super.clone();
-        }
-        catch (CloneNotSupportedException e) {
+        } catch (CloneNotSupportedException e) {
             throw new RuntimeException(e.toString(), e);
         }
         if (this.version != null) {
@@ -113,5 +109,9 @@ public class UpdateInfo implements Cloneable{
         downloadInfo.setDownloadStatus(this.downloadInfo.getDownloadStatus());
         clone.setDownloadInfo(downloadInfo);
         return clone;
+    }
+
+    public enum UpdateState {
+        NONE, IN_PROGRESS, REQUIRED_START, REQUIRED_MANUAL_INSTALL, RE_PLANNING, FINISHED, FAILED_REQUIRED_START
     }
 }

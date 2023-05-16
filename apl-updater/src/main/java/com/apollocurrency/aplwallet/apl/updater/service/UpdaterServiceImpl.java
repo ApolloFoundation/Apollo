@@ -4,7 +4,7 @@
 
 package com.apollocurrency.aplwallet.apl.updater.service;
 
-import com.apollocurrency.aplwallet.apl.core.app.Transaction;
+import com.apollocurrency.aplwallet.apl.core.model.Transaction;
 import com.apollocurrency.aplwallet.apl.udpater.intfce.DownloadInfo;
 import com.apollocurrency.aplwallet.apl.updater.AuthorityChecker;
 import com.apollocurrency.aplwallet.apl.updater.AuthorityCheckerImpl;
@@ -21,7 +21,7 @@ import com.apollocurrency.aplwallet.apl.updater.downloader.Downloader;
 import com.apollocurrency.aplwallet.apl.updater.downloader.DownloaderImpl;
 import com.apollocurrency.aplwallet.apl.updater.repository.UpdaterRepository;
 
-import javax.inject.Inject;
+import jakarta.inject.Inject;
 import java.io.IOException;
 import java.nio.file.Path;
 import java.util.regex.Pattern;
@@ -29,7 +29,7 @@ import java.util.regex.Pattern;
 public class UpdaterServiceImpl implements UpdaterService {
     private static final UrlExtractor defaultUrlExtractor = new SimpleUrlExtractor(new RSADoubleDecryptor());
     private static final Downloader defaultDownloader = new DownloaderImpl(new DownloadInfo(), UpdaterConstants.NEXT_ATTEMPT_TIMEOUT,
-            UpdaterConstants.DOWNLOAD_ATTEMPTS, new SHA256ConsistencyVerifier());
+        UpdaterConstants.DOWNLOAD_ATTEMPTS, new SHA256ConsistencyVerifier());
     private UrlExtractor urlExtractor;
     private SecurityAlertSender securityAlertSender;
     private Unpacker unpacker;
@@ -73,7 +73,7 @@ public class UpdaterServiceImpl implements UpdaterService {
     @Override
     public boolean verifyJarSignature(String certificateDirectory, Path jarFilePath) {
         return
-        authorityChecker.verifyJarSignature(certificateDirectory, jarFilePath);
+            authorityChecker.verifyJarSignature(certificateDirectory, jarFilePath);
     }
 
     @Override
@@ -97,13 +97,23 @@ public class UpdaterServiceImpl implements UpdaterService {
         return urlExtractor.extract(encryptedUrlBytes, urlPattern);
     }
 
-    public UpdateTransaction getLast() {return updaterRepository.getLast();}
+    public UpdateTransaction getLast() {
+        return updaterRepository.getLast();
+    }
 
-    public void save(UpdateTransaction transaction) {updaterRepository.save(transaction);}
+    public void save(UpdateTransaction transaction) {
+        updaterRepository.save(transaction);
+    }
 
-    public void update(UpdateTransaction transaction) {updaterRepository.update(transaction);}
+    public void update(UpdateTransaction transaction) {
+        updaterRepository.update(transaction);
+    }
 
-    public int clear() {return updaterRepository.clear();}
+    public int clear() {
+        return updaterRepository.clear();
+    }
 
-    public void clearAndSave(UpdateTransaction transaction) {updaterRepository.clearAndSave(transaction);}
+    public void clearAndSave(UpdateTransaction transaction) {
+        updaterRepository.clearAndSave(transaction);
+    }
 }

@@ -4,16 +4,16 @@
 
 package com.apollocurrency.aplwallet.apl.core.shard;
 
-import com.apollocurrency.aplwallet.apl.core.app.Blockchain;
-import com.apollocurrency.aplwallet.apl.core.phasing.PhasingPollService;
-import com.apollocurrency.aplwallet.apl.core.phasing.TransactionDbInfo;
+import com.apollocurrency.aplwallet.apl.core.model.TransactionDbInfo;
+import com.apollocurrency.aplwallet.apl.core.service.blockchain.Blockchain;
+import com.apollocurrency.aplwallet.apl.core.service.state.PhasingPollService;
 import com.apollocurrency.aplwallet.apl.core.shard.model.ExcludeInfo;
 import lombok.extern.slf4j.Slf4j;
 
+import jakarta.inject.Inject;
+import jakarta.inject.Singleton;
 import java.util.List;
 import java.util.stream.Collectors;
-import javax.inject.Inject;
-import javax.inject.Singleton;
 
 @Slf4j
 @Singleton
@@ -36,7 +36,7 @@ public class ExcludedTransactionDbIdExtractor {
         log.trace("get activePhasedTransactions: {}", activePhasedTransactions);
         List<TransactionDbInfo> transactionsBeforeHeight = blockchain.getTransactionsBeforeHeight(startHeight);
         log.trace("get transactionsBeforeHeight: {}", transactionsBeforeHeight);
-        List<TransactionDbInfo> deleteNotExportNotCopy = transactionsBeforeHeight.stream().filter(tdi->!activePhasedTransactions.contains(tdi)).collect(Collectors.toList());
+        List<TransactionDbInfo> deleteNotExportNotCopy = transactionsBeforeHeight.stream().filter(tdi -> !activePhasedTransactions.contains(tdi)).collect(Collectors.toList());
         log.trace("get deleteNotExportNotCopy: {}", deleteNotExportNotCopy);
         List<TransactionDbInfo> notDeleteExportNotCopy = transactionsBeforeHeight.stream().filter(activePhasedTransactions::contains).collect(Collectors.toList());
         log.trace("get notDeleteExportNotCopy: {}", notDeleteExportNotCopy);

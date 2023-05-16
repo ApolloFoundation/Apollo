@@ -1,48 +1,55 @@
+/*
+ *  Copyright © 2018-2020 Apollo Foundation
+ */
+
 package com.apollocurrency.aplwallet.apl.core.shard;
 
 import com.apollocurrency.aplwallet.apl.core.app.AplAppStatus;
-import com.apollocurrency.aplwallet.apl.core.app.Block;
-import com.apollocurrency.aplwallet.apl.core.app.Blockchain;
-import com.apollocurrency.aplwallet.apl.core.app.BlockchainProcessor;
-import com.apollocurrency.aplwallet.apl.core.app.CollectionUtil;
 import com.apollocurrency.aplwallet.apl.core.app.GenesisImporter;
 import com.apollocurrency.aplwallet.apl.core.chainid.BlockchainConfig;
 import com.apollocurrency.aplwallet.apl.core.chainid.HeightConfig;
-import com.apollocurrency.aplwallet.apl.core.db.DatabaseManager;
-import com.apollocurrency.aplwallet.apl.core.db.DerivedTablesRegistry;
-import com.apollocurrency.aplwallet.apl.core.db.TransactionalDataSource;
-import com.apollocurrency.aplwallet.apl.core.db.dao.ShardDao;
-import com.apollocurrency.aplwallet.apl.core.db.dao.model.Shard;
-import com.apollocurrency.aplwallet.apl.core.db.dao.model.ShardState;
-import com.apollocurrency.aplwallet.apl.core.db.fulltext.FullTextConfigImpl;
+import com.apollocurrency.aplwallet.apl.core.dao.DbContainerBaseTest;
+import com.apollocurrency.aplwallet.apl.util.db.TransactionalDataSource;
+import com.apollocurrency.aplwallet.apl.core.dao.appdata.ShardDao;
+import com.apollocurrency.aplwallet.apl.core.dao.prunable.DataTagDao;
+import com.apollocurrency.aplwallet.apl.core.entity.appdata.Shard;
+import com.apollocurrency.aplwallet.apl.core.entity.appdata.ShardState;
+import com.apollocurrency.aplwallet.apl.core.model.Block;
+import com.apollocurrency.aplwallet.apl.core.entity.prunable.DataTag;
 import com.apollocurrency.aplwallet.apl.core.files.DownloadableFilesManager;
 import com.apollocurrency.aplwallet.apl.core.files.shards.ShardPresentData;
+import com.apollocurrency.aplwallet.apl.core.db.DatabaseManager;
+import com.apollocurrency.aplwallet.apl.core.service.blockchain.Blockchain;
+import com.apollocurrency.aplwallet.apl.core.service.blockchain.BlockchainProcessor;
+import com.apollocurrency.aplwallet.apl.core.service.fulltext.FullTextConfigImpl;
+import com.apollocurrency.aplwallet.apl.core.service.state.DerivedTablesRegistry;
 import com.apollocurrency.aplwallet.apl.core.shard.helper.CsvImporter;
 import com.apollocurrency.aplwallet.apl.core.shard.helper.CsvImporterImpl;
 import com.apollocurrency.aplwallet.apl.core.shard.helper.ValueParserImpl;
 import com.apollocurrency.aplwallet.apl.core.shard.helper.csv.CsvEscaper;
 import com.apollocurrency.aplwallet.apl.core.shard.helper.csv.CsvEscaperImpl;
 import com.apollocurrency.aplwallet.apl.core.shard.helper.csv.ValueParser;
-import com.apollocurrency.aplwallet.apl.core.tagged.dao.DataTagDao;
-import com.apollocurrency.aplwallet.apl.core.tagged.model.DataTag;
+import com.apollocurrency.aplwallet.apl.core.utils.CollectionUtil;
 import com.apollocurrency.aplwallet.apl.extension.DbExtension;
 import com.apollocurrency.aplwallet.apl.extension.TemporaryFolderExtension;
 import com.apollocurrency.aplwallet.apl.testutil.DbUtils;
 import com.apollocurrency.aplwallet.apl.util.ChunkedFileOps;
 import com.apollocurrency.aplwallet.apl.util.Zip;
 import com.apollocurrency.aplwallet.apl.util.env.config.Chain;
+import lombok.extern.slf4j.Slf4j;
 import org.jboss.weld.junit.MockBean;
 import org.jboss.weld.junit5.EnableWeld;
 import org.jboss.weld.junit5.WeldInitiator;
 import org.jboss.weld.junit5.WeldSetup;
 import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.junit.jupiter.api.extension.RegisterExtension;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
-import javax.inject.Inject;
+import jakarta.inject.Inject;
 import java.io.IOException;
 import java.io.InputStream;
 import java.nio.file.Files;
@@ -69,13 +76,16 @@ import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.spy;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
-import static org.mockito.Mockito.verifyZeroInteractions;
+import static org.mockito.Mockito.verifyNoInteractions;
 
+@Slf4j
+@Tag("slow")
 @EnableWeld
 @ExtendWith(MockitoExtension.class)
-class ShardImporterTest {
+class ShardImporterTest extends DbContainerBaseTest {
+
     @RegisterExtension
-    DbExtension extension = new DbExtension();
+    static DbExtension extension = new DbExtension(mariaDBContainer);
     @RegisterExtension
     TemporaryFolderExtension folder = new TemporaryFolderExtension();
 
@@ -94,18 +104,18 @@ class ShardImporterTest {
     @Mock
     private Zip zipComponent;
     @Mock
-    private ChunkedFileOps fopsComponent;    
+    private ChunkedFileOps fopsComponent;
     @Mock
     private GenesisImporter genesisImporter;
     @WeldSetup
-    WeldInitiator weld = WeldInitiator.from(DataTagDao.class, FullTextConfigImpl.class, ValueParserImpl.class, CsvEscaperImpl.class)
-            .addBeans(
-                    MockBean.of(derivedTablesRegistry, DerivedTablesRegistry.class),
-                    MockBean.of(blockchainProcessor, BlockchainProcessor.class),
-                    MockBean.of(extension.getDatabaseManager(), DatabaseManager.class),
-                    MockBean.of(genesisImporter, GenesisImporter .class))
-
-            .build();
+    WeldInitiator weld = WeldInitiator.from(DataTagDao.class, FullTextConfigImpl.class,
+        ValueParserImpl.class, CsvEscaperImpl.class)
+        .addBeans(
+            MockBean.of(derivedTablesRegistry, DerivedTablesRegistry.class),
+            MockBean.of(blockchainProcessor, BlockchainProcessor.class),
+            MockBean.of(extension.getDatabaseManager(), DatabaseManager.class),
+            MockBean.of(genesisImporter, GenesisImporter.class))
+        .build();
 
     @Inject
     private DataTagDao dataTagDao;
@@ -117,31 +127,31 @@ class ShardImporterTest {
     private ShardImporter shardImporter;
 
 
-    private DataTag dataTag_1 = new DataTag(44L, 3500,"tag2",  3);
-    private DataTag dataTag_2 = new DataTag(45L, 3500, "tag3", 3);
-    private DataTag dataTag_3 = new DataTag(48L,8000, "iambatman", 1);
-    private DataTag dataTag_4 = new DataTag(47L, 3500, "newtag",  1);
-    private DataTag dataTag_5 = new DataTag(41L, 2000, "tag1", 1);
-    private DataTag dataTag_6 = new DataTag(46L, 3500, "tag4",  1);
+    private DataTag dataTag_1 = new DataTag(4L, 3500, "tag2", 3);
+    private DataTag dataTag_2 = new DataTag(5L, 3500, "tag3", 3);
+    private DataTag dataTag_3 = new DataTag(10L, 8000, "iambatman", 1);
+    private DataTag dataTag_4 = new DataTag(7L, 3500, "newtag", 1);
+    private DataTag dataTag_5 = new DataTag(1L, 2000, "tag1", 1);
+    private DataTag dataTag_6 = new DataTag(6L, 3500, "tag4", 1);
     private UUID chainId = UUID.fromString("2f2b6149-d29e-41ca-8c0d-f3343f5540c6");
 
     @BeforeEach
     void setUp() {
         csvImporter = new CsvImporterImpl(folder.newFolder("csv-import").toPath(), extension.getDatabaseManager(), aplAppStatus, parser, translator);
         shardImporter = spy(new ShardImporter(shardDao, blockchainConfig, genesisImporter,
-                blockchain, derivedTablesRegistry, csvImporter, zipComponent, dataTagDao, downloadableFilesManager, aplAppStatus));
+            blockchain, derivedTablesRegistry, csvImporter, zipComponent, dataTagDao, downloadableFilesManager, aplAppStatus));
     }
 
     @Test
     void importShardByFileIdFaile() {
         assertThrows(NullPointerException.class, () -> shardImporter.importShardByFileId(
-                new ShardPresentData(null, "fileId", List.of()))
+            new ShardPresentData(null, "fileId", List.of()))
         );
     }
 
     @Test
     void importLastShardFailed() {
-        assertThrows(NullPointerException.class, () -> shardImporter.importLastShard(-1) );
+        assertThrows(NullPointerException.class, () -> shardImporter.importLastShard(-1));
     }
 
     @Test
@@ -208,7 +218,7 @@ class ShardImporterTest {
     void testImportShardWhenZipCorrupted() {
         doReturn(Paths.get("")).when(downloadableFilesManager).mapFileIdToLocalPath("fileId");
         assertThrows(ShardArchiveProcessingException.class, () -> shardImporter.importShard(
-                new ShardPresentData(null, "fileId", List.of()), List.of())
+            new ShardPresentData(null, "fileId", List.of()), List.of(), true)
         );
         verify(aplAppStatus).durableTaskFinished(any(), anyBoolean(), anyString());
     }
@@ -216,11 +226,11 @@ class ShardImporterTest {
     @Test
     void testImportShardWhenLastShardWasNotSaved() throws Exception {
         doReturn(Paths.get("")).when(downloadableFilesManager).mapFileIdToLocalPath("fileId");
-        doReturn(true).when(zipComponent).extract(Paths.get("").toAbsolutePath().toString(), csvImporter.getDataExportPath().toAbsolutePath().toString());
+        doReturn(true).when(zipComponent).extract(Paths.get("").toAbsolutePath().toString(), csvImporter.getDataExportPath().toAbsolutePath().toString(), true);
         doNothing().when(genesisImporter).importGenesisJson(true);
 
         assertThrows(IllegalStateException.class, () -> shardImporter.importShard(
-                new ShardPresentData(null, "fileId", List.of()), List.of("block_index"))
+            new ShardPresentData(null, "fileId", List.of()), List.of("block_index"), true)
         );
         verify(aplAppStatus, times(4)).durableTaskUpdate(any(), anyString(), anyDouble());
         verify(aplAppStatus).durableTaskFinished(any(), anyBoolean(), anyString());
@@ -229,13 +239,13 @@ class ShardImporterTest {
     @Test
     void testImportShardWhenExceptionOccurredDuringImport() {
         doReturn(Paths.get("")).when(downloadableFilesManager).mapFileIdToLocalPath("fileId");
-        doReturn(true).when(zipComponent).extract(Paths.get("").toAbsolutePath().toString(), csvImporter.getDataExportPath().toAbsolutePath().toString());
+        doReturn(true).when(zipComponent).extract(Paths.get("").toAbsolutePath().toString(), csvImporter.getDataExportPath().toAbsolutePath().toString(), true);
         doNothing().when(genesisImporter).importGenesisJson(true);
         doReturn(null).when(aplAppStatus).durableTaskUpdate(null, 50.0, "Public keys were imported");
         doThrow(new IllegalArgumentException()).when(aplAppStatus).durableTaskUpdate(null, "Loading 'shard'", 0.6);
 
         assertThrows(RuntimeException.class, () -> shardImporter.importShard(
-                new ShardPresentData(null, "fileId", List.of()), List.of())
+            new ShardPresentData(null, "fileId", List.of()), List.of(), true)
         );
         verify(aplAppStatus).durableTaskFinished(any(), anyBoolean(), anyString());
     }
@@ -243,12 +253,12 @@ class ShardImporterTest {
     @Test
     void testImportShardWhenShardTableWasExcluded() {
         doReturn(Paths.get("")).when(downloadableFilesManager).mapFileIdToLocalPath("fileId");
-        doReturn(true).when(zipComponent).extract(Paths.get("").toAbsolutePath().toString(), csvImporter.getDataExportPath().toAbsolutePath().toString());
+        doReturn(true).when(zipComponent).extract(Paths.get("").toAbsolutePath().toString(), csvImporter.getDataExportPath().toAbsolutePath().toString(), true);
         doNothing().when(genesisImporter).importGenesisJson(true);
         doReturn(List.of()).when(derivedTablesRegistry).getDerivedTables();
 
         shardImporter.importShard(
-                new ShardPresentData(null, "fileId", List.of()), List.of(ShardConstants.SHARD_TABLE_NAME, ShardConstants.TRANSACTION_INDEX_TABLE_NAME));
+            new ShardPresentData(null, "fileId", List.of()), List.of(ShardConstants.SHARD_TABLE_NAME, ShardConstants.TRANSACTION_INDEX_TABLE_NAME), true);
         verify(aplAppStatus, times(3)).durableTaskUpdate(any(), anyString(), anyDouble());
         verify(aplAppStatus).durableTaskFinished(null, false, "Shard data import"); //success
     }
@@ -256,7 +266,7 @@ class ShardImporterTest {
     @Test
     void testImportShardWhenLastShardExist() {
         doReturn(Paths.get("")).when(downloadableFilesManager).mapFileIdToLocalPath("fileId");
-        doReturn(true).when(zipComponent).extract(Paths.get("").toAbsolutePath().toString(), csvImporter.getDataExportPath().toAbsolutePath().toString());
+        doReturn(true).when(zipComponent).extract(Paths.get("").toAbsolutePath().toString(), csvImporter.getDataExportPath().toAbsolutePath().toString(), true);
         doNothing().when(genesisImporter).importGenesisJson(true);
         doReturn(List.of()).when(derivedTablesRegistry).getDerivedTableNames();
         Shard lastShard = new Shard();
@@ -265,7 +275,7 @@ class ShardImporterTest {
         doReturn(lastShard).when(shardDao).getLastShard();
 
         shardImporter.importShard(
-                new ShardPresentData(lastShard.getShardId(), "fileId", List.of()), List.of(ShardConstants.TRANSACTION_INDEX_TABLE_NAME));
+            new ShardPresentData(lastShard.getShardId(), "fileId", List.of()), List.of(ShardConstants.TRANSACTION_INDEX_TABLE_NAME), true);
 
         verify(shardDao).updateShard(lastShard);
         assertEquals(ShardState.CREATED_BY_ARCHIVE, lastShard.getShardState());
@@ -278,7 +288,7 @@ class ShardImporterTest {
     @Test
     void testImportAccountTaggedDataWithDataTags() throws IOException {
         doReturn(Paths.get("")).when(downloadableFilesManager).mapFileIdToLocalPath("fileId");
-        doReturn(true).when(zipComponent).extract(Paths.get("").toAbsolutePath().toString(), csvImporter.getDataExportPath().toAbsolutePath().toString());
+        doReturn(true).when(zipComponent).extract(Paths.get("").toAbsolutePath().toString(), csvImporter.getDataExportPath().toAbsolutePath().toString(), true);
         doNothing().when(genesisImporter).importGenesisJson(true);
         doReturn(List.of(ShardConstants.GOODS_TABLE_NAME, ShardConstants.ACCOUNT_TABLE_NAME, ShardConstants.TAGGED_DATA_TABLE_NAME)).when(derivedTablesRegistry).getDerivedTableNames();
 
@@ -299,7 +309,7 @@ class ShardImporterTest {
 
         DbUtils.inTransaction(dataSource, (con) -> {
             shardImporter.importShard(
-                    new ShardPresentData(null, "fileId", List.of()), List.of(ShardConstants.SHARD_TABLE_NAME));
+                new ShardPresentData(null, "fileId", List.of()), List.of(ShardConstants.SHARD_TABLE_NAME), true);
             dataSource.commit(false);
         });
 
@@ -308,13 +318,12 @@ class ShardImporterTest {
         List<DataTag> expected = List.of(this.dataTag_1, dataTag_2, dataTag_3, dataTag_4, dataTag_5, dataTag_6);
         assertEquals(expected, allTags);
 
-        DbUtils.inTransaction(extension, (con)-> {
+        DbUtils.inTransaction(extension, (con) -> {
             try {
                 ResultSet rs = con.createStatement().executeQuery("select avg(height) from account");
                 rs.next();
                 assertEquals(1000.0, rs.getDouble(1), 0.00001);
-            }
-            catch (SQLException e) {
+            } catch (SQLException e) {
                 throw new RuntimeException(e);
             }
         });
@@ -326,14 +335,14 @@ class ShardImporterTest {
     @Test
     void testImportShardDerivedTablesWithException() {
         doReturn(Paths.get("")).when(downloadableFilesManager).mapFileIdToLocalPath("fileId");
-        doReturn(true).when(zipComponent).extract(Paths.get("").toAbsolutePath().toString(), csvImporter.getDataExportPath().toAbsolutePath().toString());
+        doReturn(true).when(zipComponent).extract(Paths.get("").toAbsolutePath().toString(), csvImporter.getDataExportPath().toAbsolutePath().toString(), true);
         doNothing().when(genesisImporter).importGenesisJson(true);
         ArrayList<String> derivedTableNames = new ArrayList<>();
         derivedTableNames.add(null);
         doReturn(derivedTableNames).when(derivedTablesRegistry).getDerivedTableNames();
 
         assertThrows(RuntimeException.class, () -> shardImporter.importShard(
-                new ShardPresentData(null, "fileId", List.of()), List.of(ShardConstants.SHARD_TABLE_NAME, ShardConstants.TRANSACTION_INDEX_TABLE_NAME))
+            new ShardPresentData(null, "fileId", List.of()), List.of(ShardConstants.SHARD_TABLE_NAME, ShardConstants.TRANSACTION_INDEX_TABLE_NAME), true)
         );
 
         verify(aplAppStatus).durableTaskFinished(null, true, "Shard data import");
@@ -342,7 +351,7 @@ class ShardImporterTest {
     @Test
     void testImportByFileId() {
         doReturn(Paths.get("")).when(downloadableFilesManager).mapFileIdToLocalPath("fileId");
-        doReturn(true).when(zipComponent).extract(Paths.get("").toAbsolutePath().toString(), csvImporter.getDataExportPath().toAbsolutePath().toString());
+        doReturn(true).when(zipComponent).extract(Paths.get("").toAbsolutePath().toString(), csvImporter.getDataExportPath().toAbsolutePath().toString(), true);
         doNothing().when(genesisImporter).importGenesisJson(true);
         doReturn(List.of()).when(derivedTablesRegistry).getDerivedTableNames();
         doReturn(mock(Shard.class)).when(shardDao).getLastShard();
@@ -361,13 +370,13 @@ class ShardImporterTest {
         shardImporter.importLastShard(0);
 
         verify(genesisImporter).importGenesisJson(false);
-        verifyZeroInteractions(aplAppStatus, zipComponent, downloadableFilesManager, blockchain, blockchainConfig, blockchainProcessor);
+        verifyNoInteractions(aplAppStatus, zipComponent, downloadableFilesManager, blockchain, blockchainConfig, blockchainProcessor);
     }
 
     @Test
     void testImportLastShard() {
-        doReturn(Paths.get("")).when(downloadableFilesManager).mapFileIdToLocalPath("shard::1;chain::" + chainId);
-        doReturn(true).when(zipComponent).extract(Paths.get("").toAbsolutePath().toString(), csvImporter.getDataExportPath().toAbsolutePath().toString());
+        doReturn(Paths.get("")).when(downloadableFilesManager).mapFileIdToLocalPath("chain::" + chainId + ";shard::1");
+        doReturn(true).when(zipComponent).extract(Paths.get("").toAbsolutePath().toString(), csvImporter.getDataExportPath().toAbsolutePath().toString(), true);
         doNothing().when(genesisImporter).importGenesisJson(true);
         doReturn(List.of(ShardConstants.GOODS_TABLE_NAME, ShardConstants.PHASING_POLL_TABLE_NAME, ShardConstants.TAGGED_DATA_TABLE_NAME)).when(derivedTablesRegistry).getDerivedTableNames();
         Shard lastShard = new Shard(1, 100);
@@ -378,7 +387,7 @@ class ShardImporterTest {
         doReturn(chain).when(blockchainConfig).getChain();
 
         shardImporter.importLastShard(1);
-        verify(aplAppStatus, times(6)).durableTaskUpdate(any(), anyString(), anyDouble());
+        verify(aplAppStatus, times(3)).durableTaskUpdate(any(), anyString(), anyDouble()); // number of tables imported
         verify(aplAppStatus).durableTaskFinished(null, false, "Shard data import");
     }
 }

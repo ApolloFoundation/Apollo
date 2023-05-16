@@ -20,19 +20,18 @@
 
 package com.apollocurrency.aplwallet.apl.core.http.get;
 
-import com.apollocurrency.aplwallet.apl.core.monetary.Currency;
-import com.apollocurrency.aplwallet.apl.core.app.mint.CurrencyMinting;
+import com.apollocurrency.aplwallet.apl.core.entity.state.currency.Currency;
 import com.apollocurrency.aplwallet.apl.core.http.APITag;
 import com.apollocurrency.aplwallet.apl.core.http.AbstractAPIRequestHandler;
-import com.apollocurrency.aplwallet.apl.core.http.ParameterParser;
-import com.apollocurrency.aplwallet.apl.util.AplException;
+import com.apollocurrency.aplwallet.apl.core.http.HttpParameterParserUtil;
 import com.apollocurrency.aplwallet.apl.crypto.Convert;
+import com.apollocurrency.aplwallet.apl.util.exception.AplException;
 import org.json.simple.JSONObject;
 import org.json.simple.JSONStreamAware;
 
-import javax.servlet.http.HttpServletRequest;
+import jakarta.enterprise.inject.Vetoed;
+import jakarta.servlet.http.HttpServletRequest;
 import java.math.BigInteger;
-import javax.enterprise.inject.Vetoed;
 
 /**
  * Currency miners can use this API to obtain their target hash value for minting currency units
@@ -48,19 +47,20 @@ import javax.enterprise.inject.Vetoed;
 public final class GetMintingTarget extends AbstractAPIRequestHandler {
 
     public GetMintingTarget() {
-        super(new APITag[] {APITag.MS}, "currency", "account", "units");
+        super(new APITag[]{APITag.MS}, "currency", "account", "units");
     }
 
     @Override
     public JSONStreamAware processRequest(HttpServletRequest req) throws AplException {
-        Currency currency = ParameterParser.getCurrency(req);
+        Currency currency = HttpParameterParserUtil.getCurrencyWithSupply(req);
         JSONObject json = new JSONObject();
         json.put("currency", Long.toUnsignedString(currency.getId()));
-        long units = ParameterParser.getLong(req, "units", 1, currency.getMaxSupply() - currency.getReserveSupply(), true);
-        BigInteger numericTarget = CurrencyMinting.getNumericTarget(currency, units);
+        long units = HttpParameterParserUtil.getLong(req, "units", 1, currency.getMaxSupply() - currency.getReserveSupply(), true);
+        BigInteger numericTarget = lookupMonetaryCurrencyMintingService().getNumericTarget(currency, units);
         json.put("difficulty", String.valueOf(BigInteger.ZERO.equals(numericTarget) ? -1 : BigInteger.valueOf(2).pow(256).subtract(BigInteger.ONE).divide(numericTarget)));
-        json.put("targetBytes", Convert.toHexString(CurrencyMinting.getTarget(numericTarget)));
-        json.put("counter", com.apollocurrency.aplwallet.apl.core.app.mint.CurrencyMint.getCounter(currency.getId(), ParameterParser.getAccountId(req, true)));
+        json.put("targetBytes", Convert.toHexString(lookupMonetaryCurrencyMintingService().getTarget(numericTarget)));
+        json.put("counter", lookupCurrencyService().getMintCounter(
+            currency.getId(), HttpParameterParserUtil.getAccountId(req, true)));
         return json;
     }
 

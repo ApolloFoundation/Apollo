@@ -3,6 +3,9 @@
     "chainId": "b5d7b697-f359-4ce5-a619-fa34b6fb01a5",
     "active": true,
     "defaultPeers": [
+      "3.141.234.52",
+      "3.19.83.112",
+      "18.188.151.122",
       "18.217.154.227",
       "52.14.216.254",
       "18.217.179.108",
@@ -49,14 +52,27 @@
     "symbol": "Apollo",
     "prefix": "APL",
     "project": "Apollo",
-    "genesisLocation": "conf/data/genesisAccounts.json",
+    "initialSupply": 30000000000,
+    "decimals": 8,
     "featuresHeightRequirement": {
-      "dexReopenPendingOrdersHeight": 3500000
+      "dexReopenPendingOrdersHeight": 3500000,
+      "dexExpiredContractWithFinishedPhasingHeightAndStep3": 4000000,
+      "failedTransactionsAcceptanceHeight": 9649200,
+      "transactionV2Height": 9649200,
+      "smartContractTransactionsHeight": 9649200
     },
+    "currencyIssuanceHeights": [7961831, 7961830, 7945553, 7945552, 7905883, 7905882,
+      7882498, 7882497, 7882492, 7882491, 7882486, 7882485, 7882454, 7882453, 7882435, 7882434,
+      7882427, 7882426, 7468092, 7468091, 7460076, 7460075, 7452190, 7452189, 7417594, 7417593,
+      7400635, 7400634, 7344893, 7344892, 7313652, 7313651, 7312320, 7312319, 7308462, 7308461,
+      7308278, 7308277, 7304669, 7304670, 6518814, 6518815],
+    "totalAmountOverflowTxs": ["3309980870150352112", "10328829363764104064", "11704807913978762684", "17412335979875507223",
+      "10627452365145084128", "14016156183641621536", "10832252742068911551"],
     "blockchainProperties": [
       {
         "height": 0,
         "maxNumberOfTransactions": 255,
+        "maxArbitraryMessageLength": 160,
         "blockTime": 60,
         "maxBlockTimeLimit": 67,
         "minBlockTimeLimit": 53,
@@ -65,6 +81,7 @@
       {
         "height": 314800,
         "maxNumberOfTransactions": 255,
+        "maxArbitraryMessageLength": 160,
         "blockTime": 10,
         "maxBlockTimeLimit": 60,
         "minBlockTimeLimit": 7,
@@ -73,6 +90,7 @@
       {
         "height": 355000,
         "maxNumberOfTransactions": 255,
+        "maxArbitraryMessageLength": 160,
         "blockTime": 2,
         "maxBlockTimeLimit": 5,
         "minBlockTimeLimit": 1,
@@ -87,6 +105,7 @@
       {
         "height": 406340,
         "maxNumberOfTransactions": 255,
+        "maxArbitraryMessageLength": 160,
         "blockTime": 2,
         "maxBlockTimeLimit": 5,
         "minBlockTimeLimit": 1,
@@ -101,6 +120,7 @@
       {
         "height": 414980,
         "maxNumberOfTransactions": 255,
+        "maxArbitraryMessageLength": 160,
         "blockTime": 2,
         "maxBlockTimeLimit": 5,
         "minBlockTimeLimit": 1,
@@ -115,6 +135,7 @@
       {
         "height": 420740,
         "maxNumberOfTransactions": 255,
+        "maxArbitraryMessageLength": 160,
         "blockTime": 2,
         "maxBlockTimeLimit": 5,
         "minBlockTimeLimit": 1,
@@ -129,6 +150,7 @@
       {
         "height": 448999,
         "maxNumberOfTransactions": 255,
+        "maxArbitraryMessageLength": 160,
         "blockTime": 2,
         "maxBlockTimeLimit": 5,
         "minBlockTimeLimit": 1,
@@ -137,6 +159,7 @@
       {
         "height": 1250000,
         "maxNumberOfTransactions": 255,
+        "maxArbitraryMessageLength": 160,
         "blockTime": 2,
         "maxBlockTimeLimit": 5,
         "minBlockTimeLimit": 1,
@@ -151,6 +174,7 @@
       {
         "height": 2000000,
         "maxNumberOfTransactions": 255,
+        "maxArbitraryMessageLength": 160,
         "blockTime": 2,
         "maxBlockTimeLimit": 5,
         "minBlockTimeLimit": 1,
@@ -165,6 +189,8 @@
       {
         "height": 2169999,
         "maxNumberOfTransactions": 255,
+        "maxArbitraryMessageLength": 160,
+        "maxNumberOfChildAccounts": 10,
         "blockTime": 60,
         "maxBlockTimeLimit": 70,
         "minBlockTimeLimit": 50,
@@ -173,6 +199,7 @@
       {
         "height": 2247000,
         "maxNumberOfTransactions": 255,
+        "maxArbitraryMessageLength": 160,
         "blockTime": 2,
         "maxBlockTimeLimit": 5,
         "minBlockTimeLimit": 1,
@@ -187,82 +214,11 @@
           "enabled": true,
           "frequency": 750000
         }
-      }
-    ]
-  },
-  {
-    "chainId": "a2e9b946-290b-48b6-9985-dc2e5a5860a1",
-    "wellKnownPeers": [
-      "51.15.235.41",
-      "51.15.69.39",
-      "51.15.59.37",
-      "51.15.114.68",
-      "51.15.140.80",
-      "51.15.100.44",
-      "51.15.233.93"
-    ],
-    "name": "Apollo public testnet",
-    "description": "Apollo main test chain, running on last stable release",
-    "symbol": "Apollo",
-    "prefix": "APL",
-    "project": "Apollo",
-    "genesisLocation": "data/genesisAccounts-testnet.json",
-    "blockchainProperties": [
+      },
       {
-        "height": 0,
+        "height": 8765000,
         "maxNumberOfTransactions": 255,
-        "blockTime": 60,
-        "maxBlockTimeLimit": 67,
-        "minBlockTimeLimit": 53,
-        "maxBalance": 30000000000
-      },
-      {
-        "height": 2000,
-        "maxNumberOfTransactions": 300,
-        "blockTime": 2,
-        "maxBlockTimeLimit": 4,
-        "minBlockTimeLimit": 1,
-        "maxBalance": 30000000000,
-        "consensusSettings": {
-          "adaptiveForgingSettings": {
-            "enabled": "true",
-            "adaptiveBlockTime": 60
-          }
-        }
-      },
-      {
-        "height": 42300,
-        "maxNumberOfTransactions": 300,
-        "blockTime": 2,
-        "maxBlockTimeLimit": 4,
-        "minBlockTimeLimit": 1,
-        "maxBalance": 30000000000,
-        "consensusSettings": {
-          "adaptiveForgingSettings": {
-            "enabled": "true",
-            "adaptiveBlockTime": 10
-          }
-        },
-        "shardingSettings": {
-          "enabled": true,
-          "frequency": 500000
-        }
-      },
-      {
-        "height": 552500,
-        "maxNumberOfTransactions": 300,
-        "blockTime": 60,
-        "maxBlockTimeLimit": 70,
-        "minBlockTimeLimit": 50,
-        "maxBalance": 30000000000,
-        "shardingSettings": {
-          "enabled": true,
-          "frequency": 500000
-        }
-      },
-      {
-        "height": 624999,
-        "maxNumberOfTransactions": 255,
+        "maxArbitraryMessageLength": 160,
         "blockTime": 2,
         "maxBlockTimeLimit": 5,
         "minBlockTimeLimit": 1,
@@ -276,41 +232,38 @@
         "shardingSettings": {
           "enabled": true,
           "frequency": 750000
+        },
+        "transactionFeeSettings": {
+          "feeRates": [
+            {
+              "type": 1,
+              "subType": 1,
+              "baseFee": "1000"
+            },
+            {
+              "type": 1,
+              "subType": 6,
+              "baseFee": "5"
+            },
+            {
+              "type": 1,
+              "subType": 7,
+              "baseFee": "5"
+            },
+            {
+              "type": 1,
+              "subType": 8,
+              "baseFee": "5"
+            }
+          ]
         }
-      }
-    ]
-  },
-  {
-    "chainId": "2f2b6149-d29e-41ca-8c0d-f3343f5540c6",
-    "wellKnownPeers": [
-      "51.15.37.165",
-      "51.15.209.252",
-      "51.15.228.90",
-      "51.15.228.126",
-      "51.15.228.171",
-      "51.15.46.25",
-      "51.15.72.23"
-    ],
-    "name": "Apollo development testnet",
-    "description": "Apollo development test chain, running on latest development version",
-    "symbol": "Apollo",
-    "prefix": "APL",
-    "project": "Apollo",
-    "genesisLocation": "data/genesisAccounts-testnet.json",
-    "blockchainProperties": [
-      {
-        "height": 0,
-        "maxNumberOfTransactions": 255,
-        "blockTime": 10,
-        "maxBlockTimeLimit": 12,
-        "minBlockTimeLimit": 8,
-        "maxBalance": 30000000000
       },
       {
-        "height": 10,
+        "height": 9649200,
         "maxNumberOfTransactions": 255,
+        "maxArbitraryMessageLength": 160,
         "blockTime": 2,
-        "maxBlockTimeLimit": 3,
+        "maxBlockTimeLimit": 5,
         "minBlockTimeLimit": 1,
         "maxBalance": 30000000000,
         "consensusSettings": {
@@ -318,60 +271,41 @@
             "enabled": "true",
             "adaptiveBlockTime": 10
           }
-        }
-      }
-    ]
-  },
-  {
-    "chainId": "3fecf3bd-86a3-436b-a1d6-41eefc0bd1c6",
-    "wellKnownPeers": [
-      "51.15.250.32",
-      "51.15.253.171",
-      "51.15.210.116",
-      "51.15.242.197",
-      "51.15.218.241"
-    ],
-    "name": "Apollo experimental testnet",
-    "description": "NOT STABLE testnet for experiments. Don't use it if you don't know what is it",
-    "symbol": "Apollo",
-    "prefix": "APL",
-    "project": "Apollo",
-    "genesisLocation": "data/genesisAccounts-testnet.json",
-    "blockchainProperties": [
-      {
-        "height": 0,
-        "maxNumberOfTransactions": 255,
-        "blockTime": 60,
-        "maxBlockTimeLimit": 67,
-        "minBlockTimeLimit": 53,
-        "maxBalance": 30000000000
-      },
-      {
-        "height": 2000,
-        "maxNumberOfTransactions": 300,
-        "blockTime": 2,
-        "maxBlockTimeLimit": 4,
-        "minBlockTimeLimit": 1,
-        "maxBalance": 30000000000,
-        "consensusSettings": {
-          "adaptiveForgingSettings": {
-            "enabled": "true",
-            "adaptiveBlockTime": 60
-          }
-        }
-      },
-      {
-        "height": 42300,
-        "maxNumberOfTransactions": 300,
-        "blockTime": 2,
-        "maxBlockTimeLimit": 4,
-        "minBlockTimeLimit": 1,
-        "maxBalance": 30000000000,
-        "consensusSettings": {
-          "adaptiveForgingSettings": {
-            "enabled": "true",
-            "adaptiveBlockTime": 10
-          }
+        },
+        "shardingSettings": {
+          "enabled": true,
+          "frequency": 750000
+        },
+        "smcSettings": {
+          "masterAccountPublicKey": "3f73873c154a7da8be66040e139336a6a7afd07f39e806f61eb2567b8bd5c949",
+          "fuelLimitMinValue": 10000000,
+          "fuelLimitMaxValue": 30000000000,
+          "fuelPriceMinValue": 10000,
+          "fuelPriceMaxValue": 100000000
+        },
+        "transactionFeeSettings": {
+          "feeRates": [
+            {
+              "type": 1,
+              "subType": 1,
+              "baseFee": "1000"
+            },
+            {
+              "type": 1,
+              "subType": 6,
+              "baseFee": "5"
+            },
+            {
+              "type": 1,
+              "subType": 7,
+              "baseFee": "5"
+            },
+            {
+              "type": 1,
+              "subType": 8,
+              "baseFee": "5"
+            }
+          ]
         }
       }
     ]

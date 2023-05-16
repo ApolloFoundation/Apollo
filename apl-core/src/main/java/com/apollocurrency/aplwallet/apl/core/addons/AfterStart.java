@@ -20,16 +20,15 @@
 
 package com.apollocurrency.aplwallet.apl.core.addons;
 
-import static org.slf4j.LoggerFactory.getLogger;
-
-import com.apollocurrency.aplwallet.apl.util.task.Task;
-import com.apollocurrency.aplwallet.apl.core.task.TaskDispatchManager;
-import com.apollocurrency.aplwallet.apl.util.task.TaskOrder;
 import com.apollocurrency.aplwallet.apl.util.injectable.PropertiesHolder;
+import com.apollocurrency.aplwallet.apl.util.service.TaskDispatchManager;
+import com.apollocurrency.aplwallet.apl.util.task.Task;
 import org.slf4j.Logger;
 
+import jakarta.enterprise.inject.spi.CDI;
 import java.util.Map;
-import javax.enterprise.inject.spi.CDI;
+
+import static org.slf4j.LoggerFactory.getLogger;
 
 public final class AfterStart implements AddOn {
     private static final Logger LOG = getLogger(AfterStart.class);
@@ -43,15 +42,15 @@ public final class AfterStart implements AddOn {
         String afterStartScript = propertiesHolder.getStringProperty("apl.afterStartScript");
         if (afterStartScript != null) {
             taskDispatchManager.newBackgroundDispatcher(BACKGROUND_SERVICE_NAME)
-                    .invokeAfter(Task.builder()
-                            .name("AfterStartScriptRunner")
-                            .task(() -> {
-                                try {
-                                    Runtime.getRuntime().exec(afterStartScript);
-                                } catch (Exception e) {
-                                    LOG.error("Failed to run after start script: " + afterStartScript, e);
-                                }
-                            }).build());
+                .invokeAfter(Task.builder()
+                    .name("AfterStartScriptRunner")
+                    .task(() -> {
+                        try {
+                            Runtime.getRuntime().exec(afterStartScript);
+                        } catch (Exception e) {
+                            LOG.error("Failed to run after start script: " + afterStartScript, e);
+                        }
+                    }).build());
         }
     }
 

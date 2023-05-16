@@ -15,33 +15,34 @@
  */
 
 /*
- * Copyright © 2018-2019 Apollo Foundation
+ * Copyright © 2018-2020 Apollo Foundation
  */
 
 package com.apollocurrency.aplwallet.apl.core.http.get;
 
-import com.apollocurrency.aplwallet.apl.core.app.Shuffling;
-import com.apollocurrency.aplwallet.apl.core.db.DbIterator;
+import com.apollocurrency.aplwallet.apl.core.entity.state.shuffling.Shuffling;
+import com.apollocurrency.aplwallet.apl.core.entity.state.shuffling.ShufflingStage;
 import com.apollocurrency.aplwallet.apl.core.http.APITag;
 import com.apollocurrency.aplwallet.apl.core.http.AbstractAPIRequestHandler;
+import com.apollocurrency.aplwallet.apl.core.http.HttpParameterParserUtil;
 import com.apollocurrency.aplwallet.apl.core.http.JSONData;
 import com.apollocurrency.aplwallet.apl.core.http.ParameterException;
-import com.apollocurrency.aplwallet.apl.core.http.ParameterParser;
 import com.apollocurrency.aplwallet.apl.crypto.Convert;
 import org.json.simple.JSONArray;
 import org.json.simple.JSONObject;
 import org.json.simple.JSONStreamAware;
 
-import javax.servlet.http.HttpServletRequest;
+import jakarta.enterprise.inject.Vetoed;
+import jakarta.servlet.http.HttpServletRequest;
+import java.util.List;
 
 import static com.apollocurrency.aplwallet.apl.core.http.JSONResponses.incorrect;
-import javax.enterprise.inject.Vetoed;
 
 @Vetoed
 public final class GetHoldingShufflings extends AbstractAPIRequestHandler {
 
     public GetHoldingShufflings() {
-        super(new APITag[] {APITag.SHUFFLING}, "holding", "stage", "includeFinished", "firstIndex", "lastIndex");
+        super(new APITag[]{APITag.SHUFFLING}, "holding", "stage", "includeFinished", "firstIndex", "lastIndex");
     }
 
     @Override
@@ -57,25 +58,24 @@ public final class GetHoldingShufflings extends AbstractAPIRequestHandler {
             }
         }
         String stageValue = Convert.emptyToNull(req.getParameter("stage"));
-        Shuffling.Stage stage = null;
+        ShufflingStage stage = null;
         if (stageValue != null) {
             try {
-                stage = Shuffling.Stage.get(Byte.parseByte(stageValue));
+                stage = ShufflingStage.get(Byte.parseByte(stageValue));
             } catch (RuntimeException e) {
                 return incorrect("stage");
             }
         }
         boolean includeFinished = "true".equalsIgnoreCase(req.getParameter("includeFinished"));
-        int firstIndex = ParameterParser.getFirstIndex(req);
-        int lastIndex = ParameterParser.getLastIndex(req);
+        int firstIndex = HttpParameterParserUtil.getFirstIndex(req);
+        int lastIndex = HttpParameterParserUtil.getLastIndex(req);
 
         JSONObject response = new JSONObject();
         JSONArray jsonArray = new JSONArray();
         response.put("shufflings", jsonArray);
-        try (DbIterator<Shuffling> shufflings = Shuffling.getHoldingShufflings(holdingId, stage, includeFinished, firstIndex, lastIndex)) {
-            for (Shuffling shuffling : shufflings) {
-                jsonArray.add(JSONData.shuffling(shuffling, false));
-            }
+        List<Shuffling> shufflings = shufflingService.getHoldingShufflings(holdingId, stage, includeFinished, firstIndex, lastIndex);
+        for (Shuffling shuffling : shufflings) {
+            jsonArray.add(JSONData.shuffling(shuffling, false));
         }
         return response;
     }

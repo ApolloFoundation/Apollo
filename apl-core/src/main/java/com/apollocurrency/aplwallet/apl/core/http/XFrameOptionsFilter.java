@@ -4,21 +4,20 @@
  */
 package com.apollocurrency.aplwallet.apl.core.http;
 
+import jakarta.servlet.Filter;
+import jakarta.servlet.FilterChain;
+import jakarta.servlet.FilterConfig;
+import jakarta.servlet.ServletException;
+import jakarta.servlet.ServletRequest;
+import jakarta.servlet.ServletResponse;
+import jakarta.servlet.http.HttpServletResponse;
 import java.io.IOException;
-import javax.servlet.Filter;
-import javax.servlet.FilterChain;
-import javax.servlet.FilterConfig;
-import javax.servlet.ServletException;
-import javax.servlet.ServletRequest;
-import javax.servlet.ServletResponse;
-import javax.servlet.http.HttpServletResponse;
 
 /**
- *
  * @author al
  */
 public final class XFrameOptionsFilter implements Filter {
-    
+
     @Override
     public void init(FilterConfig filterConfig) throws ServletException {
     }
@@ -32,5 +31,5 @@ public final class XFrameOptionsFilter implements Filter {
     @Override
     public void destroy() {
     }
-    
+
 }

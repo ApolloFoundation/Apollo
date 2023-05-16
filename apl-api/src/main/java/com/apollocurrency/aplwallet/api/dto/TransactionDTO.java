@@ -10,7 +10,7 @@ import lombok.ToString;
 @NoArgsConstructor
 @Getter
 @Setter
-@ToString
+@ToString(callSuper = true)
 @JsonInclude(JsonInclude.Include.NON_NULL)
 @JsonIgnoreProperties(ignoreUnknown = true)
 public class TransactionDTO extends UnconfirmedTransactionDTO {
@@ -18,6 +18,7 @@ public class TransactionDTO extends UnconfirmedTransactionDTO {
     private Integer confirmations;
     private Integer blockTimestamp;
     private Short transactionIndex;
+    private String errorMessage;
 
     public TransactionDTO(UnconfirmedTransactionDTO o) {
         super(o);

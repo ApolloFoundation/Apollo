@@ -20,22 +20,27 @@
 
 package com.apollocurrency.aplwallet.apl.core.http.get;
 
-import com.apollocurrency.aplwallet.apl.core.app.Transaction;
+import com.apollocurrency.aplwallet.apl.core.model.UnconfirmedTransaction;
 import com.apollocurrency.aplwallet.apl.core.http.APITag;
 import com.apollocurrency.aplwallet.apl.core.http.AbstractAPIRequestHandler;
 import com.apollocurrency.aplwallet.apl.core.http.JSONData;
-import javax.enterprise.inject.Vetoed;
 import org.json.simple.JSONArray;
 import org.json.simple.JSONObject;
 import org.json.simple.JSONStreamAware;
 
-import javax.servlet.http.HttpServletRequest;
+import jakarta.enterprise.inject.Vetoed;
+import jakarta.servlet.http.HttpServletRequest;
+import java.util.List;
 
+/**
+ * Returns only pending transactions
+ */
 @Vetoed
+@Deprecated
 public final class GetAllWaitingTransactions extends AbstractAPIRequestHandler {
 
     public GetAllWaitingTransactions() {
-        super(new APITag[] {APITag.DEBUG});
+        super(new APITag[]{APITag.DEBUG});
     }
 
     @Override
@@ -43,8 +48,8 @@ public final class GetAllWaitingTransactions extends AbstractAPIRequestHandler {
         JSONObject response = new JSONObject();
         JSONArray jsonArray = new JSONArray();
         response.put("transactions", jsonArray);
-        Transaction[] transactions = lookupTransactionProcessor().getAllWaitingTransactions();
-        for (Transaction transaction : transactions) {
+        List<UnconfirmedTransaction> transactions = lookupMemPool().getAllPendingProcessing();
+        for (UnconfirmedTransaction transaction : transactions) {
             jsonArray.add(JSONData.unconfirmedTransaction(transaction));
         }
         return response;

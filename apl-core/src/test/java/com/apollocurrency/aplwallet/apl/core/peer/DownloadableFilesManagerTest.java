@@ -19,7 +19,7 @@ import org.jboss.weld.junit5.WeldSetup;
 import org.junit.jupiter.api.Test;
 import org.slf4j.Logger;
 
-import javax.inject.Inject;
+import jakarta.inject.Inject;
 import java.io.BufferedWriter;
 import java.io.File;
 import java.io.FileWriter;
@@ -39,6 +39,7 @@ import static org.slf4j.LoggerFactory.getLogger;
 
 @EnableWeld
 class DownloadableFilesManagerTest {
+    // @formatter:off
     private static final Logger log = getLogger(DownloadableFilesManagerTest.class);
     private Path csvResourcesPath = new ResourceFileLoader().getResourcePath().toAbsolutePath();
     private DirProvider dirProvider = mock(DirProvider.class);
@@ -65,33 +66,35 @@ class DownloadableFilesManagerTest {
 
     @Inject
     private DownloadableFilesManager filesManager;
+    // @formatter:on
 
-    private String createTestZip() throws IOException{
-        int n_lines=1000;
+    private String createTestZip() throws IOException {
+        int n_lines = 1000;
 
         File tmpDir = new File(fileBaseDir);
-        File wDir = new File(tmpDir.getAbsolutePath()+"/"+"apl-test-zip");
-        if(wDir.exists()){
-           FileUtils.deleteDirectory(wDir);
+        File wDir = new File(tmpDir.getAbsolutePath() + "/" + "apl-test-zip");
+        if (wDir.exists()) {
+            FileUtils.deleteDirectory(wDir);
         }
         wDir.mkdirs();
-        for(int i=0; i<10; i++){
-          String fn="test_file_"+i;
-            try (BufferedWriter writer = new BufferedWriter(new FileWriter(wDir.getAbsolutePath()+"/"+fn))) {
-                for(int j=0; j<n_lines; j++){
-                    writer.write("line "+j);
-                } }
+        for (int i = 0; i < 10; i++) {
+            String fn = "test_file_" + i;
+            try (BufferedWriter writer = new BufferedWriter(new FileWriter(wDir.getAbsolutePath() + "/" + fn))) {
+                for (int j = 0; j < n_lines; j++) {
+                    writer.write("line " + j);
+                }
+            }
         }
         Zip zip = new ZipImpl();
-        zip.compress(fileBaseDir+"/"+zipFileName, wDir.getAbsolutePath(), Long.MIN_VALUE, null,false);
+        zip.compress(fileBaseDir + "/" + zipFileName, wDir.getAbsolutePath(), Long.MIN_VALUE, null, false);
         return wDir.getAbsolutePath();
     }
 
     @Test
     void getFileDownloadInfo() {
-        String tdir=null;
-        FileDownloadInfo fi=null;
-        String fileId = "debug::"+zipFileName;
+        String tdir = null;
+        FileDownloadInfo fi = null;
+        String fileId = "debug::" + zipFileName;
         try {
             // create ZIP in temp folder for unit test
             tdir = createTestZip();
@@ -103,11 +106,11 @@ class DownloadableFilesManagerTest {
         assertNotNull(fi);
         log.debug("File download Info = {}", fi);
         assertEquals(
-                "b7f643b7602effbe34c671da5321cfa586ec53e30095af68841f515c574bae06",
-                fi.fileInfo.hash);
-        log.debug("Parsed bytes from string = {}", Convert.parseHexString(fi.fileInfo.hash) );
+            "b7f643b7602effbe34c671da5321cfa586ec53e30095af68841f515c574bae06",
+            fi.fileInfo.hash);
+        log.debug("Parsed bytes from string = {}", Convert.parseHexString(fi.fileInfo.hash));
         assertEquals(fileId, fi.fileInfo.fileId);
-        File f = new File(fileBaseDir+"/"+zipFileName);
+        File f = new File(fileBaseDir + "/" + zipFileName);
         f.delete();
     }
 
@@ -116,7 +119,7 @@ class DownloadableFilesManagerTest {
         String zipFileName = "MISSING-archive.zip";
 
         FileDownloadInfo fi = filesManager.getFileDownloadInfo(zipFileName);
-        assertEquals(fi.fileInfo.isPresent,false);
+        assertEquals(fi.fileInfo.isPresent, false);
     }
 
     @Test
@@ -124,13 +127,13 @@ class DownloadableFilesManagerTest {
         // parse real/existing shard name + ID
         Path pathToShardArchive = filesManager.mapFileIdToLocalPath("shard::1");
         assertNotNull(pathToShardArchive);
-        assertEquals("apl-blockchain-shard-1-chain-b5d7b697-f359-4ce5-a619-fa34b6fb01a5.zip", pathToShardArchive.getFileName().toString());
+        assertEquals("apl_blockchain_b5d7b6_shard_1.zip", pathToShardArchive.getFileName().toString());
 
         pathToShardArchive = filesManager.mapFileIdToLocalPath("shard::1;chainid::b5d7b697-f359-4ce5-a619-fa34b6fb01a5");
-        assertEquals("apl-blockchain-shard-1-chain-b5d7b697-f359-4ce5-a619-fa34b6fb01a5.zip", pathToShardArchive.getFileName().toString());
+        assertEquals("apl_blockchain_b5d7b6_shard_1.zip", pathToShardArchive.getFileName().toString());
 
         pathToShardArchive = filesManager.mapFileIdToLocalPath("shardprun::1;chainid::b5d7b697-f359-4ce5-a619-fa34b6fb01a5");
-        assertEquals("apl-blockchain-shardprun-1-chain-b5d7b697-f359-4ce5-a619-fa34b6fb01a5.zip", pathToShardArchive.getFileName().toString());
+        assertEquals("apl_blockchain_b5d7b6_shardprun_1.zip", pathToShardArchive.getFileName().toString());
 
         //        String fpath = filesManager.mapFileIdToLocalPath("attachment::123;chainid::3ef0").toString();
 //        assertEquals("123", fpath);

@@ -20,34 +20,33 @@
 
 package com.apollocurrency.aplwallet.apl.core.http.get;
 
-import com.apollocurrency.aplwallet.apl.core.app.Transaction;
+import com.apollocurrency.aplwallet.apl.core.model.Transaction;
 import com.apollocurrency.aplwallet.apl.core.http.APITag;
 import com.apollocurrency.aplwallet.apl.core.http.AbstractAPIRequestHandler;
 import com.apollocurrency.aplwallet.apl.core.http.JSONData;
-import com.apollocurrency.aplwallet.apl.core.transaction.ColoredCoins;
-import com.apollocurrency.aplwallet.apl.util.AplException;
+import com.apollocurrency.aplwallet.apl.core.transaction.TransactionTypes;
 import com.apollocurrency.aplwallet.apl.util.Filter;
+import com.apollocurrency.aplwallet.apl.util.exception.AplException;
 import org.json.simple.JSONArray;
 import org.json.simple.JSONObject;
 import org.json.simple.JSONStreamAware;
 
+import jakarta.enterprise.inject.Vetoed;
+import jakarta.servlet.http.HttpServletRequest;
 import java.util.List;
-import javax.servlet.http.HttpServletRequest;
-import java.util.List;
-import javax.enterprise.inject.Vetoed;
 
 @Vetoed
 public final class GetExpectedOrderCancellations extends AbstractAPIRequestHandler {
 
 
     public GetExpectedOrderCancellations() {
-        super(new APITag[] {APITag.AE});
+        super(new APITag[]{APITag.AE});
     }
 
     @Override
     public JSONStreamAware processRequest(HttpServletRequest req) throws AplException {
-        Filter<Transaction> filter = transaction -> transaction.getType() == ColoredCoins.ASK_ORDER_CANCELLATION
-                || transaction.getType() == ColoredCoins.BID_ORDER_CANCELLATION;
+        Filter<Transaction> filter = transaction -> transaction.getType().getSpec() == TransactionTypes.TransactionTypeSpec.CC_ASK_ORDER_CANCELLATION
+            || transaction.getType().getSpec() == TransactionTypes.TransactionTypeSpec.CC_BID_ORDER_CANCELLATION;
 
         List<? extends Transaction> transactions = lookupBlockchainProcessor().getExpectedTransactions(filter);
         JSONArray cancellations = new JSONArray();

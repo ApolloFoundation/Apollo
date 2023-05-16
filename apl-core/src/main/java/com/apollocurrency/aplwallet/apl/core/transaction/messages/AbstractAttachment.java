@@ -3,24 +3,25 @@
  */
 package com.apollocurrency.aplwallet.apl.core.transaction.messages;
 
-import com.apollocurrency.aplwallet.apl.core.account.Account;
-import com.apollocurrency.aplwallet.apl.core.app.Blockchain;
-import com.apollocurrency.aplwallet.apl.core.app.Fee;
-import com.apollocurrency.aplwallet.apl.core.app.Transaction;
-import com.apollocurrency.aplwallet.apl.core.app.TransactionImpl;
-import com.apollocurrency.aplwallet.apl.util.AplException;
+import com.apollocurrency.aplwallet.apl.core.entity.state.account.Account;
+import com.apollocurrency.aplwallet.apl.core.model.Transaction;
+import com.apollocurrency.aplwallet.apl.core.transaction.Fee;
+import com.apollocurrency.aplwallet.apl.core.transaction.TransactionType;
+import com.apollocurrency.aplwallet.apl.util.annotation.FeeMarker;
+import com.apollocurrency.aplwallet.apl.util.annotation.TransactionFee;
+import com.apollocurrency.aplwallet.apl.util.exception.AplException;
+import lombok.EqualsAndHashCode;
+import lombok.NonNull;
 import org.json.simple.JSONObject;
 
 import java.nio.ByteBuffer;
-import javax.enterprise.inject.spi.CDI;
 
 /**
- *
  * @author al
  */
+@EqualsAndHashCode(callSuper = true)
 public abstract class AbstractAttachment extends AbstractAppendix implements Attachment {
-
-    protected Blockchain blockchain;
+    private TransactionType transactionType;
 
     public AbstractAttachment(ByteBuffer buffer) {
         super(buffer);
@@ -38,54 +39,68 @@ public abstract class AbstractAttachment extends AbstractAppendix implements Att
     }
 
     @Override
-    public String getAppendixName() {
-        return getTransactionType().getName();
+    public void bindTransactionType(@NonNull TransactionType transactionType) {
+        if (transactionType.getSpec() != getTransactionTypeSpec()) {
+            throw new IllegalArgumentException("Required tx type " + getTransactionTypeSpec() + " but got " + transactionType.getSpec());
+        }
+        this.transactionType = transactionType;
     }
 
     @Override
-    public void validate(Transaction transaction, int blockHeight) throws AplException.ValidationException {
-        getTransactionType().validateAttachment(transaction);
+    public String getAppendixName() {
+        return getTransactionTypeSpec().getCompatibleName();
+    }
+
+    @Override
+    public void performStateDependentValidation(Transaction transaction, int blockHeight) throws AplException.ValidationException {
+        transactionType().validateStateDependent(transaction);
+    }
+
+    @Override
+    public void performStateIndependentValidation(Transaction transaction, int blockHeight) throws AplException.ValidationException {
+        transactionType().validateStateIndependent(transaction);
     }
 
     @Override
     public void apply(Transaction transaction, Account senderAccount, Account recipientAccount) {
-        getTransactionType().apply((TransactionImpl) transaction, senderAccount, recipientAccount);
+        transactionType().apply(transaction, senderAccount, recipientAccount);
+    }
+
+    @TransactionFee(FeeMarker.BASE_FEE)
+    @Override
+    public final Fee getBaselineFee(Transaction transaction, long oneAPL) {
+        return transactionType().getBaselineFee(transaction);
     }
 
     @Override
-    public final Fee getBaselineFee(Transaction transaction) {
-        return getTransactionType().getBaselineFee(transaction);
-    }
-
-    @Override
-    public final Fee getNextFee(Transaction transaction) {
-        return getTransactionType().getNextFee(transaction);
-    }
-
-    @Override
-    public final int getBaselineFeeHeight() {
-        return getTransactionType().getBaselineFeeHeight();
-    }
-
-    @Override
-    public final int getNextFeeHeight() {
-        return getTransactionType().getNextFeeHeight();
+    public void validateAtFinish(Transaction transaction, int blockHeight) throws AplException.ValidationException {
+        if (!isPhased(transaction)) {
+            return;
+        }
+        transactionType().validateStateIndependent(transaction);
+        transactionType().validateStateDependentAtFinish(transaction);
     }
 
     @Override
     public boolean isPhasable() {
-        return !(this instanceof Prunable) && getTransactionType().isPhasable();
+        return !(this instanceof Prunable) && transactionType().isPhasable();
     }
 
-    public int getFinishValidationHeight(Transaction transaction) {
-        return isPhased(transaction) ? transaction.getPhasing().getFinishHeight() - 1 : lookupBlockchain().getHeight();
+    @Override
+    public String toString() {
+        return "Attachment[" + getClass().getSimpleName() + ", type = " + getTransactionTypeSpec()  + "]";
     }
 
-    private Blockchain lookupBlockchain() {
-        if (blockchain == null) {
-            blockchain = CDI.current().select(Blockchain.class).get();
+    @Override
+    public void undo(Transaction transaction, Account senderAccount, Account recipientAccount) {
+        transactionType().undoApply(transaction, senderAccount, recipientAccount);
+        transactionType().undoUnconfirmed(transaction, senderAccount);
+    }
+
+    private TransactionType transactionType() {
+        if (this.transactionType == null) {
+            throw new IllegalStateException("Transaction type was not set");
         }
-        return blockchain;
+        return this.transactionType;
     }
-    
 }

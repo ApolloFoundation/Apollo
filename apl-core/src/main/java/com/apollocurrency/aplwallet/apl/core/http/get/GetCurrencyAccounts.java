@@ -20,43 +20,38 @@
 
 package com.apollocurrency.aplwallet.apl.core.http.get;
 
-import com.apollocurrency.aplwallet.apl.core.account.AccountCurrency;
-import com.apollocurrency.aplwallet.apl.core.account.AccountCurrencyTable;
+import com.apollocurrency.aplwallet.apl.core.entity.state.account.AccountCurrency;
 import com.apollocurrency.aplwallet.apl.core.http.APITag;
 import com.apollocurrency.aplwallet.apl.core.http.AbstractAPIRequestHandler;
+import com.apollocurrency.aplwallet.apl.core.http.HttpParameterParserUtil;
 import com.apollocurrency.aplwallet.apl.core.http.JSONData;
-import com.apollocurrency.aplwallet.apl.core.http.ParameterParser;
-import com.apollocurrency.aplwallet.apl.util.AplException;
-import com.apollocurrency.aplwallet.apl.core.db.DbIterator;
-import javax.enterprise.inject.Vetoed;
+import com.apollocurrency.aplwallet.apl.util.exception.AplException;
 import org.json.simple.JSONArray;
 import org.json.simple.JSONObject;
 import org.json.simple.JSONStreamAware;
 
-import javax.servlet.http.HttpServletRequest;
+import jakarta.enterprise.inject.Vetoed;
+import jakarta.servlet.http.HttpServletRequest;
+import java.util.List;
 
 @Vetoed
 public final class GetCurrencyAccounts extends AbstractAPIRequestHandler {
 
     public GetCurrencyAccounts() {
-        super(new APITag[] {APITag.MS}, "currency", "height", "firstIndex", "lastIndex");
+        super(new APITag[]{APITag.MS}, "currency", "height", "firstIndex", "lastIndex");
     }
 
     @Override
     public JSONStreamAware processRequest(HttpServletRequest req) throws AplException {
 
-        long currencyId = ParameterParser.getUnsignedLong(req, "currency", true);
-        int firstIndex = ParameterParser.getFirstIndex(req);
-        int lastIndex = ParameterParser.getLastIndex(req);
-        int height = ParameterParser.getHeight(req);
+        long currencyId = HttpParameterParserUtil.getUnsignedLong(req, "currency", true);
+        int firstIndex = HttpParameterParserUtil.getFirstIndex(req);
+        int lastIndex = HttpParameterParserUtil.getLastIndex(req);
+        int height = HttpParameterParserUtil.getHeight(req);
 
         JSONArray accountCurrencies = new JSONArray();
-        try (DbIterator<AccountCurrency> iterator = AccountCurrencyTable.getCurrencyAccounts(currencyId, height, firstIndex, lastIndex)) {
-            while (iterator.hasNext()) {
-                AccountCurrency accountCurrency = iterator.next();
-                accountCurrencies.add(JSONData.accountCurrency(accountCurrency, true, false));
-            }
-        }
+        List<AccountCurrency> accounts = lookupAccountCurrencyService().getByCurrency(currencyId, height, firstIndex, lastIndex);
+        accounts.forEach(accountCurrency -> accountCurrencies.add(JSONData.accountCurrency(accountCurrency, true, false)));
 
         JSONObject response = new JSONObject();
         response.put("accountCurrencies", accountCurrencies);

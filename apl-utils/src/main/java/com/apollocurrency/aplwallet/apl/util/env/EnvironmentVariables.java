@@ -4,7 +4,7 @@
 
 package com.apollocurrency.aplwallet.apl.util.env;
 
-import org.apache.commons.lang3.StringUtils;
+import com.apollocurrency.aplwallet.apl.util.StringUtils;
 
 public class EnvironmentVariables {
     public String logDir = "";
@@ -13,10 +13,10 @@ public class EnvironmentVariables {
     public String dexKeystoreDir = "";
     public String twoFactorAuthDir = "";
     public String pidFile = "";
-    private String applicationName;
-    public String configDir ="";
+    public String configDir = "";
     public String dataExportDir = ""; // path to keep exported CSV files
-    
+    private String applicationName;
+
     public EnvironmentVariables(String applicationName) {
         if (StringUtils.isBlank(applicationName)) {
             throw new IllegalArgumentException("Application name cannot be null or blank");

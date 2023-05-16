@@ -23,8 +23,7 @@ public class LogDirPropertyDefiner extends PropertyDefinerBase {
         List<Path> logDirPaths = Arrays.asList(Apollo.logDirPath, DEFAULT_LOG_PATH, Paths.get(System.getProperty("java.io.tmpdir")).resolve(Constants.APPLICATION_DIR_NAME + "-logs"));
 
         Path logDirPath = null;
-        for (int i = 0; i < logDirPaths.size(); i++) {
-            Path p = logDirPaths.get(i);
+        for (Path p : logDirPaths) {
             if (p != null) {
                 try {
                     if (!Files.exists(p)) {
@@ -34,8 +33,7 @@ public class LogDirPropertyDefiner extends PropertyDefinerBase {
                         logDirPath = p;
                         break;
                     }
-                }
-                catch (IOException e) {
+                } catch (IOException e) {
                     System.err.println(e.toString());
                 }
             }

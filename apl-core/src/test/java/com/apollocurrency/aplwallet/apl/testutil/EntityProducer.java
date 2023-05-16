@@ -6,24 +6,30 @@
 
 package com.apollocurrency.aplwallet.apl.testutil;
 
+import com.apollocurrency.aplwallet.api.p2p.request.BaseP2PRequest;
 import com.apollocurrency.aplwallet.apl.core.http.APIEnum;
 import com.apollocurrency.aplwallet.apl.core.peer.BlockchainState;
 import com.apollocurrency.aplwallet.apl.core.peer.Hallmark;
 import com.apollocurrency.aplwallet.apl.core.peer.Peer;
+import com.apollocurrency.aplwallet.apl.core.peer.Peer2PeerTransport;
+import com.apollocurrency.aplwallet.apl.core.peer.PeerNotConnectedException;
 import com.apollocurrency.aplwallet.apl.core.peer.PeerState;
 import com.apollocurrency.aplwallet.apl.core.peer.PeerTrustLevel;
+import com.apollocurrency.aplwallet.apl.core.peer.parser.JsonReqRespParser;
+import com.apollocurrency.aplwallet.apl.data.AccountTestData;
 import com.apollocurrency.aplwallet.apl.util.Version;
 import org.json.simple.JSONObject;
 import org.json.simple.JSONStreamAware;
 
+import jakarta.enterprise.inject.Produces;
+import jakarta.inject.Named;
 import java.util.Set;
 import java.util.UUID;
 
 public class EntityProducer {
 
-
-    public static Peer createPeer(final String host, final String announcedAddress, boolean active, final long supportServices){
-        final PeerState state = active ? PeerState.CONNECTED: PeerState.NON_CONNECTED;
+    public static Peer createPeer(final String host, final String announcedAddress, boolean active, final long supportServices) {
+        final PeerState state = active ? PeerState.CONNECTED : PeerState.NON_CONNECTED;
 
         Peer peer = new Peer() {
             @Override
@@ -63,7 +69,7 @@ public class EntityProducer {
 
             @Override
             public Version getVersion() {
-                return new Version(1,30,17);
+                return new Version(1, 30, 17);
             }
 
             @Override
@@ -207,6 +213,16 @@ public class EntityProducer {
             }
 
             @Override
+            public JSONObject send(BaseP2PRequest request) throws PeerNotConnectedException {
+                return null;
+            }
+
+            @Override
+            public <T> T send(BaseP2PRequest request, JsonReqRespParser<T> parser) throws PeerNotConnectedException {
+                return null;
+            }
+
+            @Override
             public String getHostWithPort() {
                 return null;
             }
@@ -222,6 +238,11 @@ public class EntityProducer {
             }
 
             @Override
+            public void sendAsync(BaseP2PRequest request) {
+
+            }
+
+            @Override
             public boolean isOutbound() {
                 return false;
             }
@@ -229,6 +250,31 @@ public class EntityProducer {
             @Override
             public long getServices() {
                 return 0L;
+            }
+
+            @Override
+            public long getLastActivityTime() {
+                return 0;
+            }
+
+            @Override
+            public Peer2PeerTransport getP2pTransport() {
+                return null;
+            }
+
+            @Override
+            public boolean processError(JSONObject request) {
+                return false;
+            }
+
+            @Override
+            public void setServices(long code) {
+
+            }
+
+            @Override
+            public void setLastUpdated(int time) {
+
             }
 
             @Override
@@ -243,6 +289,12 @@ public class EntityProducer {
 
         };
         return peer;
+    }
+
+    @Produces
+    @Named("CREATOR_ID")
+    public long getCreatorId() { //only for tests, instead of using the GenesisImporter component.
+        return AccountTestData.CREATOR_ID;
     }
 
 }

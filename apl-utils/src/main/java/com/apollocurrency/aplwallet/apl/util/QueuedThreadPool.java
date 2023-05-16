@@ -21,6 +21,7 @@
 package com.apollocurrency.aplwallet.apl.util;
 
 import com.apollocurrency.aplwallet.apl.util.task.NamedThreadFactory;
+import lombok.extern.slf4j.Slf4j;
 
 import java.util.concurrent.Callable;
 import java.util.concurrent.Future;
@@ -37,22 +38,27 @@ import java.util.concurrent.TimeUnit;
  * available.  Threads that are idle for 60 seconds are terminated if the
  * pool size is greater than the core size.
  */
+@Slf4j
 public class QueuedThreadPool extends ThreadPoolExecutor {
 
-    /** Core pool size */
+    /**
+     * Pending task queue
+     */
+    private final LinkedBlockingQueue<RunnableContainer> pendingQueue = new LinkedBlockingQueue<>();
+    /**
+     * Core pool size
+     */
     private int coreSize;
-
-    /** Maximum pool size */
+    /**
+     * Maximum pool size
+     */
     private int maxSize;
-
-    /** Pending task queue */
-    private final LinkedBlockingQueue<Runnable> pendingQueue = new LinkedBlockingQueue<>();
 
     /**
      * Create the queued thread pool
      *
-     * @param   coreSize                Core pool size
-     * @param   maxSize                 Maximum pool size
+     * @param coreSize Core pool size
+     * @param maxSize  Maximum pool size
      */
     public QueuedThreadPool(int coreSize, int maxSize, String poolName) {
         super(coreSize, Integer.MAX_VALUE, 60L, TimeUnit.SECONDS, new SynchronousQueue<>(), new NamedThreadFactory(poolName));
@@ -63,7 +69,7 @@ public class QueuedThreadPool extends ThreadPoolExecutor {
     /**
      * Return the core pool size
      *
-     * @return                          Core pool size
+     * @return Core pool size
      */
     @Override
     public int getCorePoolSize() {
@@ -73,7 +79,7 @@ public class QueuedThreadPool extends ThreadPoolExecutor {
     /**
      * Set the core pool size
      *
-     * @param   coreSize                Core pool size
+     * @param coreSize Core pool size
      */
     @Override
     public void setCorePoolSize(int coreSize) {
@@ -84,7 +90,7 @@ public class QueuedThreadPool extends ThreadPoolExecutor {
     /**
      * Return the maximum pool size
      *
-     * @return                          Maximum pool size
+     * @return Maximum pool size
      */
     @Override
     public int getMaximumPoolSize() {
@@ -94,7 +100,7 @@ public class QueuedThreadPool extends ThreadPoolExecutor {
     /**
      * Set the maximum pool size
      *
-     * @param   maxSize                 Maximum pool size
+     * @param maxSize Maximum pool size
      */
     @Override
     public void setMaximumPoolSize(int maxSize) {
@@ -104,8 +110,8 @@ public class QueuedThreadPool extends ThreadPoolExecutor {
     /**
      * Execute a task
      *
-     * @param   task                            Task
-     * @throws  RejectedExecutionException      Unable to execute task
+     * @param task Task
+     * @throws RejectedExecutionException Unable to execute task
      */
     @Override
     public void execute(Runnable task) throws RejectedExecutionException {
@@ -113,7 +119,7 @@ public class QueuedThreadPool extends ThreadPoolExecutor {
             throw new NullPointerException("Null runnable passed to execute()");
         try {
             if (getActiveCount() >= maxSize) {
-                pendingQueue.put(task);
+                pendingQueue.put(new RunnableContainer(task));
             } else {
                 super.execute(task);
             }
@@ -125,9 +131,9 @@ public class QueuedThreadPool extends ThreadPoolExecutor {
     /**
      * Submit a task for execution
      *
-     * @param   task                            Runnable task
-     * @return                                  Future representing the task
-     * @throws  RejectedExecutionException      Unable to execute task
+     * @param task Runnable task
+     * @return Future representing the task
+     * @throws RejectedExecutionException Unable to execute task
      */
     @Override
     public Future<?> submit(Runnable task) throws RejectedExecutionException {
@@ -141,11 +147,11 @@ public class QueuedThreadPool extends ThreadPoolExecutor {
     /**
      * Submit a task for execution
      *
-     * @param   <T>                             Result type
-     * @param   task                            Runnable task
-     * @param   result                          Result returned when task completes
-     * @return                                  Future representing the task result
-     * @throws  RejectedExecutionException      Unable to execute task
+     * @param <T>    Result type
+     * @param task   Runnable task
+     * @param result Result returned when task completes
+     * @return Future representing the task result
+     * @throws RejectedExecutionException Unable to execute task
      */
     @Override
     public <T> Future<T> submit(Runnable task, T result) throws RejectedExecutionException {
@@ -159,10 +165,10 @@ public class QueuedThreadPool extends ThreadPoolExecutor {
     /**
      * Submit a task for execution
      *
-     * @param   <T>                             Result type
-     * @param   callable                        Callable task
-     * @return                                  Future representing the task
-     * @throws  RejectedExecutionException      Unable to execute task
+     * @param <T>      Result type
+     * @param callable Callable task
+     * @return Future representing the task
+     * @throws RejectedExecutionException Unable to execute task
      */
     @Override
     public <T> Future<T> submit(Callable<T> callable) throws RejectedExecutionException {
@@ -176,19 +182,33 @@ public class QueuedThreadPool extends ThreadPoolExecutor {
     /**
      * Process task completion
      *
-     * @param   task                    Runnable task
-     * @param   exc                     Thrown exception
+     * @param task Runnable task
+     * @param exc  Thrown exception
      */
     @Override
     protected void afterExecute(Runnable task, Throwable exc) {
         super.afterExecute(task, exc);
-        Runnable newTask = pendingQueue.poll();
-        if (newTask != null)
-            super.execute(newTask);
+        RunnableContainer newTask = pendingQueue.poll();
+        if (newTask != null) {
+            log.trace("Execute pending task, waiting time - {}", System.currentTimeMillis() - newTask.creationTime);
+            super.execute(newTask.runnable);
+
+        }
     }
 
     @Override
     public boolean isShutdown() {
         return super.isShutdown();
     }
+
+    private static class RunnableContainer {
+        private final Runnable runnable;
+        private final long creationTime;
+
+        private RunnableContainer(Runnable runnable) {
+            this.runnable = runnable;
+            this.creationTime = System.currentTimeMillis();
+        }
+    }
+
 }

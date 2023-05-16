@@ -1,5 +1,10 @@
 package com.apollocurrency.aplwallet.api.dto;
 
-public class AppendixDTO {
+import lombok.Getter;
+import lombok.Setter;
 
+@Getter
+@Setter
+public class AppendixDTO {
+    public byte version;
 }

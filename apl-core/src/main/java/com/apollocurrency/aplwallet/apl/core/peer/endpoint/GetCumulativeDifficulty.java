@@ -20,14 +20,18 @@
 
 package com.apollocurrency.aplwallet.apl.core.peer.endpoint;
 
-import com.apollocurrency.aplwallet.apl.core.app.Block;
+import com.apollocurrency.aplwallet.apl.core.model.Block;
 import com.apollocurrency.aplwallet.apl.core.peer.Peer;
 import org.json.simple.JSONObject;
 import org.json.simple.JSONStreamAware;
 
-public final class GetCumulativeDifficulty extends PeerRequestHandler {
+import jakarta.inject.Singleton;
 
-    public GetCumulativeDifficulty() {}
+@Singleton
+public class GetCumulativeDifficulty extends PeerRequestHandler {
+
+    public GetCumulativeDifficulty() {
+    }
 
 
     @Override

@@ -1,34 +1,27 @@
 /*
- * Copyright © 2018-2019 Apollo Foundation
+ * Copyright © 2018-2021 Apollo Foundation
  */
 
 
 package com.apollocurrency.aplwallet.apl.core.transaction.messages;
 
-import java.nio.ByteBuffer;
-
-import com.apollocurrency.aplwallet.apl.core.account.Account;
-import com.apollocurrency.aplwallet.apl.util.Constants;
-import com.apollocurrency.aplwallet.apl.core.app.Fee;
-import com.apollocurrency.aplwallet.apl.core.app.Transaction;
+import com.apollocurrency.aplwallet.apl.core.entity.state.account.Account;
+import com.apollocurrency.aplwallet.apl.core.model.Transaction;
+import com.apollocurrency.aplwallet.apl.core.transaction.Fee;
 import com.apollocurrency.aplwallet.apl.crypto.Convert;
 import com.apollocurrency.aplwallet.apl.crypto.EncryptedData;
 import com.apollocurrency.aplwallet.apl.crypto.NotValidException;
-import com.apollocurrency.aplwallet.apl.util.AplException;
+import com.apollocurrency.aplwallet.apl.util.exception.AplException;
 import org.json.simple.JSONObject;
+
+import java.nio.ByteBuffer;
+import java.util.Map;
 
 public abstract class AbstractEncryptedMessageAppendix extends AbstractAppendix {
 
-    private static final Fee ENCRYPTED_MESSAGE_FEE = new Fee.SizeBasedFee(Constants.ONE_APL, Constants.ONE_APL, 32) {
-        @Override
-        public int getSize(Transaction transaction, Appendix appendage) {
-            return ((AbstractEncryptedMessageAppendix)appendage).getEncryptedDataLength() - 16;
-        }
-    };
-
-    private EncryptedData encryptedData;
-    private boolean isText;
-    private boolean isCompressed;
+    private final EncryptedData encryptedData;
+    private final boolean isText;
+    private final boolean isCompressed;
 
     public AbstractEncryptedMessageAppendix(ByteBuffer buffer) throws AplException.NotValidException {
         super(buffer);
@@ -45,9 +38,9 @@ public abstract class AbstractEncryptedMessageAppendix extends AbstractAppendix 
         this.isCompressed = getVersion() != 2;
     }
 
-    public AbstractEncryptedMessageAppendix(JSONObject attachmentJSON, JSONObject encryptedMessageJSON) {
+    public AbstractEncryptedMessageAppendix(JSONObject attachmentJSON, Map<?,?> encryptedMessageJSON) {
         super(attachmentJSON);
-        byte[] data = Convert.parseHexString((String)encryptedMessageJSON.get("data"));
+        byte[] data = Convert.parseHexString((String) encryptedMessageJSON.get("data"));
         byte[] nonce = Convert.parseHexString((String) encryptedMessageJSON.get("nonce"));
         this.encryptedData = new EncryptedData(data, nonce);
         this.isText = Boolean.TRUE.equals(encryptedMessageJSON.get("isText"));
@@ -83,24 +76,18 @@ public abstract class AbstractEncryptedMessageAppendix extends AbstractAppendix 
     }
 
     @Override
-    public Fee getBaselineFee(Transaction transaction) {
-        return ENCRYPTED_MESSAGE_FEE;
+    public Fee getBaselineFee(Transaction transaction, long oneAPL) {
+        return new Fee.SizeBasedFee(oneAPL, oneAPL, 32) {
+            @Override
+            public int getSize(Transaction transaction, Appendix appendage) {
+                return ((AbstractEncryptedMessageAppendix) appendage).getEncryptedDataLength() - 16;
+            }
+        };
     }
 
     @Override
-    public void validate(Transaction transaction, int blockHeight) throws AplException.ValidationException {
-        if (getEncryptedDataLength() > Constants.MAX_ENCRYPTED_MESSAGE_LENGTH) {
-            throw new AplException.NotValidException("Max encrypted message length exceeded");
-        }
-        if (encryptedData != null) {
-            if ((encryptedData.getNonce().length != 32 && encryptedData.getData().length > 0)
-                    || (encryptedData.getNonce().length != 0 && encryptedData.getData().length == 0)) {
-                throw new AplException.NotValidException("Invalid nonce length " + encryptedData.getNonce().length);
-            }
-        }
-        if ((getVersion() != 2 && !isCompressed) || (getVersion() == 2 && isCompressed)) {
-            throw new AplException.NotValidException("Version mismatch - version " + getVersion() + ", isCompressed " + isCompressed);
-        }
+    public void performStateDependentValidation(Transaction transaction, int blockHeight) throws AplException.ValidationException {
+        throw new UnsupportedOperationException("Validation for encrypted message appendix is not supported");
     }
 
     @Override
@@ -109,14 +96,11 @@ public abstract class AbstractEncryptedMessageAppendix extends AbstractAppendix 
     }
 
     @Override
-    public void apply(Transaction transaction, Account senderAccount, Account recipientAccount) {}
+    public void apply(Transaction transaction, Account senderAccount, Account recipientAccount) {
+    }
 
     public final EncryptedData getEncryptedData() {
         return encryptedData;
-    }
-
-    final void setEncryptedData(EncryptedData encryptedData) {
-        this.encryptedData = encryptedData;
     }
 
     int getEncryptedDataLength() {

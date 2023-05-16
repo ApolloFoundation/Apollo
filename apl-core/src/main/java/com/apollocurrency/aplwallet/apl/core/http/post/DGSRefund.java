@@ -20,40 +20,42 @@
 
 package com.apollocurrency.aplwallet.apl.core.http.post;
 
+import com.apollocurrency.aplwallet.apl.core.chainid.BlockchainConfig;
+import com.apollocurrency.aplwallet.apl.core.entity.state.account.Account;
+import com.apollocurrency.aplwallet.apl.core.entity.state.dgs.DGSPurchase;
+import com.apollocurrency.aplwallet.apl.core.http.APITag;
+import com.apollocurrency.aplwallet.apl.core.http.HttpParameterParserUtil;
+import com.apollocurrency.aplwallet.apl.core.service.state.DGSService;
+import com.apollocurrency.aplwallet.apl.core.transaction.messages.Attachment;
+import com.apollocurrency.aplwallet.apl.core.transaction.messages.DGSRefundAttachment;
+import com.apollocurrency.aplwallet.apl.crypto.Convert;
+import com.apollocurrency.aplwallet.apl.util.exception.AplException;
+import org.json.simple.JSONStreamAware;
+
+import jakarta.enterprise.inject.Vetoed;
+import jakarta.enterprise.inject.spi.CDI;
+import jakarta.servlet.http.HttpServletRequest;
+
 import static com.apollocurrency.aplwallet.apl.core.http.JSONResponses.DUPLICATE_REFUND;
 import static com.apollocurrency.aplwallet.apl.core.http.JSONResponses.GOODS_NOT_DELIVERED;
 import static com.apollocurrency.aplwallet.apl.core.http.JSONResponses.INCORRECT_DGS_REFUND;
 import static com.apollocurrency.aplwallet.apl.core.http.JSONResponses.INCORRECT_PURCHASE;
 
-import com.apollocurrency.aplwallet.apl.core.account.Account;
-import com.apollocurrency.aplwallet.apl.core.chainid.BlockchainConfig;
-import com.apollocurrency.aplwallet.apl.core.dgs.DGSService;
-import com.apollocurrency.aplwallet.apl.core.dgs.model.DGSPurchase;
-import com.apollocurrency.aplwallet.apl.core.http.APITag;
-import com.apollocurrency.aplwallet.apl.core.http.ParameterParser;
-import com.apollocurrency.aplwallet.apl.core.transaction.messages.Attachment;
-import com.apollocurrency.aplwallet.apl.core.transaction.messages.DigitalGoodsRefund;
-import com.apollocurrency.aplwallet.apl.crypto.Convert;
-import com.apollocurrency.aplwallet.apl.util.AplException;
-import org.json.simple.JSONStreamAware;
-
-import javax.enterprise.inject.Vetoed;
-import javax.enterprise.inject.spi.CDI;
-import javax.servlet.http.HttpServletRequest;
-
 @Vetoed
-public final class DGSRefund extends CreateTransaction {
+public final class DGSRefund extends CreateTransactionHandler {
+
+    private DGSService service = CDI.current().select(DGSService.class).get();
 
     public DGSRefund() {
-        super(new APITag[] {APITag.DGS, APITag.CREATE_TRANSACTION},
+        super(new APITag[]{APITag.DGS, APITag.CREATE_TRANSACTION},
                 "purchase", "refundATM");
     }
-    private DGSService service = CDI.current().select(DGSService.class).get();
+
     @Override
     public JSONStreamAware processRequest(HttpServletRequest req) throws AplException {
 
-        Account sellerAccount = ParameterParser.getSenderAccount(req);
-        DGSPurchase purchase = ParameterParser.getPurchase(service, req);
+        Account sellerAccount = HttpParameterParserUtil.getSenderAccount(req);
+        DGSPurchase purchase = HttpParameterParserUtil.getPurchase(service, req);
         if (sellerAccount.getId() != purchase.getSellerId()) {
             return INCORRECT_PURCHASE;
         }
@@ -77,9 +79,9 @@ public final class DGSRefund extends CreateTransaction {
             return INCORRECT_DGS_REFUND;
         }
 
-        Account buyerAccount = Account.getAccount(purchase.getBuyerId());
+        Account buyerAccount = lookupAccountService().getAccount(purchase.getBuyerId());
 
-        Attachment attachment = new DigitalGoodsRefund(purchase.getId(), refundATM);
+        Attachment attachment = new DGSRefundAttachment(purchase.getId(), refundATM);
         return createTransaction(req, sellerAccount, buyerAccount.getId(), 0, attachment);
 
     }

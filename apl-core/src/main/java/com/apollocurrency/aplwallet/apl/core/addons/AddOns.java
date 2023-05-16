@@ -26,7 +26,7 @@ import com.apollocurrency.aplwallet.apl.core.http.AbstractAPIRequestHandler;
 import com.apollocurrency.aplwallet.apl.util.injectable.PropertiesHolder;
 import org.slf4j.Logger;
 
-import javax.enterprise.inject.spi.CDI;
+import jakarta.enterprise.inject.spi.CDI;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
@@ -38,15 +38,25 @@ public final class AddOns {
     private static final Logger LOG = getLogger(AddOns.class);
 
     // TODO: YL remove static instance later
-    private static PropertiesHolder propertiesHolder = CDI.current().select(PropertiesHolder.class).get();
+    private static PropertiesHolder propertiesHolder;
     private static List<AddOn> addOns = new ArrayList<>(0);
+
+    private AddOns() {
+    }
+
+    private static PropertiesHolder lookupPropertiesHolder() {
+        if (propertiesHolder == null) {
+            propertiesHolder = CDI.current().select(PropertiesHolder.class).get();
+        }
+        return propertiesHolder;
+    }
 
     public static void init() {
         List<AddOn> addOnsList = new ArrayList<>(10);
 
-        propertiesHolder.getStringListProperty("apl.addOns").forEach(addOn -> {
+        lookupPropertiesHolder().getStringListProperty("apl.addOns").forEach(addOn -> {
             try {
-                addOnsList.add((AddOn)Class.forName(addOn).newInstance());
+                addOnsList.add((AddOn) Class.forName(addOn).newInstance());
             } catch (ReflectiveOperationException e) {
                 LOG.error(e.getMessage(), e);
             }
@@ -61,10 +71,12 @@ public final class AddOns {
                 public void checkConnect(String host, int port) {
                     // Allow all connections
                 }
+
                 @Override
                 public void checkConnect(String host, int port, Object context) {
                     // Allow all connections
                 }
+
                 @Override
                 public Object getSecurityContext() {
                     return super.getSecurityContext();
@@ -91,7 +103,7 @@ public final class AddOns {
             if (requestHandler != null) {
                 if (!requestHandler.getAPITags().contains(APITag.ADDONS)) {
                     LOG.error("Add-on " + addOn.getClass().getName()
-                            + " attempted to register request handler which is not tagged as APITag.ADDONS, skipping");
+                        + " attempted to register request handler which is not tagged as APITag.ADDONS, skipping");
                     continue;
                 }
                 String requestType = addOn.getAPIRequestType();
@@ -108,7 +120,5 @@ public final class AddOns {
             }
         }
     }
-
-    private AddOns() {}
 
 }

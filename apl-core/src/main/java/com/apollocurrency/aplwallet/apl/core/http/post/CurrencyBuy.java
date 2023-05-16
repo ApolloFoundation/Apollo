@@ -20,19 +20,18 @@
 
 package com.apollocurrency.aplwallet.apl.core.http.post;
 
-import com.apollocurrency.aplwallet.apl.core.account.Account;
-import com.apollocurrency.aplwallet.apl.core.transaction.messages.Attachment;
-import com.apollocurrency.aplwallet.apl.core.monetary.Currency;
-import com.apollocurrency.aplwallet.apl.core.transaction.messages.MonetarySystemExchangeBuyAttachment;
+import com.apollocurrency.aplwallet.apl.core.entity.state.account.Account;
+import com.apollocurrency.aplwallet.apl.core.entity.state.currency.Currency;
 import com.apollocurrency.aplwallet.apl.core.http.APITag;
+import com.apollocurrency.aplwallet.apl.core.http.HttpParameterParserUtil;
 import com.apollocurrency.aplwallet.apl.core.http.get.GetExchanges;
-import com.apollocurrency.aplwallet.apl.core.http.JSONResponses;
-import com.apollocurrency.aplwallet.apl.core.http.ParameterParser;
-import com.apollocurrency.aplwallet.apl.util.AplException;
-import javax.enterprise.inject.Vetoed;
+import com.apollocurrency.aplwallet.apl.core.transaction.messages.Attachment;
+import com.apollocurrency.aplwallet.apl.core.transaction.messages.MonetarySystemExchangeBuyAttachment;
+import com.apollocurrency.aplwallet.apl.util.exception.AplException;
 import org.json.simple.JSONStreamAware;
 
-import javax.servlet.http.HttpServletRequest;
+import jakarta.enterprise.inject.Vetoed;
+import jakarta.servlet.http.HttpServletRequest;
 
 /**
  * Buy currency for APL
@@ -53,24 +52,20 @@ import javax.servlet.http.HttpServletRequest;
  * For every match between buyer and seller an exchange record is saved, exchange records can be retrieved using the {@link GetExchanges} API
  */
 @Vetoed
-public final class CurrencyBuy extends CreateTransaction {
+public final class CurrencyBuy extends CreateTransactionHandler {
     public CurrencyBuy() {
-        super(new APITag[] {APITag.MS, APITag.CREATE_TRANSACTION}, "currency", "rateATM", "units");
+        super(new APITag[]{APITag.MS, APITag.CREATE_TRANSACTION}, "currency", "rateATM", "units");
     }
 
     @Override
     public JSONStreamAware processRequest(HttpServletRequest req) throws AplException {
-        Currency currency = ParameterParser.getCurrency(req);
-        long rateATM = ParameterParser.getLong(req, "rateATM", 0, Long.MAX_VALUE, true);
-        long units = ParameterParser.getLong(req, "units", 0, Long.MAX_VALUE, true);
-        Account account = ParameterParser.getSenderAccount(req);
+        Currency currency = HttpParameterParserUtil.getCurrency(req);
+        long rateATM = HttpParameterParserUtil.getLong(req, "rateATM", 0, Long.MAX_VALUE, true);
+        long units = HttpParameterParserUtil.getLong(req, "units", 0, Long.MAX_VALUE, true);
+        Account account = HttpParameterParserUtil.getSenderAccount(req);
 
         Attachment attachment = new MonetarySystemExchangeBuyAttachment(currency.getId(), rateATM, units);
-        try {
-            return createTransaction(req, account, attachment);
-        } catch (AplException.InsufficientBalanceException e) {
-            return JSONResponses.NOT_ENOUGH_APL;
-        }
+        return createTransaction(req, account, attachment);
     }
 
 }

@@ -1,11 +1,20 @@
+/*
+ *  Copyright © 2018-2020 Apollo Foundation
+ */
+
 package com.apollocurrency.aplwallet.apl.exchange.dao;
 
-import com.apollocurrency.aplwallet.apl.core.db.cdi.transaction.JdbiHandleFactory;
-import com.apollocurrency.aplwallet.apl.core.db.cdi.transaction.JdbiTransactionalSqlObjectDaoProxyInvocationHandler;
+import com.apollocurrency.aplwallet.apl.core.dao.DbContainerBaseTest;
 import com.apollocurrency.aplwallet.apl.data.DexTestData;
-import com.apollocurrency.aplwallet.apl.exchange.model.DexTransaction;
+import com.apollocurrency.aplwallet.apl.dex.core.dao.DexTransactionDao;
+import com.apollocurrency.aplwallet.apl.dex.core.model.DexTransaction;
 import com.apollocurrency.aplwallet.apl.extension.DbExtension;
+import com.apollocurrency.aplwallet.apl.testutil.DbUtils;
+import com.apollocurrency.aplwallet.apl.util.cdi.transaction.JdbiTransactionalSqlObjectDaoProxyInvocationHandler;
+import lombok.extern.slf4j.Slf4j;
+import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.RegisterExtension;
 
@@ -13,20 +22,26 @@ import java.util.List;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 
-class DexTransactionDaoTest {
+@Slf4j
+
+@Tag("slow")
+class DexTransactionDaoTest extends DbContainerBaseTest {
+
     @RegisterExtension
-    DbExtension extension = new DbExtension();
+    static DbExtension extension = new DbExtension(mariaDBContainer);
     DexTransactionDao dao;
     DexTestData td;
 
     @BeforeEach
     void setUp() {
-        JdbiHandleFactory jdbiHandleFactory = new JdbiHandleFactory();
-        jdbiHandleFactory.setJdbi(extension.getDatabaseManager().getJdbi());
-        dao = JdbiTransactionalSqlObjectDaoProxyInvocationHandler.createProxy(jdbiHandleFactory, DexTransactionDao.class);
+        dao = JdbiTransactionalSqlObjectDaoProxyInvocationHandler.createProxy(DbUtils.createJdbiHandleFactory(extension.getDatabaseManager()), DexTransactionDao.class);
         td = new DexTestData();
     }
 
+    @AfterEach
+    void tearDown() {
+        extension.cleanAndPopulateDb();
+    }
 
     @Test
     void testGet() {

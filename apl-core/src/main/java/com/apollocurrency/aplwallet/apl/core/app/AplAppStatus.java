@@ -1,5 +1,5 @@
 /*
- * Copyright © 2018 Apollo Foundation
+ * Copyright © 2018-2021 Apollo Foundation
  */
 package com.apollocurrency.aplwallet.apl.core.app;
 
@@ -8,8 +8,8 @@ import com.apollocurrency.aplwallet.apl.util.StringUtils;
 import com.apollocurrency.aplwallet.apl.util.StringValidator;
 import org.slf4j.Logger;
 
-import javax.inject.Inject;
-import javax.inject.Singleton;
+import jakarta.inject.Inject;
+import jakarta.inject.Singleton;
 import java.text.DecimalFormat;
 import java.text.NumberFormat;
 import java.util.ArrayList;
@@ -46,10 +46,10 @@ public class AplAppStatus {
     /**
      * Create new long running task indicator and get handle to it
      *
-     * @param name Short name of the task
+     * @param name        Short name of the task
      * @param description Longer description of the task
-     * @param isCritical If task is critical it will be displayed on top of
-     * GUI, if not it will be just in list of backend tasks accessible by menu
+     * @param isCritical  If task is critical it will be displayed on top of
+     *                    GUI, if not it will be just in list of backend tasks accessible by menu
      * @return handle to newly created task indicator
      */
 
@@ -84,9 +84,9 @@ public class AplAppStatus {
     /**
      * Update status of long running task
      *
-     * @param taskId task handle
+     * @param taskId          task handle
      * @param percentComplete percent of task completion
-     * @param message optional message
+     * @param message         optional message
      * @return handle to the task
      */
     public synchronized String durableTaskUpdate(String taskId, Double percentComplete, String message) {
@@ -96,9 +96,9 @@ public class AplAppStatus {
     /**
      * Update status of long running task
      *
-     * @param taskId task handle
-     * @param percentComplete percent of task completion
-     * @param message optional message
+     * @param taskId           task handle
+     * @param percentComplete  percent of task completion
+     * @param message          optional message
      * @param keepPrevMessages how many previous messages to keep
      * @return handle to the task
      */
@@ -167,11 +167,11 @@ public class AplAppStatus {
     }
 
     public synchronized double durableTaskUpdate(String taskId, String message, double addPercents) {
-        double res=0.0;
+        double res = 0.0;
         durableTaskUpdate(taskId, null, message, -1, addPercents);
         DurableTaskInfo ti = tasks.get(taskId);
-        if(ti!=null){
-            res=ti.getPercentComplete();
+        if (ti != null) {
+            res = ti.getPercentComplete();
         }
         return res;
     }
@@ -179,7 +179,7 @@ public class AplAppStatus {
     /**
      * Indicate that long running task is paused
      *
-     * @param taskId task handle
+     * @param taskId  task handle
      * @param message optional message
      */
     public synchronized void durableTaskPaused(String taskId, String message) {
@@ -197,7 +197,7 @@ public class AplAppStatus {
     /**
      * Indicate that previously paused long running task is running again
      *
-     * @param taskId task handle
+     * @param taskId  task handle
      * @param message optional message
      */
     public synchronized void durableTaskContinue(String taskId, String message) {
@@ -215,10 +215,10 @@ public class AplAppStatus {
     /**
      * Indicate that long running task is finished
      *
-     * @param taskId task handle
+     * @param taskId      task handle
      * @param isCancelled if false task is finished normally. If true, task is
-     * cancelled
-     * @param message optional message
+     *                    cancelled
+     * @param message     optional message
      */
     public synchronized void durableTaskFinished(String taskId, boolean isCancelled, String message) {
         DurableTaskInfo info = tasks.get(taskId);
@@ -272,7 +272,7 @@ public class AplAppStatus {
 
     public synchronized Optional<DurableTaskInfo> findTaskByName(String taskName) {
         Objects.requireNonNull(taskName, "taskName is NULL");
-        for(DurableTaskInfo taskInfo: tasks.values()){
+        for (DurableTaskInfo taskInfo : tasks.values()) {
             if (taskInfo.getName() != null && !taskInfo.getName().isEmpty() && taskInfo.getName().contains(taskName)) {
                 return Optional.of(taskInfo);
             }
@@ -282,8 +282,8 @@ public class AplAppStatus {
 
     public double durableTaskUpdateAddPercents(String taskId, Double percentIncreaseValue) {
         Objects.requireNonNull(percentIncreaseValue, "percentComplete is NULL");
-        DurableTaskInfo info =  tasks.get(taskId);
-        if(info != null) {
+        DurableTaskInfo info = tasks.get(taskId);
+        if (info != null) {
             info.percentComplete += percentIncreaseValue;
             LOG.trace("Task '{}' new percent value = '{}'", taskId, formatter.format(info.percentComplete));
             return info.percentComplete;

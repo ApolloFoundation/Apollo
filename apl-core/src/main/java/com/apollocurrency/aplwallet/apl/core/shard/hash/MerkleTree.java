@@ -4,8 +4,6 @@
 
 package com.apollocurrency.aplwallet.apl.core.shard.hash;
 
-import org.apache.commons.collections4.list.TreeList;
-
 import java.security.InvalidParameterException;
 import java.security.MessageDigest;
 import java.util.ArrayList;
@@ -31,7 +29,6 @@ import java.util.stream.Collectors;
  *     This implementation guarantee that trees, which were created using same leaves but in different ways (only append, from dataList + append and
  *     only from dataList) will be equals and fully compatible
  * </p>
- *
  */
 public class MerkleTree {
     private List<Node> nodes;
@@ -39,15 +36,18 @@ public class MerkleTree {
 
     /**
      * Create empty tree
+     *
      * @param digest message digest for data hashing
      */
     public MerkleTree(MessageDigest digest) {
         this(digest, null);
     }
+
     /**
      * Build tree from the list of non-hashed data
+     *
      * @param dataList list of non-hashed data
-     * @param digest message digest for data hashing
+     * @param digest   message digest for data hashing
      */
     public MerkleTree(MessageDigest digest, List<byte[]> dataList) {
         Objects.requireNonNull(digest, "digest cannot be null");
@@ -58,6 +58,103 @@ public class MerkleTree {
         } else {
             this.nodes = new ArrayList<>();
         }
+    }
+
+    static boolean isPowerOfTwo(int number) {
+        return number > 0 && ((number & (number - 1)) == 0);
+    }
+
+    static int[][] getNodeIndexes(int size) {
+        if (size < 2) {
+            throw new IllegalArgumentException("Cannot find indexes for size: " + size);
+        }
+        if (!isPowerOfTwo(size)) {
+            throw new IllegalArgumentException("Size is not power of two: " + size);
+        }
+        int[][] res = new int[2][];
+        int[] left = new int[size / 2];
+        int[] right = new int[size / 2];
+        res[0] = left;
+        res[1] = right;
+        left[0] = 0;
+        right[0] = 1;
+        int indexCounter = 1;
+        int p = 1;
+        int prev = 1 << p;
+        int cur = 1 << p + 1;
+        while (cur <= size) {
+            int steps = (cur - prev) / 2;
+            int mid = prev + steps;
+
+            for (int i = 0; i < steps; i++) {
+                left[indexCounter] = prev + i;
+                right[indexCounter] = mid + i;
+                indexCounter++;
+            }
+
+            p++;
+            prev = 1 << p;
+            cur = 1 << p + 1;
+        }
+        return res;
+    }
+
+    static int[] orderNodeIndexes(int[] left, int[] right) {
+        Objects.requireNonNull(left, "left cannot be null");
+        Objects.requireNonNull(right, "right cannot be null");
+        if (left.length != right.length) {
+            throw new IllegalArgumentException("Branch size mismatch");
+        }
+        if (!isPowerOfTwo(left.length)) {
+            throw new IllegalArgumentException("Size of branch is not power of two");
+        }
+
+        int branchLength = left.length;
+        int[] ordered = new int[2 * branchLength];
+        int[] leftOrdered = orderNodes(left);
+        int[] rightOrdered = orderNodes(right);
+        System.arraycopy(leftOrdered, 0, ordered, 0, branchLength);
+        System.arraycopy(rightOrdered, 0, ordered, branchLength, branchLength);
+        return ordered;
+    }
+
+    static int[] orderNodes(int[] indexes) {
+        if (indexes.length <= 2) {
+            return indexes;
+        }
+        int[] res = new int[indexes.length];
+        List<Integer> list = new ArrayList<>();
+        list.add(indexes[0]);
+        list.add(indexes[1]);
+        int position = 1;
+        while (2 * position != indexes.length) {
+            position <<= 1;
+            int start = 1;
+            for (int i = position; i < 2 * position; i++) {
+                if (list.size() <= start) {
+                    list.add(indexes[i]);
+                } else {
+                    list.add(start, indexes[i]);
+                    start += 2;
+                }
+            }
+        }
+        for (int i = 0; i < indexes.length; i++) {
+            res[i] = list.get(i);
+        }
+        return res;
+    }
+
+    static int getParentIndex(int childIndex) {
+        return (childIndex - 1) / 2;
+    }
+
+    static int getLeftChildIndex(int parentIndex) {
+        return parentIndex * 2 + 1;
+    }
+
+    static int getRightChildIndex(int parentIndex) {
+        return parentIndex * 2 + 2;
     }
 
     private void buildTreeFromScratch(List<byte[]> dataList) {
@@ -147,10 +244,6 @@ public class MerkleTree {
         return bottomLevelNodes;
     }
 
-    static boolean isPowerOfTwo(int number) {
-        return number > 0 && ((number & (number - 1)) == 0);
-    }
-
     private int[] getOrderedLeavesIndexes(int size) {
         int[][] nodeIndexes = getNodeIndexes(size);
         return orderNodeIndexes(nodeIndexes[0], nodeIndexes[1]);
@@ -158,87 +251,6 @@ public class MerkleTree {
 
     private int nearestPowerOfTwo(int number) {
         return 1 << 32 - Integer.numberOfLeadingZeros(number) - 1;
-    }
-
-    static int[][] getNodeIndexes(int size) {
-        if (size < 2) {
-            throw new IllegalArgumentException("Cannot find indexes for size: " + size);
-        }
-        if (!isPowerOfTwo(size)) {
-            throw new IllegalArgumentException("Size is not power of two: " + size);
-        }
-        int[][] res = new int[2][];
-        int[] left = new int[size / 2];
-        int[] right = new int[size / 2];
-        res[0] = left;
-        res[1] = right;
-        left[0] = 0;
-        right[0] = 1;
-        int indexCounter = 1;
-        int p = 1;
-        int prev = 1 << p;
-        int cur = 1 << p + 1;
-        while (cur <= size) {
-            int steps = (cur - prev) / 2;
-            int mid = prev + steps;
-
-            for (int i = 0; i < steps; i++) {
-                left[indexCounter] = prev + i;
-                right[indexCounter] = mid + i;
-                indexCounter++;
-            }
-
-            p++;
-            prev = 1 << p;
-            cur = 1 << p + 1;
-        }
-        return res;
-    }
-
-    static int[] orderNodeIndexes(int[] left, int[] right) {
-        Objects.requireNonNull(left, "left cannot be null");
-        Objects.requireNonNull(right, "right cannot be null");
-        if (left.length != right.length) {
-            throw new IllegalArgumentException("Branch size mismatch");
-        }
-        if (!isPowerOfTwo(left.length)) {
-            throw new IllegalArgumentException("Size of branch is not power of two");
-        }
-
-        int branchLength = left.length;
-        int[] ordered = new int[2 * branchLength];
-        int[] leftOrdered = orderNodes(left);
-        int[] rightOrdered = orderNodes(right);
-        System.arraycopy(leftOrdered, 0, ordered, 0, branchLength);
-        System.arraycopy(rightOrdered, 0, ordered, branchLength, branchLength);
-        return ordered;
-    }
-
-    static int[] orderNodes(int[] indexes) {
-        if (indexes.length <= 2) {
-            return indexes;
-        }
-        int[] res = new int[indexes.length];
-        List<Integer> list = new TreeList<>();
-        list.add(indexes[0]);
-        list.add(indexes[1]);
-        int position = 1;
-        while (2 * position != indexes.length) {
-            position <<= 1;
-            int start = 1;
-            for (int i = position; i < 2 * position; i++) {
-                if (list.size() <= start) {
-                    list.add(indexes[i]);
-                } else {
-                    list.add(start, indexes[i]);
-                    start += 2;
-                }
-            }
-        }
-        for (int i = 0; i < indexes.length; i++) {
-            res[i] = list.get(i);
-        }
-        return res;
     }
 
     /**
@@ -273,6 +285,7 @@ public class MerkleTree {
     /**
      * <p>Add new leaf to the end of tree</p>
      * <p>This method guarantee, that no more than 'log2(numberOfLeaves) + 1' hash updates will be performed</p>
+     *
      * @param node leaf with hashed value
      */
     public void appendLeaf(Node node) {
@@ -319,20 +332,9 @@ public class MerkleTree {
         }
     }
 
-
-    static int getParentIndex(int childIndex) {
-        return (childIndex - 1) / 2;
-    }
-
-    static int getLeftChildIndex(int parentIndex) {
-        return parentIndex * 2 + 1;
-    }
-
-    static int getRightChildIndex(int parentIndex) {
-        return parentIndex * 2 + 2;
-    }
     /**
      * Add array of leaves to the end of tree
+     *
      * @param nodes array of leaves
      */
     public void appendLeaves(Node[] nodes) {
@@ -343,6 +345,7 @@ public class MerkleTree {
 
     /**
      * Add new non-hashed data to the end of tree
+     *
      * @param value non-hashed data to append
      */
     public void appendLeaf(byte[] value) {
@@ -351,6 +354,7 @@ public class MerkleTree {
 
     /**
      * Add array of non-hashed elements to the end of tree
+     *
      * @param values array which consist of non-hashed data elements
      */
     public void appendLeaves(byte[][] values) {
@@ -361,6 +365,7 @@ public class MerkleTree {
 
     /**
      * Add array of hashed elements to the end of tree
+     *
      * @param hashes array which consist of hashed data elements
      */
     public void appendHashedLeaves(byte[][] hashes) {

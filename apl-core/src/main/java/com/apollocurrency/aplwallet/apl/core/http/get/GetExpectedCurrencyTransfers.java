@@ -20,22 +20,22 @@
 
 package com.apollocurrency.aplwallet.apl.core.http.get;
 
-import com.apollocurrency.aplwallet.apl.core.app.Transaction;
+import com.apollocurrency.aplwallet.apl.core.model.Transaction;
 import com.apollocurrency.aplwallet.apl.core.http.APITag;
 import com.apollocurrency.aplwallet.apl.core.http.AbstractAPIRequestHandler;
+import com.apollocurrency.aplwallet.apl.core.http.HttpParameterParserUtil;
 import com.apollocurrency.aplwallet.apl.core.http.JSONData;
-import com.apollocurrency.aplwallet.apl.core.http.ParameterParser;
-import com.apollocurrency.aplwallet.apl.core.monetary.MonetarySystem;
-import com.apollocurrency.aplwallet.apl.core.transaction.messages.MonetarySystemCurrencyTransfer;
-import com.apollocurrency.aplwallet.apl.util.AplException;
+import com.apollocurrency.aplwallet.apl.core.transaction.TransactionTypes;
+import com.apollocurrency.aplwallet.apl.core.transaction.messages.MSCurrencyTransferAttachment;
 import com.apollocurrency.aplwallet.apl.util.Filter;
+import com.apollocurrency.aplwallet.apl.util.exception.AplException;
 import org.json.simple.JSONArray;
 import org.json.simple.JSONObject;
 import org.json.simple.JSONStreamAware;
 
+import jakarta.enterprise.inject.Vetoed;
+import jakarta.servlet.http.HttpServletRequest;
 import java.util.List;
-import javax.servlet.http.HttpServletRequest;
-import javax.enterprise.inject.Vetoed;
 
 @Vetoed
 public final class GetExpectedCurrencyTransfers extends AbstractAPIRequestHandler {
@@ -43,21 +43,22 @@ public final class GetExpectedCurrencyTransfers extends AbstractAPIRequestHandle
     public GetExpectedCurrencyTransfers() {
         super(new APITag[]{APITag.MS}, "currency", "account", "includeCurrencyInfo");
     }
+
     @Override
     public JSONStreamAware processRequest(HttpServletRequest req) throws AplException {
 
-        long currencyId = ParameterParser.getUnsignedLong(req, "currency", false);
-        long accountId = ParameterParser.getAccountId(req, "account", false);
+        long currencyId = HttpParameterParserUtil.getUnsignedLong(req, "currency", false);
+        long accountId = HttpParameterParserUtil.getAccountId(req, "account", false);
         boolean includeCurrencyInfo = "true".equalsIgnoreCase(req.getParameter("includeCurrencyInfo"));
 
         Filter<Transaction> filter = transaction -> {
-            if (transaction.getType() != MonetarySystem.CURRENCY_TRANSFER) {
+            if (transaction.getType().getSpec() != TransactionTypes.TransactionTypeSpec.MS_CURRENCY_TRANSFER) {
                 return false;
             }
             if (accountId != 0 && transaction.getSenderId() != accountId && transaction.getRecipientId() != accountId) {
                 return false;
             }
-            MonetarySystemCurrencyTransfer attachment = (MonetarySystemCurrencyTransfer)transaction.getAttachment();
+            MSCurrencyTransferAttachment attachment = (MSCurrencyTransferAttachment) transaction.getAttachment();
             return currencyId == 0 || attachment.getCurrencyId() == currencyId;
         };
 

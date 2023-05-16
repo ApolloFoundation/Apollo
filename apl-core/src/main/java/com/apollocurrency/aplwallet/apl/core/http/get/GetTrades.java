@@ -20,72 +20,64 @@
 
 package com.apollocurrency.aplwallet.apl.core.http.get;
 
+import com.apollocurrency.aplwallet.apl.core.entity.state.Trade;
 import com.apollocurrency.aplwallet.apl.core.http.APITag;
 import com.apollocurrency.aplwallet.apl.core.http.AbstractAPIRequestHandler;
+import com.apollocurrency.aplwallet.apl.core.http.HttpParameterParserUtil;
 import com.apollocurrency.aplwallet.apl.core.http.JSONData;
 import com.apollocurrency.aplwallet.apl.core.http.JSONResponses;
-import com.apollocurrency.aplwallet.apl.core.http.ParameterParser;
-import com.apollocurrency.aplwallet.apl.util.AplException;
-import com.apollocurrency.aplwallet.apl.core.app.Trade;
-import com.apollocurrency.aplwallet.apl.core.db.DbIterator;
-import com.apollocurrency.aplwallet.apl.core.db.DbUtils;
-import javax.enterprise.inject.Vetoed;
+import com.apollocurrency.aplwallet.apl.core.service.state.TradeService;
+import com.apollocurrency.aplwallet.apl.util.exception.AplException;
 import org.json.simple.JSONArray;
 import org.json.simple.JSONObject;
 import org.json.simple.JSONStreamAware;
 
-import javax.servlet.http.HttpServletRequest;
+import jakarta.enterprise.inject.Vetoed;
+import jakarta.enterprise.inject.spi.CDI;
+import jakarta.servlet.http.HttpServletRequest;
+import java.util.stream.Stream;
+
+import static java.util.stream.Collectors.toCollection;
 
 @Vetoed
 public final class GetTrades extends AbstractAPIRequestHandler {
+    private final TradeService tradeService = CDI.current().select(TradeService.class).get();
 
     public GetTrades() {
-        super(new APITag[] {APITag.AE}, "asset", "account", "firstIndex", "lastIndex", "timestamp", "includeAssetInfo");
+        super(new APITag[]{APITag.AE}, "asset", "account", "firstIndex", "lastIndex", "timestamp", "includeAssetInfo");
     }
 
     @Override
     public JSONStreamAware processRequest(HttpServletRequest req) throws AplException {
 
-        long assetId = ParameterParser.getUnsignedLong(req, "asset", false);
-        long accountId = ParameterParser.getAccountId(req, false);
+        long assetId = HttpParameterParserUtil.getUnsignedLong(req, "asset", false);
+        long accountId = HttpParameterParserUtil.getAccountId(req, false);
         if (assetId == 0 && accountId == 0) {
             return JSONResponses.MISSING_ASSET_ACCOUNT;
         }
 
-        int timestamp = ParameterParser.getTimestamp(req);
-        int firstIndex = ParameterParser.getFirstIndex(req);
-        int lastIndex = ParameterParser.getLastIndex(req);
+        int timestamp = HttpParameterParserUtil.getTimestamp(req);
+        int firstIndex = HttpParameterParserUtil.getFirstIndex(req);
+        int lastIndex = HttpParameterParserUtil.getLastIndex(req);
         boolean includeAssetInfo = "true".equalsIgnoreCase(req.getParameter("includeAssetInfo"));
 
         JSONObject response = new JSONObject();
         JSONArray tradesData = new JSONArray();
-        DbIterator<Trade> trades = null;
-        try {
-            if (accountId == 0) {
-                trades = Trade.getAssetTrades(assetId, firstIndex, lastIndex);
-            } else if (assetId == 0) {
-                trades = Trade.getAccountTrades(accountId, firstIndex, lastIndex);
-            } else {
-                trades = Trade.getAccountAssetTrades(accountId, assetId, firstIndex, lastIndex);
-            }
-            while (trades.hasNext()) {
-                Trade trade = trades.next();
-                if (trade.getTimestamp() < timestamp) {
-                    break;
-                }
-                tradesData.add(JSONData.trade(trade, includeAssetInfo));
-            }
-        } finally {
-            DbUtils.close(trades);
+        Stream<Trade> trades = null;
+        if (accountId == 0) {
+            trades = tradeService.getAssetTrades(assetId, firstIndex, lastIndex);
+        } else if (assetId == 0) {
+            trades = tradeService.getAccountTrades(accountId, firstIndex, lastIndex);
+        } else {
+            trades = tradeService.getAccountAssetTrades(accountId, assetId, firstIndex, lastIndex);
         }
+        trades
+            .takeWhile(t -> t.getTimestamp() >= timestamp)
+            .map(t -> JSONData.trade(t, includeAssetInfo))
+            .collect(toCollection(JSONArray::new));
+
         response.put("trades", tradesData);
 
         return response;
     }
-
-//    @Override
-//    protected boolean startDbTransaction() {
-//        return true;
-//    }
-
 }

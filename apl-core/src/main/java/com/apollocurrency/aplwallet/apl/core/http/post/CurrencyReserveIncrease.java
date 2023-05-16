@@ -15,25 +15,26 @@
  */
 
 /*
- * Copyright © 2018-2019 Apollo Foundation
+ * Copyright © 2018-2021 Apollo Foundation
  */
 
 package com.apollocurrency.aplwallet.apl.core.http.post;
 
-import com.apollocurrency.aplwallet.apl.core.account.Account;
-import com.apollocurrency.aplwallet.apl.core.monetary.Currency;
-import com.apollocurrency.aplwallet.apl.core.transaction.messages.Attachment;
-import com.apollocurrency.aplwallet.apl.core.transaction.messages.MonetarySystemReserveIncrease;
 import com.apollocurrency.aplwallet.apl.core.chainid.BlockchainConfig;
+import com.apollocurrency.aplwallet.apl.core.entity.state.account.Account;
+import com.apollocurrency.aplwallet.apl.core.entity.state.currency.Currency;
+import com.apollocurrency.aplwallet.apl.core.entity.state.currency.CurrencyType;
 import com.apollocurrency.aplwallet.apl.core.http.APITag;
-import com.apollocurrency.aplwallet.apl.core.http.ParameterParser;
+import com.apollocurrency.aplwallet.apl.core.http.HttpParameterParserUtil;
 import com.apollocurrency.aplwallet.apl.core.http.get.GetCurrencyFounders;
-import com.apollocurrency.aplwallet.apl.util.AplException;
-import javax.enterprise.inject.Vetoed;
+import com.apollocurrency.aplwallet.apl.core.transaction.messages.Attachment;
+import com.apollocurrency.aplwallet.apl.core.transaction.messages.MonetarySystemReserveIncreaseAttachment;
+import com.apollocurrency.aplwallet.apl.util.exception.AplException;
 import org.json.simple.JSONStreamAware;
 
-import javax.enterprise.inject.spi.CDI;
-import javax.servlet.http.HttpServletRequest;
+import jakarta.enterprise.inject.Vetoed;
+import jakarta.enterprise.inject.spi.CDI;
+import jakarta.servlet.http.HttpServletRequest;
 
 /**
  * Increase the value of currency units by paying APL
@@ -47,26 +48,26 @@ import javax.servlet.http.HttpServletRequest;
  * <p>
  * Constraints
  * <p>
- * This API is allowed only when the currency is {@link com.apollocurrency.aplwallet.apl.CurrencyType#RESERVABLE} and is not yet active.
+ * This API is allowed only when the currency is {@link CurrencyType#RESERVABLE} and is not yet active.
  * <p>
  * The sender account is registered as a founder. Once the currency becomes active
  * the total supply is distributed between the founders based on their proportional investment<br>
  * The list of founders and their ATM investment can be obtained using the {@link GetCurrencyFounders} API.
  */
 @Vetoed
-public final class CurrencyReserveIncrease extends CreateTransaction {
+public final class CurrencyReserveIncrease extends CreateTransactionHandler {
 
     public CurrencyReserveIncrease() {
-        super(new APITag[] {APITag.MS, APITag.CREATE_TRANSACTION}, "currency", "amountPerUnitATM");
+        super(new APITag[]{APITag.MS, APITag.CREATE_TRANSACTION}, "currency", "amountPerUnitATM");
     }
 
     @Override
     public JSONStreamAware processRequest(HttpServletRequest req) throws AplException {
-        Currency currency = ParameterParser.getCurrency(req);
-        long amountPerUnitATM = ParameterParser.getLong(req, "amountPerUnitATM", 1L,
+        Currency currency = HttpParameterParserUtil.getCurrency(req);
+        long amountPerUnitATM = HttpParameterParserUtil.getLong(req, "amountPerUnitATM", 1L,
                 CDI.current().select(BlockchainConfig.class).get().getCurrentConfig().getMaxBalanceATM(), true);
-        Account account = ParameterParser.getSenderAccount(req);
-        Attachment attachment = new MonetarySystemReserveIncrease(currency.getId(), amountPerUnitATM);
+        Account account = HttpParameterParserUtil.getSenderAccount(req);
+        Attachment attachment = new MonetarySystemReserveIncreaseAttachment(currency.getId(), amountPerUnitATM);
         return createTransaction(req, account, attachment);
 
     }

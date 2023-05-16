@@ -20,27 +20,27 @@
 
 package com.apollocurrency.aplwallet.apl.core.http.post;
 
-import com.apollocurrency.aplwallet.apl.core.account.Account;
+import com.apollocurrency.aplwallet.apl.core.entity.state.account.Account;
+import com.apollocurrency.aplwallet.apl.core.http.APITag;
+import com.apollocurrency.aplwallet.apl.core.http.HttpParameterParserUtil;
 import com.apollocurrency.aplwallet.apl.core.transaction.messages.Attachment;
 import com.apollocurrency.aplwallet.apl.core.transaction.messages.MessagingAccountInfo;
-import com.apollocurrency.aplwallet.apl.util.Constants;
-import com.apollocurrency.aplwallet.apl.core.http.APITag;
-import com.apollocurrency.aplwallet.apl.core.http.ParameterParser;
-import com.apollocurrency.aplwallet.apl.util.AplException;
 import com.apollocurrency.aplwallet.apl.crypto.Convert;
+import com.apollocurrency.aplwallet.apl.util.Constants;
+import com.apollocurrency.aplwallet.apl.util.exception.AplException;
 import org.json.simple.JSONStreamAware;
 
-import javax.servlet.http.HttpServletRequest;
+import jakarta.enterprise.inject.Vetoed;
+import jakarta.servlet.http.HttpServletRequest;
 
 import static com.apollocurrency.aplwallet.apl.core.http.JSONResponses.INCORRECT_ACCOUNT_DESCRIPTION_LENGTH;
 import static com.apollocurrency.aplwallet.apl.core.http.JSONResponses.INCORRECT_ACCOUNT_NAME_LENGTH;
-import javax.enterprise.inject.Vetoed;
 
 @Vetoed
-public final class SetAccountInfo extends CreateTransaction {
+public final class SetAccountInfo extends CreateTransactionHandler {
 
     public SetAccountInfo() {
-        super(new APITag[] {APITag.ACCOUNTS, APITag.CREATE_TRANSACTION}, "name", "description");
+        super(new APITag[]{APITag.ACCOUNTS, APITag.CREATE_TRANSACTION}, "name", "description");
     }
 
     @Override
@@ -57,7 +57,7 @@ public final class SetAccountInfo extends CreateTransaction {
             return INCORRECT_ACCOUNT_DESCRIPTION_LENGTH;
         }
 
-        Account account = ParameterParser.getSenderAccount(req);
+        Account account = HttpParameterParserUtil.getSenderAccount(req);
         Attachment attachment = new MessagingAccountInfo(name, description);
         return createTransaction(req, account, attachment);
 

@@ -20,46 +20,43 @@
 
 package com.apollocurrency.aplwallet.apl.core.http.get;
 
-import com.apollocurrency.aplwallet.apl.core.app.Transaction;
-import com.apollocurrency.aplwallet.apl.core.db.DbIterator;
+import com.apollocurrency.aplwallet.apl.core.model.Transaction;
 import com.apollocurrency.aplwallet.apl.core.http.APITag;
 import com.apollocurrency.aplwallet.apl.core.http.AbstractAPIRequestHandler;
+import com.apollocurrency.aplwallet.apl.core.http.HttpParameterParserUtil;
 import com.apollocurrency.aplwallet.apl.core.http.JSONData;
-import com.apollocurrency.aplwallet.apl.core.http.ParameterParser;
-import com.apollocurrency.aplwallet.apl.core.phasing.PhasingPollService;
-import com.apollocurrency.aplwallet.apl.util.AplException;
+import com.apollocurrency.aplwallet.apl.core.service.state.PhasingPollService;
+import com.apollocurrency.aplwallet.apl.util.exception.AplException;
 import org.json.simple.JSONArray;
 import org.json.simple.JSONObject;
 import org.json.simple.JSONStreamAware;
 
-import javax.enterprise.inject.Vetoed;
-import javax.enterprise.inject.spi.CDI;
-import javax.servlet.http.HttpServletRequest;
+import jakarta.enterprise.inject.Vetoed;
+import jakarta.enterprise.inject.spi.CDI;
+import jakarta.servlet.http.HttpServletRequest;
+import java.util.List;
 
 @Vetoed
 public class GetAccountPhasedTransactions extends AbstractAPIRequestHandler {
 
+    private static PhasingPollService phasingPollService = CDI.current().select(PhasingPollService.class).get();
+
     public GetAccountPhasedTransactions() {
         super(new APITag[]{APITag.ACCOUNTS, APITag.PHASING},
-                "account", "firstIndex", "lastIndex");
+            "account", "firstIndex", "lastIndex");
     }
-    private static PhasingPollService phasingPollService = CDI.current().select(PhasingPollService.class).get();
+
     @Override
     public JSONStreamAware processRequest(HttpServletRequest req) throws AplException {
-        long accountId = ParameterParser.getAccountId(req, true);
+        long accountId = HttpParameterParserUtil.getAccountId(req, true);
 
-        int firstIndex = ParameterParser.getFirstIndex(req);
-        int lastIndex = ParameterParser.getLastIndex(req);
+        int firstIndex = HttpParameterParserUtil.getFirstIndex(req);
+        int lastIndex = HttpParameterParserUtil.getLastIndex(req);
 
         JSONArray transactions = new JSONArray();
 
-        try (DbIterator<? extends Transaction> iterator =
-                phasingPollService.getAccountPhasedTransactions(accountId, firstIndex, lastIndex)) {
-            while (iterator.hasNext()) {
-                Transaction transaction = iterator.next();
-                transactions.add(JSONData.transaction(false, transaction));
-            }
-        }
+        List<Transaction> accountPhasedTransactions = phasingPollService.getAccountPhasedTransactions(accountId, firstIndex, lastIndex);
+        accountPhasedTransactions.forEach(e -> transactions.add(JSONData.transaction(false, e)));
 
         JSONObject response = new JSONObject();
         response.put("transactions", transactions);

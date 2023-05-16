@@ -14,8 +14,9 @@ import lombok.Setter;
 @JsonInclude(JsonInclude.Include.NON_NULL)
 @JsonIgnoreProperties(ignoreUnknown = true)
 public class ECBlockDTO extends BaseDTO {
-    private Long ecBlockHeight;
-    private Long requestProcessingTime;
+    private Long id;
     private String ecBlockId;
-    private Long timestamp;
+    private Integer height;
+    private Integer ecBlockHeight;
+    private Integer timestamp;
 }

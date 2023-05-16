@@ -23,23 +23,23 @@ package com.apollocurrency.aplwallet.apl.core.http.get;
 import com.apollocurrency.aplwallet.apl.core.http.APITag;
 import com.apollocurrency.aplwallet.apl.core.http.AbstractAPIRequestHandler;
 import com.apollocurrency.aplwallet.apl.crypto.Convert;
-import javax.enterprise.inject.Vetoed;
 import org.json.simple.JSONObject;
 import org.json.simple.JSONStreamAware;
 
-import javax.servlet.http.HttpServletRequest;
+import jakarta.enterprise.inject.Vetoed;
+import jakarta.servlet.http.HttpServletRequest;
 
 @Vetoed
 public final class FullHashToId extends AbstractAPIRequestHandler {
 
     public FullHashToId() {
-        super(new APITag[] {APITag.UTILS}, "fullHash");
+        super(new APITag[]{APITag.UTILS}, "fullHash");
     }
 
     @Override
     public JSONStreamAware processRequest(HttpServletRequest req) {
         JSONObject response = new JSONObject();
-        long longId = Convert.fullHashToId(Convert.parseHexString(req.getParameter("fullHash")));
+        long longId = Convert.transactionFullHashToId(Convert.parseHexString(req.getParameter("fullHash")));
         response.put("longId", String.valueOf(longId));
         response.put("stringId", Long.toUnsignedString(longId));
         return response;

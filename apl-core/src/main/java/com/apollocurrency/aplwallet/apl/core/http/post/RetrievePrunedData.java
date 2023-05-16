@@ -23,11 +23,11 @@ package com.apollocurrency.aplwallet.apl.core.http.post;
 import com.apollocurrency.aplwallet.apl.core.http.APITag;
 import com.apollocurrency.aplwallet.apl.core.http.AbstractAPIRequestHandler;
 import com.apollocurrency.aplwallet.apl.core.http.JSONData;
-import javax.enterprise.inject.Vetoed;
 import org.json.simple.JSONObject;
 import org.json.simple.JSONStreamAware;
 
-import javax.servlet.http.HttpServletRequest;
+import jakarta.enterprise.inject.Vetoed;
+import jakarta.servlet.http.HttpServletRequest;
 
 /**
  * <p>RetrievePrunedData will schedule a background task to retrieve data which
@@ -41,14 +41,14 @@ import javax.servlet.http.HttpServletRequest;
 public class RetrievePrunedData extends AbstractAPIRequestHandler {
 
     public RetrievePrunedData() {
-        super(new APITag[] {APITag.DEBUG});
+        super(new APITag[]{APITag.DEBUG});
     }
 
     @Override
     public JSONStreamAware processRequest(HttpServletRequest req) {
         JSONObject response = new JSONObject();
         try {
-            int count = lookupBlockchainProcessor().restorePrunedData();
+            int count = prunableRestorationService.restorePrunedData();
             response.put("done", true);
             response.put("numberOfPrunedData", count);
         } catch (RuntimeException e) {

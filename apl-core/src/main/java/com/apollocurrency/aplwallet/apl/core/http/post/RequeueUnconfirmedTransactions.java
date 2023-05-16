@@ -23,24 +23,28 @@ package com.apollocurrency.aplwallet.apl.core.http.post;
 import com.apollocurrency.aplwallet.apl.core.http.APITag;
 import com.apollocurrency.aplwallet.apl.core.http.AbstractAPIRequestHandler;
 import com.apollocurrency.aplwallet.apl.core.http.JSONData;
-import javax.enterprise.inject.Vetoed;
 import org.json.simple.JSONObject;
 import org.json.simple.JSONStreamAware;
 
-import javax.servlet.http.HttpServletRequest;
+import jakarta.enterprise.inject.Vetoed;
+import jakarta.servlet.http.HttpServletRequest;
 
+/**
+ * Do nothing. 'Requeue' operation is not available for new mempool impl
+ */
 @Vetoed
+@Deprecated
 public final class RequeueUnconfirmedTransactions extends AbstractAPIRequestHandler {
 
     public RequeueUnconfirmedTransactions() {
-        super(new APITag[] {APITag.DEBUG});
+        super(new APITag[]{APITag.DEBUG});
     }
 
     @Override
     public JSONStreamAware processRequest(HttpServletRequest req) {
         JSONObject response = new JSONObject();
         try {
-            lookupTransactionProcessor().requeueAllUnconfirmedTransactions();
+//            lookupTransactionProcessor().requeueAllUnconfirmedTransactions();
             response.put("done", true);
         } catch (RuntimeException e) {
             JSONData.putException(response, e);

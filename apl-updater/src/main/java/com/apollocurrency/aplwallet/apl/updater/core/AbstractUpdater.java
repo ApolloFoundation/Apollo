@@ -4,9 +4,7 @@
 
 package com.apollocurrency.aplwallet.apl.updater.core;
 
-import static org.slf4j.LoggerFactory.getLogger;
-
-import com.apollocurrency.aplwallet.apl.core.transaction.messages.UpdateAttachment;
+import com.apollocurrency.aplwallet.apl.core.transaction.messages.update.UpdateAttachment;
 import com.apollocurrency.aplwallet.apl.udpater.intfce.UpdateData;
 import com.apollocurrency.aplwallet.apl.udpater.intfce.UpdateInfo;
 import com.apollocurrency.aplwallet.apl.udpater.intfce.UpdaterMediator;
@@ -16,17 +14,19 @@ import com.apollocurrency.aplwallet.apl.updater.pdu.PlatformDependentUpdater;
 import com.apollocurrency.aplwallet.apl.updater.pdu.PlatformDependentUpdaterFactory;
 import com.apollocurrency.aplwallet.apl.updater.pdu.PlatformDependentUpdaterFactoryImpl;
 import com.apollocurrency.aplwallet.apl.updater.service.UpdaterService;
-import com.apollocurrency.aplwallet.apl.util.Platform;
+import com.apollocurrency.aplwallet.apl.util.env.OS;
 import org.slf4j.Logger;
 
 import java.io.IOException;
 import java.nio.file.Path;
 import java.util.concurrent.TimeUnit;
 
+import static org.slf4j.LoggerFactory.getLogger;
+
 public abstract class AbstractUpdater implements Updater {
     private static final Logger LOG = getLogger(AbstractUpdater.class);
-    protected UpdateData updateData;
     protected final UpdateInfo updateInfo;
+    protected UpdateData updateData;
     protected UpdaterMediator updaterMediator;
     protected UpdaterService updaterService;
     protected int blocksWait;
@@ -85,11 +85,10 @@ public abstract class AbstractUpdater implements Updater {
             if (updaterService.verifyJarSignature(UpdaterConstants.CERTIFICATE_DIRECTORY, path)) {
                 try {
                     Path unpackedDirPath = updaterService.unpack(path);
-                    PlatformDependentUpdater pdu = pduFactory.createInstance(Platform.current(), updateInfo);
+                    PlatformDependentUpdater pdu = pduFactory.createInstance(OS.current(), updateInfo);
                     pdu.start(unpackedDirPath);
                     return true;
-                }
-                catch (IOException e) {
+                } catch (IOException e) {
                     LOG.error("Cannot unpack file: " + path.toString());
                 }
             } else {
@@ -108,8 +107,7 @@ public abstract class AbstractUpdater implements Updater {
                 TimeUnit.SECONDS.sleep(1);
                 timeSpent++;
                 currentHeight = updaterMediator.getBlockchainHeight();
-            }
-            catch (InterruptedException e) {
+            } catch (InterruptedException e) {
                 LOG.error(e.getMessage(), e);
             }
         }

@@ -1,12 +1,12 @@
 package com.apollocurrency.aplwallet.apl.exchange.service;
 
-import com.apollocurrency.aplwallet.apl.core.db.cdi.Transactional;
+import com.apollocurrency.aplwallet.apl.core.model.dex.DexOrder;
+import com.apollocurrency.aplwallet.apl.dex.core.model.DexOrderDBMatchingRequest;
 import com.apollocurrency.aplwallet.apl.exchange.dao.DexOrderDao;
-import com.apollocurrency.aplwallet.apl.exchange.model.DexOrder;
-import com.apollocurrency.aplwallet.apl.exchange.model.DexOrderDBMatchingRequest;
+import com.apollocurrency.aplwallet.apl.util.cdi.Transactional;
 
-import javax.inject.Inject;
-import javax.inject.Singleton;
+import jakarta.inject.Inject;
+import jakarta.inject.Singleton;
 import java.util.List;
 
 @Singleton

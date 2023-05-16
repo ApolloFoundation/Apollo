@@ -4,19 +4,18 @@
 
 package com.apollocurrency.aplwallet.apl.exchange.service;
 
-import com.apollocurrency.aplwallet.apl.exchange.model.DexOrder;
+import com.apollocurrency.aplwallet.apl.core.model.dex.DexOrder;
 
 /**
- *
  * @author Serhiy Lymar
  */
 public interface IDexMatcherInterface {
-     /** 
+    /**
      * Start transport interaction service
      */
-     void initialize();
-   
-    /** 
+    void initialize();
+
+    /**
      * Stop transport interaction service
      */
     void deinitialize();

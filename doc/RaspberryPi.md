@@ -1,12 +1,12 @@
 == How to run Apollo node on Raspberry PI 2/3
 
-Yes, it is possible and it is easy. First, you need Java 11 JRE or JDK installed on your Raspberry PI.
+Yes, it is possible and it is easy. First, you need Java 17 JRE or JDK installed on your Raspberry PI.
 
 At the time Raspbian repositories have JDK 9 only so JDK 11  needs to be download from somewhere.
 
 One of possible JKDs for Pi is Zulu from https://www.azul.com/downloads/zulu-embedded/
 
-You need to download Java 11 Arm 32bit JDK on Linux (for Armv8/v7/v6 Hard Float ABI)
+You need to download Java 17 Arm 32bit JDK on Linux (for Armv8/v7/v6 Hard Float ABI)
 It is tar.gz archieve so you have to untar it in some directory, e.g. /usr/local:
 
 cd /usr/local

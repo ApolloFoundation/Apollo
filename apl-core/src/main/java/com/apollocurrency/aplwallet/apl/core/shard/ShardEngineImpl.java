@@ -1,28 +1,24 @@
 /*
- * Copyright © 2018-2019 Apollo Foundation
+ * Copyright © 2018-2022 Apollo Foundation
  */
 
 package com.apollocurrency.aplwallet.apl.core.shard;
 
 import com.apollocurrency.aplwallet.api.dto.DurableTaskInfo;
 import com.apollocurrency.aplwallet.apl.core.app.AplAppStatus;
-import com.apollocurrency.aplwallet.apl.core.app.TrimService;
-import com.apollocurrency.aplwallet.apl.core.db.AplDbVersion;
+import com.apollocurrency.aplwallet.apl.core.dao.appdata.ShardDao;
+import com.apollocurrency.aplwallet.apl.core.dao.appdata.ShardRecoveryDao;
+import com.apollocurrency.aplwallet.apl.core.dao.appdata.ShardRecoveryDaoJdbc;
+import com.apollocurrency.aplwallet.apl.core.dao.state.derived.DerivedTableInterface;
+import com.apollocurrency.aplwallet.apl.core.dao.state.derived.MinMaxValue;
+import com.apollocurrency.aplwallet.apl.core.dao.state.derived.PrunableDbTable;
 import com.apollocurrency.aplwallet.apl.core.db.DatabaseManager;
-import com.apollocurrency.aplwallet.apl.core.db.DbVersion;
-import com.apollocurrency.aplwallet.apl.core.db.DerivedTablesRegistry;
-import com.apollocurrency.aplwallet.apl.core.db.ShardAddConstraintsSchemaVersion;
-import com.apollocurrency.aplwallet.apl.core.db.ShardDataSourceCreateHelper;
-import com.apollocurrency.aplwallet.apl.core.db.ShardRecoveryDaoJdbc;
-import com.apollocurrency.aplwallet.apl.core.db.TransactionalDataSource;
-import com.apollocurrency.aplwallet.apl.core.db.cdi.Transactional;
-import com.apollocurrency.aplwallet.apl.core.db.dao.ShardDao;
-import com.apollocurrency.aplwallet.apl.core.db.dao.ShardRecoveryDao;
-import com.apollocurrency.aplwallet.apl.core.db.dao.model.Shard;
-import com.apollocurrency.aplwallet.apl.core.db.dao.model.ShardRecovery;
-import com.apollocurrency.aplwallet.apl.core.db.dao.model.ShardState;
-import com.apollocurrency.aplwallet.apl.core.db.derived.DerivedTableInterface;
-import com.apollocurrency.aplwallet.apl.core.db.derived.PrunableDbTable;
+import com.apollocurrency.aplwallet.apl.core.entity.appdata.Shard;
+import com.apollocurrency.aplwallet.apl.core.entity.appdata.ShardRecovery;
+import com.apollocurrency.aplwallet.apl.core.entity.appdata.ShardState;
+import com.apollocurrency.aplwallet.apl.core.entity.state.derived.DerivedEntity;
+import com.apollocurrency.aplwallet.apl.core.service.appdata.TrimService;
+import com.apollocurrency.aplwallet.apl.core.service.state.DerivedTablesRegistry;
 import com.apollocurrency.aplwallet.apl.core.shard.commands.CommandParamInfo;
 import com.apollocurrency.aplwallet.apl.core.shard.helper.AbstractHelper;
 import com.apollocurrency.aplwallet.apl.core.shard.helper.BatchedPaginationOperation;
@@ -35,20 +31,24 @@ import com.apollocurrency.aplwallet.apl.core.shard.model.ExcludeInfo;
 import com.apollocurrency.aplwallet.apl.core.shard.model.PrevBlockData;
 import com.apollocurrency.aplwallet.apl.core.shard.model.TableInfo;
 import com.apollocurrency.aplwallet.apl.crypto.Convert;
+import com.apollocurrency.aplwallet.apl.db.updater.AplDBUpdater;
+import com.apollocurrency.aplwallet.apl.db.updater.DBUpdater;
+import com.apollocurrency.aplwallet.apl.db.updater.ShardAllScriptsDBUpdater;
 import com.apollocurrency.aplwallet.apl.util.ChunkedFileOps;
 import com.apollocurrency.aplwallet.apl.util.FileUtils;
 import com.apollocurrency.aplwallet.apl.util.StringUtils;
 import com.apollocurrency.aplwallet.apl.util.Zip;
+import com.apollocurrency.aplwallet.apl.util.cdi.Transactional;
+import com.apollocurrency.aplwallet.apl.util.db.TransactionalDataSource;
 import com.apollocurrency.aplwallet.apl.util.env.dirprovider.DirProvider;
 import org.slf4j.Logger;
 
-import javax.inject.Inject;
-import javax.inject.Singleton;
+import jakarta.inject.Inject;
+import jakarta.inject.Singleton;
 import java.io.FilenameFilter;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.sql.Connection;
-import java.sql.PreparedStatement;
 import java.sql.SQLException;
 import java.util.List;
 import java.util.Objects;
@@ -58,6 +58,7 @@ import java.util.UUID;
 import java.util.function.BiConsumer;
 import java.util.function.Supplier;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 import static com.apollocurrency.aplwallet.apl.core.shard.MigrateState.COMPLETED;
 import static com.apollocurrency.aplwallet.apl.core.shard.MigrateState.CSV_EXPORT_FINISHED;
@@ -73,7 +74,6 @@ import static com.apollocurrency.aplwallet.apl.core.shard.MigrateState.SHARD_SCH
 import static com.apollocurrency.aplwallet.apl.core.shard.MigrateState.SHARD_SCHEMA_FULL;
 import static com.apollocurrency.aplwallet.apl.core.shard.MigrateState.ZIP_ARCHIVE_FINISHED;
 import static com.apollocurrency.aplwallet.apl.core.shard.MigrateState.ZIP_ARCHIVE_STARTED;
-import static com.apollocurrency.aplwallet.apl.core.shard.ShardConstants.DB_BACKUP_FORMAT;
 import static org.slf4j.LoggerFactory.getLogger;
 
 /**
@@ -83,7 +83,7 @@ import static org.slf4j.LoggerFactory.getLogger;
 public class ShardEngineImpl implements ShardEngine {
     private static final Logger log = getLogger(ShardEngineImpl.class);
 
-    private MigrateState state = MigrateState.INIT;
+    private MigrateState state;
     private DatabaseManager databaseManager;
     private TrimService trimService;
     private HelperFactory<BatchedPaginationOperation> helperFactory = new HelperFactoryImpl();
@@ -95,7 +95,7 @@ public class ShardEngineImpl implements ShardEngine {
     private ShardDao shardDao;
     private Zip zipComponent;
     private AplAppStatus aplAppStatus;
-    private String durableStatusTaskId;
+    private volatile String durableStatusTaskId;
 
 
     @Inject
@@ -120,6 +120,11 @@ public class ShardEngineImpl implements ShardEngine {
         this.shardDao = Objects.requireNonNull(shardDao, "shardDao is NULL");
     }
 
+    public void prepare() {
+        durableStatusTaskId = null;
+        state = MigrateState.INIT;
+    }
+
     /**
      * {@inheritDoc}
      */
@@ -133,49 +138,19 @@ public class ShardEngineImpl implements ShardEngine {
      */
     @Override
     public MigrateState createBackup() {
-        long start = System.currentTimeMillis();
-        durableTaskUpdateByState(state, 0.0, "Backup main database...");
-        ShardDataSourceCreateHelper shardDataSourceCreateHelper =
-                new ShardDataSourceCreateHelper(databaseManager);
-        TransactionalDataSource sourceDataSource = databaseManager.getDataSource();
-        String nextShardName = shardDataSourceCreateHelper.createUninitializedDataSource().checkGenerateShardName();
-        Path dbDir = dirProvider.getDbDir();
-        String backupName = String.format(DB_BACKUP_FORMAT, nextShardName);
-        Path backupPath = dbDir.resolve(backupName);
-        String sql = String.format("BACKUP TO '%s'", backupPath.toAbsolutePath().toString());
-        try (Connection con = sourceDataSource.getConnection();
-             PreparedStatement ps = con.prepareStatement(sql)) {
-            ps.executeUpdate();
-            if (!Files.exists(backupPath)) {
-                state = FAILED;
-                log.error("BACKUP main db has FAILED, SQL={}, shard = {}, backup was not found in path = {}",
-                        sql, shardDataSourceCreateHelper.getShardId(), backupPath);
-                durableTaskUpdateByState(state, null, null);
-            }
-            log.debug("BACKUP by SQL={} was successful, shard = {}", sql, shardDataSourceCreateHelper.getShardId());
-            state = MigrateState.MAIN_DB_BACKUPED;
-            durableTaskUpdateByState(state, 3.0, "Backed up");
-            loadAndRefreshRecovery(sourceDataSource);
-        } catch (SQLException e) {
-            log.error("ERROR on backup db before sharding, sql = " + sql, e);
-            state = FAILED;
-            durableTaskUpdateByState(state, null, null);
-        }
-        log.debug("BACKUP db before shard ({}) in {} sec", state.name(),
-                (System.currentTimeMillis() - start)/1000);
-        return state;
+        throw new UnsupportedOperationException("Backup shard operation is not supported");
     }
 
     /**
      * {@inheritDoc}
      */
     @Override
-    public MigrateState addOrCreateShard(DbVersion dbVersion, CommandParamInfo commandParamInfo) {
+    public MigrateState addOrCreateShard(DBUpdater dbUpdater, CommandParamInfo commandParamInfo) {
         long start = System.currentTimeMillis();
-        Objects.requireNonNull(dbVersion, "dbVersion is NULL");
-        log.debug("INIT shard db file by schema={}", dbVersion.getClass().getSimpleName());
+        Objects.requireNonNull(dbUpdater, "dbUpdater is NULL");
+        log.debug("INIT shard db file by schema={}", dbUpdater.getClass().getSimpleName());
         try {
-            boolean isConstraintSchema = dbVersion instanceof ShardAddConstraintsSchemaVersion || dbVersion instanceof AplDbVersion;
+            boolean isConstraintSchema = dbUpdater instanceof ShardAllScriptsDBUpdater || dbUpdater instanceof AplDBUpdater;
             ShardRecovery recovery = shardRecoveryDaoJdbc.getLatestShardRecovery(databaseManager.getDataSource());
             if (recovery != null) {
                 if (recovery.getState().getValue() >= SHARD_SCHEMA_FULL.getValue()) {
@@ -192,7 +167,7 @@ public class ShardEngineImpl implements ShardEngine {
             }
 
             // we ALWAYS need to do that STEP to attach to new/existing shard db !!
-            TransactionalDataSource createdShardSource = ((ShardManagement) databaseManager).createOrUpdateShard(commandParamInfo.getShardId(), dbVersion);
+            TransactionalDataSource createdShardSource = ((ShardManagement) databaseManager).createOrUpdateShard(commandParamInfo.getShardId(), dbUpdater);
 
 
             if (isConstraintSchema) {
@@ -220,10 +195,10 @@ public class ShardEngineImpl implements ShardEngine {
             TransactionalDataSource sourceDataSource = databaseManager.getDataSource();
             loadAndRefreshRecovery(sourceDataSource);
             log.debug("INIT shard db={} by schema={} ({}) in {} sec",
-                    createdShardSource.getDbIdentity(), dbVersion.getClass().getSimpleName(), state.name(),
-                    (System.currentTimeMillis() - start)/1000);
+                createdShardSource.getDbIdentity(), dbUpdater.getClass().getSimpleName(), state.name(),
+                (System.currentTimeMillis() - start) / 1000);
         } catch (Exception e) {
-            log.error("Error creation Shard Db with Schema script:" + dbVersion.getClass().getSimpleName(), e);
+            log.error("Error creation Shard Db with Schema script:" + dbUpdater.getClass().getSimpleName(), e);
             state = MigrateState.FAILED;
             durableTaskUpdateByState(state, null, null);
         }
@@ -237,7 +212,6 @@ public class ShardEngineImpl implements ShardEngine {
         }
         return lastShard;
     }
-
 
 
     /**
@@ -266,6 +240,7 @@ public class ShardEngineImpl implements ShardEngine {
 
     /**
      * Check mandatory parameters
+     *
      * @param paramInfo common parameters
      */
     private void checkRequiredParameters(CommandParamInfo paramInfo) {
@@ -282,14 +257,13 @@ public class ShardEngineImpl implements ShardEngine {
         checkRequiredParameters(paramInfo);
         log.debug("Starting shard data transfer from [{}] tables...", paramInfo.getTableInfoList().size());
         long startAllTables = System.currentTimeMillis();
-        String lastTableName = null;
 
         TransactionalDataSource targetDataSource = ((ShardManagement) databaseManager).getOrCreateShardDataSourceById(paramInfo.getShardId());
         TransactionalDataSource sourceDataSource = databaseManager.getDataSource();
         // check previous state
         ShardRecovery recovery = shardRecoveryDaoJdbc.getLatestShardRecovery(sourceDataSource);
         if (recovery != null && recovery.getState() != null
-                && recovery.getState().getValue() > DATA_COPY_TO_SHARD_FINISHED.getValue()) {
+            && recovery.getState().getValue() > DATA_COPY_TO_SHARD_FINISHED.getValue()) {
             // skip to next step
             return state = DATA_COPY_TO_SHARD_FINISHED;
         } else { // that is needed in case separate step execution, when previous step was missed in code
@@ -301,7 +275,7 @@ public class ShardEngineImpl implements ShardEngine {
 
         String currentTable = null;
         durableTaskUpdateByState(state, 4.0, "Data copying...");
-        try (Connection sourceConnect = sourceDataSource.getConnection() ) {
+        try (Connection sourceConnect = sourceDataSource.getConnection()) {
             for (TableInfo tableInfo : paramInfo.getTableInfoList()) {
                 long start = System.currentTimeMillis();
                 if (!targetDataSource.isInTransaction()) {
@@ -310,15 +284,15 @@ public class ShardEngineImpl implements ShardEngine {
                 currentTable = tableInfo.getName();
                 BatchedPaginationOperation paginationOperationHelper = helperFactory.createSelectInsertHelper(currentTable);
                 ExcludeInfo excludeInfo = paramInfo.getExcludeInfo();
-                    TableOperationParams operationParams = new TableOperationParams(
-                            currentTable, paramInfo.getCommitBatchSize(), paramInfo.getSnapshotBlockHeight(),
-                            paramInfo.getShardId(), excludeInfo);
+                TableOperationParams operationParams = new TableOperationParams(
+                    currentTable, paramInfo.getCommitBatchSize(), paramInfo.getSnapshotBlockHeight(),
+                    paramInfo.getShardId(), excludeInfo);
 
                 paginationOperationHelper.setShardRecoveryDao(shardRecoveryDaoJdbc);// mandatory
 
-                    long totalCount = paginationOperationHelper.processOperation(
-                            sourceConnect, targetConnect, operationParams);
-                    log.debug("Totally inserted '{}' records in table ='{}' within {} sec", totalCount, currentTable, (System.currentTimeMillis() - start)/1000);
+                long totalCount = paginationOperationHelper.processOperation(
+                    sourceConnect, targetConnect, operationParams);
+                log.debug("Totally inserted '{}' records in table ='{}' within {} sec", totalCount, currentTable, (System.currentTimeMillis() - start) / 1000);
                 paginationOperationHelper.reset();
                 recovery = updateShardRecoveryProcessedTableList(sourceConnect, currentTable, DATA_COPY_TO_SHARD_STARTED);
                 targetDataSource.commit(false);
@@ -339,7 +313,7 @@ public class ShardEngineImpl implements ShardEngine {
                 targetDataSource.commit();
             }
         }
-        log.debug("COPY Processed table(s)=[{}] in {} sec", paramInfo.getTableInfoList().size(), (System.currentTimeMillis() - startAllTables)/1000);
+        log.debug("COPY Processed table(s)=[{}] in {} sec", paramInfo.getTableInfoList().size(), (System.currentTimeMillis() - startAllTables) / 1000);
         return state;
     }
 
@@ -347,7 +321,7 @@ public class ShardEngineImpl implements ShardEngine {
                                          String tableName, long start,
                                          BatchedPaginationOperation paginationOperationHelper) throws Exception {
         TableOperationParams operationParams = new TableOperationParams(
-                tableName, paramInfo.getCommitBatchSize(), paramInfo.getSnapshotBlockHeight(),null,  paramInfo.getExcludeInfo());
+            tableName, paramInfo.getCommitBatchSize(), paramInfo.getSnapshotBlockHeight(), null, paramInfo.getExcludeInfo());
 
         if (paginationOperationHelper == null) { // should never happen from outside code, but better to play safe
             String error = "OperationHelper is NOT PRESENT... Fatal error in sharding code...";
@@ -357,7 +331,7 @@ public class ShardEngineImpl implements ShardEngine {
         paginationOperationHelper.setShardRecoveryDao(shardRecoveryDaoJdbc); // mandatory assignment
 
         long totalCount = paginationOperationHelper.processOperation(
-                sourceConnect, null, operationParams);
+            sourceConnect, null, operationParams);
 
         sourceConnect.commit();
         log.debug("Totally processed '{}' records in table ='{}' within {} sec", totalCount, tableName, (System.currentTimeMillis() - start) / 1000);
@@ -377,7 +351,7 @@ public class ShardEngineImpl implements ShardEngine {
 
         ShardRecovery recovery = shardRecoveryDaoJdbc.getLatestShardRecovery(sourceDataSource);
         if (recovery != null && recovery.getState() != null
-                && recovery.getState().getValue() > SECONDARY_INDEX_FINISHED.getValue()) {
+            && recovery.getState().getValue() > SECONDARY_INDEX_FINISHED.getValue()) {
             // skip to next step
             return state = SECONDARY_INDEX_FINISHED;
         } else {
@@ -385,7 +359,7 @@ public class ShardEngineImpl implements ShardEngine {
             recovery = new ShardRecovery(SECONDARY_INDEX_STARTED);
         }
         durableTaskUpdateByState(state, 13.0, "Secondary indexes creation...");
-        try (Connection sourceConnect = beginOrOpenConnection(sourceDataSource) ) {
+        try (Connection sourceConnect = beginOrOpenConnection(sourceDataSource)) {
             for (TableInfo tableInfo : paramInfo.getTableInfoList()) {
                 long start = System.currentTimeMillis();
                 currentTable = tableInfo.getName();
@@ -410,7 +384,7 @@ public class ShardEngineImpl implements ShardEngine {
                 sourceDataSource.commit();
             }
         }
-        log.debug("UPDATE Processed table(s)=[{}] in {} sec", paramInfo.getTableInfoList().size(), (System.currentTimeMillis() - startAllTables)/1000);
+        log.debug("UPDATE Processed table(s)=[{}] in {} sec", paramInfo.getTableInfoList().size(), (System.currentTimeMillis() - startAllTables) / 1000);
 
         return state;
     }
@@ -433,7 +407,8 @@ public class ShardEngineImpl implements ShardEngine {
         checkRequiredParameters(paramInfo);
         long startTime = System.currentTimeMillis();
         List<TableInfo> allTables = paramInfo.getTableInfoList();
-        log.debug("Starting EXPORT data from 'derived tables' + [{}] tables...", allTables.size());
+        log.debug("Starting EXPORT data from 'derived tables' = [{}]", allTables.size());
+        log.trace("Starting EXPORT data from 'derived tables' = {}", allTables);
 
         ShardRecovery recovery = getOrCreateRecovery(CSV_EXPORT_STARTED);
         if (recovery.getState().getValue() >= CSV_EXPORT_FINISHED.getValue()) {
@@ -445,9 +420,11 @@ public class ShardEngineImpl implements ShardEngine {
         try {
             int pruningTime = trimDerivedTables(paramInfo.getSnapshotBlockHeight() + 1);
             if (StringUtils.isBlank(recovery.getProcessedObject())) {
-                Files.list(csvExporter.getDataExportPath())
-                        .filter(p-> !Files.isDirectory(p) && p.toString().endsWith(CsvAbstractBase.CSV_FILE_EXTENSION))
+                try (Stream<Path> files = Files.list(csvExporter.getDataExportPath())) {
+                    files
+                        .filter(p -> !Files.isDirectory(p) && p.toString().endsWith(CsvAbstractBase.CSV_FILE_EXTENSION))
                         .forEach(FileUtils::deleteFileIfExistsQuietly);
+                }
             }
             for (TableInfo tableInfo : allTables) {
                 exportTableWithRecovery(recovery, tableInfo.getName(), () -> {
@@ -463,14 +440,14 @@ public class ShardEngineImpl implements ShardEngine {
                         case ShardConstants.TRANSACTION_TABLE_NAME:
                             return csvExporter.exportTransactions(paramInfo.getExcludeInfo().getExportDbIds(), paramInfo.getSnapshotBlockHeight());
                         case ShardConstants.ACCOUNT_TABLE_NAME:
-                            return exportDerivedTable(tableInfo, paramInfo, Set.of("DB_ID", "LATEST", "HEIGHT"), pruningTime, null);
+                            return exportDerivedTable(tableInfo, paramInfo, Set.of("db_id", "latest", "height", "deleted"), pruningTime, "id");
 //                        case ShardConstants.DEX_ORDER_TABLE_NAME: // now it's returned back to usual export for derived tables
                         // this is en example how to export using specified columns + index on it
-//                            return exportDerivedTable(tableInfo, paramInfo, Set.of("DB_ID", "LATEST"), -1, "HEIGHT");
+//                            return exportDerivedTable(tableInfo, paramInfo, Set.of("db_id", "latest"), -1, "height");
                         case ShardConstants.ACCOUNT_CURRENCY_TABLE_NAME:
-                            return exportDerivedTable(tableInfo, paramInfo, Set.of("DB_ID", "LATEST", "HEIGHT"), pruningTime, " account_id, currency_id");
+                            return exportDerivedTable(tableInfo, paramInfo, Set.of("db_id", "latest", "height", "deleted"), pruningTime, " account_id, currency_id");
                         case ShardConstants.ACCOUNT_ASSET_TABLE_NAME:
-                            return exportDerivedTable(tableInfo, paramInfo, Set.of("DB_ID", "LATEST", "HEIGHT"), pruningTime, " account_id, asset_id");
+                            return exportDerivedTable(tableInfo, paramInfo, Set.of("db_id", "latest", "height", "deleted"), pruningTime, " account_id, asset_id");
 
                         default:
                             return exportDerivedTable(tableInfo, paramInfo, pruningTime);
@@ -480,7 +457,7 @@ public class ShardEngineImpl implements ShardEngine {
             }
             state = CSV_EXPORT_FINISHED;
             updateToFinalStepState(recovery, state);
-            log.debug("Export finished in {} secs", (System.currentTimeMillis() - startTime)/1000);
+            log.debug("Export finished in {} secs", (System.currentTimeMillis() - startTime) / 1000);
             durableTaskUpdateByState(state, 58.0, "CSV exported");
         } catch (Exception e) {
             log.error("Exception during export", e);
@@ -494,14 +471,15 @@ public class ShardEngineImpl implements ShardEngine {
         TransactionalDataSource dataSource = databaseManager.getDataSource();
         boolean inTransaction = dataSource.isInTransaction();
         log.debug("trimDerivedTables height = '{}', inTransaction = '{}'",
-                height, inTransaction);
+            height, inTransaction);
         if (!inTransaction) {
             dataSource.begin();
         }
         try {
             trimService.waitTrimming();
             // distinguish usual trim and trim within sharding process
-            return trimService.doTrimDerivedTablesOnHeightLocked(height, true);
+//            return trimService.doTrimDerivedTablesOnHeightLocked(height, true);
+            return trimService.doAccountableTrimDerivedTables(height);
         } catch (Exception e) {
             databaseManager.getDataSource().rollback(false);
             throw new RuntimeException(e);
@@ -534,7 +512,8 @@ public class ShardEngineImpl implements ShardEngine {
     private Long exportDerivedTable(TableInfo info, CommandParamInfo paramInfo,
                                     Set<String> excludedColumns, int pruningTime,
                                     String sortColumn) {
-        DerivedTableInterface derivedTable = registry.getDerivedTable(info.getName());
+        DerivedTableInterface<? extends DerivedEntity> derivedTable = registry.getDerivedTable(info.getName());
+        log.trace("Export derived: {} (isPrunable = {}) = {}", info.getName(), info.isPrunable(), derivedTable != null ? derivedTable.getName() : "NULL");
         if (derivedTable != null) {
             if (!info.isPrunable()) {
                 // not prunable table
@@ -543,26 +522,37 @@ public class ShardEngineImpl implements ShardEngine {
                     return csvExporter.exportDerivedTable(derivedTable, paramInfo.getSnapshotBlockHeight(), paramInfo.getCommitBatchSize());
                 } else {
                     // some column(s) are excluded
-                    if (sortColumn != null && !sortColumn.isEmpty()) {
+                    if (StringUtils.isNotBlank(sortColumn)) {
                         // there is sorting column
-                        return csvExporter.exportDerivedTableCustomSort(
-                                derivedTable, paramInfo.getSnapshotBlockHeight(),
-                                paramInfo.getCommitBatchSize(), excludedColumns, sortColumn);
+                        return exportSorted(derivedTable, paramInfo, excludedColumns, sortColumn);
                     } else {
                         // no special sorting column, most probable DB_ID will be used by default
                         return csvExporter.exportDerivedTable(
-                                derivedTable, paramInfo.getSnapshotBlockHeight(),
-                                paramInfo.getCommitBatchSize(), excludedColumns);
+                            derivedTable, paramInfo.getSnapshotBlockHeight(),
+                            paramInfo.getCommitBatchSize(), excludedColumns);
                     }
                 }
             } else {
                 // prunable table export
                 return csvExporter.exportPrunableDerivedTable(((PrunableDbTable) derivedTable),
-                        paramInfo.getSnapshotBlockHeight(), pruningTime, paramInfo.getCommitBatchSize());
+                    paramInfo.getSnapshotBlockHeight(), pruningTime, paramInfo.getCommitBatchSize());
             }
         } else {
             durableTaskUpdateByState(FAILED, null, null);
             throw new IllegalArgumentException("Unable to find derived table " + info.getName() + " in derived table registry");
+        }
+    }
+
+    private long exportSorted(DerivedTableInterface<? extends DerivedEntity> table, CommandParamInfo paramInfo, Set<String> excludedColumns, String sortColumn) {
+        boolean oneUniqueColumn = sortColumn.split(",").length == 1;
+        if (oneUniqueColumn) { // assume that this column is of type Long
+            MinMaxValue minMaxValue = table.getMinMaxValue(paramInfo.getSnapshotBlockHeight());
+
+            return csvExporter.exportDerivedTableByUniqueLongColumnPagination(table.getName(),
+                minMaxValue, paramInfo.getCommitBatchSize(), excludedColumns);
+        } else {
+            return csvExporter.exportDerivedTableCustomSort(table, paramInfo.getSnapshotBlockHeight(),
+                paramInfo.getCommitBatchSize(), excludedColumns, sortColumn);
         }
     }
 
@@ -575,7 +565,7 @@ public class ShardEngineImpl implements ShardEngine {
             log.debug("Skip already exported table: {}", tableName);
         } else {
             Path tableCsvPath = csvExporter.getDataExportPath().resolve(tableName + CsvAbstractBase.CSV_FILE_EXTENSION);
-            log.trace("Exporting '{}' into file : '{}'...", tableName, tableCsvPath);
+            log.debug("Exporting '{}' into file : '{}'...", tableName, tableCsvPath);
             FileUtils.deleteFileIfExistsAndHandleException(tableCsvPath, (e) -> {
                 durableTaskUpdateByState(state, null, null);
                 throw new RuntimeException("Unable to remove not finished csv file: " + tableCsvPath.toAbsolutePath().toString());
@@ -583,7 +573,7 @@ public class ShardEngineImpl implements ShardEngine {
             long startTableExportTime = System.currentTimeMillis();
             Long exported = exportPerformer.get();
             log.debug("Exported '{}', count {} to {} in {} secs", tableName, exported, tableCsvPath,
-                    (System.currentTimeMillis() - startTableExportTime)/1000);
+                (System.currentTimeMillis() - startTableExportTime) / 1000);
             updateRecovery(recovery, tableName);
         }
     }
@@ -606,35 +596,35 @@ public class ShardEngineImpl implements ShardEngine {
             UUID chainId = databaseManager.getChainId();
             ShardNameHelper shardNameHelper = new ShardNameHelper();
 
-            String shardCoreFileName = shardNameHelper.getCoreShardArchiveNameByShardId(paramInfo.getShardId(),chainId);
+            String shardCoreFileName = shardNameHelper.getCoreShardArchiveNameByShardId(paramInfo.getShardId(), chainId);
             Set<String> coreTables = paramInfo.getTableInfoList().stream().filter(t -> !t.isPrunable()).map(TableInfo::getName).collect(Collectors.toSet());
             doZip(recovery, shardCoreFileName,
-                    (dir, name) -> name.endsWith(".csv") && coreTables.contains(name.substring(0, name.indexOf(".csv"))),
-                    (shard, hash) -> {
-                        shard.setCoreZipHash(hash);
-                        shardDao.updateShard(shard);
-                    });
-            String shardPrunableFileName = shardNameHelper.getPrunableShardArchiveNameByShardId(paramInfo.getShardId(),chainId);
+                (dir, name) -> name.endsWith(".csv") && coreTables.contains(name.substring(0, name.indexOf(".csv"))),
+                (shard, hash) -> {
+                    shard.setCoreZipHash(hash);
+                    shardDao.updateShard(shard);
+                });
+            String shardPrunableFileName = shardNameHelper.getPrunableShardArchiveNameByShardId(paramInfo.getShardId(), chainId);
             Set<String> prunableTables = paramInfo.getTableInfoList().stream().filter(TableInfo::isPrunable).map(TableInfo::getName).collect(Collectors.toSet());
             doZip(recovery, shardPrunableFileName,
-                    (dir, name) -> name.endsWith(".csv") && prunableTables.contains(name.substring(0, name.indexOf(".csv"))),
-                    (shard, hash) -> {
-                        if (hash != null) {
-                            shard.setPrunableZipHash(hash);
-                            shardDao.updateShard(shard);
-                        }
-                    });
-                // update recovery
-                state = ZIP_ARCHIVE_FINISHED;
-                updateToFinalStepState(recovery, state);
-                durableTaskUpdateByState(state, 58.5, "CSV archived");
+                (dir, name) -> name.endsWith(".csv") && prunableTables.contains(name.substring(0, name.indexOf(".csv"))),
+                (shard, hash) -> {
+                    if (hash != null) {
+                        shard.setPrunableZipHash(hash);
+                        shardDao.updateShard(shard);
+                    }
+                });
+            // update recovery
+            state = ZIP_ARCHIVE_FINISHED;
+            updateToFinalStepState(recovery, state);
+            durableTaskUpdateByState(state, 58.5, "CSV archived");
         } catch (Exception e) {
             log.error("Error ZIP ARCHIVE creation", e);
             state = MigrateState.FAILED;
             durableTaskUpdateByState(state, null, null);
             return state;
         }
-        log.debug("ZIP ARCHIVE Processed in {} sec", (System.currentTimeMillis() - startAllTables)/1000);
+        log.debug("ZIP ARCHIVE Processed in {} sec", (System.currentTimeMillis() - startAllTables) / 1000);
         return state;
     }
 
@@ -649,8 +639,8 @@ public class ShardEngineImpl implements ShardEngine {
             log.debug("Previous Zip in '{}' was '{}'", zipName, isRemoved ? "REMOVED" : "NOT FOUND");
             // compute ZIP crc hash
             ChunkedFileOps fops = zipComponent.compressAndHash(
-                    zipPath.toAbsolutePath().toString(),
-                    dirProvider.getDataExportDir().toAbsolutePath().toString(), null, fileFilter, false);
+                zipPath.toAbsolutePath().toString(),
+                dirProvider.getDataExportDir().toAbsolutePath().toString(), null, fileFilter, false);
             byte[] zipCrcHash = null;
             if (fops != null && fops.isHashedOK()) {
                 zipCrcHash = fops.getFileHash();
@@ -675,7 +665,7 @@ public class ShardEngineImpl implements ShardEngine {
 
         ShardRecovery recovery = shardRecoveryDaoJdbc.getLatestShardRecovery(sourceDataSource);
         if (recovery != null && recovery.getState() != null
-                && recovery.getState().getValue() > DATA_REMOVED_FROM_MAIN.getValue()) {
+            && recovery.getState().getValue() > DATA_REMOVED_FROM_MAIN.getValue()) {
             // skip to next step
             return state = DATA_REMOVED_FROM_MAIN;
         } else {
@@ -708,7 +698,7 @@ public class ShardEngineImpl implements ShardEngine {
                 sourceDataSource.commit();
             }
         }
-        log.debug("DELETE Processed table(s)=[{}] in {} sec", paramInfo.getTableInfoList().size(), (System.currentTimeMillis() - startAllTables)/1000);
+        log.debug("DELETE Processed table(s)=[{}] in {} sec", paramInfo.getTableInfoList().size(), (System.currentTimeMillis() - startAllTables) / 1000);
         return state;
     }
 
@@ -725,7 +715,7 @@ public class ShardEngineImpl implements ShardEngine {
 
         ShardRecovery recovery = shardRecoveryDao.getLatestShardRecovery();
         if (recovery != null && recovery.getState() != null
-                && recovery.getState().getValue() >= COMPLETED.getValue()) {
+            && recovery.getState().getValue() >= COMPLETED.getValue()) {
             // skip to next step
             return state = COMPLETED;
         }
@@ -737,7 +727,7 @@ public class ShardEngineImpl implements ShardEngine {
         shardDao.updateShard(shard);
         shardRecoveryDao.hardDeleteAllShardRecovery();
         // call ANALYZE to optimize main db performance after massive copy/delete/update actions in it
-        sourceDataSource.analyzeTables();
+//        sourceDataSource.analyzeTables();
         log.debug("Shard process finished successfully, shard id - {}", paramInfo.getShardId());
         durableTaskUpdateByState(state, null, null);
         return state;
@@ -745,12 +735,13 @@ public class ShardEngineImpl implements ShardEngine {
 
     /**
      * Update previous info with table name just processed in loop
-     * @param currentTable table name to be put into table
+     *
+     * @param currentTable    table name to be put into table
      * @param inProgressState progress state value
      * @return updated and stored instance
      */
     private ShardRecovery updateShardRecoveryProcessedTableList(
-            Connection connection, String currentTable, MigrateState inProgressState) {
+        Connection connection, String currentTable, MigrateState inProgressState) {
         ShardRecovery recovery = shardRecoveryDaoJdbc.getLatestShardRecovery(connection);
         // add processed table name into optional column for later use
         recovery.setState(inProgressState);
@@ -759,21 +750,22 @@ public class ShardEngineImpl implements ShardEngine {
         // - preserve column value if the same table name exist inside
         // - add table name if it not exists in list separated by space
         recovery.setProcessedObject(recovery.getProcessedObject() != null ?
-                (!AbstractHelper.isContain(recovery.getProcessedObject(), currentTable) ?
-                        recovery.getProcessedObject() + " " + currentTable.toLowerCase() : recovery.getProcessedObject())
-                : currentTable.toLowerCase()); // add processed table name into list if NOT exists
+            (!AbstractHelper.isContain(recovery.getProcessedObject(), currentTable) ?
+                recovery.getProcessedObject() + " " + currentTable.toLowerCase() : recovery.getProcessedObject())
+            : currentTable.toLowerCase()); // add processed table name into list if NOT exists
         shardRecoveryDaoJdbc.updateShardRecovery(connection, recovery); // update info for next step
         return recovery;
     }
 
     /**
      * Store final step state, when all tables were processed
-     * @param recovery current recovery
+     *
+     * @param recovery       current recovery
      * @param finalStepState final state
      */
     private void updateToFinalStepState(Connection connection, ShardRecovery recovery, MigrateState finalStepState) {
-       resetShardRecovery(recovery, finalStepState);
-       shardRecoveryDaoJdbc.updateShardRecovery(connection, recovery); // update info for next step
+        resetShardRecovery(recovery, finalStepState);
+        shardRecoveryDaoJdbc.updateShardRecovery(connection, recovery); // update info for next step
     }
 
     private void updateToFinalStepState(ShardRecovery recovery, MigrateState finalStepState) {
@@ -814,16 +806,14 @@ public class ShardEngineImpl implements ShardEngine {
     private void checkOrInitAppStatus() {
         if (durableStatusTaskId == null) {
             Optional<DurableTaskInfo> taskInfo = aplAppStatus.findTaskByName("sharding");
-            if (taskInfo.isEmpty()) {
+            if (taskInfo.isEmpty() || taskInfo.get().stateOfTask.equalsIgnoreCase(DurableTaskInfo.TASK_STATES[3]) || taskInfo.get().stateOfTask.equalsIgnoreCase(DurableTaskInfo.TASK_STATES[2])) {
                 durableStatusTaskId = aplAppStatus.durableTaskStart(
-                        "sharding",
-                        "Blockchain db sharding process takes some time, pls be patient...",
-                        true, 0.0);
+                    "sharding",
+                    "Blockchain db sharding process takes some time, pls be patient...",
+                    true, 0.0);
             } else {
                 durableStatusTaskId = taskInfo.get().getId();
             }
-        } else {
-            aplAppStatus.findTaskByName("sharding");
         }
     }
 

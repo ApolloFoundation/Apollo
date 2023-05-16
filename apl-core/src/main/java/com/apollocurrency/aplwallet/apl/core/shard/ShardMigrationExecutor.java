@@ -4,18 +4,10 @@
 
 package com.apollocurrency.aplwallet.apl.core.shard;
 
-import com.apollocurrency.aplwallet.apl.core.app.BlockchainProcessor;
-import com.apollocurrency.aplwallet.apl.core.app.Generator;
-import com.apollocurrency.aplwallet.apl.core.config.Property;
-import com.apollocurrency.aplwallet.apl.core.db.DerivedTablesRegistry;
-import com.apollocurrency.aplwallet.apl.core.db.ShardAddConstraintsSchemaVersion;
-import com.apollocurrency.aplwallet.apl.core.db.ShardInitTableSchemaVersion;
-import com.apollocurrency.aplwallet.apl.core.db.cdi.Transactional;
-import com.apollocurrency.aplwallet.apl.core.db.dao.ShardDao;
-import com.apollocurrency.aplwallet.apl.core.db.dao.model.Shard;
-import com.apollocurrency.aplwallet.apl.core.db.derived.PrunableDbTable;
-import com.apollocurrency.aplwallet.apl.core.peer.PeersService;
-import com.apollocurrency.aplwallet.apl.core.shard.commands.BackupDbBeforeShardCommand;
+import com.apollocurrency.aplwallet.apl.core.dao.appdata.ShardDao;
+import com.apollocurrency.aplwallet.apl.core.dao.state.derived.PrunableDbTable;
+import com.apollocurrency.aplwallet.apl.core.entity.appdata.Shard;
+import com.apollocurrency.aplwallet.apl.core.service.state.DerivedTablesRegistry;
 import com.apollocurrency.aplwallet.apl.core.shard.commands.CopyDataCommand;
 import com.apollocurrency.aplwallet.apl.core.shard.commands.CreateShardSchemaCommand;
 import com.apollocurrency.aplwallet.apl.core.shard.commands.CsvExportCommand;
@@ -30,11 +22,15 @@ import com.apollocurrency.aplwallet.apl.core.shard.model.PrevBlockData;
 import com.apollocurrency.aplwallet.apl.core.shard.model.TableInfo;
 import com.apollocurrency.aplwallet.apl.core.shard.observer.events.ShardChangeStateEvent;
 import com.apollocurrency.aplwallet.apl.core.shard.observer.events.ShardChangeStateEventBinding;
+import com.apollocurrency.aplwallet.apl.db.updater.ShardAllScriptsDBUpdater;
+import com.apollocurrency.aplwallet.apl.db.updater.ShardInitDBUpdater;
+import com.apollocurrency.aplwallet.apl.util.cdi.Transactional;
+import com.apollocurrency.aplwallet.apl.util.cdi.config.Property;
 import org.slf4j.Logger;
 
-import javax.enterprise.util.AnnotationLiteral;
-import javax.inject.Inject;
-import javax.inject.Singleton;
+import jakarta.enterprise.util.AnnotationLiteral;
+import jakarta.inject.Inject;
+import jakarta.inject.Singleton;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
@@ -49,11 +45,11 @@ import static org.slf4j.LoggerFactory.getLogger;
  */
 @Singleton
 public class ShardMigrationExecutor {
-    private static final Logger log = getLogger(ShardMigrationExecutor.class);
     public static final String ACCOUNT_LEDGER = "account_ledger";
+    private static final Logger log = getLogger(ShardMigrationExecutor.class);
     private final List<DataMigrateOperation> dataMigrateOperations = new ArrayList<>();
 
-    private final javax.enterprise.event.Event<MigrateState> migrateStateEvent;
+    private final jakarta.enterprise.event.Event<MigrateState> migrateStateEvent;
     private final ShardEngine shardEngine;
     private final ShardHashCalculator shardHashCalculator;
     private final ShardDao shardDao;
@@ -61,26 +57,15 @@ public class ShardMigrationExecutor {
     private final DerivedTablesRegistry derivedTablesRegistry;
     private final PrevBlockInfoExtractor prevBlockInfoExtractor;
     private volatile boolean backupDb;
-    private BlockchainProcessor blockchainProcessor;
-    private PeersService peers;
-    public boolean backupDb() {
-        return backupDb;
-    }
-
-    public void setBackupDb(boolean backupDb) {
-        this.backupDb = backupDb;
-    }
 
     @Inject
     public ShardMigrationExecutor(ShardEngine shardEngine,
-                                  javax.enterprise.event.Event<MigrateState> migrateStateEvent,
+                                  jakarta.enterprise.event.Event<MigrateState> migrateStateEvent,
                                   ShardHashCalculator shardHashCalculator,
                                   ShardDao shardDao,
                                   ExcludedTransactionDbIdExtractor excludedTransactionDbIdExtractor,
                                   PrevBlockInfoExtractor prevBlockInfoExtractor,
                                   DerivedTablesRegistry registry,
-                                  BlockchainProcessor blockchainProcessor,
-                                  PeersService peers,
                                   @Property(value = "apl.sharding.backupDb", defaultValue = "false") boolean backupDb) {
         this.shardEngine = Objects.requireNonNull(shardEngine, "managementReceiver is NULL");
         this.migrateStateEvent = Objects.requireNonNull(migrateStateEvent, "migrateStateEvent is NULL");
@@ -90,13 +75,19 @@ public class ShardMigrationExecutor {
         this.derivedTablesRegistry = Objects.requireNonNull(registry, "derived table registry is null");
         this.backupDb = backupDb;
         this.prevBlockInfoExtractor = Objects.requireNonNull(prevBlockInfoExtractor);
-        this.peers = peers;
-        this.blockchainProcessor = blockchainProcessor;
+    }
+
+    public boolean backupDb() {
+        return backupDb;
+    }
+
+    public void setBackupDb(boolean backupDb) {
+        this.backupDb = backupDb;
     }
 
     private void addCreateSchemaCommand(long shardId) {
         CreateShardSchemaCommand createShardSchemaCommand = new CreateShardSchemaCommand(shardId, shardEngine,
-                new ShardInitTableSchemaVersion(), /*hash should be null here*/ null, null);
+            new ShardInitDBUpdater(), /*hash should be null here*/ null, null);
         this.addOperation(createShardSchemaCommand);
     }
 
@@ -108,10 +99,10 @@ public class ShardMigrationExecutor {
         ExcludeInfo excludeInfo = null;
         switch (state) {
             case INIT:
-                if (backupDb) {
-                    log.info("Will backup db before sharding");
-                    BackupDbBeforeShardCommand beforeShardCommand = new BackupDbBeforeShardCommand(shardEngine);
-                    this.addOperation(beforeShardCommand);
+                if (backupDb) { // there is not backup-ing in mariadb using SQL command
+//                    log.info("Will backup db before sharding");
+//                    BackupDbBeforeShardCommand beforeShardCommand = new BackupDbBeforeShardCommand(shardEngine);
+//                    this.addOperation(beforeShardCommand);
                 } else {
                     addCreateSchemaCommand(shardId);
                 }
@@ -130,13 +121,13 @@ public class ShardMigrationExecutor {
                 log.debug("SHARD HASH = {}", hash.length);
                 PrevBlockData prevBlockData = prevBlockInfoExtractor.extractPrevBlockData(height, 3);
                 CreateShardSchemaCommand createShardConstraintsCommand = new CreateShardSchemaCommand(shardId, shardEngine,
-                        new ShardAddConstraintsSchemaVersion(), /*hash should be correct value*/ hash, prevBlockData);
+                    new ShardAllScriptsDBUpdater(), /*hash should be correct value*/ hash, prevBlockData);
                 this.addOperation(createShardConstraintsCommand);
             case SHARD_SCHEMA_FULL:
             case SECONDARY_INDEX_STARTED:
                 excludeInfo = getOrInitExcludeInfo(excludeInfo, shardStartHeight, height);
                 UpdateSecondaryIndexCommand updateSecondaryIndexCommand = new UpdateSecondaryIndexCommand
-                        (shardEngine, height, excludeInfo);
+                    (shardEngine, height, excludeInfo);
                 this.addOperation(updateSecondaryIndexCommand);
             case SECONDARY_INDEX_FINISHED:
             case CSV_EXPORT_STARTED:
@@ -148,13 +139,13 @@ public class ShardMigrationExecutor {
             case CSV_EXPORT_FINISHED:
             case ZIP_ARCHIVE_STARTED:
                 tableInfoList = getOrInitTableList(tableInfoList);
-                ZipArchiveCommand zipArchiveCommand = new ZipArchiveCommand(shardId,tableInfoList, shardEngine);
+                ZipArchiveCommand zipArchiveCommand = new ZipArchiveCommand(shardId, tableInfoList, shardEngine);
                 this.addOperation(zipArchiveCommand);
             case ZIP_ARCHIVE_FINISHED:
             case DATA_REMOVE_STARTED:
                 excludeInfo = getOrInitExcludeInfo(excludeInfo, shardStartHeight, height);
                 DeleteCopiedDataCommand deleteCopiedDataCommand =
-                        new DeleteCopiedDataCommand(shardEngine, ShardConstants.DEFAULT_COMMIT_BATCH_SIZE, height, excludeInfo);
+                    new DeleteCopiedDataCommand(shardEngine, ShardConstants.DEFAULT_COMMIT_BATCH_SIZE, height, excludeInfo);
                 this.addOperation(deleteCopiedDataCommand);
             case DATA_REMOVED_FROM_MAIN:
                 FinishShardingCommand finishShardingCommand = new FinishShardingCommand(shardEngine, shardId);
@@ -170,14 +161,14 @@ public class ShardMigrationExecutor {
             return existingList;
         }
         List<TableInfo> tableInfoList = derivedTablesRegistry.getDerivedTables()
-                .stream()
-                .filter(t -> !t.getName().equalsIgnoreCase(ACCOUNT_LEDGER))
-                .map(t -> new TableInfo(t.getName(), t instanceof PrunableDbTable))
-                .collect(Collectors.toList());
+            .stream()
+            .filter(t -> !t.getName().equalsIgnoreCase(ACCOUNT_LEDGER))
+            .map(t -> new TableInfo(t.getName(), t instanceof PrunableDbTable))
+            .collect(Collectors.toList());
         List<TableInfo> coreTableInfoList = List.of(
-                new TableInfo(ShardConstants.BLOCK_TABLE_NAME), new TableInfo(ShardConstants.TRANSACTION_TABLE_NAME),
-                new TableInfo(ShardConstants.BLOCK_INDEX_TABLE_NAME), new TableInfo(ShardConstants.TRANSACTION_INDEX_TABLE_NAME),
-                new TableInfo(ShardConstants.SHARD_TABLE_NAME));
+            new TableInfo(ShardConstants.BLOCK_TABLE_NAME), new TableInfo(ShardConstants.TRANSACTION_TABLE_NAME),
+            new TableInfo(ShardConstants.BLOCK_INDEX_TABLE_NAME), new TableInfo(ShardConstants.TRANSACTION_INDEX_TABLE_NAME),
+            new TableInfo(ShardConstants.SHARD_TABLE_NAME));
         tableInfoList.addAll(coreTableInfoList);
         return tableInfoList;
     }
@@ -193,8 +184,9 @@ public class ShardMigrationExecutor {
     }
 
     @Transactional
-    public void cleanCommands() {
+    public void prepare() {
         dataMigrateOperations.clear();
+        shardEngine.prepare();
     }
 
     public void addOperation(DataMigrateOperation shardOperation) {
@@ -203,20 +195,8 @@ public class ShardMigrationExecutor {
         dataMigrateOperations.add(shardOperation);
     }
 
-    private void stopNetOperations() {
-        peers.suspend();
-        Generator.suspendForging();
-        blockchainProcessor.suspendBlockchainDownloading();
-    }
-
-    private void resumeNetOperations() {
-        peers.resume();
-        blockchainProcessor.resumeBlockchainDownloading();
-        Generator.resumeForging();
-    }
-
     public MigrateState executeAllOperations() {
-        stopNetOperations();
+        long start = System.currentTimeMillis();
         log.debug("START SHARDING...");
         MigrateState state = MigrateState.INIT;
         for (DataMigrateOperation dataMigrateOperation : dataMigrateOperations) {
@@ -229,8 +209,7 @@ public class ShardMigrationExecutor {
                 break;
             }
         }
-        log.debug("FINISHED SHARDING '{}'..", state);
-        resumeNetOperations();
+        log.debug("FINISHED SHARDING ----- '{}' in {} ms", state, System.currentTimeMillis() - start);
         return state;
     }
 

@@ -20,23 +20,24 @@
 
 package com.apollocurrency.aplwallet.apl.core.addons;
 
-import static org.slf4j.LoggerFactory.getLogger;
-
-import com.apollocurrency.aplwallet.apl.core.app.Block;
 import com.apollocurrency.aplwallet.apl.core.app.observer.events.BlockEvent;
 import com.apollocurrency.aplwallet.apl.core.app.observer.events.BlockEventType;
+import com.apollocurrency.aplwallet.apl.core.model.Block;
 import com.apollocurrency.aplwallet.apl.core.http.APITag;
 import com.apollocurrency.aplwallet.apl.core.http.AbstractAPIRequestHandler;
-import com.apollocurrency.aplwallet.apl.util.AplException;
+import com.apollocurrency.aplwallet.apl.util.exception.AplException;
 import org.json.simple.JSONObject;
 import org.json.simple.JSONStreamAware;
 import org.slf4j.Logger;
 
+import jakarta.enterprise.event.Observes;
+import jakarta.enterprise.inject.Vetoed;
+import jakarta.servlet.http.HttpServletRequest;
 import java.util.Map;
 import java.util.concurrent.atomic.AtomicInteger;
-import javax.enterprise.event.Observes;
-import javax.enterprise.inject.Vetoed;
-import javax.servlet.http.HttpServletRequest;
+
+import static org.slf4j.LoggerFactory.getLogger;
+
 @Vetoed
 public final class PopOffCounter implements AddOn {
     private static final Logger LOG = getLogger(PopOffCounter.class);
@@ -60,6 +61,7 @@ public final class PopOffCounter implements AddOn {
                 response.put("numberOfPopOffs", numberOfPopOffs);
                 return response;
             }
+
             @Override
             protected boolean allowRequiredBlockParameters() {
                 return false;

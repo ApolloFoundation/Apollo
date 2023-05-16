@@ -22,32 +22,34 @@ package com.apollocurrency.aplwallet.apl.core.http.get;
 
 import com.apollocurrency.aplwallet.apl.core.http.APITag;
 import com.apollocurrency.aplwallet.apl.core.http.AbstractAPIRequestHandler;
+import com.apollocurrency.aplwallet.apl.core.http.HttpParameterParserUtil;
 import com.apollocurrency.aplwallet.apl.core.http.JSONResponses;
 import com.apollocurrency.aplwallet.apl.core.http.ParameterException;
-import com.apollocurrency.aplwallet.apl.core.http.ParameterParser;
-import com.apollocurrency.aplwallet.apl.crypto.HashFunction;
 import com.apollocurrency.aplwallet.apl.crypto.Convert;
-import javax.enterprise.inject.Vetoed;
+import com.apollocurrency.aplwallet.apl.crypto.HashFunction;
 import org.json.simple.JSONObject;
 import org.json.simple.JSONStreamAware;
 
-import javax.servlet.http.HttpServletRequest;
+import jakarta.enterprise.inject.Vetoed;
+import jakarta.servlet.http.HttpServletRequest;
 
+@Deprecated
 @Vetoed
 public final class Hash extends AbstractAPIRequestHandler {
 
     public Hash() {
-        super(new APITag[] {APITag.UTILS}, "hashAlgorithm", "secret", "secretIsText");
+        super(new APITag[]{APITag.UTILS}, "hashAlgorithm", "secret", "secretIsText");
     }
 
     @Override
     public JSONStreamAware processRequest(HttpServletRequest req) throws ParameterException {
 
-        byte algorithm = ParameterParser.getByte(req, "hashAlgorithm", (byte) 0, Byte.MAX_VALUE, false);
+        byte algorithm = HttpParameterParserUtil.getByte(req, "hashAlgorithm", (byte) 0, Byte.MAX_VALUE, false);
         HashFunction hashFunction = null;
         try {
             hashFunction = HashFunction.getHashFunction(algorithm);
-        } catch (IllegalArgumentException ignore) {}
+        } catch (IllegalArgumentException ignore) {
+        }
         if (hashFunction == null) {
             return JSONResponses.INCORRECT_HASH_ALGORITHM;
         }
@@ -56,7 +58,7 @@ public final class Hash extends AbstractAPIRequestHandler {
         byte[] secret;
         try {
             secret = secretIsText ? Convert.toBytes(req.getParameter("secret"))
-                    : Convert.parseHexString(req.getParameter("secret"));
+                : Convert.parseHexString(req.getParameter("secret"));
         } catch (RuntimeException e) {
             return JSONResponses.INCORRECT_SECRET;
         }

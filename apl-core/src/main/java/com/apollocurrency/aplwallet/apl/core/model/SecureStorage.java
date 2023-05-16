@@ -1,8 +1,12 @@
+/*
+ * Copyright © 2018-2020 Apollo Foundation
+ */
+
 package com.apollocurrency.aplwallet.apl.core.model;
 
 import com.apollocurrency.aplwallet.apl.crypto.Crypto;
-import com.apollocurrency.aplwallet.apl.util.AplException;
 import com.apollocurrency.aplwallet.apl.util.JSON;
+import com.apollocurrency.aplwallet.apl.util.exception.AplException;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -20,20 +24,36 @@ import java.util.Map;
 import java.util.Objects;
 
 public class SecureStorage extends FbWallet {
-    private static Logger LOG = LoggerFactory.getLogger(SecureStorage.class);
-
     public static final String DEX_PRIVATE_KEYS = "dex_keys";
     private static final ObjectMapper JSON_MAPPER = JSON.getMapper();
+    private static Logger LOG = LoggerFactory.getLogger(SecureStorage.class);
 
-    public Map<Long, String> getDexKeys(){
+    public static SecureStorage get(String privateKey, String storagePath) {
+        Objects.requireNonNull(privateKey);
+        SecureStorage fbWallet = new SecureStorage();
+        try {
+            fbWallet.readOpenData(storagePath);
+            byte[] salt = fbWallet.getContainerIV();
+            byte[] key = fbWallet.keyFromPassPhrase(privateKey, salt);
+            fbWallet.openFile(storagePath, key);
+        } catch (Exception e) {
+            LOG.error(e.getMessage(), e);
+            return null;
+        }
+
+        return fbWallet;
+    }
+
+    public Map<Long, String> getDexKeys() {
         String json = this.getAllData().stream()
-                .filter(dataRecord -> Objects.equals(dataRecord.alias, DEX_PRIVATE_KEYS))
-                .map(dataRecord -> dataRecord.data)
-                .findFirst().orElse(null);
+            .filter(dataRecord -> Objects.equals(dataRecord.alias, DEX_PRIVATE_KEYS))
+            .map(dataRecord -> dataRecord.data)
+            .findFirst().orElse(null);
 
         Map<Long, String> store = new HashMap<>();
         try {
-            store.putAll(JSON_MAPPER.readValue(json, new TypeReference<Map<Long,String>>(){}));
+            store.putAll(JSON_MAPPER.readValue(json, new TypeReference<Map<Long, String>>() {
+            }));
         } catch (IOException e) {
             LOG.error(e.getMessage(), e);
         }
@@ -59,7 +79,7 @@ public class SecureStorage extends FbWallet {
         this.addKey(kr);
     }
 
-    public boolean store(String privateKey, String storagePath){
+    public boolean store(String privateKey, String storagePath) {
         byte[] salt = generateBytes(12);
         try {
             byte[] key = keyFromPassPhrase(privateKey, salt);
@@ -70,25 +90,6 @@ public class SecureStorage extends FbWallet {
         }
 
         return true;
-    }
-
-    public static SecureStorage get(String privateKey, String storagePath){
-        Objects.requireNonNull(privateKey);
-        SecureStorage fbWallet = new SecureStorage();
-        try {
-            fbWallet.readOpenData(storagePath);
-            byte[] salt = fbWallet.getContanerIV();
-            byte[] key = fbWallet.keyFromPassPhrase(privateKey, salt);
-            fbWallet.openFile(storagePath, key);
-        } catch (IOException e) {
-            LOG.error(e.getMessage(), e);
-            return null;
-        } catch (CryptoNotValidException e) {
-            LOG.error(e.getMessage(), e);
-            return null;
-        }
-
-        return fbWallet;
     }
 
     private byte[] generateBytes(int size) {

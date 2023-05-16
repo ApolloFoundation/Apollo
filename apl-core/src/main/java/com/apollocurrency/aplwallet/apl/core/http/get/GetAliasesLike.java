@@ -20,33 +20,35 @@
 
 package com.apollocurrency.aplwallet.apl.core.http.get;
 
-import com.apollocurrency.aplwallet.apl.core.app.Alias;
 import com.apollocurrency.aplwallet.apl.core.http.APITag;
 import com.apollocurrency.aplwallet.apl.core.http.AbstractAPIRequestHandler;
+import com.apollocurrency.aplwallet.apl.core.http.HttpParameterParserUtil;
 import com.apollocurrency.aplwallet.apl.core.http.JSONData;
 import com.apollocurrency.aplwallet.apl.core.http.JSONResponses;
-import com.apollocurrency.aplwallet.apl.core.http.ParameterParser;
-import com.apollocurrency.aplwallet.apl.util.AplException;
-import com.apollocurrency.aplwallet.apl.core.db.DbIterator;
+import com.apollocurrency.aplwallet.apl.core.service.state.AliasService;
 import com.apollocurrency.aplwallet.apl.crypto.Convert;
-import javax.enterprise.inject.Vetoed;
+import com.apollocurrency.aplwallet.apl.util.exception.AplException;
 import org.json.simple.JSONArray;
 import org.json.simple.JSONObject;
 import org.json.simple.JSONStreamAware;
 
-import javax.servlet.http.HttpServletRequest;
+import jakarta.enterprise.inject.Vetoed;
+import jakarta.enterprise.inject.spi.CDI;
+import jakarta.servlet.http.HttpServletRequest;
 
 @Vetoed
 public final class GetAliasesLike extends AbstractAPIRequestHandler {
+    private final AliasService aliasService;
 
     public GetAliasesLike() {
-        super(new APITag[] {APITag.ALIASES, APITag.SEARCH}, "aliasPrefix", "firstIndex", "lastIndex");
+        super(new APITag[]{APITag.ALIASES, APITag.SEARCH}, "aliasPrefix", "firstIndex", "lastIndex");
+        this.aliasService = CDI.current().select(AliasService.class).get();
     }
 
     @Override
     public JSONStreamAware processRequest(HttpServletRequest req) throws AplException {
-        int firstIndex = ParameterParser.getFirstIndex(req);
-        int lastIndex = ParameterParser.getLastIndex(req);
+        int firstIndex = HttpParameterParserUtil.getFirstIndex(req);
+        int lastIndex = HttpParameterParserUtil.getLastIndex(req);
         String prefix = Convert.emptyToNull(req.getParameter("aliasPrefix"));
         if (prefix == null) {
             return JSONResponses.missing("aliasPrefix");
@@ -56,13 +58,14 @@ public final class GetAliasesLike extends AbstractAPIRequestHandler {
         }
 
         JSONObject response = new JSONObject();
-        JSONArray aliasJSON = new JSONArray();
+        final JSONArray aliasJSON = new JSONArray();
+
+        aliasService.getAliasesByNamePattern(prefix, firstIndex, lastIndex)
+            .stream()
+            .map(JSONData::alias)
+            .forEach(aliasJSON::add);
+
         response.put("aliases", aliasJSON);
-        try (DbIterator<Alias> aliases = Alias.getAliasesLike(prefix, firstIndex, lastIndex)) {
-            while (aliases.hasNext()) {
-                aliasJSON.add(JSONData.alias(aliases.next()));
-            }
-        }
         return response;
     }
 

@@ -20,27 +20,27 @@
 
 package com.apollocurrency.aplwallet.apl.core.http.post;
 
-import com.apollocurrency.aplwallet.apl.core.account.Account;
-import com.apollocurrency.aplwallet.apl.core.monetary.Asset;
-import com.apollocurrency.aplwallet.apl.core.monetary.Currency;
-import com.apollocurrency.aplwallet.apl.core.app.FundingMonitor;
-import com.apollocurrency.aplwallet.apl.core.monetary.HoldingType;
+import com.apollocurrency.aplwallet.apl.core.entity.state.account.Account;
+import com.apollocurrency.aplwallet.apl.core.entity.state.asset.Asset;
+import com.apollocurrency.aplwallet.apl.core.entity.state.currency.Currency;
 import com.apollocurrency.aplwallet.apl.core.http.APITag;
 import com.apollocurrency.aplwallet.apl.core.http.AbstractAPIRequestHandler;
+import com.apollocurrency.aplwallet.apl.core.http.HttpParameterParserUtil;
 import com.apollocurrency.aplwallet.apl.core.http.JSONResponses;
 import com.apollocurrency.aplwallet.apl.core.http.ParameterException;
-import com.apollocurrency.aplwallet.apl.core.http.ParameterParser;
-import com.apollocurrency.aplwallet.apl.util.AplException;
+import com.apollocurrency.aplwallet.apl.core.model.HoldingType;
+import com.apollocurrency.aplwallet.apl.core.service.appdata.funding.FundingMonitorService;
 import com.apollocurrency.aplwallet.apl.crypto.Crypto;
+import com.apollocurrency.aplwallet.apl.util.exception.AplException;
 import org.json.simple.JSONObject;
 import org.json.simple.JSONStreamAware;
 
-import javax.servlet.http.HttpServletRequest;
+import jakarta.enterprise.inject.Vetoed;
+import jakarta.servlet.http.HttpServletRequest;
 
 import static com.apollocurrency.aplwallet.apl.core.http.JSONResponses.MONITOR_ALREADY_STARTED;
 import static com.apollocurrency.aplwallet.apl.core.http.JSONResponses.UNKNOWN_ACCOUNT;
 import static com.apollocurrency.aplwallet.apl.core.http.JSONResponses.incorrect;
-import javax.enterprise.inject.Vetoed;
 
 /**
  * Start a funding monitor
@@ -72,52 +72,53 @@ import javax.enterprise.inject.Vetoed;
 public final class StartFundingMonitor extends AbstractAPIRequestHandler {
 
     public StartFundingMonitor() {
-        super(new APITag[] {APITag.ACCOUNTS}, "holdingType", "holding", "property", "amount", "threshold",
-                "interval", "secretPhrase", "account", "passphrase");
+        super(new APITag[]{APITag.ACCOUNTS}, "holdingType", "holding", "property", "amount", "threshold",
+            "interval", "secretPhrase", "account", "passphrase");
     }
 
     /**
      * Process the request
      *
-     * @param   req                 Client request
-     * @return                      Client response
-     * @throws  AplException        Unable to process request
+     * @param req Client request
+     * @return Client response
+     * @throws AplException Unable to process request
      */
     @Override
     public JSONStreamAware processRequest(HttpServletRequest req) throws AplException {
-        long accountId = ParameterParser.getAccountId(req, false);
-        HoldingType holdingType = ParameterParser.getHoldingType(req);
-        long holdingId = ParameterParser.getHoldingId(req, holdingType);
-        String property = ParameterParser.getAccountProperty(req, true);
-        long amount = ParameterParser.getLong(req, "amount", 0, Long.MAX_VALUE, true);
-        if (amount < FundingMonitor.MIN_FUND_AMOUNT) {
-            throw new ParameterException(incorrect("amount", "Minimum funding amount is " + FundingMonitor.MIN_FUND_AMOUNT));
+        long accountId = HttpParameterParserUtil.getAccountId(req, false);
+        HoldingType holdingType = HttpParameterParserUtil.getHoldingType(req);
+        long holdingId = HttpParameterParserUtil.getHoldingId(req, holdingType);
+        String property = HttpParameterParserUtil.getAccountProperty(req, true);
+        long amount = HttpParameterParserUtil.getLong(req, "amount", 0, Long.MAX_VALUE, true);
+        if (amount < FundingMonitorService.MIN_FUND_AMOUNT) {
+            throw new ParameterException(incorrect("amount", "Minimum funding amount is " + FundingMonitorService.MIN_FUND_AMOUNT));
         }
-        long threshold = ParameterParser.getLong(req, "threshold", 0, Long.MAX_VALUE, true);
-        if (threshold < FundingMonitor.MIN_FUND_THRESHOLD) {
-            throw new ParameterException(incorrect("threshold", "Minimum funding threshold is " + FundingMonitor.MIN_FUND_THRESHOLD));
+        long threshold = HttpParameterParserUtil.getLong(req, "threshold", 0, Long.MAX_VALUE, true);
+        if (threshold < FundingMonitorService.MIN_FUND_THRESHOLD) {
+            throw new ParameterException(incorrect("threshold", "Minimum funding threshold is " + FundingMonitorService.MIN_FUND_THRESHOLD));
         }
-        int interval = ParameterParser.getInt(req, "interval", FundingMonitor.MIN_FUND_INTERVAL, Integer.MAX_VALUE, true);
-        byte[] keySeed = ParameterParser.getKeySeed(req, accountId, true);
+        int interval = HttpParameterParserUtil.getInt(req, "interval", FundingMonitorService.MIN_FUND_INTERVAL, Integer.MAX_VALUE, true);
+        byte[] keySeed = HttpParameterParserUtil.getKeySeed(req, accountId, true);
+//        AssetService assetService = CDI.current().select(AssetService.class).get();
         switch (holdingType) {
             case ASSET:
-                Asset asset = Asset.getAsset(holdingId);
+                Asset asset = assetService.getAsset(holdingId);
                 if (asset == null) {
                     throw new ParameterException(JSONResponses.UNKNOWN_ASSET);
                 }
                 break;
             case CURRENCY:
-                Currency currency = Currency.getCurrency(holdingId);
+                Currency currency = lookupCurrencyService().getCurrency(holdingId);
                 if (currency == null) {
                     throw new ParameterException(JSONResponses.UNKNOWN_CURRENCY);
                 }
                 break;
         }
-        Account account = Account.getAccount(Crypto.getPublicKey(keySeed));
+        Account account = lookupAccountService().getAccount(Crypto.getPublicKey(keySeed));
         if (account == null) {
             throw new ParameterException(UNKNOWN_ACCOUNT);
         }
-        if (FundingMonitor.startMonitor(holdingType, holdingId, property, amount, threshold, interval, keySeed)) {
+        if (lookupFundingMonitorService().startMonitor(holdingType, holdingId, property, amount, threshold, interval, keySeed)) {
             JSONObject response = new JSONObject();
             response.put("started", true);
             return response;

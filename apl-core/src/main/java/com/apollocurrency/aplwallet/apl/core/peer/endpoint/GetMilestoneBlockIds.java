@@ -20,22 +20,25 @@
 
 package com.apollocurrency.aplwallet.apl.core.peer.endpoint;
 
-import static org.slf4j.LoggerFactory.getLogger;
-
-
-import com.apollocurrency.aplwallet.apl.core.app.Block;
-import com.apollocurrency.aplwallet.apl.core.app.Blockchain;
+import com.apollocurrency.aplwallet.apl.core.model.Block;
 import com.apollocurrency.aplwallet.apl.core.peer.Peer;
+import com.apollocurrency.aplwallet.apl.core.service.blockchain.Blockchain;
 import com.apollocurrency.aplwallet.apl.crypto.Convert;
 import org.json.simple.JSONArray;
 import org.json.simple.JSONObject;
 import org.json.simple.JSONStreamAware;
 import org.slf4j.Logger;
 
-public final class GetMilestoneBlockIds extends PeerRequestHandler {
+import jakarta.inject.Singleton;
+
+import static org.slf4j.LoggerFactory.getLogger;
+
+@Singleton
+public class GetMilestoneBlockIds extends PeerRequestHandler {
     private static final Logger LOG = getLogger(GetMilestoneBlockIds.class);
 
-    public GetMilestoneBlockIds() {}
+    public GetMilestoneBlockIds() {
+    }
 
 
     @Override

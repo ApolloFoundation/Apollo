@@ -20,42 +20,42 @@
 
 package com.apollocurrency.aplwallet.apl.core.http.get;
 
-import com.apollocurrency.aplwallet.apl.core.tagged.model.TaggedDataUploadAttachment;
-import com.apollocurrency.aplwallet.apl.core.transaction.messages.Attachment;
+import com.apollocurrency.aplwallet.apl.core.model.Transaction;
 import com.apollocurrency.aplwallet.apl.core.http.APITag;
 import com.apollocurrency.aplwallet.apl.core.http.AbstractAPIRequestHandler;
-import com.apollocurrency.aplwallet.apl.core.http.ParameterParser;
-import com.apollocurrency.aplwallet.apl.util.AplException;
-import com.apollocurrency.aplwallet.apl.core.app.Transaction;
+import com.apollocurrency.aplwallet.apl.core.http.HttpParameterParserUtil;
+import com.apollocurrency.aplwallet.apl.core.transaction.messages.Attachment;
+import com.apollocurrency.aplwallet.apl.core.transaction.messages.TaggedDataUploadAttachment;
+import com.apollocurrency.aplwallet.apl.util.exception.AplException;
 import org.json.simple.JSONObject;
 import org.json.simple.JSONStreamAware;
 
-import javax.servlet.http.HttpServletRequest;
+import jakarta.enterprise.inject.Vetoed;
+import jakarta.servlet.http.HttpServletRequest;
 import java.util.Arrays;
 
 import static com.apollocurrency.aplwallet.apl.core.http.JSONResponses.HASHES_MISMATCH;
 import static com.apollocurrency.aplwallet.apl.core.http.JSONResponses.INCORRECT_TRANSACTION;
 import static com.apollocurrency.aplwallet.apl.core.http.JSONResponses.UNKNOWN_TRANSACTION;
-import javax.enterprise.inject.Vetoed;
 
 @Vetoed
 public final class VerifyTaggedData extends AbstractAPIRequestHandler {
 
     public VerifyTaggedData() {
         super("file", new APITag[]{APITag.DATA}, "transaction",
-                "name", "description", "tags", "type", "channel", "isText", "filename", "data");
+            "name", "description", "tags", "type", "channel", "isText", "filename", "data");
     }
 
     @Override
     public JSONStreamAware processRequest(HttpServletRequest req) throws AplException {
 
-        long transactionId = ParameterParser.getUnsignedLong(req, "transaction", true);
+        long transactionId = HttpParameterParserUtil.getUnsignedLong(req, "transaction", true);
         Transaction transaction = lookupBlockchain().getTransaction(transactionId);
         if (transaction == null) {
             return UNKNOWN_TRANSACTION;
         }
 
-        TaggedDataUploadAttachment taggedData = ParameterParser.getTaggedData(req);
+        TaggedDataUploadAttachment taggedData = HttpParameterParserUtil.getTaggedData(req);
         Attachment attachment = transaction.getAttachment();
 
         if (!(attachment instanceof TaggedDataUploadAttachment)) {

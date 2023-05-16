@@ -4,20 +4,23 @@
 
 package com.apollocurrency.aplwallet.apl.exchange.dao;
 
-import com.apollocurrency.aplwallet.apl.core.app.CollectionUtil;
-import com.apollocurrency.aplwallet.apl.core.db.DbClause;
-import com.apollocurrency.aplwallet.apl.core.db.DbIterator;
-import com.apollocurrency.aplwallet.apl.core.db.DbKey;
-import com.apollocurrency.aplwallet.apl.core.db.LongKey;
-import com.apollocurrency.aplwallet.apl.core.db.LongKeyFactory;
-import com.apollocurrency.aplwallet.apl.core.db.dao.mapper.ExchangeContractMapper;
-import com.apollocurrency.aplwallet.apl.core.db.derived.VersionedDeletableEntityDbTable;
-import com.apollocurrency.aplwallet.apl.exchange.model.ExchangeContract;
-import com.apollocurrency.aplwallet.apl.util.AplException;
+import com.apollocurrency.aplwallet.apl.core.converter.db.ExchangeContractMapper;
+import com.apollocurrency.aplwallet.apl.core.dao.state.derived.EntityDbTable;
+import com.apollocurrency.aplwallet.apl.core.dao.state.keyfactory.DbKey;
+import com.apollocurrency.aplwallet.apl.core.dao.state.keyfactory.LongKey;
+import com.apollocurrency.aplwallet.apl.core.dao.state.keyfactory.LongKeyFactory;
+import com.apollocurrency.aplwallet.apl.core.service.fulltext.FullTextOperationData;
+import com.apollocurrency.aplwallet.apl.util.db.DbClause;
+import com.apollocurrency.aplwallet.apl.util.db.DbIterator;
+import com.apollocurrency.aplwallet.apl.core.model.dex.ExchangeContract;
+import com.apollocurrency.aplwallet.apl.core.db.DatabaseManager;
+import com.apollocurrency.aplwallet.apl.core.utils.CollectionUtil;
+import com.apollocurrency.aplwallet.apl.util.exception.AplException;
 import lombok.extern.slf4j.Slf4j;
 
-import javax.inject.Inject;
-import javax.inject.Singleton;
+import jakarta.enterprise.event.Event;
+import jakarta.inject.Inject;
+import jakarta.inject.Singleton;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
@@ -30,7 +33,7 @@ import java.util.List;
  */
 @Slf4j
 @Singleton
-public class DexContractTable  extends VersionedDeletableEntityDbTable<ExchangeContract> {
+public class DexContractTable extends EntityDbTable<ExchangeContract> {
 
     static final LongKeyFactory<ExchangeContract> KEY_FACTORY = new LongKeyFactory<>("id") {
         @Override
@@ -43,8 +46,10 @@ public class DexContractTable  extends VersionedDeletableEntityDbTable<ExchangeC
     private ExchangeContractMapper mapper = new ExchangeContractMapper();
 
     @Inject
-    public DexContractTable() {
-        super(TABLE_NAME, KEY_FACTORY, false);
+    public DexContractTable(DatabaseManager databaseManager,
+                            Event<FullTextOperationData> fullTextOperationDataEvent) {
+        super(TABLE_NAME, KEY_FACTORY, true, null,
+            databaseManager, fullTextOperationDataEvent);
     }
 
     @Override
@@ -55,8 +60,15 @@ public class DexContractTable  extends VersionedDeletableEntityDbTable<ExchangeC
     @Override
     public void save(Connection con, ExchangeContract entity) throws SQLException {
         try (PreparedStatement pstmt = con.prepareStatement("INSERT INTO dex_contract (id, offer_id, counter_offer_id, " +
-                "sender, recipient, secret_hash, encrypted_secret, transfer_tx_id, counter_transfer_tx_id, deadline_to_reply, status, height, latest) " +
-                "VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, TRUE)")) {
+            "sender, recipient, secret_hash, encrypted_secret, transfer_tx_id, counter_transfer_tx_id, deadline_to_reply, status, height, latest) "
+            + "VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, TRUE) "
+            + "ON DUPLICATE KEY UPDATE "
+            + "id = VALUES(id), offer_id = VALUES(offer_id), counter_offer_id = VALUES(counter_offer_id), "
+            + "sender = VALUES(sender), recipient = VALUES(recipient), secret_hash = VALUES(secret_hash), "
+            + "encrypted_secret = VALUES(encrypted_secret), transfer_tx_id = VALUES(transfer_tx_id), "
+            + "counter_transfer_tx_id = VALUES(counter_transfer_tx_id), deadline_to_reply = VALUES(deadline_to_reply), "
+            + "status = VALUES(status), height = VALUES(height), latest = TRUE")
+        ) {
             int i = 0;
             pstmt.setLong(++i, entity.getId());
             pstmt.setLong(++i, entity.getOrderId());
@@ -80,35 +92,27 @@ public class DexContractTable  extends VersionedDeletableEntityDbTable<ExchangeC
     }
 
     public List<ExchangeContract> getAllByCounterOrder(Long counterOrderId) {
-        return getAllByLongParameterFromStatus(counterOrderId, "counter_offer_id", 0);
-    }
-
-    private List<ExchangeContract> getAllByLongParameterFromStatusHeightSorted(Long parameterValue, String parameterName,  int fromStatus) {
-        DbIterator<ExchangeContract> dbIterator = getManyBy(new DbClause.LongClause(parameterName, parameterValue).and(new DbClause.ByteClause("status", DbClause.Op.GTE, (byte) fromStatus)), 0, -1, " ORDER BY height DESC, db_id DESC");
+        DbIterator<ExchangeContract> dbIterator = getManyBy(
+            new DbClause.LongClause("counter_offer_id", counterOrderId)
+            .and(new DbClause.ByteClause("status", DbClause.Op.GTE, (byte) 0)), 0, -1, " ORDER BY db_id ASC ");
         return CollectionUtil.toList(dbIterator);
     }
 
-    private List<ExchangeContract> getAllByLongParameterFromStatus(Long parameterValue, String parameterName,  int fromStatus) {
-        DbIterator<ExchangeContract> dbIterator = getManyBy(new DbClause.LongClause(parameterName, parameterValue).and(new DbClause.ByteClause("status", DbClause.Op.GTE, (byte) fromStatus)), 0, -1);
-        return CollectionUtil.toList(dbIterator);
-    }
+    public List<ExchangeContract> getByOrderIdAndHeight(long orderId, int height) throws AplException.ExecutiveProcessException {
+        try (Connection con = getDatabaseManager().getDataSource().getConnection();
+             PreparedStatement pstmt = con
+                 .prepareStatement("SELECT * FROM dex_contract  where latest = true " +
+                     "AND height = ? AND (offer_id = ? OR counter_offer_id = ?) ORDER BY db_id ASC")
+        ) {
+            int i = 0;
+            pstmt.setInt(++i, height);
+            pstmt.setLong(++i, orderId);
+            pstmt.setLong(++i, orderId);
 
-    public ExchangeContract getLastByOrder(Long orderId) {
-        List<ExchangeContract> allByOrder = getAllByLongParameterFromStatusHeightSorted(orderId, "offer_id", 1);
-        return getFirstOrNull(allByOrder);
-    }
-
-    private static ExchangeContract getFirstOrNull(List<ExchangeContract> contracts) {
-        if (contracts.size() > 0) {
-            return contracts.get(0);
-        } else {
-            return null;
+            return CollectionUtil.toList(getManyBy(con, pstmt, true));
+        } catch (SQLException ex) {
+            throw new AplException.ExecutiveProcessException(ex.getMessage(), ex);
         }
-    }
-
-    public ExchangeContract getLastByCounterOrder(Long orderId) {
-        List<ExchangeContract> allByOrder = getAllByLongParameterFromStatusHeightSorted(orderId, "counter_offer_id", 1);
-        return getFirstOrNull(allByOrder);
     }
 
     public ExchangeContract getByOrderAndCounterOrder(Long orderId, Long counterOrderId) {
@@ -118,10 +122,23 @@ public class DexContractTable  extends VersionedDeletableEntityDbTable<ExchangeC
     }
 
     public List<ExchangeContract> getOverdueContractsStep1and2(int deadlineToReply) throws AplException.ExecutiveProcessException {
+        String sql = "SELECT * FROM dex_contract  where latest = true " +
+            "AND status IN (0,1) AND deadline_to_reply < ? ORDER BY db_id ASC ";
+
+        return getOverdueContracts(deadlineToReply, sql);
+    }
+
+    public List<ExchangeContract> getOverdueContractsStep1_2_3(int deadlineToReply) throws AplException.ExecutiveProcessException {
+        String sql = "SELECT * FROM dex_contract  where latest = true " +
+            "AND status IN (0,1,2) AND deadline_to_reply < ? ORDER BY db_id ASC ";
+
+        return getOverdueContracts(deadlineToReply, sql);
+    }
+
+    private List<ExchangeContract> getOverdueContracts(int deadlineToReply, String sql) throws AplException.ExecutiveProcessException {
         try (Connection con = getDatabaseManager().getDataSource().getConnection();
              PreparedStatement pstmt = con
-                     .prepareStatement("SELECT * FROM dex_contract  where latest = true " +
-                             "AND status IN (0,1) AND deadline_to_reply < ?")
+                 .prepareStatement(sql)
         ) {
             int i = 0;
             pstmt.setLong(++i, deadlineToReply);

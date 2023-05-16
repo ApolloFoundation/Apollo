@@ -20,49 +20,52 @@
 
 package com.apollocurrency.aplwallet.apl.core.http.get;
 
-import com.apollocurrency.aplwallet.apl.core.app.Order;
-import com.apollocurrency.aplwallet.apl.core.db.DbIterator;
+import com.apollocurrency.aplwallet.apl.core.entity.state.order.BidOrder;
 import com.apollocurrency.aplwallet.apl.core.http.APITag;
 import com.apollocurrency.aplwallet.apl.core.http.AbstractAPIRequestHandler;
+import com.apollocurrency.aplwallet.apl.core.http.HttpParameterParserUtil;
 import com.apollocurrency.aplwallet.apl.core.http.JSONData;
 import com.apollocurrency.aplwallet.apl.core.http.ParameterException;
-import com.apollocurrency.aplwallet.apl.core.http.ParameterParser;
-import javax.enterprise.inject.Vetoed;
+import com.apollocurrency.aplwallet.apl.core.service.state.order.OrderService;
+import com.apollocurrency.aplwallet.apl.core.service.state.order.impl.BidOrderServiceImpl;
+import com.apollocurrency.aplwallet.apl.core.service.state.qualifier.BidOrderService;
+import com.apollocurrency.aplwallet.apl.core.transaction.messages.CCBidOrderPlacementAttachment;
+import com.apollocurrency.aplwallet.apl.core.utils.CollectorUtils;
 import org.json.simple.JSONArray;
 import org.json.simple.JSONObject;
 import org.json.simple.JSONStreamAware;
 
-import javax.servlet.http.HttpServletRequest;
+import jakarta.enterprise.inject.Vetoed;
+import jakarta.enterprise.inject.spi.CDI;
+import jakarta.servlet.http.HttpServletRequest;
+import java.util.stream.Stream;
 
 @Vetoed
 public final class GetAccountCurrentBidOrders extends AbstractAPIRequestHandler {
+    private final OrderService<BidOrder, CCBidOrderPlacementAttachment> bidOrderService =
+        CDI.current().select(BidOrderServiceImpl.class, BidOrderService.Literal.INSTANCE).get();
 
     public GetAccountCurrentBidOrders() {
-        super(new APITag[] {APITag.ACCOUNTS, APITag.AE}, "account", "asset", "firstIndex", "lastIndex");
+        super(new APITag[]{APITag.ACCOUNTS, APITag.AE}, "account", "asset", "firstIndex", "lastIndex");
     }
 
     @Override
     public JSONStreamAware processRequest(HttpServletRequest req) throws ParameterException {
 
-        long accountId = ParameterParser.getAccountId(req, true);
-        long assetId = ParameterParser.getUnsignedLong(req, "asset", false);
-        int firstIndex = ParameterParser.getFirstIndex(req);
-        int lastIndex = ParameterParser.getLastIndex(req);
+        long accountId = HttpParameterParserUtil.getAccountId(req, true);
+        long assetId = HttpParameterParserUtil.getUnsignedLong(req, "asset", false);
+        int firstIndex = HttpParameterParserUtil.getFirstIndex(req);
+        int lastIndex = HttpParameterParserUtil.getLastIndex(req);
 
-        DbIterator<Order.Bid> bidOrders;
+        Stream<BidOrder> bidOrders;
         if (assetId == 0) {
-            bidOrders = Order.Bid.getBidOrdersByAccount(accountId, firstIndex, lastIndex);
+            bidOrders = bidOrderService.getOrdersByAccount(accountId, firstIndex, lastIndex);
         } else {
-            bidOrders = Order.Bid.getBidOrdersByAccountAsset(accountId, assetId, firstIndex, lastIndex);
+            bidOrders = bidOrderService.getOrdersByAccountAsset(accountId, assetId, firstIndex, lastIndex);
         }
-        JSONArray orders = new JSONArray();
-        try {
-            while (bidOrders.hasNext()) {
-                orders.add(JSONData.bidOrder(bidOrders.next()));
-            }
-        } finally {
-            bidOrders.close();
-        }
+        JSONArray orders = bidOrders.map(JSONData::bidOrder)
+            .collect(CollectorUtils.jsonCollector());
+
         JSONObject response = new JSONObject();
         response.put("bidOrders", orders);
         return response;

@@ -20,33 +20,33 @@
 
 package com.apollocurrency.aplwallet.apl.core.http.get;
 
-import com.apollocurrency.aplwallet.apl.core.account.Account;
+import com.apollocurrency.aplwallet.apl.core.entity.state.account.Account;
 import com.apollocurrency.aplwallet.apl.core.http.APITag;
 import com.apollocurrency.aplwallet.apl.core.http.AbstractAPIRequestHandler;
+import com.apollocurrency.aplwallet.apl.core.http.HttpParameterParserUtil;
 import com.apollocurrency.aplwallet.apl.core.http.JSONData;
-import com.apollocurrency.aplwallet.apl.core.http.ParameterParser;
-import com.apollocurrency.aplwallet.apl.util.AplException;
-import javax.enterprise.inject.Vetoed;
+import com.apollocurrency.aplwallet.apl.util.exception.AplException;
 import org.json.simple.JSONStreamAware;
 
-import javax.servlet.http.HttpServletRequest;
+import jakarta.enterprise.inject.Vetoed;
+import jakarta.servlet.http.HttpServletRequest;
 
 @Vetoed
 public final class GetBalance extends AbstractAPIRequestHandler {
 
     public GetBalance() {
-        super(new APITag[] {APITag.ACCOUNTS}, "account", "includeEffectiveBalance", "height");
+        super(new APITag[]{APITag.ACCOUNTS}, "account", "includeEffectiveBalance", "height");
     }
 
     @Override
     public JSONStreamAware processRequest(HttpServletRequest req) throws AplException {
         boolean includeEffectiveBalance = "true".equalsIgnoreCase(req.getParameter("includeEffectiveBalance"));
-        long accountId = ParameterParser.getAccountId(req, true);
-        int height = ParameterParser.getHeight(req);
+        long accountId = HttpParameterParserUtil.getAccountId(req, true);
+        int height = HttpParameterParserUtil.getHeight(req);
         if (height < 0) {
             height = lookupBlockchain().getHeight();
         }
-        Account account = Account.getAccount(accountId, height);
+        Account account = lookupAccountService().getAccount(accountId, height);
         return JSONData.accountBalance(account, includeEffectiveBalance, height);
     }
 

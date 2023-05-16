@@ -1,12 +1,25 @@
+/*
+ * Copyright © 2018-2021 Apollo Foundation
+ */
+
 package com.apollocurrency.aplwallet.api.dto;
 
+import com.apollocurrency.aplwallet.api.dto.utils.JacksonUtil;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonInclude;
+import com.fasterxml.jackson.core.JsonParser;
+import com.fasterxml.jackson.core.ObjectCodec;
+import com.fasterxml.jackson.databind.DeserializationContext;
+import com.fasterxml.jackson.databind.JsonDeserializer;
+import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
 import lombok.ToString;
 
+import java.io.IOException;
+import java.util.LinkedHashMap;
 import java.util.Map;
 
 @Getter
@@ -30,8 +43,9 @@ public class UnconfirmedTransactionDTO extends BaseDTO {
     private String signature;
     private String signatureHash;
     private String fullHash;
-    private String transaction;
-    private Map attachment;
+    private String transaction;//unsigned long of transactionId
+    @JsonDeserialize(using = UnconfirmedTransactionDTO.AttachmentDeserializer.class)
+    private Map<?, ?> attachment;
     private String sender;
     private String senderRS;
 
@@ -65,4 +79,15 @@ public class UnconfirmedTransactionDTO extends BaseDTO {
         this.ecBlockId = o.ecBlockId;
         this.ecBlockHeight = o.ecBlockHeight;
     }
+
+
+    static class AttachmentDeserializer extends JsonDeserializer<LinkedHashMap<?, ?>> {
+        @Override
+        public LinkedHashMap<?, ?> deserialize(JsonParser p, DeserializationContext ctxt) throws IOException {
+            ObjectCodec oc = p.getCodec();
+            JsonNode root = oc.readTree(p);
+            return JacksonUtil.parseJsonNodeGraph(root);
+        }
+    }
+
 }

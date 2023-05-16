@@ -32,6 +32,7 @@ import java.util.Collections;
 import java.util.Comparator;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Locale;
 import java.util.Objects;
 import java.util.Set;
 import java.util.zip.GZIPInputStream;
@@ -39,9 +40,6 @@ import java.util.zip.GZIPOutputStream;
 
 
 public final class Convert {
-
-    private static final char[] hexChars = { '0','1','2','3','4','5','6','7','8','9','a','b','c','d','e','f' };
-    private static final long[] multipliers = {1, 10, 100, 1000, 10000, 100000, 1000000, 10000000, 100000000};
 
     public static final BigInteger two64 = new BigInteger("18446744073709551616");
     public static final long[] EMPTY_LONG = new long[0];
@@ -51,13 +49,27 @@ public final class Convert {
     public static final byte[] EMPTY_BYTE = new byte[0];
     public static final byte[][] EMPTY_BYTES = new byte[0][];
     public static final String[] EMPTY_STRING = new String[0];
+    public static final Comparator<byte[]> byteArrayComparator = (o1, o2) -> {
+        int minLength = Math.min(o1.length, o2.length);
+        for (int i = 0; i < minLength; i++) {
+            int result = Byte.compare(o1[i], o2[i]);
+            if (result != 0) {
+                return result;
+            }
+        }
+        return o1.length - o2.length;
+    };
+    private static final char[] hexChars = {'0', '1', '2', '3', '4', '5', '6', '7', '8', '9', 'a', 'b', 'c', 'd', 'e', 'f'};
+    private static final long[] multipliers = {1, 10, 100, 1000, 10000, 100000, 1000000, 10000000, 100000000};
 
-    private Convert() {} //never
+    private Convert() {
+    } //never
 
-    public static byte[] parseHexString(String hex) {
-        if (hex == null) {
+    public static byte[] parseHexString(String hexStr) {
+        if (hexStr == null) {
             return null;
         }
+        String hex = hexStr.toLowerCase(Locale.ROOT);
         byte[] bytes = new byte[hex.length() / 2];
         for (int i = 0; i < bytes.length; i++) {
             int char1 = hex.charAt(i * 2);
@@ -67,14 +79,18 @@ public final class Convert {
             if (char1 < 0 || char2 < 0 || char1 > 15 || char2 > 15) {
                 throw new NumberFormatException("Invalid hex number: " + hex);
             }
-            bytes[i] = (byte)((char1 << 4) + char2);
+            bytes[i] = (byte) ((char1 << 4) + char2);
         }
         return bytes;
     }
 
     public static long getId(byte[] publicKey) {
         byte[] publicKeyHash = Crypto.sha256().digest(publicKey);
-        return Convert.fullHashToId(publicKeyHash);
+        return Convert.transactionFullHashToId(publicKeyHash);
+    }
+
+    public static String toHexString(long value) {
+        return toHexString(longToBytes(value));
     }
 
     public static String toHexString(byte[] bytes) {
@@ -99,7 +115,7 @@ public final class Convert {
     public static long parseLong(String s) {
         if (s == null) {
             return 0;
-        } else if (s.charAt(0)== '-') {
+        } else if (s.charAt(0) == '-') {
             return Long.parseLong(s);
         } else {
             return Long.parseUnsignedLong(s);
@@ -110,9 +126,11 @@ public final class Convert {
         if (o == null) {
             return 0;
         } else if (o instanceof Long) {
-            return ((Long)o);
+            return ((Long) o);
         } else if (o instanceof String) {
-            return Long.parseLong((String)o);
+            return Long.parseLong((String) o);
+        } else if (o instanceof Number) {
+            return ((Number) o).longValue();
         } else {
             throw new IllegalArgumentException("Not a long: " + o);
         }
@@ -133,11 +151,12 @@ public final class Convert {
         }
     }
 
-    public static byte[] longToBytes(long l) {
+    public static byte[] longToBytes(final long value) {
         int longSize = Long.BYTES;
         byte[] result = new byte[longSize];
+        long l = value;
         for (int i = longSize - 1; i >= 0; i--) {
-            result[i] = (byte)(l & 0xFF);
+            result[i] = (byte) (l & 0xFF);
             l >>= longSize;
         }
         return result;
@@ -173,6 +192,7 @@ public final class Convert {
         byte[] firstPartOfHash = Convert.reverse(bytes); //reverse bytes according to order in Convert.fullHashToId
         return Convert.concat(firstPartOfHash, partialHash);
     }
+
     public static byte[] reverseSelf(byte[] bytes) {
         for (int i = 0; i < bytes.length / 2; i++) {
             byte temp = bytes[i];
@@ -194,15 +214,14 @@ public final class Convert {
 
     //avoid static initialization chain when call Constants.ACCOUNT_PREFIX in rsAccount method
     public static String defaultRsAccount(long accountId) {
-        return  "APL-" + Crypto.rsEncode(accountId);
+        return "APL-" + Crypto.rsEncode(accountId);
     }
 
-    public static long fullHashToId(byte[] hash) {
+    public static long transactionFullHashToId(byte[] hash) {
         if (hash == null || hash.length < 8) {
             throw new IllegalArgumentException("Invalid hash: " + Arrays.toString(hash));
         }
-        BigInteger bigInteger = new BigInteger(1, new byte[] {hash[7], hash[6], hash[5], hash[4], hash[3], hash[2], hash[1], hash[0]});
-        return bigInteger.longValue();
+        return AplIdGenerator.TRANSACTION.getIdByHash(hash).longValue();
     }
 
     public static byte[] toPartialHash(byte[] hash) {
@@ -212,8 +231,6 @@ public final class Convert {
         }
         return Arrays.copyOfRange(hash, 8, hash.length);
     }
-
-
 
     public static String emptyToNull(String s) {
         return s == null || s.length() == 0 ? null : s;
@@ -248,7 +265,7 @@ public final class Convert {
     }
 
     public static long[] toArray(List<Long> list) {
-        return list.stream().mapToLong(x->x).toArray();
+        return list.stream().mapToLong(x -> x).toArray();
     }
 
     public static List<Long> toList(long[] array) {
@@ -266,6 +283,7 @@ public final class Convert {
         }
         return result;
     }
+
     public static Integer[] toArray(int[] array) {
         Integer[] result = new Integer[array.length];
         for (int i = 0; i < array.length; i++) {
@@ -299,7 +317,7 @@ public final class Convert {
     }
 
     public static Set<Long> toSet(long[] array) {
-        if (array == null || array.length ==0) {
+        if (array == null || array.length == 0) {
             return Collections.emptySet();
         }
         Set<Long> set = new HashSet<>(array.length);
@@ -328,7 +346,7 @@ public final class Convert {
     public static byte[] toBytes(long n) {
         byte[] bytes = new byte[8];
         for (int i = 0; i < 8; i++) {
-            bytes[i] = (byte)(n >> (8 * i));
+            bytes[i] = (byte) (n >> (8 * i));
         }
         return bytes;
     }
@@ -338,6 +356,28 @@ public final class Convert {
             throw new NotValidException("Max parameter length exceeded");
         }
         byte[] bytes = new byte[numBytes];
+        buffer.get(bytes);
+        return Convert.toString(bytes);
+    }
+
+    public static void writeString(ByteBuffer buffer, String value) {
+        if(value == null || value.isEmpty()){
+            buffer.putInt(0);
+        }else {
+            byte[] data = Convert.toBytes(value);
+            buffer.putInt(data.length);
+            buffer.put(data);
+        }
+    }
+
+    public static String readString(ByteBuffer buffer) throws NotValidException {
+        int len = buffer.getInt();
+        if(len<0){
+            throw new NotValidException("The string length can't be negative.");
+        }else if (len == 0){
+            return "";
+        }
+        byte[] bytes = new byte[len];
         buffer.get(bytes);
         return Convert.toString(bytes);
     }
@@ -395,16 +435,5 @@ public final class Convert {
             throw new RuntimeException(e.getMessage(), e);
         }
     }
-
-    public static final Comparator<byte[]> byteArrayComparator = (o1, o2) -> {
-        int minLength = Math.min(o1.length, o2.length);
-        for (int i = 0; i < minLength; i++) {
-            int result = Byte.compare(o1[i], o2[i]);
-            if (result != 0) {
-                return result;
-            }
-        }
-        return o1.length - o2.length;
-    };
 
 }

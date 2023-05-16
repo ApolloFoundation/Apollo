@@ -7,9 +7,9 @@ package com.apollocurrency.aplwallet.apl.core.cache;
 import com.apollocurrency.aplwallet.apl.util.cache.CacheProducer;
 import com.google.common.cache.Cache;
 
-import javax.enterprise.inject.Produces;
-import javax.enterprise.inject.spi.InjectionPoint;
-import javax.inject.Singleton;
+import jakarta.enterprise.inject.Produces;
+import jakarta.enterprise.inject.spi.InjectionPoint;
+import jakarta.inject.Singleton;
 
 @Singleton
 public class NullCacheProducerForTests {

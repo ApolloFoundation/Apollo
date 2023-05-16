@@ -6,7 +6,7 @@ package com.apollocurrency.aplwallet.apl.core.utils;
 
 import lombok.extern.slf4j.Slf4j;
 
-import javax.enterprise.inject.Vetoed;
+import jakarta.enterprise.inject.Vetoed;
 import javax.management.MBeanServer;
 import javax.management.ObjectName;
 import java.lang.management.ManagementFactory;
@@ -14,6 +14,9 @@ import java.lang.management.ManagementFactory;
 @Slf4j
 @Vetoed
 public class RuntimeUtils {
+    private RuntimeUtils() {
+    }
+
     public static boolean isEnoughMemory(long limit) {
         long memoryTotal = 0;
         MBeanServer mBeanServer = ManagementFactory.getPlatformMBeanServer();
@@ -34,8 +37,5 @@ public class RuntimeUtils {
             log.debug("Required memory: {}, Available: {} ", limit, memoryTotal);
         }
         return res;
-    }
-
-    private RuntimeUtils() {
     }
 }

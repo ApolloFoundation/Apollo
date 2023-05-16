@@ -1,11 +1,11 @@
 package com.apollocurrency.aplwallet.apl.exchange.service.graph;
 
-import com.apollocurrency.aplwallet.apl.core.app.Convert2;
-import com.apollocurrency.aplwallet.apl.eth.utils.EthUtil;
-import com.apollocurrency.aplwallet.apl.exchange.model.DexCandlestick;
-import com.apollocurrency.aplwallet.apl.exchange.model.DexOrder;
+import com.apollocurrency.aplwallet.apl.core.model.dex.DexOrder;
+import com.apollocurrency.aplwallet.apl.dex.core.model.DexCandlestick;
+import com.apollocurrency.aplwallet.apl.dex.eth.utils.EthUtil;
+import com.apollocurrency.aplwallet.apl.util.Convert2;
 
-import javax.enterprise.inject.Vetoed;
+import jakarta.enterprise.inject.Vetoed;
 import java.math.BigDecimal;
 import java.util.List;
 import java.util.Map;
@@ -13,6 +13,9 @@ import java.util.Map;
 @Vetoed
 public class CandlestickUtil {
     static final int BASE_TIME_INTERVAL = 15 * 60; // 15 minutes in seconds
+
+    private CandlestickUtil() {
+    }
 
     public static void convertOrders(List<DexOrder> orders, Map<Integer, DexCandlestick> candlesticks, TimeFrame frame, CandlestickLoader loader) {
         for (DexOrder order : orders) {
@@ -49,9 +52,8 @@ public class CandlestickUtil {
             return thisCandlestick;
         } else {
             return new DexCandlestick(order.getPairCurrency(), order.getPairRate(), order.getPairRate(), order.getPairRate(),
-                    order.getPairRate(), aplAmount, order.getPairRate().multiply(aplAmount), candlestickTime, orderUnixFinishTime, orderUnixFinishTime);
+                order.getPairRate(), aplAmount, order.getPairRate().multiply(aplAmount), candlestickTime, orderUnixFinishTime, orderUnixFinishTime);
         }
     }
-    private CandlestickUtil() {}
 
 }
