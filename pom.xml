@@ -46,6 +46,7 @@
     <module>apl-dex</module>
     <module>apl-vault-wallet</module>
       <module>apl-smc</module>
+      <module>apl-api3</module>
   </modules>
 
   <properties>

@@ -1,8 +1,8 @@
 /*
- * Copyright (c)  2018-2023. Apollo Foundation.
+ * Copyright (c)  2018-2020. Apollo Foundation.
  */
 
-package com.apollocurrency.aplwallet.api.v2;
+package com.apollocurrency.aplwallet.api.v3;
 
 public class NotFoundException extends jakarta.ws.rs.NotFoundException {
 

@@ -9,8 +9,8 @@
     <version>2.0.1</version>
   </parent>
 
-  <artifactId>apl-api2</artifactId>
-  <name>apl-api2</name>
+  <artifactId>apl-api3</artifactId>
+  <name>apl-api3</name>
   <packaging>jar</packaging>
 
   <properties>
@@ -22,6 +22,7 @@
     <slf4j-version>1.6.3</slf4j-version>
     <junit-version>4.8.1</junit-version>
     <servlet-api-version>2.5</servlet-api-version>
+    <swagger-codegen-maven-plugin.version>3.0.36</swagger-codegen-maven-plugin.version>
   </properties>
 
   <build>
@@ -33,7 +34,7 @@
         <configuration>
           <!-- to resolve swagger codegen issue on windows -->
           <excludes>
-            <exclude>com/apollocurrency/aplwallet/api/impl/v2/*</exclude>
+            <exclude>com/apollocurrency/aplwallet/api/impl/v3/*</exclude>
           </excludes>
         </configuration>
       </plugin>
@@ -64,7 +65,7 @@
             <configuration>
               <tasks>
                 <!--             @Path("/@@                     @Path("/v2/                      -->
-                <replace token= "@Path(&#34;/&#64;&#64;" value="@Path(&#34;/v2/" dir="src/gen/java">
+                <replace token= "@Path(&#34;/&#64;&#64;" value="@Path(&#34;/v3/" dir="src/gen/java">
                   <include name="**/*Api.java"/>
                 </replace>
               </tasks>
@@ -77,6 +78,7 @@
       </plugin>
       <plugin>
         <artifactId>maven-clean-plugin</artifactId>
+        <version>${maven-clean-plugin.version}</version>
         <executions>
           <execution>
             <id>clean-webapp</id>
@@ -115,27 +117,27 @@
       <plugin>
         <groupId>io.swagger.codegen.v3</groupId>
         <artifactId>swagger-codegen-maven-plugin</artifactId>
+        <version>${swagger-codegen-maven-plugin.version}</version>
         <executions>
           <execution>
             <goals>
               <goal>generate</goal>
             </goals>
             <configuration>
-              <inputSpec>${project.basedir}/src/main/resources/yaml/apollo-api-v2.yaml</inputSpec>
+              <inputSpec>${project.basedir}/src/main/resources/yaml/apollo-api-v3.yaml</inputSpec>
               <output>${project.basedir}</output>
               <language>jaxrs-resteasy</language>
-              <artifactId>apl-api2</artifactId>
+              <artifactId>apl-api3</artifactId>
               <groupId>com.apollocurrency</groupId>
-              <apiPackage>com.apollocurrency.aplwallet.api.v2</apiPackage>
-              <modelPackage>com.apollocurrency.aplwallet.api.v2.model</modelPackage>
+              <apiPackage>com.apollocurrency.aplwallet.api.v3</apiPackage>
+              <modelPackage>com.apollocurrency.aplwallet.api.v3.model</modelPackage>
               <invokerPackage>com.apollocurrency.aplwallet.api</invokerPackage>
               <skipOverwrite>true</skipOverwrite>
               <generateApiTests>true</generateApiTests>
               <generateSupportingFiles>false</generateSupportingFiles>
               <supportingFilesToGenerate>ApiException.java,NotFoundException.java</supportingFilesToGenerate>
-<!--              IMPORTANT! NO SPACES ALLOWED BETWEEN modelsToGenerate values-->
               <modelsToGenerate>
-                AccountInfo,AccountInfoResp,AccountReq,AccountReqTest,AccountReqSendMoney,BlockchainInfo,BlockInfo,BlockchainState,CountResponse,CreateChildAccountResp,EmptyResponse,HealthResponse,ListResponse,QueryCountResult,QueryObject,QueryResult,TransactionInfo,TransactionInfoArrayResp,TransactionInfoResp,TxReceipt,TxRequest,PublishContractReq,CallContractMethodReq,ContractListResponse,ContractDetails,ContractDetailsResponse,ContractStateResponse,ContractMethod,CallMethodResult,TransactionArrayResp,CallViewMethodReq,ResultValueResponse,MemberSpec,PropertySpec,ArgSpec,ContractSpecResponse,CurrencyBurningTxCreationRequest,TransactionCreationRequest,TransactionCreationResponse,UnconfirmedTransactionInfo,CurrencyBurningTxParams,AddressSpec,AddressSpecResponse,TransactionVerificationResponse,LastTransactionVerificationResponse,TransactionVerification,StringListResponse,ModuleSourceResponse,ModuleListResponse,AsrSpec,AsrSpecResponse,AsrMemberSpec,ContractEventsRequest,ContractEventsResponse,ContractEventDetails
+                AccountInfo,AccountInfoResp,AccountAssetsResp,AccountCurrenciesResp,AccountReq,AccountReqTest,AccountReqSendMoney,AssetBalance,BlockchainInfo,BlockInfo,BlockchainState,BlockInfoResponse,BlockInfoListResponse,Currency,CountResponse,CacheInfo,CacheInfoResponse,CreateChildAccountResp,EmptyResponse,ForgerInfo,ForgersInfoResponse,FullHealthInfo,FullPeerInfo,HealthPrivateInfo,HealthPublicInfo,HealthResponse,NetworkResponse,NodeStatusInfo,ListLogs,ListResponse,PeerPublicInfo,PeerPrivateInfo,PrivateHealthResponse,PublicHealthResponse,TasksInfoResponse,ThreadsInfoResponse,QueryCountResult,QueryObject,QueryResult,TasksInfo,TransactionInfo,TransactionInfoArrayResp,TransactionInfoResp,ThreadsInfo,ThreadsInfoResponse,TxReceipt,TxRequest,PublishContractReq,CallContractMethodReq,ContractListResponse,ContractDetails,ContractDetailsResponse,ContractStateResponse,ContractMethod,CallMethodResult,TransactionArrayResp,CallViewMethodReq,ResultValueResponse,MemberSpec,PropertySpec,ArgSpec,ContractSpecResponse,CurrencyBurningTxCreationRequest,TransactionCreationRequest,TransactionCreationResponse,UnconfirmedTransactionInfo,CurrencyBurningTxParams,AddressSpec,AddressSpecResponse,TransactionVerificationResponse,LastTransactionVerificationResponse,TransactionVerification,StringListResponse,ModuleSourceResponse,ModuleListResponse,AsrSpec,AsrSpecResponse,AsrMemberSpec,ContractEventsRequest,ContractEventsResponse,ContractEventDetails,X509Response
               </modelsToGenerate>
               <configHelp>false</configHelp>
               <configOptions>
@@ -180,8 +182,6 @@
           <regex>false</regex>
         </configuration>
       </plugin>
-
-
     </plugins>
   </build>
   <dependencies>
@@ -193,11 +193,11 @@
     <dependency>
       <groupId>org.jboss.weld.servlet</groupId>
       <artifactId>weld-servlet-shaded</artifactId>
-      <!--<scope>provided</scope>-->
+      <scope>provided</scope>
     </dependency>
     <dependency>
       <groupId>io.swagger.core.v3</groupId>
-      <artifactId>swagger-jaxrs2-jakarta</artifactId>
+      <artifactId>swagger-jaxrs2</artifactId>
     </dependency>
     <!-- Bean Validation API support -->
     <dependency>

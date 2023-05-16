@@ -16,7 +16,7 @@ import lombok.RequiredArgsConstructor;
 @Data
 @Schema(name = "CacheStats", description = "Statistics about the performance of a Cache.")
 public class CacheStatsDTO {
-    @Schema(name = "cacheName", description = "The cahce name.")
+    @Schema(name = "cacheName", description = "The cache name.")
     private String cacheName;
     @NonNull
     @Schema(name = "hitCount", description = "The number of times Cache lookup methods have returned a cached value.")
