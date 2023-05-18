@@ -2,7 +2,6 @@ package com.apollocurrency.aplwallet.apl.core.app.observer;
 
 import com.apollocurrency.aplwallet.apl.core.entity.appdata.funding.FundingMonitorInstance;
 import com.apollocurrency.aplwallet.apl.core.entity.appdata.funding.MonitoredAccount;
-import com.apollocurrency.aplwallet.apl.core.entity.state.account.Account;
 import com.apollocurrency.aplwallet.apl.core.entity.state.account.AccountCurrency;
 import com.apollocurrency.aplwallet.apl.core.model.HoldingType;
 import com.apollocurrency.aplwallet.apl.core.service.appdata.funding.FundingMonitorService;
@@ -16,7 +15,6 @@ import org.mockito.junit.jupiter.MockitoExtension;
 
 import java.util.List;
 
-import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.lenient;
 import static org.mockito.Mockito.times;
@@ -41,30 +39,30 @@ class AccountCurrencyBalanceObserverTest {
 
     @Test
     void onAccountCurrencyBalance_stoppedMonitor() {
-        AccountCurrency account = new AccountCurrency(1L, 1L, 100L, 200L, 100);
+        AccountCurrency accountCurrency = new AccountCurrency(1L, 1L, 100L, 200L, 100);
         when(fundingMonitorService.isStopped()).thenReturn(true);
 
-        observer.onAccountCurrencyBalance(account);
+        observer.onAccountCurrencyBalance(accountCurrency);
 
         verify(fundingMonitorService).isStopped();
     }
 
     @Test
     void onAccountCurrencyBalance() {
-        AccountCurrency asset = new AccountCurrency(1L, 1L, 100L, 200L, 100);
+        AccountCurrency accountCurrency = new AccountCurrency(1L, 1L, 100L, 200L, 100);
         when(fundingMonitorService.getMonitors()).thenReturn(List.of());
         byte[] keySeed = Crypto.getKeySeed(new byte[]{0, 1, 2, 3});
         MonitoredAccount monAcc1 = new MonitoredAccount(1L,
             new FundingMonitorInstance(HoldingType.CURRENCY, 1L, "prop",
-                100L, 1000L, 10, asset.getAccountId(), keySeed),
+                100L, 1000L, 10, accountCurrency.getAccountId(), keySeed),
             100L, 1000L, 10
         );
         MonitoredAccount monAcc2 = new MonitoredAccount(2L,
             new FundingMonitorInstance(HoldingType.CURRENCY, 1L, "prop",
-                100L, 1000L, 10, asset.getAccountId(), keySeed),
+                100L, 1000L, 10, accountCurrency.getAccountId(), keySeed),
             100L, 1000L, 10
         );
-        when(fundingMonitorService.getMonitoredAccountListById(asset.getAccountId())).thenReturn(
+        when(fundingMonitorService.getMonitoredAccountListById(accountCurrency.getAccountId())).thenReturn(
             List.of(
                 monAcc1,
                 monAcc2
@@ -73,7 +71,7 @@ class AccountCurrencyBalanceObserverTest {
         when(fundingMonitorService.containsPendingEvent(any(MonitoredAccount.class))).thenReturn(false).thenReturn(false);
         lenient().when(fundingMonitorService.addPendingEvent(any(MonitoredAccount.class))).thenReturn(true).thenReturn(true);
 
-        observer.onAccountCurrencyBalance(asset);
+        observer.onAccountCurrencyBalance(accountCurrency);
 
         verify(fundingMonitorService).getMonitors();
         verify(fundingMonitorService, times(2)).containsPendingEvent(any(MonitoredAccount.class));

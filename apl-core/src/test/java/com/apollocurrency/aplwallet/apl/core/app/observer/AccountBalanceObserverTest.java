@@ -16,7 +16,6 @@ import org.mockito.junit.jupiter.MockitoExtension;
 
 import java.util.List;
 
-import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.lenient;
 import static org.mockito.Mockito.times;
@@ -51,20 +50,20 @@ class AccountBalanceObserverTest {
 
     @Test
     void onAccountAssetBalance() {
-        Account asset = new Account(1L, 1L, 100L, 200L, 10L, 100);
+        Account account = new Account(1L, 1L, 100L, 200L, 10L, 100);
         when(fundingMonitorService.getMonitors()).thenReturn(List.of());
         byte[] keySeed = Crypto.getKeySeed(new byte[]{0, 1, 2, 3});
         MonitoredAccount monAcc1 = new MonitoredAccount(1L,
             new FundingMonitorInstance(HoldingType.APL, 1L, "prop",
-                100L, 1000L, 10, asset.getId(), keySeed),
+                100L, 1000L, 10, account.getId(), keySeed),
             100L, 1000L, 10
         );
         MonitoredAccount monAcc2 = new MonitoredAccount(2L,
             new FundingMonitorInstance(HoldingType.APL, 1L, "prop",
-                100L, 1000L, 10, asset.getId(), keySeed),
+                100L, 1000L, 10, account.getId(), keySeed),
             100L, 1000L, 10
         );
-        when(fundingMonitorService.getMonitoredAccountListById(asset.getId())).thenReturn(
+        when(fundingMonitorService.getMonitoredAccountListById(account.getId())).thenReturn(
             List.of(
                 monAcc1,
                 monAcc2
@@ -73,7 +72,7 @@ class AccountBalanceObserverTest {
         when(fundingMonitorService.containsPendingEvent(any(MonitoredAccount.class))).thenReturn(false).thenReturn(false);
         lenient().when(fundingMonitorService.addPendingEvent(any(MonitoredAccount.class))).thenReturn(true).thenReturn(true);
 
-        observer.onAccountBalance(asset);
+        observer.onAccountBalance(account);
 
         verify(fundingMonitorService).getMonitors();
         verify(fundingMonitorService, times(2)).containsPendingEvent(any(MonitoredAccount.class));
