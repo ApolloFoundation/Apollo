@@ -5,7 +5,7 @@ ALTER TABLE `block`
     ADD CONSTRAINT primary_key_block_id PRIMARY KEY (`id`);
 
 ALTER TABLE `block`
-    ADD CONSTRAINT block_timestamp_idx unique (`TIMESTAMP` DESC);
+    ADD CONSTRAINT block_timestamp_idx unique (`TIMESTAMP`/* DESC*/); -- DESC is NOT permitted by RocksDb engine now
 
 ALTER TABLE `block`
     ADD CONSTRAINT block_height_idx unique (`height`);
@@ -28,7 +28,7 @@ CREATE INDEX IF NOT EXISTS transaction_sender_id_idx ON `transaction` (`sender_i
 
 CREATE INDEX IF NOT EXISTS transaction_recipient_id_idx ON `transaction` (`recipient_id`);
 
-CREATE INDEX IF NOT EXISTS transaction_block_timestamp_idx ON `transaction` (`block_timestamp` DESC);
+CREATE INDEX IF NOT EXISTS transaction_block_timestamp_idx ON `transaction` (`block_timestamp`/* DESC*/); -- DESC is NOT permitted by RocksDb engine now
 
 ALTER TABLE `transaction`
 DROP CONSTRAINT IF EXISTS transaction_id_idx;

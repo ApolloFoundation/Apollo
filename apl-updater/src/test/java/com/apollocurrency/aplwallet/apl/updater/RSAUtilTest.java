@@ -35,8 +35,8 @@ public class RSAUtilTest {
 
     @Test
     public void testEncryptAndDecrypt() throws Exception {
-        PublicKey pubKey = getPublicKeyFromCertificate("certs/1_1.crt");
-        PrivateKey privateKey = getPrivateKey("certs/1_1.key");
+        PublicKey pubKey = getPublicKeyFromCertificate("test-certs/1_1.crt");
+        PrivateKey privateKey = getPrivateKey("test-certs/1_1.key");
 
         // encrypt the message
         String expectedMessage = "This is a secret message";
@@ -53,11 +53,11 @@ public class RSAUtilTest {
 
     @Test
     public void doubleEncryptAndDecrypt() throws Exception {
-        PublicKey pubKey1 = getPublicKeyFromCertificate("certs/1_2.crt");
-        PrivateKey privateKey1 = getPrivateKey("certs/1_2.key");
+        PublicKey pubKey1 = getPublicKeyFromCertificate("test-certs/1_2.crt");
+        PrivateKey privateKey1 = getPrivateKey("test-certs/1_2.key");
 
-        PublicKey pubKey2 = getPublicKeyFromCertificate("certs/2_2.crt");
-        PrivateKey privateKey2 = getPrivateKey("certs/2_2.key");
+        PublicKey pubKey2 = getPublicKeyFromCertificate("test-certs/2_2.crt");
+        PrivateKey privateKey2 = getPrivateKey("test-certs/2_2.key");
 
         String expectedMessage = "This is a secret message!";
 
@@ -73,11 +73,11 @@ public class RSAUtilTest {
 
     @Test
     public void testDecryptUrl() throws Exception {
-        PublicKey pubKey1 = getPublicKeyFromCertificate("certs/1_2.crt");
-        PrivateKey privateKey1 = getPrivateKey("certs/1_2.key");
+        PublicKey pubKey1 = getPublicKeyFromCertificate("test-certs/1_2.crt");
+        PrivateKey privateKey1 = getPrivateKey("test-certs/1_2.key");
 
-        PublicKey pubKey2 = getPublicKeyFromCertificate("certs/2_2.crt");
-        PrivateKey privateKey2 = getPrivateKey("certs/2_2.key");
+        PublicKey pubKey2 = getPublicKeyFromCertificate("test-certs/2_2.crt");
+        PrivateKey privateKey2 = getPrivateKey("test-certs/2_2.key");
 
         String expectedMessage = "http://apollocurrency/ApolloWallet-1.0.8.jar";
         DoubleByteArrayTuple doubleEncryptedBytes = RSAUtil.doubleEncrypt(privateKey1, privateKey2, expectedMessage.getBytes());
@@ -93,16 +93,16 @@ public class RSAUtilTest {
 
     @Test
     void testDecryptUrlEx() throws Exception {
-        PublicKey pubKey1 = getPublicKeyFromCertificate("certs/1_2.crt");
-        PrivateKey privateKey1 = getPrivateKey("certs/1_2.key");
+        PublicKey pubKey1 = getPublicKeyFromCertificate("test-certs/1_2.crt");
+        PrivateKey privateKey1 = getPrivateKey("test-certs/1_2.key");
 
-        PublicKey pubKey2 = getPublicKeyFromCertificate("certs/2_2.crt");
-        PrivateKey privateKey2 = getPrivateKey("certs/2_2.key");
+        PublicKey pubKey2 = getPublicKeyFromCertificate("test-certs/2_2.crt");
+        PrivateKey privateKey2 = getPrivateKey("test-certs/2_2.key");
         Set<CertificatePair> pairs = new HashSet<>();
         String expectedMessage = "http://apollocurrency/ApolloWallet-1.0.8.jar";
         DoubleByteArrayTuple doubleEncryptedBytes = RSAUtil.doubleEncrypt(privateKey1, privateKey2, expectedMessage.getBytes());
-        Certificate c1 = UpdaterUtil.readCertificate("certs/1_2.crt");
-        Certificate c2 = UpdaterUtil.readCertificate("certs/2_2.crt");
+        Certificate c1 = UpdaterUtil.readCertificate("test-certs/1_2.crt");
+        Certificate c2 = UpdaterUtil.readCertificate("test-certs/2_2.crt");
         pairs.add(new CertificatePair(c1, c2));
         SimpleUrlExtractor extractor = new SimpleUrlExtractor(new RSADoubleDecryptor(), pairs);
         byte[] bytes = UpdaterUtil.concatArrays(doubleEncryptedBytes.getFirst(), doubleEncryptedBytes.getSecond());

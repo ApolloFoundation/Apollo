@@ -62,8 +62,12 @@ public class DbPopulator {
         try (Connection con = dataSource.getConnection();
              Statement stm = con.createStatement()) {
             while (tokenizer.hasMoreElements()) {
-                String sqlCommand = tokenizer.nextToken();
-                if (sqlCommand.trim().length() != 0) {
+                String sqlCommand = tokenizer.nextToken().trim();
+                if (sqlCommand.equalsIgnoreCase("commit")) {
+                    // process intermediate commit inside script
+                    stm.executeBatch();
+                    con.commit();
+                } else if (sqlCommand.length() != 0) {
                     stm.addBatch(sqlCommand);
                 }
             }

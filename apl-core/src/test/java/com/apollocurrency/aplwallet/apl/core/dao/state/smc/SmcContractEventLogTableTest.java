@@ -22,6 +22,7 @@ import com.apollocurrency.smc.data.type.Address;
 import lombok.extern.slf4j.Slf4j;
 import org.jboss.weld.junit.MockBean;
 import org.jboss.weld.junit5.EnableWeld;
+import org.jboss.weld.junit5.ExplicitParamInjection;
 import org.jboss.weld.junit5.WeldInitiator;
 import org.jboss.weld.junit5.WeldSetup;
 import org.junit.jupiter.api.AfterEach;
@@ -48,6 +49,7 @@ import static org.mockito.Mockito.mock;
 @Slf4j
 @Tag("slow")
 @EnableWeld
+@ExplicitParamInjection
 class SmcContractEventLogTableTest extends DbContainerBaseTest {
     @RegisterExtension
     static TemporaryFolderExtension temporaryFolderExtension = new TemporaryFolderExtension();
@@ -122,11 +124,11 @@ class SmcContractEventLogTableTest extends DbContainerBaseTest {
         assertEquals(4, actual.size());
     }
 
-    @CsvSource(delimiterString = ":", value = {
-        "Buy:0:-1:4",
-        "Transfer:0:-1:10",
-        "Transfer:100:-1:9",
-        "Transfer:100:10000:8"
+    @CsvSource(value = {
+        "Buy,0,-1,4",
+        "Transfer,0,-1,10",
+        "Transfer,100,-1,9",
+        "Transfer,100,10000,8"
     })
     @ParameterizedTest
     void getEventsByFilter(String name, Integer heightFrom, Integer heightTo, Integer num) {

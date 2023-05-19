@@ -4,7 +4,7 @@
 
 package com.apollocurrency.aplwallet.apl.core.dao.state.shuffling;
 
-import com.apollocurrency.aplwallet.apl.core.dao.DBContainerRootTest;
+import com.apollocurrency.aplwallet.apl.core.dao.DbContainerRootUserTest;
 import com.apollocurrency.aplwallet.apl.core.entity.state.shuffling.Shuffling;
 import com.apollocurrency.aplwallet.apl.core.entity.state.shuffling.ShufflingStage;
 import com.apollocurrency.aplwallet.apl.data.DbTestData;
@@ -28,11 +28,11 @@ import static org.mockito.Mockito.mock;
 public class ShufflingDbRepositoryTest extends ShufflingRepositoryTest {
     @BeforeAll
     static void beforeAll() {
-        log.info("Connect to the db using {}", DBContainerRootTest.class);
+        log.info("Connect to the db using {}", DbContainerRootUserTest.class);
     }
 
     @RegisterExtension
-    static DbExtension extension = new DbExtension(DBContainerRootTest.mariaDBContainer, DbTestData.getInMemDbProps(), "db/shuffling.sql", null);
+    static DbExtension extension = new DbExtension(DbContainerRootUserTest.mariaDBContainer, DbTestData.getInMemDbProps(), "db/shuffling.sql", null);
 
     @Override
     public ShufflingTable createRepository() {

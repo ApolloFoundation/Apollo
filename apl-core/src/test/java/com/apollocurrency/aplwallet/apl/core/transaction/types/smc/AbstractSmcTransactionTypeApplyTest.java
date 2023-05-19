@@ -171,7 +171,7 @@ abstract class AbstractSmcTransactionTypeApplyTest extends DbContainerBaseTest {
         .addBeans(MockBean.of(mock(TaskDispatchManager.class), TaskDispatchManager.class))
         .addBeans(MockBean.of(blockchainConfig, BlockchainConfig.class))
         .addBeans(MockBean.of(propertiesHolder, PropertiesHolder.class))
-        .addBeans(MockBean.of(timeService, TimeConfig.class))
+        .addBeans(MockBean.of(config, TimeConfig.class))
         .addBeans(MockBean.of(timeService, TimeService.class))
         .addBeans(MockBean.of(accountTable, AccountTableInterface.class))
         .addBeans(MockBean.of(mock(PhasingPollService.class), PhasingPollService.class, PhasingPollServiceImpl.class))

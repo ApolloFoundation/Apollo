@@ -104,8 +104,11 @@
     <plugins>
       <plugin>
         <artifactId>maven-surefire-plugin</artifactId>
+        <configuration>
+          <argLine>--add-opens java.base/sun.security.x509=ALL-UNNAMED</argLine>
+        </configuration>
       </plugin>
-
     </plugins>
   </build>
+
 </project>

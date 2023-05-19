@@ -8,6 +8,7 @@ import com.apollocurrency.aplwallet.apl.core.app.AplAppStatus;
 import com.apollocurrency.aplwallet.apl.core.app.GenesisAccounts;
 import com.apollocurrency.aplwallet.apl.core.chainid.BlockchainConfig;
 import com.apollocurrency.aplwallet.apl.core.config.JdbiConfiguration;
+import com.apollocurrency.aplwallet.apl.core.config.TimeConfig;
 import com.apollocurrency.aplwallet.apl.core.dao.DbContainerBaseTest;
 import com.apollocurrency.aplwallet.apl.core.dao.state.account.AccountGuaranteedBalanceTable;
 import com.apollocurrency.aplwallet.apl.core.dao.state.account.AccountTable;
@@ -27,6 +28,7 @@ import com.apollocurrency.aplwallet.apl.core.entity.state.dgs.DGSPurchase;
 import com.apollocurrency.aplwallet.apl.core.entity.state.dgs.DGSTag;
 import com.apollocurrency.aplwallet.apl.core.model.Block;
 import com.apollocurrency.aplwallet.apl.core.model.Transaction;
+import com.apollocurrency.aplwallet.apl.core.service.appdata.TimeService;
 import com.apollocurrency.aplwallet.apl.core.service.appdata.impl.TimeServiceImpl;
 import com.apollocurrency.aplwallet.apl.core.service.blockchain.Blockchain;
 import com.apollocurrency.aplwallet.apl.core.service.blockchain.BlockchainProcessor;
@@ -102,13 +104,14 @@ public class DGSServiceTest extends DbContainerBaseTest {
 
     @RegisterExtension
     DbExtension extension = new DbExtension(mariaDBContainer, DbTestData.getDbUrlProps(), "db/dgs-data.sql", "db/schema.sql");
+    TimeConfig config = new TimeConfig(false);
+    TimeService timeService = new TimeServiceImpl(config.timeSource());
 
     Blockchain blockchain = mock(Blockchain.class);
     AccountTable accountTable = new AccountTable(extension.getDatabaseManager(), mock(Event.class));
     @WeldSetup
     public WeldInitiator weld = WeldInitiator.from(
         PropertiesHolder.class,
-        TimeServiceImpl.class,
         GlobalSyncImpl.class,
         FullTextConfigImpl.class,
         DGSPublicFeedbackTable.class,
@@ -134,6 +137,8 @@ public class DGSServiceTest extends DbContainerBaseTest {
         .addBeans(MockBean.of(mock(AccountLedgerService.class), AccountLedgerService.class, AccountLedgerServiceImpl.class))
         .addBeans(MockBean.of(mock(FullTextSearchUpdater.class), FullTextSearchUpdater.class, FullTextSearchUpdaterImpl.class))
         .addBeans(MockBean.of(mock(BlockchainConfig.class), BlockchainConfig.class))
+        .addBeans(MockBean.of(config, TimeConfig.class))
+        .addBeans(MockBean.of(timeService, TimeService.class))
         .build();
     Block lastBlock = mock(Block.class);
     Block prevBlock = mock(Block.class);

@@ -4,163 +4,142 @@
 
 package com.apollocurrency.aplwallet.apl.updater;
 
-import org.junit.jupiter.api.Disabled;
+import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.Test;
-import org.mockito.Mock;
-import org.mockito.Mockito;
 import org.slf4j.Logger;
 
 import java.io.IOException;
-import java.io.InputStream;
-import java.nio.file.Path;
-import java.nio.file.Paths;
 import java.security.cert.Certificate;
-import java.security.cert.CertificateException;
-import java.security.cert.CertificateFactory;
-import java.util.Arrays;
-import java.util.HashSet;
+import java.security.cert.X509Certificate;
 import java.util.Set;
-import java.util.stream.Collectors;
-import java.util.stream.Stream;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.junit.jupiter.api.Assertions.fail;
 import static org.slf4j.LoggerFactory.getLogger;
 
-//import org.powermock.api.mockito.PowerMockito;
-
-//TODO: Rewrite using mockito
-@Disabled
+/**
+ * in case RUN TIME ERROR (e.g. in IDE)
+ * add VM parameter below to this test
+ * --add-opens=java.base/sun.security.x509=ALL-UNNAMED
+ */
 public class UpdaterUtilTest {
     private static final Logger log = getLogger(UpdaterUtilTest.class);
 
-    private final static String CERTIFICATE_MOCK_PREFIX = "CERTIFICATE_MOCK_";
-
-    @Mock
-    private CertificateFactory certificateFactoryMock;
-
-    /**
-     * Create certificate mock for each filename.
-     * Used to mock dependencies of UpdaterUtil.readCertificates(Set<Path> certificateFilesPaths) method
-     *
-     * @param certificateFactoryMock
-     * @param files
-     * @throws IOException
-     * @throws CertificateException
-     */
-    private static void createCertificateMocksForFiles(CertificateFactory certificateFactoryMock, String[] files) throws IOException, CertificateException {
-        for (String filename : files) {
-            InputStream inputStreamMock = Mockito.mock(InputStream.class);
-            Certificate certificateMock = Mockito.mock(Certificate.class);
-
-//            PowerMockito.when(Files.newInputStream(Paths.get(filename))).thenReturn(inputStreamMock);
-
-            Mockito.when(certificateFactoryMock.generateCertificate(inputStreamMock)).thenReturn(certificateMock);
-            Mockito.when(certificateMock.toString()).thenReturn(CERTIFICATE_MOCK_PREFIX + filename);
-        }
+    @AfterEach
+    void tearDown() {
+        UpdaterUtil.certificates.clear();
+        UpdaterUtil.certificatePairs.clear();
     }
 
-    /**
-     * convert String[] to Stream<Path>
-     *
-     * @param filenames
-     * @return
-     */
-    private static Stream<Path> createPathStream(String[] filenames) {
-        return Arrays.stream(filenames).map(filename -> Paths.get(filename));
-    }
-
-    /**
-     * Simple iterate through result not to make filename to mock-cert mapping for better readability
-     *
-     * @param pairs
-     * @param first
-     * @param second
-     * @return
-     */
-    private static boolean containsPair(Set<CertificatePair> pairs, String first, String second) {
-        for (CertificatePair pair : pairs) {
-            if (pair.getFirstCertificate().toString().equals(CERTIFICATE_MOCK_PREFIX + first) &&
-                pair.getSecondCertificate().toString().equals(CERTIFICATE_MOCK_PREFIX + second)) {
-                return true;
-            }
-        }
-        return false;
-    }
-
-    /**
-     * Test UpdaterUtil.buildCertificatePairs(String certificateDirectory) method
-     *
-     * @throws Exception
-     */
     @Test
     public void testBuildCertificatePairs() throws Exception {
-        String directory = "test-dir";
-        String[] files = new String[]{"1_1.crt", "1_2.crt", "1_3.crt", "2_1.crt", "2_2.crt"};
-
-        Path directoryPath = Paths.get(directory);
-
-//        PowerMockito.spy(UpdaterUtil.class);
-//        PowerMockito.doReturn(directoryPath).when(UpdaterUtil.class, "loadResourcePath", directory) ;
-//        PowerMockito.mockStatic(Files.class);
-//        PowerMockito.when(Files.walk(directoryPath, 1)).thenReturn(createPathStream(files), createPathStream(files));
-//        PowerMockito.mockStatic(CertificateFactory.class);
-//        PowerMockito.when(CertificateFactory.getInstance("X.509")).thenReturn(certificateFactoryMock);
-
-        // create certificate mock for each filename
-        createCertificateMocksForFiles(certificateFactoryMock, files);
-
+        UpdaterUtil.init(false);
         // Call tested method
-        Set<CertificatePair> result = UpdaterUtil.buildCertificatePairs(directory, "1_", "2_", ".crt");
+        Set<CertificatePair> result = UpdaterUtil.buildCertificatePairs("any-dir",
+            "1_", "2_", ".crt");
 
         assertNotNull(result);
         for (CertificatePair pair : result) {
             log.debug("pair: [{}, {}]", pair.getFirstCertificate().toString(), pair.getSecondCertificate().toString());
         }
+        log.debug("set size: {}", result.size());
+        assertEquals(result.size(), 9);
+//        assertHasPair(result, "YL", "Denis Demut");
+//        assertHasPair(result, "YL", "Dzhyncharadze George");
+//        assertHasPair(result, "YL", "iAlexander");
+//        assertHasPair(result, "Rostyslav Golda", "Denis Demut");
+//        assertHasPair(result, "Rostyslav Golda", "Dzhyncharadze George");
+//        assertHasPair(result, "Rostyslav Golda", "iAlexander");
+//        assertHasPair(result, "Maksim Khabenko", "Denis Demut");
+//        assertHasPair(result, "Maksim Khabenko", "Dzhyncharadze George");
+//        assertHasPair(result, "Maksim Khabenko", "iAlexander");
+    }
 
-        assertEquals(result.size(), 6);
+    @Test
+    public void testBuildDebugCertificatePairs() throws Exception {
+        UpdaterUtil.init(true);
 
-        assertTrue(containsPair(result, "2_1.crt", "1_1.crt"));
-        assertTrue(containsPair(result, "2_1.crt", "1_2.crt"));
-        assertTrue(containsPair(result, "2_1.crt", "1_3.crt"));
-        assertTrue(containsPair(result, "2_2.crt", "1_1.crt"));
-        assertTrue(containsPair(result, "2_2.crt", "1_2.crt"));
-        assertTrue(containsPair(result, "2_2.crt", "1_3.crt"));
+        Set<CertificatePair> result = UpdaterUtil.buildCertificatePairs("any-dir",
+            "1_", "2_", ".crt");
+
+        assertNotNull(result);
+        assertEquals(result.size(), 1);
+        assertHasPair(result, "Andrii Boiarskyi", "Andrii Boiarskyi");
+    }
+
+
+    @Test
+    public void testReadMainCertificates() throws IOException {
+
+        // init certificates (from apl-updater/src/main/resources/certs)
+        UpdaterUtil.init(false);
+
+        // read certificates ignoring input parameters
+        Set<Certificate> result = UpdaterUtil.readCertificates("any-dir", "any-prefix", "any-suffix");
+
+        assertNotNull(result);
+        assertEquals(6, result.size());
+
+        // Assert that for each filename a correspondent certificate was created
+        final Set<String> names = Set.of("Denis Demut", "YL", "Rostyslav Golda",
+            "Dzhyncharadze George", "iAlexander", "Maksim Khabenko");
+        for (Certificate certificate : result) {
+            final X509Certificate cert = (X509Certificate) certificate;
+            final sun.security.x509.X500Name subjectDN = (sun.security.x509.X500Name) cert.getSubjectDN();
+            final String commonName = subjectDN.getCommonName();
+            assertTrue(names.contains(commonName), commonName + " is not present in expected names set " +
+                "for certificates: " + names + ", cert: " + certificate);
+        }
 
     }
 
-    /**
-     * Test UpdaterUtil.readCertificates(Set<Path> certificateFilesPaths) method
-     *
-     * @throws CertificateException
-     * @throws IOException
-     */
     @Test
-    public void testReadCertificates() throws Exception {
+    public void testReadDebugCertificates() throws IOException {
 
-        String[] files = new String[]{"cert1", "cert2", "cert3"};
+        // init certificates (from apl-updater/src/main/resources/debug-certs)
+        UpdaterUtil.init(true);
 
-//        PowerMockito.mockStatic(Files.class);
-//
-//        PowerMockito.mockStatic(CertificateFactory.class);
-//        PowerMockito.when(CertificateFactory.getInstance("X.509")).thenReturn(certificateFactoryMock);
-
-        // create certificate mock for each filename
-        createCertificateMocksForFiles(certificateFactoryMock, files);
-
-        // Call tested method
-        Set<Certificate> result = UpdaterUtil.readCertificates(createPathStream(files).collect(Collectors.toSet()));
+        // read certificates ignoring input parameters
+        Set<Certificate> result = UpdaterUtil.readCertificates("any-dir",
+            "any-prefix", "any-suffix");
 
         assertNotNull(result);
-        assertEquals(result.size(), files.length);
+        assertEquals(1, result.size()); // same cert
 
-        HashSet<String> filenames = new HashSet<>(Arrays.asList(files));
-        // Assert that for each filename a correspondent certificate was created
-        for (Certificate certificate : result) {
-            assertTrue(filenames.contains(certificate.toString().replace(CERTIFICATE_MOCK_PREFIX, "")));
+        final Certificate certificate = (Certificate) result.toArray()[0];
+        final X509Certificate cert = (X509Certificate) certificate;
+        final sun.security.x509.X500Name subjectDN = (sun.security.x509.X500Name) cert.getSubjectDN();
+        final String commonName = subjectDN.getCommonName();
+        assertEquals("Andrii Boiarskyi", commonName, commonName + " does not match expected " +
+            "www.firstbridge.io for loaded debug certificate");
+    }
+
+    private void assertHasPair(Set<CertificatePair> pairs, String devName, String approver) {
+        for (CertificatePair pair : pairs) {
+            final String firstName = getNameFromCert(pair.getSecondCertificate());
+            if (!firstName.equals(devName)) {
+                continue;
+            }
+            final String secondName = getNameFromCert(pair.getFirstCertificate());
+            if (secondName.equals(approver)) {
+                return;
+            }
         }
+        fail(pairs + " does not contain certificate pair for 1-dev: " + devName + " and 2-approver: " + approver);
+    }
 
+    private String getNameFromCert(Certificate certificate) {
+        final X509Certificate cert = (X509Certificate) certificate;
+        final sun.security.x509.X500Name subjectDN = (sun.security.x509.X500Name) cert.getSubjectDN();
+        final String commonName;
+        try {
+            commonName = subjectDN.getCommonName();
+        } catch (IOException e) {
+            throw new RuntimeException(e.toString(), e);
+        }
+        return commonName;
     }
 
 }

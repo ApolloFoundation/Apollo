@@ -105,11 +105,10 @@ class TaggedDataTimestampDaoTest extends DbContainerBaseTest {
         .addBeans(MockBean.of(mock(AliasService.class), AliasService.class))
         .addBeans(MockBean.of(propertiesHolder, PropertiesHolder.class))
         .addBeans(MockBean.of(mock(PublicKeyDao.class), PublicKeyDao.class))
-        .addBeans(MockBean.of(timeService, TimeConfig.class))
+        .addBeans(MockBean.of(config, TimeConfig.class))
         .addBeans(MockBean.of(timeService, TimeService.class))
         .addBeans(MockBean.of(mock(PrunableLoadingService.class), PrunableLoadingService.class))
         .addBeans(MockBean.of(ttd.getTransactionTypeFactory(), TransactionTypeFactory.class))
-        .addBeans(MockBean.of(timeService, TimeService.class))
         .addBeans(MockBean.of(mock(BlockchainConfig.class), BlockchainConfig.class))
         .build();
 

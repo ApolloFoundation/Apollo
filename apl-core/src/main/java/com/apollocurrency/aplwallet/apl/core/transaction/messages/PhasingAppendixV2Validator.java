@@ -29,6 +29,12 @@ public class PhasingAppendixV2Validator implements AppendixValidator<PhasingAppe
 
     public void validateFinishHeightAndTime(Integer height, Integer time, PhasingAppendix phasingAppendix) throws AplException.NotCurrentlyValidException {
         int finishHeight = phasingAppendix.getFinishHeight();
+        if (height == null) {
+            throw new AplException.NotCurrentlyValidException("'Height' should NOT be null");
+        }
+        if (time == null) {
+            throw new AplException.NotCurrentlyValidException("'Time' should NOT be null");
+        }
         if ((finishHeight != -1 && time != -1) || (finishHeight == -1 && time == -1)) {
             throw new AplException.NotCurrentlyValidException("Only one parameter should be filled 'phasingFinishHeight or phasingFinishTime'");
         }

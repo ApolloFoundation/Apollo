@@ -636,14 +636,20 @@ public class BlockchainImpl implements Blockchain {
         long id = Convert.transactionFullHashToId(fullHash);
         TransactionIndex transactionIndex = transactionIndexDao.getByTransactionId(id);
         byte[] hash = getTransactionIndexFullHash(transactionIndex);
-        return Arrays.equals(hash, fullHash)
-            && transactionIndexDao.getTransactionHeightByTransactionId(id) <= height;
+        boolean isHashEqual = Arrays.equals(hash, fullHash);
+        Integer transactionHeightByTransactionId = transactionIndexDao.getTransactionHeightByTransactionId(id);
+        boolean isHeightBelow = transactionHeightByTransactionId != null && transactionHeightByTransactionId <= height;
+        log.trace("is TR found in SHARD and height in DB '{}' or in Shard '{}'", isHashEqual, isHeightBelow);
+        return isHashEqual && isHeightBelow;
     }
 
     @Override
     @Transactional(readOnly = true)
     public boolean hasTransactionByFullHash(byte[] fullHash, int height) {
-        return transactionService.hasTransactionByFullHash(fullHash, height) || hasShardTransactionByFullHash(fullHash, height);
+        boolean existsInDb = transactionService.hasTransactionByFullHash(fullHash, height);
+        boolean existsInShard = hasShardTransactionByFullHash(fullHash, height);
+        log.trace("is TR found by hash and height in DB '{}' or in Shard '{}'", existsInDb, existsInShard);
+        return existsInDb || existsInShard;
     }
 
     @Override

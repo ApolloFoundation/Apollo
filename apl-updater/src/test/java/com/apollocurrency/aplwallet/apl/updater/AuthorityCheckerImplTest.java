@@ -24,30 +24,30 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 
 public class AuthorityCheckerImplTest {
     private static Certificate loadRootCert() throws CertificateException, IOException, URISyntaxException {
-        String testRootCAPath = "certs/rootCA.crt";
+        String testRootCAPath = "test-certs/rootCA.crt";
         Certificate certificate = UpdaterUtil.readCertificate(testRootCAPath);
         return certificate;
     }
 
     @Test
     public void testVerifyCertificates() throws Exception {
-        String testRootCAPath = "certs/rootCA.crt";
+        String testRootCAPath = "test-certs/rootCA.crt";
         Certificate certificate = UpdaterUtil.readCertificate(testRootCAPath);
         AuthorityChecker correctAuthorityChecker = new AuthorityCheckerImpl(certificate, ".crt", "intermediate.crt",
             "1_", "2_");
-        boolean verified = correctAuthorityChecker.verifyCertificates("certs");
+        boolean verified = correctAuthorityChecker.verifyCertificates("test-certs");
         assertTrue(verified);
     }
 
     @Test
     public void testNotVerifiedCertificatesWhenIncorrectRootCertificate() throws Exception {
 
-        String fakeRootCACertificate = "certs/1_1.crt";
+        String fakeRootCACertificate = "test-certs/1_1.crt";
         Certificate certificate = UpdaterUtil.readCertificate(fakeRootCACertificate);
         AuthorityChecker incorrectAuthorityChecker = new AuthorityCheckerImpl(certificate, ".crt", "intermediate.crt", "1_", "2_");
         ;
 
-        boolean isVerified = incorrectAuthorityChecker.verifyCertificates("certs");
+        boolean isVerified = incorrectAuthorityChecker.verifyCertificates("test-certs");
 
         assertFalse(isVerified);
     }
@@ -56,7 +56,7 @@ public class AuthorityCheckerImplTest {
     public void testNotVerifiedCertificatesWhenIncorrectPathIntermediateCertificate() {
         AuthorityChecker incorrectAuthorityChecker = new AuthorityCheckerImpl("rootCA.crt", ".crt", "intermediat.crt", "1_", "2_");
 //
-        assertThrows(RuntimeException.class, () -> incorrectAuthorityChecker.verifyCertificates("certs"));
+        assertThrows(RuntimeException.class, () -> incorrectAuthorityChecker.verifyCertificates("test-certs"));
     }
 
     @Test
@@ -64,8 +64,8 @@ public class AuthorityCheckerImplTest {
         Path jarFilePath = Files.createTempFile("apl-test", ".jar");
         try {
             OutputStream jarOutputStream = Files.newOutputStream(jarFilePath);
-            Certificate certificate = UpdaterUtil.readCertificate(("certs/1_2.crt"));
-            PrivateKey key = RSAUtil.getPrivateKey("certs/1_2.key");
+            Certificate certificate = UpdaterUtil.readCertificate(("test-certs/1_2.crt"));
+            PrivateKey key = RSAUtil.getPrivateKey("test-certs/1_2.key");
             JarGenerator generator = new JarGenerator(jarOutputStream, certificate, key);
             generator.generate();
             generator.close();
@@ -81,7 +81,7 @@ public class AuthorityCheckerImplTest {
         Path jarFilePath = Files.createTempFile("apl-test", ".jar");
         try {
             OutputStream jarOutputStream = Files.newOutputStream(jarFilePath);
-            Certificate certificate = UpdaterUtil.readCertificate("certs/1_2.crt");
+            Certificate certificate = UpdaterUtil.readCertificate("test-certs/1_2.crt");
             JarGenerator generator = new JarGenerator(jarOutputStream);
             generator.generate();
             generator.close();

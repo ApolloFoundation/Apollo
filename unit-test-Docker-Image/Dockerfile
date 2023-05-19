@@ -1,40 +1,60 @@
 # vim:set ft=dockerfile:
-FROM ubuntu:focal
+FROM ubuntu:jammy
 
 # add our user and group first to make sure their IDs get assigned consistently, regardless of whatever dependencies get added
 RUN groupadd -r mysql && useradd -r -g mysql mysql
 
-# https://bugs.debian.org/830696 (apt uses gpgv by default in newer releases, rather than gpg)
-RUN set -ex; \
-	apt-get update; \
-	if ! which gpg; then \
-		apt-get install -y --no-install-recommends gnupg; \
-	fi; \
-	if ! gpg --version | grep -q '^gpg (GnuPG) 1\.'; then \
-# Ubuntu includes "gnupg" (not "gnupg2", but still 2.x), but not dirmngr, and gnupg 2.x requires dirmngr
-# so, if we're not running gnupg 1.x, explicitly install dirmngr too
-		apt-get install -y --no-install-recommends dirmngr; \
-	fi; \
-	rm -rf /var/lib/apt/lists/*
-
 # add gosu for easy step-down from root
 # https://github.com/tianon/gosu/releases
-ENV GOSU_VERSION 1.12
+# gosu key is B42F6819007F00F88E364FD4036A9C25BF357DD4
+ENV GOSU_VERSION 1.14
+
+ARG GPG_KEYS=177F4010FE56CA3336300305F1656F24C74CD1D8
+# pub   rsa4096 2016-03-30 [SC]
+#         177F 4010 FE56 CA33 3630  0305 F165 6F24 C74C D1D8
+# uid           [ unknown] MariaDB Signing Key <signing-key@mariadb.org>
+# sub   rsa4096 2016-03-30 [E]
+# install "libjemalloc2" as it offers better performance in some cases. Use with LD_PRELOAD
+# install "pwgen" for randomizing passwords
+# install "tzdata" for /usr/share/zoneinfo/
+# install "xz-utils" for .sql.xz docker-entrypoint-initdb.d files
+# install "zstd" for .sql.zst docker-entrypoint-initdb.d files
+# hadolint ignore=SC2086
 RUN set -eux; \
-	savedAptMark="$(apt-mark showmanual)"; \
 	apt-get update; \
-	apt-get install -y --no-install-recommends ca-certificates wget; \
+	DEBIAN_FRONTEND=noninteractive apt-get install -y --no-install-recommends \
+		ca-certificates \
+		gpg \
+		gpgv \
+		libjemalloc2 \
+		pwgen \
+		tzdata \
+		xz-utils \
+		zstd ; \
+	savedAptMark="$(apt-mark showmanual)"; \
+	apt-get install -y --no-install-recommends \
+		dirmngr \
+		gpg-agent \
+		wget; \
 	rm -rf /var/lib/apt/lists/*; \
 	dpkgArch="$(dpkg --print-architecture | awk -F- '{ print $NF }')"; \
-	wget -O /usr/local/bin/gosu "https://github.com/tianon/gosu/releases/download/$GOSU_VERSION/gosu-$dpkgArch"; \
-	wget -O /usr/local/bin/gosu.asc "https://github.com/tianon/gosu/releases/download/$GOSU_VERSION/gosu-$dpkgArch.asc"; \
-	export GNUPGHOME="$(mktemp -d)"; \
+	wget -q -O /usr/local/bin/gosu "https://github.com/tianon/gosu/releases/download/$GOSU_VERSION/gosu-$dpkgArch"; \
+	wget -q -O /usr/local/bin/gosu.asc "https://github.com/tianon/gosu/releases/download/$GOSU_VERSION/gosu-$dpkgArch.asc"; \
+	GNUPGHOME="$(mktemp -d)"; \
+	export GNUPGHOME; \
 	gpg --batch --keyserver hkps://keys.openpgp.org --recv-keys B42F6819007F00F88E364FD4036A9C25BF357DD4; \
+	for key in $GPG_KEYS; do \
+		gpg --batch --keyserver keyserver.ubuntu.com --recv-keys "$key"; \
+	done; \
+	gpg --batch --export "$GPG_KEYS" > /etc/apt/trusted.gpg.d/mariadb.gpg; \
+	if command -v gpgconf >/dev/null; then \
+		gpgconf --kill all; \
+	fi; \
 	gpg --batch --verify /usr/local/bin/gosu.asc /usr/local/bin/gosu; \
 	gpgconf --kill all; \
 	rm -rf "$GNUPGHOME" /usr/local/bin/gosu.asc; \
 	apt-mark auto '.*' > /dev/null; \
-	[ -z "$savedAptMark" ] || apt-mark manual $savedAptMark > /dev/null; \
+	[ -z "$savedAptMark" ] ||	apt-mark manual $savedAptMark >/dev/null; \
 	apt-get purge -y --auto-remove -o APT::AutoRemove::RecommendsImportant=false; \
 	chmod +x /usr/local/bin/gosu; \
 	gosu --version; \
@@ -42,42 +62,33 @@ RUN set -eux; \
 
 RUN mkdir /docker-entrypoint-initdb.d
 
-# install "pwgen" for randomizing passwords
-# install "tzdata" for /usr/share/zoneinfo/
-# install "xz-utils" for .sql.xz docker-entrypoint-initdb.d files
-RUN set -ex; \
-	apt-get update; \
-	apt-get install -y --no-install-recommends \
-		pwgen \
-		tzdata \
-		xz-utils \
-	; \
-	rm -rf /var/lib/apt/lists/*
+# Ensure the container exec commands handle range of utf8 characters based of
+# default locales in base image (https://github.com/docker-library/docs/blob/135b79cc8093ab02e55debb61fdb079ab2dbce87/ubuntu/README.md#locales)
+ENV LANG C.UTF-8
 
-ENV GPG_KEYS \
-# pub   rsa4096 2016-03-30 [SC]
-#         177F 4010 FE56 CA33 3630  0305 F165 6F24 C74C D1D8
-# uid           [ unknown] MariaDB Signing Key <signing-key@mariadb.org>
-# sub   rsa4096 2016-03-30 [E]
-	177F4010FE56CA3336300305F1656F24C74CD1D8
-RUN set -ex; \
-	export GNUPGHOME="$(mktemp -d)"; \
-	for key in $GPG_KEYS; do \
-		gpg --batch --keyserver ha.pool.sks-keyservers.net --recv-keys "$key"; \
-	done; \
-	gpg --batch --export $GPG_KEYS > /etc/apt/trusted.gpg.d/mariadb.gpg; \
-	command -v gpgconf > /dev/null && gpgconf --kill all || :; \
-	rm -r "$GNUPGHOME"; \
-	apt-key list
+# OCI annotations to image
+LABEL org.opencontainers.image.authors="MariaDB Community" \
+      org.opencontainers.image.title="MariaDB Database" \
+      org.opencontainers.image.description="MariaDB Database for relational SQL" \
+      org.opencontainers.image.documentation="https://hub.docker.com/_/mariadb/" \
+      org.opencontainers.image.base.name="docker.io/library/ubuntu:jammy" \
+      org.opencontainers.image.licenses="GPL-2.0" \
+      org.opencontainers.image.source="https://github.com/MariaDB/mariadb-docker" \
+      org.opencontainers.image.vendor="MariaDB Community" \
+      org.opencontainers.image.version="10.11.2" \
+      org.opencontainers.image.url="https://github.com/MariaDB/mariadb-docker"
 
-# bashbrew-architectures: amd64 arm64v8 ppc64le
-ENV MARIADB_MAJOR 10.5
-ENV MARIADB_VERSION 1:10.5.8+maria~focal
+# bashbrew-architectures: amd64 arm64v8 ppc64le s390x
+ARG MARIADB_VERSION=1:10.11.2+maria~ubu2204
+ENV MARIADB_VERSION $MARIADB_VERSION
 # release-status:Stable
-# (https://downloads.mariadb.org/mariadb/+releases/)
+# (https://downloads.mariadb.org/rest-api/mariadb/)
+
+# Allowing overriding of REPOSITORY, a URL that includes suite and component for testing and Enterprise Versions
+ARG REPOSITORY="http://archive.mariadb.org/mariadb-10.11.2/repo/ubuntu/ jammy main"
 
 RUN set -e;\
-	echo "deb http://ftp.osuosl.org/pub/mariadb/repo/$MARIADB_MAJOR/ubuntu focal main" > /etc/apt/sources.list.d/mariadb.list; \
+	echo "deb ${REPOSITORY}" > /etc/apt/sources.list.d/mariadb.list; \
 	{ \
 		echo 'Package: *'; \
 		echo 'Pin: release o=MariaDB'; \
@@ -88,17 +99,15 @@ RUN set -e;\
 
 # the "/var/lib/mysql" stuff here is because the mysql-server postinst doesn't have an explicit way to disable the mysql_install_db codepath besides having a database already "configured" (ie, stuff in /var/lib/mysql/mysql)
 # also, we set debconf keys to make APT a little quieter
+# hadolint ignore=DL3015
 RUN set -ex; \
 	{ \
-		echo "mariadb-server-$MARIADB_MAJOR" mysql-server/root_password password 'unused'; \
-		echo "mariadb-server-$MARIADB_MAJOR" mysql-server/root_password_again password 'unused'; \
+		echo "mariadb-server" mysql-server/root_password password 'unused'; \
+		echo "mariadb-server" mysql-server/root_password_again password 'unused'; \
 	} | debconf-set-selections; \
 	apt-get update; \
-	apt-get install -y \
-		"mariadb-server=$MARIADB_VERSION" \
 # mariadb-backup is installed at the same time so that `mysql-common` is only installed once from just mariadb repos
-		mariadb-backup \
-		socat \
+	apt-get install -y --no-install-recommends mariadb-server="$MARIADB_VERSION" mariadb-backup socat \
 	; \
 # APOLLO addition START (install rocksdb plugin and nano editor)
 	apt-get -y install mariadb-plugin-rocksdb -f; \
@@ -116,14 +125,22 @@ RUN set -ex; \
 		| xargs -0 grep -lZE '^(bind-address|log|user\s)' \
 		| xargs -rt -0 sed -Ei 's/^(bind-address|log|user\s)/#&/'; \
 # don't reverse lookup hostnames, they are usually another container
-	echo '[mysqld]\nskip-host-cache\nskip-name-resolve' > /etc/mysql/conf.d/docker.cnf
+	printf "[mariadb]\nhost-cache-size=0\nskip-name-resolve\n" > /etc/mysql/mariadb.conf.d/05-skipcache.cnf; \
+# Issue #327 Correct order of reading directories /etc/mysql/mariadb.conf.d before /etc/mysql/conf.d (mount-point per documentation)
+	if [ -L /etc/mysql/my.cnf ]; then \
+# 10.5+
+		sed -i -e '/includedir/ {N;s/\(.*\)\n\(.*\)/\n\2\n\1/}' /etc/mysql/mariadb.cnf; \
+	fi
+
 
 VOLUME /var/lib/mysql
 
+COPY healthcheck.sh /usr/local/bin/healthcheck.sh
+COPY docker-entrypoint.sh /usr/local/bin/
 # APOLLO copy docker-entrypoint.sh and PUT root's exec permissions to it
 USER root
-COPY --chown=root:root docker-entrypoint.sh /usr/local/bin/
-RUN chmod +x /usr/local/bin/docker-entrypoint.sh
+#COPY --chown=root:root docker-entrypoint.sh /usr/local/bin/
+#RUN chmod +x /usr/local/bin/docker-entrypoint.sh
 # APOLLO addition START (set max_connections to = 1024)
 USER mysql
 COPY --chown=mysql:mysql my_conf.cnf /etc/mysql/my.cnf
@@ -132,4 +149,4 @@ RUN chmod -R 0444 /etc/mysql/my.cnf
 ENTRYPOINT ["docker-entrypoint.sh"]
 
 EXPOSE 3306
-CMD ["mysqld"]
+CMD ["mariadbd"]

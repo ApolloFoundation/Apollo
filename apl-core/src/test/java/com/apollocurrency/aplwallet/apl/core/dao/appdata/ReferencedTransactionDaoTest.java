@@ -128,7 +128,7 @@ class ReferencedTransactionDaoTest extends DbContainerBaseTest {
         .addBeans(MockBean.of(mock(PrunableMessageService.class), PrunableMessageService.class, PrunableMessageServiceImpl.class))
         .addBeans(MockBean.of(mock(AccountService.class), AccountService.class, AccountServiceImpl.class))
         .addBeans(MockBean.of(propertiesHolder, PropertiesHolder.class))
-        .addBeans(MockBean.of(timeService, TimeConfig.class))
+        .addBeans(MockBean.of(config, TimeConfig.class))
         .addBeans(MockBean.of(timeService, TimeService.class))
         .addBeans(MockBean.of(mock(PublicKeyDao.class), PublicKeyDao.class))
         .addBeans(MockBean.of(mock(CurrencyService.class), CurrencyService.class))
