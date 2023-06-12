@@ -9,9 +9,9 @@ import com.apollocurrency.aplwallet.apl.util.injectable.PropertiesHolder;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import javax.enterprise.inject.Produces;
-import javax.inject.Inject;
-import javax.inject.Named;
+import jakarta.enterprise.inject.Produces;
+import jakarta.inject.Inject;
+import jakarta.inject.Named;
 import java.nio.file.Path;
 
 public class PropertyBasedFileConfig {

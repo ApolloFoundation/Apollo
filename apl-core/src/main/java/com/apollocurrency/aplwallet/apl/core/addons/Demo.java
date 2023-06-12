@@ -23,7 +23,7 @@ package com.apollocurrency.aplwallet.apl.core.addons;
 
 import org.slf4j.Logger;
 
-import javax.enterprise.inject.Vetoed;
+import jakarta.enterprise.inject.Vetoed;
 import java.util.Map;
 
 import static org.slf4j.LoggerFactory.getLogger;

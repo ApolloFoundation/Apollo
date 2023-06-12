@@ -7,7 +7,8 @@
     <parent>
         <groupId>com.apollocurrency</groupId>
         <artifactId>apollo-blockchain</artifactId>
-        <version>1.51.2</version>
+
+        <version>2.0.1</version>
     </parent>
 
     <artifactId>apl-vault-wallet</artifactId>
@@ -65,25 +66,28 @@
             <scope>provided</scope>
         </dependency>
 
-        <!-- REST:  Need to put api here because strange things happens without it  -->
-        <dependency>
-            <groupId>javax.ws.rs</groupId>
-            <artifactId>javax.ws.rs-api</artifactId>
-        </dependency>
+      <!-- REST:  Need to put api here because strange things happens without it  -->
+      <dependency>
+        <groupId>jakarta.ws.rs</groupId>
+        <artifactId>jakarta.ws.rs-api</artifactId>
+      </dependency>
+      <dependency>
+        <groupId>commons-codec</groupId>
+        <artifactId>commons-codec</artifactId>
+      </dependency>
+      <dependency>
+        <groupId>org.jboss.weld.servlet</groupId>
+        <artifactId>weld-servlet-shaded</artifactId>
+      </dependency>
 
-        <dependency>
-            <groupId>org.jboss.weld.servlet</groupId>
-            <artifactId>weld-servlet-shaded</artifactId>
-        </dependency>
-
-        <dependency>
-            <groupId>org.jdbi</groupId>
-            <artifactId>jdbi3-core</artifactId>
-        </dependency>
-        <dependency>
-            <groupId>org.jdbi</groupId>
-            <artifactId>jdbi3-sqlobject</artifactId>
-        </dependency>
+      <dependency>
+        <groupId>org.jdbi</groupId>
+        <artifactId>jdbi3-core</artifactId>
+      </dependency>
+      <dependency>
+        <groupId>org.jdbi</groupId>
+        <artifactId>jdbi3-sqlobject</artifactId>
+      </dependency>
 
 
         <!--    DEX     -->

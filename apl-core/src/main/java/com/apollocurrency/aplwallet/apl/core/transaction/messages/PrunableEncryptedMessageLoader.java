@@ -8,8 +8,8 @@ import com.apollocurrency.aplwallet.apl.core.model.Transaction;
 import com.apollocurrency.aplwallet.apl.core.entity.prunable.PrunableMessage;
 import com.apollocurrency.aplwallet.apl.core.service.prunable.PrunableMessageService;
 
-import javax.inject.Inject;
-import javax.inject.Singleton;
+import jakarta.inject.Inject;
+import jakarta.inject.Singleton;
 
 @Singleton
 public class PrunableEncryptedMessageLoader implements PrunableLoader<PrunableEncryptedMessageAppendix> {

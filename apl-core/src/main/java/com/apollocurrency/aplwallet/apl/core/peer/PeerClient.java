@@ -21,7 +21,7 @@ import com.fasterxml.jackson.datatype.jsonorg.JsonOrgModule;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import javax.enterprise.inject.Vetoed;
+import jakarta.enterprise.inject.Vetoed;
 import java.util.Objects;
 import java.util.UUID;
 

@@ -80,9 +80,9 @@ import org.junit.jupiter.api.extension.RegisterExtension;
 import org.junit.jupiter.api.function.Executable;
 import org.mockito.Mockito;
 
-import javax.enterprise.event.Event;
-import javax.enterprise.inject.spi.Bean;
-import javax.inject.Inject;
+import jakarta.enterprise.event.Event;
+import jakarta.enterprise.inject.spi.Bean;
+import jakarta.inject.Inject;
 import java.io.IOException;
 import java.io.InputStream;
 import java.nio.file.Path;

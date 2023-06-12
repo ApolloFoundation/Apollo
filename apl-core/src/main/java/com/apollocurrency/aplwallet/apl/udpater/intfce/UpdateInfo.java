@@ -6,7 +6,7 @@ package com.apollocurrency.aplwallet.apl.udpater.intfce;
 import com.apollocurrency.aplwallet.apl.util.Version;
 import org.json.simple.JSONObject;
 
-import javax.inject.Singleton;
+import jakarta.inject.Singleton;
 
 @Singleton
 public class UpdateInfo implements Cloneable {

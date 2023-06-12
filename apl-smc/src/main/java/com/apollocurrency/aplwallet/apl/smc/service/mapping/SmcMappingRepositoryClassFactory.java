@@ -19,8 +19,8 @@ import com.apollocurrency.smc.data.type.BigNum;
 import com.apollocurrency.smc.data.type.UnsignedBigNum;
 import lombok.NonNull;
 
-import javax.inject.Inject;
-import javax.inject.Singleton;
+import jakarta.inject.Inject;
+import jakarta.inject.Singleton;
 import java.math.BigInteger;
 import java.util.Set;
 

@@ -11,9 +11,9 @@ import com.apollocurrency.aplwallet.apl.core.entity.state.account.PublicKey;
 import com.apollocurrency.aplwallet.apl.core.service.state.account.PublicKeyDao;
 import com.apollocurrency.aplwallet.apl.core.utils.CollectionUtil;
 
-import javax.inject.Inject;
-import javax.inject.Named;
-import javax.inject.Singleton;
+import jakarta.inject.Inject;
+import jakarta.inject.Named;
+import jakarta.inject.Singleton;
 import java.util.List;
 
 @Singleton

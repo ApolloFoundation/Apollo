@@ -10,8 +10,8 @@ import com.apollocurrency.aplwallet.apl.util.annotation.TransactionFee;
 import com.apollocurrency.aplwallet.apl.util.env.config.FeeRate;
 import lombok.extern.slf4j.Slf4j;
 
-import javax.inject.Inject;
-import javax.inject.Singleton;
+import jakarta.inject.Inject;
+import jakarta.inject.Singleton;
 
 @Slf4j
 @Singleton

@@ -11,8 +11,8 @@ import com.apollocurrency.aplwallet.apl.core.service.blockchain.TransactionBuild
 import com.apollocurrency.aplwallet.apl.util.api.converter.Converter;
 import com.apollocurrency.aplwallet.apl.util.exception.AplException;
 
-import javax.inject.Inject;
-import javax.inject.Singleton;
+import jakarta.inject.Inject;
+import jakarta.inject.Singleton;
 import java.util.Objects;
 
 /**

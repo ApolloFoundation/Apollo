@@ -7,8 +7,8 @@ package com.apollocurrency.aplwallet.apl.core.rest.utils;
 import com.apollocurrency.aplwallet.apl.util.cdi.config.Property;
 import lombok.Getter;
 
-import javax.inject.Inject;
-import javax.inject.Singleton;
+import jakarta.inject.Inject;
+import jakarta.inject.Singleton;
 
 @Singleton
 public class FirstLastIndexParser {

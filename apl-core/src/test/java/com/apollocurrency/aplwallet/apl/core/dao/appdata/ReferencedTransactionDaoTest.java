@@ -4,12 +4,10 @@
 
 package com.apollocurrency.aplwallet.apl.core.dao.appdata;
 
-import com.apollocurrency.aplwallet.apl.core.model.Transaction;
-import com.apollocurrency.aplwallet.apl.core.service.blockchain.TransactionBuilderFactory;
-import com.apollocurrency.aplwallet.apl.core.model.TransactionImpl;
 import com.apollocurrency.aplwallet.apl.core.chainid.BlockchainConfig;
 import com.apollocurrency.aplwallet.apl.core.config.DaoConfig;
-import com.apollocurrency.aplwallet.apl.core.config.NtpTimeConfig;
+import com.apollocurrency.aplwallet.apl.core.config.JdbiConfiguration;
+import com.apollocurrency.aplwallet.apl.core.config.TimeConfig;
 import com.apollocurrency.aplwallet.apl.core.converter.db.BlockEntityRowMapper;
 import com.apollocurrency.aplwallet.apl.core.converter.db.BlockEntityToModelConverter;
 import com.apollocurrency.aplwallet.apl.core.converter.db.BlockModelToEntityConverter;
@@ -29,13 +27,15 @@ import com.apollocurrency.aplwallet.apl.core.dao.state.phasing.PhasingPollTable;
 import com.apollocurrency.aplwallet.apl.core.dao.state.phasing.PhasingPollVoterTable;
 import com.apollocurrency.aplwallet.apl.core.dao.state.phasing.PhasingVoteTable;
 import com.apollocurrency.aplwallet.apl.core.db.DatabaseManager;
-import com.apollocurrency.aplwallet.apl.core.config.JdbiConfiguration;
 import com.apollocurrency.aplwallet.apl.core.entity.appdata.ReferencedTransaction;
 import com.apollocurrency.aplwallet.apl.core.entity.blockchain.TransactionEntity;
+import com.apollocurrency.aplwallet.apl.core.model.Transaction;
+import com.apollocurrency.aplwallet.apl.core.model.TransactionImpl;
 import com.apollocurrency.aplwallet.apl.core.service.appdata.TimeService;
 import com.apollocurrency.aplwallet.apl.core.service.appdata.impl.TimeServiceImpl;
 import com.apollocurrency.aplwallet.apl.core.service.blockchain.BlockchainImpl;
 import com.apollocurrency.aplwallet.apl.core.service.blockchain.GlobalSyncImpl;
+import com.apollocurrency.aplwallet.apl.core.service.blockchain.TransactionBuilderFactory;
 import com.apollocurrency.aplwallet.apl.core.service.blockchain.TransactionProcessor;
 import com.apollocurrency.aplwallet.apl.core.service.blockchain.TransactionServiceImpl;
 import com.apollocurrency.aplwallet.apl.core.service.fulltext.FullTextConfigImpl;
@@ -44,12 +44,12 @@ import com.apollocurrency.aplwallet.apl.core.service.fulltext.FullTextSearchUpda
 import com.apollocurrency.aplwallet.apl.core.service.prunable.PrunableMessageService;
 import com.apollocurrency.aplwallet.apl.core.service.prunable.impl.PrunableMessageServiceImpl;
 import com.apollocurrency.aplwallet.apl.core.service.state.DerivedDbTablesRegistryImpl;
+import com.apollocurrency.aplwallet.apl.core.service.state.PhasingPollServiceImpl;
 import com.apollocurrency.aplwallet.apl.core.service.state.account.AccountPublicKeyService;
 import com.apollocurrency.aplwallet.apl.core.service.state.account.AccountService;
 import com.apollocurrency.aplwallet.apl.core.service.state.account.PublicKeyDao;
 import com.apollocurrency.aplwallet.apl.core.service.state.account.impl.AccountServiceImpl;
 import com.apollocurrency.aplwallet.apl.core.service.state.currency.CurrencyService;
-import com.apollocurrency.aplwallet.apl.core.service.state.PhasingPollServiceImpl;
 import com.apollocurrency.aplwallet.apl.core.shard.BlockIndexService;
 import com.apollocurrency.aplwallet.apl.core.shard.BlockIndexServiceImpl;
 import com.apollocurrency.aplwallet.apl.core.shard.ShardDbExplorerImpl;
@@ -72,7 +72,7 @@ import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.RegisterExtension;
 
-import javax.inject.Inject;
+import jakarta.inject.Inject;
 import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
@@ -96,8 +96,8 @@ class ReferencedTransactionDaoTest extends DbContainerBaseTest {
     @RegisterExtension
     static DbExtension extension = new DbExtension(mariaDBContainer);
     private PropertiesHolder propertiesHolder = mock(PropertiesHolder.class);
-    private NtpTimeConfig ntpTimeConfig = new NtpTimeConfig();
-    private TimeService timeService = new TimeServiceImpl(ntpTimeConfig.time());
+    TimeConfig config = new TimeConfig(false);
+    TimeService timeService = new TimeServiceImpl(config.timeSource());
     private AccountPublicKeyService publicKeyService = mock(AccountPublicKeyService.class);
     TransactionTestData td = new TransactionTestData();
 
@@ -128,7 +128,7 @@ class ReferencedTransactionDaoTest extends DbContainerBaseTest {
         .addBeans(MockBean.of(mock(PrunableMessageService.class), PrunableMessageService.class, PrunableMessageServiceImpl.class))
         .addBeans(MockBean.of(mock(AccountService.class), AccountService.class, AccountServiceImpl.class))
         .addBeans(MockBean.of(propertiesHolder, PropertiesHolder.class))
-        .addBeans(MockBean.of(ntpTimeConfig, NtpTimeConfig.class))
+        .addBeans(MockBean.of(timeService, TimeConfig.class))
         .addBeans(MockBean.of(timeService, TimeService.class))
         .addBeans(MockBean.of(mock(PublicKeyDao.class), PublicKeyDao.class))
         .addBeans(MockBean.of(mock(CurrencyService.class), CurrencyService.class))

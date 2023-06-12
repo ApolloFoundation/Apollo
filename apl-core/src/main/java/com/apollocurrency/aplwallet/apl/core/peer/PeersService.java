@@ -63,9 +63,9 @@ import org.json.simple.JSONStreamAware;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import javax.enterprise.inject.spi.CDI;
-import javax.inject.Inject;
-import javax.inject.Singleton;
+import jakarta.enterprise.inject.spi.CDI;
+import jakarta.inject.Inject;
+import jakarta.inject.Singleton;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
@@ -587,10 +587,7 @@ public class PeersService {
             }
         }
         PeerAddress myExtAddr = peerHttpServer.getMyExtAddress();
-        if (pa.compareTo(myExtAddr) == 0) {
-            return true;
-        }
-        return false;
+        return pa.compareTo(myExtAddr) == 0;
     }
 
     public Peer findOrCreatePeer(PeerAddress actualAddr, final String announcedAddress, final boolean create) {
@@ -673,7 +670,7 @@ public class PeersService {
 
         if (peer != null && peer.getAnnouncedAddress() != null) {
             // put new or replace previous
-            connectablePeers.put(peer.getAnnouncedAddress(), (PeerImpl) peer);
+            connectablePeers.put(peer.getAnnouncedAddress(), peer);
             listeners.notify(peer, Event.NEW_PEER);
             return true;
         }
@@ -727,7 +724,7 @@ public class PeersService {
             res = ((PeerImpl) peer).handshake();
         }
         if (res) {
-            connectablePeers.putIfAbsent(peer.getHostWithPort(), (PeerImpl) peer);
+            connectablePeers.putIfAbsent(peer.getHostWithPort(), peer);
         }
         return res;
     }

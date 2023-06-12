@@ -16,7 +16,7 @@ import com.apollocurrency.aplwallet.apl.util.env.Arch;
 import com.apollocurrency.aplwallet.apl.util.env.OS;
 import org.slf4j.Logger;
 
-import javax.inject.Inject;
+import jakarta.inject.Inject;
 import java.util.regex.Pattern;
 
 import static org.slf4j.LoggerFactory.getLogger;

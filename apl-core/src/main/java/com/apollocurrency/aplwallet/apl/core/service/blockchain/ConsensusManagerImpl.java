@@ -10,7 +10,7 @@ import com.apollocurrency.aplwallet.apl.core.model.Block;
 import com.apollocurrency.aplwallet.apl.crypto.Convert;
 import com.apollocurrency.aplwallet.apl.util.Constants;
 
-import javax.inject.Singleton;
+import jakarta.inject.Singleton;
 import java.math.BigInteger;
 import java.util.Objects;
 

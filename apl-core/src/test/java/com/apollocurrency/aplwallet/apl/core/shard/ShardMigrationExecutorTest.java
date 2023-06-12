@@ -9,8 +9,8 @@ import com.apollocurrency.aplwallet.apl.core.chainid.BlockchainConfig;
 import com.apollocurrency.aplwallet.apl.core.chainid.HeightConfig;
 import com.apollocurrency.aplwallet.apl.core.config.DaoConfig;
 import com.apollocurrency.aplwallet.apl.core.config.JdbiConfiguration;
-import com.apollocurrency.aplwallet.apl.core.config.NtpTimeConfig;
 import com.apollocurrency.aplwallet.apl.core.config.PropertyProducer;
+import com.apollocurrency.aplwallet.apl.core.config.TimeConfig;
 import com.apollocurrency.aplwallet.apl.core.config.UtilComponentConfig;
 import com.apollocurrency.aplwallet.apl.core.converter.db.BlockEntityRowMapper;
 import com.apollocurrency.aplwallet.apl.core.converter.db.BlockEntityToModelConverter;
@@ -109,8 +109,8 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.RegisterExtension;
 import org.mockito.Mockito;
 
-import javax.enterprise.inject.spi.Bean;
-import javax.inject.Inject;
+import jakarta.enterprise.inject.spi.Bean;
+import jakarta.inject.Inject;
 import java.io.IOException;
 import java.nio.file.Path;
 import java.util.List;
@@ -159,9 +159,9 @@ class ShardMigrationExecutorTest extends DBContainerRootTest {
     private TransactionProcessor transactionProcessor = mock(TransactionProcessorImpl.class);
     private TaskDispatchManager taskDispatchManager = mock(TaskDispatchManager.class);
     private DirProvider dirProvider = mock(DirProvider.class);
-    private NtpTimeConfig ntpTimeConfig = new NtpTimeConfig();
-    private TimeService timeService = new TimeServiceImpl(ntpTimeConfig.time());
-    private Zip zip = new UtilComponentConfig().zip();
+
+    private Zip zip = new UtilComponentConfig().zip();   TimeConfig config = new TimeConfig(false);
+    TimeService timeService = new TimeServiceImpl(config.timeSource());
     private GeneratorService generatorService = mock(GeneratorService.class);
     private TransactionTestData td = new TransactionTestData();
 
@@ -204,7 +204,7 @@ class ShardMigrationExecutorTest extends DBContainerRootTest {
         .addBeans(MockBean.of(mock(PrunableMessageService.class), PrunableMessageService.class, PrunableMessageServiceImpl.class))
         .addBeans(MockBean.of(mock(BlockIndexService.class), BlockIndexService.class, BlockIndexServiceImpl.class))
         .addBeans(MockBean.of(mock(AliasService.class), AliasService.class))
-        .addBeans(MockBean.of(ntpTimeConfig, NtpTimeConfig.class))
+        .addBeans(MockBean.of(timeService, TimeConfig.class))
         .addBeans(MockBean.of(timeService, TimeService.class))
         .addBeans(MockBean.of(zip, Zip.class))
         .addBeans(MockBean.of(generatorService, GeneratorService.class))

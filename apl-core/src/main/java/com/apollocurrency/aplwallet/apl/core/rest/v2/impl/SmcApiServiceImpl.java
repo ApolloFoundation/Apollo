@@ -81,10 +81,10 @@ import com.apollocurrency.smc.util.HexUtils;
 import com.google.common.base.Strings;
 import lombok.extern.slf4j.Slf4j;
 
-import javax.enterprise.context.RequestScoped;
-import javax.inject.Inject;
-import javax.ws.rs.core.Response;
-import javax.ws.rs.core.SecurityContext;
+import jakarta.enterprise.context.RequestScoped;
+import jakarta.inject.Inject;
+import jakarta.ws.rs.core.Response;
+import jakarta.ws.rs.core.SecurityContext;
 import java.math.BigInteger;
 import java.util.ArrayList;
 import java.util.Arrays;

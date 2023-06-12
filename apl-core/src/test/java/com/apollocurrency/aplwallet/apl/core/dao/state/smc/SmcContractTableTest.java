@@ -43,7 +43,7 @@ import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.NullSource;
 import org.junit.jupiter.params.provider.ValueSource;
 
-import javax.inject.Inject;
+import jakarta.inject.Inject;
 import java.math.BigInteger;
 import java.nio.ByteBuffer;
 import java.sql.Connection;

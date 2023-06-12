@@ -7,8 +7,8 @@ package com.apollocurrency.aplwallet.apl.core.config;
 import com.apollocurrency.aplwallet.apl.core.rest.filters.RequestUriMatcher;
 import com.apollocurrency.aplwallet.apl.core.rest.filters.UriPatternMatcher;
 
-import javax.enterprise.inject.Produces;
-import javax.inject.Named;
+import jakarta.enterprise.inject.Produces;
+import jakarta.inject.Named;
 
 public class RestSecurityConfig {
 

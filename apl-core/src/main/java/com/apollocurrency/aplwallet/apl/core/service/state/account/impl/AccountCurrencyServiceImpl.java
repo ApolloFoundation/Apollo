@@ -17,9 +17,9 @@ import com.apollocurrency.aplwallet.apl.core.entity.state.account.LedgerHolding;
 import com.apollocurrency.aplwallet.apl.core.service.state.BlockChainInfoService;
 import com.apollocurrency.aplwallet.apl.core.service.state.account.AccountCurrencyService;
 
-import javax.enterprise.event.Event;
-import javax.inject.Inject;
-import javax.inject.Singleton;
+import jakarta.enterprise.event.Event;
+import jakarta.inject.Inject;
+import jakarta.inject.Singleton;
 import java.util.List;
 
 import static com.apollocurrency.aplwallet.apl.core.app.observer.events.AccountEventBinding.literal;

@@ -4,7 +4,7 @@
 
 package com.apollocurrency.aplwallet.apl.smc.events;
 
-import javax.enterprise.util.AnnotationLiteral;
+import jakarta.enterprise.util.AnnotationLiteral;
 
 /**
  * @author andrew.zinchenko@gmail.com

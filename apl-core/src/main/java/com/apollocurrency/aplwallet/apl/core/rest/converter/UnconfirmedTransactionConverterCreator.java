@@ -6,8 +6,8 @@ package com.apollocurrency.aplwallet.apl.core.rest.converter;
 
 import com.apollocurrency.aplwallet.apl.core.transaction.messages.PrunableLoadingService;
 
-import javax.inject.Inject;
-import javax.inject.Singleton;
+import jakarta.inject.Inject;
+import jakarta.inject.Singleton;
 
 /**
  * Creates instances of the {@link UnconfirmedTransactionConverter} according to the supplied configuration

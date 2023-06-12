@@ -9,8 +9,8 @@ import com.apollocurrency.aplwallet.apl.core.chainid.BlockchainConfig;
 import com.apollocurrency.aplwallet.apl.core.chainid.HeightConfig;
 import com.apollocurrency.aplwallet.apl.core.config.DaoConfig;
 import com.apollocurrency.aplwallet.apl.core.config.JdbiConfiguration;
-import com.apollocurrency.aplwallet.apl.core.config.NtpTimeConfig;
 import com.apollocurrency.aplwallet.apl.core.config.PropertyProducer;
+import com.apollocurrency.aplwallet.apl.core.config.TimeConfig;
 import com.apollocurrency.aplwallet.apl.core.converter.db.BlockEntityRowMapper;
 import com.apollocurrency.aplwallet.apl.core.converter.db.BlockEntityToModelConverter;
 import com.apollocurrency.aplwallet.apl.core.converter.db.BlockModelToEntityConverter;
@@ -92,7 +92,6 @@ import com.apollocurrency.aplwallet.apl.extension.DbExtension;
 import com.apollocurrency.aplwallet.apl.extension.TemporaryFolderExtension;
 import com.apollocurrency.aplwallet.apl.testutil.DbUtils;
 import com.apollocurrency.aplwallet.apl.testutil.ResourceFileLoader;
-import com.apollocurrency.aplwallet.apl.util.NtpTime;
 import com.apollocurrency.aplwallet.apl.util.cdi.transaction.JdbiHandleFactory;
 import com.apollocurrency.aplwallet.apl.util.db.TransactionalDataSource;
 import com.apollocurrency.aplwallet.apl.util.env.config.Chain;
@@ -114,7 +113,7 @@ import org.junit.jupiter.api.parallel.Execution;
 import org.junit.jupiter.api.parallel.ExecutionMode;
 import org.mockito.Mockito;
 
-import javax.inject.Inject;
+import jakarta.inject.Inject;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -149,8 +148,8 @@ class CsvImporterTest extends DbContainerBaseTest {
     CsvImporter csvImporter;
     BlockchainConfig blockchainConfig = mock(BlockchainConfig.class);
     PropertiesHolder propertiesHolder = mock(PropertiesHolder.class);
-    NtpTimeConfig ntpTimeConfig = new NtpTimeConfig();
-    TimeService timeService = new TimeServiceImpl(ntpTimeConfig.time());
+    TimeConfig timeConfig = new TimeConfig(false);
+    TimeService timeService = new TimeServiceImpl(timeConfig.timeSource());
     PeersService peersService = mock(PeersService.class);
     GeneratorService generatorService = mock(GeneratorService.class);
     TransactionTestData td = new TransactionTestData();
@@ -198,8 +197,7 @@ class CsvImporterTest extends DbContainerBaseTest {
         .addBeans(MockBean.of(mock(BlockIndexService.class), BlockIndexService.class, BlockIndexServiceImpl.class))
         .addBeans(MockBean.of(mock(AccountControlPhasingService.class), AccountControlPhasingService.class))
         .addBeans(MockBean.of(propertiesHolder, PropertiesHolder.class))
-        .addBeans(MockBean.of(ntpTimeConfig, NtpTimeConfig.class))
-        .addBeans(MockBean.of(ntpTimeConfig.time(), NtpTime.class))
+        .addBeans(MockBean.of(timeConfig, TimeConfig.class))
         .addBeans(MockBean.of(timeService, TimeService.class))
         .addBeans(MockBean.of(peersService, PeersService.class))
         .addBeans(MockBean.of(generatorService, GeneratorService.class))

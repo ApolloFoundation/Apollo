@@ -25,7 +25,7 @@ import com.apollocurrency.aplwallet.apl.core.peer.Peer;
 import org.json.simple.JSONObject;
 import org.json.simple.JSONStreamAware;
 
-import javax.inject.Singleton;
+import jakarta.inject.Singleton;
 
 @Singleton
 public class GetCumulativeDifficulty extends PeerRequestHandler {

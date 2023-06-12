@@ -59,8 +59,8 @@ import com.apollocurrency.aplwallet.apl.util.service.TaskDispatchManager;
 import lombok.Setter;
 import lombok.extern.slf4j.Slf4j;
 
-import javax.enterprise.inject.spi.CDI;
-import javax.inject.Inject;
+import jakarta.enterprise.inject.spi.CDI;
+import jakarta.inject.Inject;
 import java.sql.SQLException;
 import java.util.HashSet;
 import java.util.Set;

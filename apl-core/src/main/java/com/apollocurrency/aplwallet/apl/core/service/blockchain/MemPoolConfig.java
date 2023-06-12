@@ -7,8 +7,8 @@ package com.apollocurrency.aplwallet.apl.core.service.blockchain;
 import com.apollocurrency.aplwallet.apl.util.cdi.config.Property;
 import lombok.Getter;
 
-import javax.inject.Inject;
-import javax.inject.Singleton;
+import jakarta.inject.Inject;
+import jakarta.inject.Singleton;
 
 @Singleton
 @Getter

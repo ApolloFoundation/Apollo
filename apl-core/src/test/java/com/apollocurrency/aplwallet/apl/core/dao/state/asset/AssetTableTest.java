@@ -20,8 +20,8 @@ import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.RegisterExtension;
 
-import javax.enterprise.event.Event;
-import javax.enterprise.util.AnnotationLiteral;
+import jakarta.enterprise.event.Event;
+import jakarta.enterprise.util.AnnotationLiteral;
 import java.util.Comparator;
 import java.util.List;
 import java.util.Map;

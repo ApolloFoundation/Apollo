@@ -10,8 +10,8 @@ import com.apollocurrency.aplwallet.apl.core.model.WrappedTransaction;
 import com.apollocurrency.aplwallet.apl.core.utils.CollectionUtil;
 import com.apollocurrency.aplwallet.apl.util.SizeBoundedPriorityQueue;
 
-import javax.inject.Inject;
-import javax.inject.Singleton;
+import jakarta.inject.Inject;
+import jakarta.inject.Singleton;
 import java.util.ArrayDeque;
 import java.util.ArrayList;
 import java.util.Collection;

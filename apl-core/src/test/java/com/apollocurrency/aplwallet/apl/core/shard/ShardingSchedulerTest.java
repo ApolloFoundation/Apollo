@@ -23,8 +23,8 @@ import org.mockito.invocation.InvocationOnMock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.mockito.stubbing.Answer;
 
-import javax.enterprise.event.Event;
-import javax.enterprise.util.AnnotationLiteral;
+import jakarta.enterprise.event.Event;
+import jakarta.enterprise.util.AnnotationLiteral;
 import java.util.List;
 import java.util.Random;
 import java.util.concurrent.CompletableFuture;

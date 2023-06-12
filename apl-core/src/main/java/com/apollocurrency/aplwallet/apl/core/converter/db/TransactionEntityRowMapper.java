@@ -8,7 +8,7 @@ import com.apollocurrency.aplwallet.apl.core.entity.blockchain.TransactionEntity
 import org.jdbi.v3.core.mapper.RowMapper;
 import org.jdbi.v3.core.statement.StatementContext;
 
-import javax.inject.Singleton;
+import jakarta.inject.Singleton;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 

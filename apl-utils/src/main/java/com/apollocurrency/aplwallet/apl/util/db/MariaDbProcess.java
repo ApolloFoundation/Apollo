@@ -44,24 +44,22 @@ public class MariaDbProcess {
         vars.put("dbuser", dbUser);
         vars.put("dbuser_password", dbPassword);
 
-                dbParams.setDbConfigFileTemplate(confFileTemplate);
-                dbParams.setVarSubstMap(vars);
-                dbParams.setDbConfigFile(confFile);
-                dbParams.setDbDataDir(dbDataDir);
-                dbParams.setDbInstallDir(dbInstallDir);
-                dbParams.setOut(logPath);
-                dbParams.setDbUser(dbUser);
-                dbParams.setDbPassword(dbPassword);
+        dbParams.setDbConfigFileTemplate(confFileTemplate);
+        dbParams.setVarSubstMap(vars);
+        dbParams.setDbConfigFile(confFile);
+        dbParams.setDbDataDir(dbDataDir);
+        dbParams.setDbInstallDir(dbInstallDir);
+        dbParams.setOut(logPath);
+        dbParams.setDbUser(dbUser);
+        dbParams.setDbPassword(dbPassword);
 
-                if(dbParams.verify()){
-                    if(!dbParams.processConfigTemplates()){
-                        log.warn("Error processing DB config templates!");
-                    }
-                }else{
-                   log.error("Please verify database parameters!");
-                }
-
-
+        if(dbParams.verify()){
+            if(!dbParams.processConfigTemplates()){
+                log.warn("Error processing DB config templates!");
+            }
+        }else{
+            log.error("Please verify database parameters!");
+        }
         return dbParams;
     }
 

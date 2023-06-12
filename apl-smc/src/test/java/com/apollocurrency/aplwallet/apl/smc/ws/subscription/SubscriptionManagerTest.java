@@ -15,7 +15,8 @@ import com.apollocurrency.smc.data.expr.TrueTerm;
 import com.apollocurrency.smc.data.type.Address;
 import com.apollocurrency.smc.data.type.ContractEventType;
 import com.apollocurrency.smc.util.HexUtils;
-import org.eclipse.jetty.websocket.api.WebSocketException;
+import lombok.SneakyThrows;
+import org.eclipse.jetty.websocket.api.exceptions.WebSocketException;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
@@ -143,6 +144,7 @@ class SubscriptionManagerTest {
         verify(container).removeSubscription(eq(address), eq(socket), any());
     }
 
+    @SneakyThrows
     @Test
     void fire() {
         //GIVEN

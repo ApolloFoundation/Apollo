@@ -9,7 +9,7 @@ import com.apollocurrency.aplwallet.apl.smc.ws.subscription.Subscription;
 import com.apollocurrency.aplwallet.apl.util.api.converter.Converter;
 import com.apollocurrency.smc.data.expr.TrueTerm;
 
-import javax.inject.Singleton;
+import jakarta.inject.Singleton;
 
 /**
  * @author andrew.zinchenko@gmail.com

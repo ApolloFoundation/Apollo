@@ -9,7 +9,7 @@ import com.apollocurrency.aplwallet.apl.util.JSON;
 import lombok.SneakyThrows;
 import org.json.simple.JSONObject;
 
-import javax.validation.Valid;
+import jakarta.validation.Valid;
 
 public class GetTransactionsRequestParser implements JsonReqRespParser<GetTransactionsRequest> {
     @SneakyThrows
