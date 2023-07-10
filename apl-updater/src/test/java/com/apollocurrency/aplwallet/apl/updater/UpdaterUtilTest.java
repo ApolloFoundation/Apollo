@@ -89,10 +89,9 @@ public class UpdaterUtilTest {
             "Dzhyncharadze George", "iAlexander", "Maksim Khabenko");
         for (Certificate certificate : result) {
         final X509Certificate cert = (X509Certificate) certificate;
-        final X500Name x500name = new JcaX509CertificateHolder(cert).getSubject();
-        final RDN cn = x500name.getRDNs(BCStyle.CN)[0];
-        final String commonName =IETFUtils.valueToString(cn.getFirst().getValue());
-            assertTrue(names.contains(commonName), commonName + " is not present in expected names set " +
+        final String commonName = getNameFromCert(cert);
+
+        assertTrue(names.contains(commonName), commonName + " is not present in expected names set " +
                 "for certificates: " + names + ", cert: " + certificate);
         }
 
@@ -113,9 +112,7 @@ public class UpdaterUtilTest {
 
         final Certificate certificate = (Certificate) result.toArray()[0];
         final X509Certificate cert = (X509Certificate) certificate;
-        final X500Name x500name = new JcaX509CertificateHolder(cert).getSubject();
-        final RDN cn = x500name.getRDNs(BCStyle.CN)[0];
-        final String commonName =IETFUtils.valueToString(cn.getFirst().getValue());
+        final String commonName = getNameFromCert(cert);
         assertEquals("Andrii Boiarskyi", commonName, commonName + " does not match expected " +
             "www.firstbridge.io for loaded debug certificate");
     }
