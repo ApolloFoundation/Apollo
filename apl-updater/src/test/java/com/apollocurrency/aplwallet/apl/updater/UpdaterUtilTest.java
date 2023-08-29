@@ -10,8 +10,14 @@ import org.slf4j.Logger;
 
 import java.io.IOException;
 import java.security.cert.Certificate;
+import java.security.cert.CertificateEncodingException;
 import java.security.cert.X509Certificate;
 import java.util.Set;
+import org.bouncycastle.asn1.x500.RDN;
+import org.bouncycastle.asn1.x500.X500Name;
+import org.bouncycastle.asn1.x500.style.BCStyle;
+import org.bouncycastle.asn1.x500.style.IETFUtils;
+import org.bouncycastle.cert.jcajce.JcaX509CertificateHolder;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
@@ -67,7 +73,7 @@ public class UpdaterUtilTest {
 
 
     @Test
-    public void testReadMainCertificates() throws IOException {
+    public void testReadMainCertificates() throws IOException, CertificateEncodingException {
 
         // init certificates (from apl-updater/src/main/resources/certs)
         UpdaterUtil.init(false);
@@ -82,17 +88,17 @@ public class UpdaterUtilTest {
         final Set<String> names = Set.of("Denis Demut", "YL", "Rostyslav Golda",
             "Dzhyncharadze George", "iAlexander", "Maksim Khabenko");
         for (Certificate certificate : result) {
-            final X509Certificate cert = (X509Certificate) certificate;
-            final sun.security.x509.X500Name subjectDN = (sun.security.x509.X500Name) cert.getSubjectDN();
-            final String commonName = subjectDN.getCommonName();
-            assertTrue(names.contains(commonName), commonName + " is not present in expected names set " +
+        final X509Certificate cert = (X509Certificate) certificate;
+        final String commonName = getNameFromCert(cert);
+
+        assertTrue(names.contains(commonName), commonName + " is not present in expected names set " +
                 "for certificates: " + names + ", cert: " + certificate);
         }
 
     }
 
     @Test
-    public void testReadDebugCertificates() throws IOException {
+    public void testReadDebugCertificates() throws IOException, CertificateEncodingException {
 
         // init certificates (from apl-updater/src/main/resources/debug-certs)
         UpdaterUtil.init(true);
@@ -106,13 +112,12 @@ public class UpdaterUtilTest {
 
         final Certificate certificate = (Certificate) result.toArray()[0];
         final X509Certificate cert = (X509Certificate) certificate;
-        final sun.security.x509.X500Name subjectDN = (sun.security.x509.X500Name) cert.getSubjectDN();
-        final String commonName = subjectDN.getCommonName();
+        final String commonName = getNameFromCert(cert);
         assertEquals("Andrii Boiarskyi", commonName, commonName + " does not match expected " +
             "www.firstbridge.io for loaded debug certificate");
     }
 
-    private void assertHasPair(Set<CertificatePair> pairs, String devName, String approver) {
+    private void assertHasPair(Set<CertificatePair> pairs, String devName, String approver) throws CertificateEncodingException {
         for (CertificatePair pair : pairs) {
             final String firstName = getNameFromCert(pair.getSecondCertificate());
             if (!firstName.equals(devName)) {
@@ -126,15 +131,11 @@ public class UpdaterUtilTest {
         fail(pairs + " does not contain certificate pair for 1-dev: " + devName + " and 2-approver: " + approver);
     }
 
-    private String getNameFromCert(Certificate certificate) {
+    private String getNameFromCert(Certificate certificate) throws CertificateEncodingException {
         final X509Certificate cert = (X509Certificate) certificate;
-        final sun.security.x509.X500Name subjectDN = (sun.security.x509.X500Name) cert.getSubjectDN();
-        final String commonName;
-        try {
-            commonName = subjectDN.getCommonName();
-        } catch (IOException e) {
-            throw new RuntimeException(e.toString(), e);
-        }
+        final X500Name x500name = new JcaX509CertificateHolder(cert).getSubject();
+        final RDN cn = x500name.getRDNs(BCStyle.CN)[0];
+        final String commonName =IETFUtils.valueToString(cn.getFirst().getValue());
         return commonName;
     }
 

@@ -219,22 +219,6 @@
         <groupId>org.apache.maven.plugins</groupId>
         <artifactId>maven-clean-plugin</artifactId>
       </plugin>
-      <plugin>
-        <groupId>org.apache.maven.plugins</groupId>
-        <artifactId>maven-compiler-plugin</artifactId>
-        <configuration>
-<!--          Add sun.security.x509 module to compiler to allow successful UpdaterUtilTest running -->
-          <compilerArgs>
-            <arg>
-              --add-exports
-            </arg>
-            <arg>
-              java.base/sun.security.x509=ALL-UNNAMED
-            </arg>
-          </compilerArgs>
-          <showDeprecation>false</showDeprecation>
-        </configuration>
-      </plugin>
     </plugins>
   </build>
 
