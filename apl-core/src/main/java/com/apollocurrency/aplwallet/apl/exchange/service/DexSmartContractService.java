@@ -11,13 +11,13 @@ import com.apollocurrency.aplwallet.apl.dex.core.mapper.UserEthDepositInfoMapper
 import com.apollocurrency.aplwallet.apl.dex.core.model.DepositedOrderDetails;
 import com.apollocurrency.aplwallet.apl.dex.core.model.DexCurrency;
 import com.apollocurrency.aplwallet.apl.dex.core.model.DexTransaction;
-import com.apollocurrency.aplwallet.apl.dex.core.model.ExpiredSwap;
 import com.apollocurrency.aplwallet.apl.dex.core.model.OrderType;
 import com.apollocurrency.aplwallet.apl.dex.core.model.SwapDataInfo;
 import com.apollocurrency.aplwallet.apl.dex.core.model.UserAddressesWithOffset;
 import com.apollocurrency.aplwallet.apl.dex.eth.contracts.DexContract;
 import com.apollocurrency.aplwallet.apl.dex.eth.contracts.DexContractImpl;
 import com.apollocurrency.aplwallet.apl.dex.eth.model.EthDepositsWithOffset;
+import com.apollocurrency.aplwallet.apl.dex.eth.model.ExpiredSwapsWithOffset;
 import com.apollocurrency.aplwallet.apl.dex.eth.service.DexBeanProducer;
 import com.apollocurrency.aplwallet.apl.dex.eth.service.DexEthService;
 import com.apollocurrency.aplwallet.apl.dex.eth.service.EthereumWalletService;
@@ -278,10 +278,10 @@ public class DexSmartContractService {
         }
     }
 
-    public List<ExpiredSwap> getExpiredSwaps(String user) throws AplException.ExecutiveProcessException {
+    public ExpiredSwapsWithOffset getExpiredSwaps(String user, long offset, long limit) throws AplException.ExecutiveProcessException {
         DexContract dexContract = new DexContractImpl(smartContractAddress, dexBeanProducer.web3j(), Credentials.create(ACCOUNT_TO_READ_DATA), null);
         try {
-            return ExpiredSwapMapper.map(dexContract.getExpiredSwaps(user).sendAsync().get());
+            return ExpiredSwapMapper.map(dexContract.getExpiredSwaps(user, offset, limit).sendAsync().get());
         } catch (Exception e) {
             throw new AplException.ExecutiveProcessException(e.getMessage());
         }

@@ -65,6 +65,7 @@ import com.apollocurrency.aplwallet.apl.dex.eth.model.AddressEthExpiredSwaps;
 import com.apollocurrency.aplwallet.apl.dex.eth.model.EthDepositInfo;
 import com.apollocurrency.aplwallet.apl.dex.eth.model.EthDepositsWithOffset;
 import com.apollocurrency.aplwallet.apl.dex.eth.model.EthWalletBalanceInfo;
+import com.apollocurrency.aplwallet.apl.dex.eth.model.ExpiredSwapsWithOffset;
 import com.apollocurrency.aplwallet.apl.dex.eth.service.EthereumWalletService;
 import com.apollocurrency.aplwallet.apl.dex.eth.utils.EthUtil;
 import com.apollocurrency.aplwallet.apl.exchange.dao.DexContractDao;
@@ -1052,11 +1053,13 @@ public class DexService {
     public List<AddressEthExpiredSwaps> getAllExpiredSwaps() throws AplException.ExecutiveProcessException {
         List<AddressEthExpiredSwaps> addressEthExpiredSwaps = new ArrayList<>();
         List<String> addresses = getAllUsers();
+        int offset = 0;
+        int limit = 100;
 
         for (String address : addresses) {
             try {
-                List<ExpiredSwap> expiredSwaps = dexSmartContractService.getExpiredSwaps(address);
-                addressEthExpiredSwaps.add(new AddressEthExpiredSwaps(address, expiredSwaps));
+                ExpiredSwapsWithOffset expiredSwaps = dexSmartContractService.getExpiredSwaps(address, offset, limit);
+                addressEthExpiredSwaps.add(new AddressEthExpiredSwaps(address, expiredSwaps.getSwaps()));
             } catch (Exception ex) {
                 log.warn(ex.getMessage());
             }

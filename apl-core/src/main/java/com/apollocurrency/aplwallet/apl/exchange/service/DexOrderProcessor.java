@@ -37,6 +37,7 @@ import com.apollocurrency.aplwallet.apl.dex.core.model.OrderType;
 import com.apollocurrency.aplwallet.apl.dex.core.model.SwapDataInfo;
 import com.apollocurrency.aplwallet.apl.dex.eth.model.EthDepositInfo;
 import com.apollocurrency.aplwallet.apl.dex.eth.model.EthDepositsWithOffset;
+import com.apollocurrency.aplwallet.apl.dex.eth.model.ExpiredSwapsWithOffset;
 import com.apollocurrency.aplwallet.apl.dex.eth.service.EthereumWalletService;
 import com.apollocurrency.aplwallet.apl.exchange.util.DexCurrencyValidator;
 import com.apollocurrency.aplwallet.apl.util.Convert2;
@@ -843,11 +844,17 @@ public class DexOrderProcessor {
         List<String> addresses = kmsService.getEthWalletAddresses(accountId, passphrase);
         for (String address : addresses) {
             try {
-                List<ExpiredSwap> expiredSwaps = dexSmartContractService.getExpiredSwaps(address);
-                for (ExpiredSwap expiredSwap : expiredSwaps) {
-                    log.info("Refunding atomic swap {}, id {}", Numeric.toHexString(expiredSwap.getSecretHash()), expiredSwap.getOrderId());
-                    dexSmartContractService.refundAndWithdraw(expiredSwap.getSecretHash(), passphrase, address, accountId, false);
-                }
+                long offset = 0;
+                ExpiredSwapsWithOffset swapsWithOffset;
+                do {
+                    swapsWithOffset = dexSmartContractService.getExpiredSwaps(address, offset, CONTRACT_FETCH_SIZE);
+                    offset = swapsWithOffset.getOffset();
+                    for (ExpiredSwap expiredSwap : swapsWithOffset.getSwaps()) {
+                        log.info("Refunding atomic swap {}, id {}", Numeric.toHexString(expiredSwap.getSecretHash()), expiredSwap.getOrderId());
+                        dexSmartContractService.refundAndWithdraw(expiredSwap.getSecretHash(), passphrase, address, accountId, false);
+                    }
+                } while (swapsWithOffset.getSwaps().size() == CONTRACT_FETCH_SIZE);
+
             } catch (AplException.ExecutiveProcessException e) {
                 log.error(e.getMessage(), e);
             }
