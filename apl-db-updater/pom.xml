@@ -12,6 +12,18 @@
 
   <artifactId>apl-db-updater</artifactId>
 
+  <dependencyManagement>
+    <dependencies>
+      <dependency>
+        <groupId>com.apollocurrency</groupId>
+        <artifactId>apl-bom-ext</artifactId>
+        <version>2.0.1</version>
+        <type>pom</type>
+        <scope>import</scope>
+      </dependency>
+    </dependencies>
+  </dependencyManagement>
+
   <dependencies>
     <!-- Flyway   -->
     <dependency>
