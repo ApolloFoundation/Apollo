@@ -13,11 +13,10 @@ import com.apollocurrency.aplwallet.apl.core.dao.state.smc.SmcContractTable;
 import com.apollocurrency.aplwallet.apl.core.entity.state.smc.SmcContractEntity;
 import com.apollocurrency.aplwallet.apl.core.entity.state.smc.SmcContractStateEntity;
 import com.apollocurrency.aplwallet.apl.core.service.blockchain.Blockchain;
+import com.apollocurrency.aplwallet.apl.core.service.state.smc.ContractQuery;
 import com.apollocurrency.aplwallet.apl.core.service.state.smc.SmcContractRepository;
-import com.apollocurrency.aplwallet.apl.core.service.state.smc.SmcContractService;
 import com.apollocurrency.aplwallet.apl.smc.model.AplAddress;
-import com.apollocurrency.aplwallet.apl.smc.model.AplContractSpec;
-import com.apollocurrency.aplwallet.apl.util.Convert2;
+import com.apollocurrency.aplwallet.apl.util.api.PositiveRange;
 import com.apollocurrency.aplwallet.apl.util.cdi.Transactional;
 import com.apollocurrency.smc.contract.AddressNotFoundException;
 import com.apollocurrency.smc.contract.ContractSource;
@@ -48,17 +47,15 @@ public class SmcContractRepositoryImpl implements SmcContractRepository {
     private final ContractModelToStateEntityConverter contractModelToStateConverter;
 
     protected final SmcConfig smcConfig;
-    private final SmcContractService contractService;
 
     @Inject
-    public SmcContractRepositoryImpl(Blockchain blockchain, SmcContractTable smcContractTable, SmcContractStateTable smcContractStateTable, ContractModelToEntityConverter contractModelToEntityConverter, ContractModelToStateEntityConverter contractModelToStateConverter, SmcConfig smcConfig, SmcContractService contractService) {
+    public SmcContractRepositoryImpl(Blockchain blockchain, SmcContractTable smcContractTable, SmcContractStateTable smcContractStateTable, ContractModelToEntityConverter contractModelToEntityConverter, ContractModelToStateEntityConverter contractModelToStateConverter, SmcConfig smcConfig) {
         this.blockchain = blockchain;
         this.smcContractTable = smcContractTable;
         this.smcContractStateTable = smcContractStateTable;
         this.contractModelToEntityConverter = contractModelToEntityConverter;
         this.contractModelToStateConverter = contractModelToStateConverter;
         this.smcConfig = smcConfig;
-        this.contractService = contractService;
     }
 
     @Override
@@ -114,19 +111,6 @@ public class SmcContractRepositoryImpl implements SmcContractRepository {
         return loadContract(address, null, null, new ContractFuel(address, 0, 0));
     }
 
-    /**
-     * Load the contract specification by the given address or null if the given address doesn't correspond the smart contract
-     *
-     * @param address given contract address
-     * @return loaded smart contract specification or throw {@link com.apollocurrency.smc.contract.AddressNotFoundException}
-     */
-    @Override
-    @Transactional(readOnly = true)
-    public AplContractSpec loadAsrModuleSpec(Address address) {
-        SmcContractEntity smcEntity = loadContractEntity(address);
-        log.trace("Loaded specification for contract name={} type={}", smcEntity.getContractName(), smcEntity.getBaseContract());
-        return contractService.loadAsrModuleSpec(smcEntity.getBaseContract(), smcEntity.getLanguageName(), SimpleVersion.fromString(smcEntity.getLanguageVersion()));
-    }
 
     @Override
     @Transactional(readOnly = true)
@@ -168,19 +152,19 @@ public class SmcContractRepositoryImpl implements SmcContractRepository {
     }
 
     @Override
-    public List<ContractDetails> loadContractsByFilter(Address address, Address transaction, Address owner, String name, String baseContract, Long timestamp, ContractStatus status, int height, int from, int to) {
-        Long contractId = address != null ? new AplAddress(address).getLongId() : null;
-        Long txId = transaction != null ? new AplAddress(transaction).getLongId() : null;
-        Long ownerId = owner != null ? new AplAddress(owner).getLongId() : null;
-        Integer blockTimestamp = timestamp == null ? null : Convert2.toEpochTime(timestamp);
-        List<ContractDetails> result = smcContractTable.getContractsByFilter(contractId, txId, ownerId, name, baseContract, blockTimestamp, status != null ? status.name() : null, height < 0 ? blockchain.getHeight() : height, from, to);
+    public List<ContractDetails> loadContractsByFilter(ContractQuery query) {
+        List<ContractDetails> result = smcContractTable.getContractsByFilter(query);
         return result;
     }
 
     @Override
-    public List<ContractDetails> getContractDetailsByAddress(Address address) {
-        var result = loadContractsByFilter(address, null, null, null, null, null, null, -1, 0, 1);
-        return result;
+    public List<ContractDetails> getContractDetailsByAddress(long address) {
+        var query = ContractQuery.builder()
+            .address(address)
+            .height(-1)
+            .paging(new PositiveRange(0, 1))
+            .build();
+        return loadContractsByFilter(query);
     }
 
     public static SmartContract convert(SmcContractEntity entity, SmcContractStateEntity stateEntity, Address originator, Address caller, Fuel contractFuel) {

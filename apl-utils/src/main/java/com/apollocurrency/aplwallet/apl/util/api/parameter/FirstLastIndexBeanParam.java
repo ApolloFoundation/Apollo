@@ -4,6 +4,7 @@
 
 package com.apollocurrency.aplwallet.apl.util.api.parameter;
 
+import com.apollocurrency.aplwallet.apl.util.api.PositiveRange;
 import io.swagger.v3.oas.annotations.Parameter;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
@@ -27,7 +28,8 @@ public class FirstLastIndexBeanParam {
     @PositiveOrZero
     private int firstIndex = 0;
     @Parameter(description = "A zero-based index to the last record ID to retrieve (optional).")
-    @QueryParam("lastIndex") @DefaultValue("-1")
+    @QueryParam("lastIndex")
+    @DefaultValue("-1")
     private int lastIndex = -1;
 
     public void adjustIndexes(int maxAPIrecords) {
@@ -40,4 +42,7 @@ public class FirstLastIndexBeanParam {
         this.lastIndex = tempLastIndex;
     }
 
+    public PositiveRange range() {
+        return new PositiveRange(firstIndex, lastIndex);
+    }
 }

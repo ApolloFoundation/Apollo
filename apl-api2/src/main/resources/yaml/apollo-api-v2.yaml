@@ -647,7 +647,7 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/TransactionArrayResp'
+                $ref: '#/components/schemas/TransactionByteArrayResp'
         400:
           $ref: '#/components/responses/BadRequest'
         500:
@@ -674,7 +674,7 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/TransactionArrayResp'
+                $ref: '#/components/schemas/TransactionByteArrayResp'
         400:
           $ref: '#/components/responses/BadRequest'
         500:
@@ -711,9 +711,9 @@ paths:
     post:
       tags:
         - smc
-      summary: Returns signed transaction to call the contract method.
+      summary: Create, sign and return the 'Call smart-contract' transaction.
       description: |
-        Returns signed transaction to call the contract method.
+        Create, sign and return the 'Call smart-contract' transaction.
       operationId: createCallContractMethodTx
       requestBody:
         description: the contract method and method parameters
@@ -728,7 +728,7 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/TransactionArrayResp'
+                $ref: '#/components/schemas/TransactionByteArrayResp'
         400:
           $ref: '#/components/responses/BadRequest'
         500:
@@ -860,7 +860,7 @@ paths:
             example: 1591696372000
         - name: transaction
           in: query
-          description: The transaction that contains contract
+          description: The contract transaction id
           required: false
           schema:
             type: string
@@ -2372,7 +2372,7 @@ components:
               items:
                 type: string
 
-    TransactionArrayResp:
+    TransactionByteArrayResp:
       required:
         - tx
       allOf:

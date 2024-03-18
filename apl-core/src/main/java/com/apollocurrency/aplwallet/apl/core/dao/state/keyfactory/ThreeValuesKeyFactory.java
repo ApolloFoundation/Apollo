@@ -9,13 +9,13 @@ import java.sql.SQLException;
 /**
  * @author andrew.zinchenko@gmail.com
  */
-public abstract class ComplexKeyFactory<T> extends KeyFactory<T> {
+public abstract class ThreeValuesKeyFactory<T> extends KeyFactory<T> {
 
     private final String idColumnA;
     private final String idColumnB;
     private final String idColumnC;
 
-    protected ComplexKeyFactory(String idColumnA, String idColumnB, String idColumnC) {
+    protected ThreeValuesKeyFactory(String idColumnA, String idColumnB, String idColumnC) {
         super(" WHERE" +
                 " " + idColumnA + " = ? " +
                 "AND " + idColumnB + " = ? " +
@@ -32,10 +32,10 @@ public abstract class ComplexKeyFactory<T> extends KeyFactory<T> {
 
     @Override
     public DbKey newKey(ResultSet rs) throws SQLException {
-        return new ComplexKey(rs.getLong(idColumnA), rs.getString(idColumnB), rs.getBytes(idColumnC));
+        return new ThreeValuesKey(rs.getLong(idColumnA), rs.getString(idColumnB), rs.getBytes(idColumnC));
     }
 
     public DbKey newKey(long idA, String idB, byte[] idC) {
-        return new ComplexKey(idA, idB, idC);
+        return new ThreeValuesKey(idA, idB, idC);
     }
 }

@@ -6,7 +6,7 @@ package com.apollocurrency.aplwallet.apl.core.dao.state.smc;
 
 import com.apollocurrency.aplwallet.apl.core.converter.db.smc.SmcContractMappingRowMapper;
 import com.apollocurrency.aplwallet.apl.core.dao.state.derived.VersionedDeletableEntityDbTable;
-import com.apollocurrency.aplwallet.apl.core.dao.state.keyfactory.ComplexKeyFactory;
+import com.apollocurrency.aplwallet.apl.core.dao.state.keyfactory.ThreeValuesKeyFactory;
 import com.apollocurrency.aplwallet.apl.core.dao.state.keyfactory.DbKey;
 import com.apollocurrency.aplwallet.apl.core.db.DatabaseManager;
 import com.apollocurrency.aplwallet.apl.core.entity.state.smc.SmcContractMappingEntity;
@@ -28,7 +28,7 @@ import java.sql.Statement;
  * @author andrew.zinchenko@gmail.com
  */
 public class SmcContractMappingTable extends VersionedDeletableEntityDbTable<SmcContractMappingEntity> {
-    public static final ComplexKeyFactory<SmcContractMappingEntity> KEY_FACTORY = new ComplexKeyFactory<>("address", "name", "entry_key") {
+    public static final ThreeValuesKeyFactory<SmcContractMappingEntity> KEY_FACTORY = new ThreeValuesKeyFactory<>("address", "name", "entry_key") {
         @Override
         public DbKey newKey(SmcContractMappingEntity mapping) {
             if (mapping.getDbKey() == null) {

@@ -4,7 +4,12 @@
 
 package com.apollocurrency.aplwallet.apl.core.service.state.smc;
 
+import com.apollocurrency.aplwallet.api.v2.model.ContractMethod;
+import com.apollocurrency.aplwallet.api.v2.model.ContractSpecResponse;
 import com.apollocurrency.aplwallet.apl.smc.model.AplContractSpec;
+import com.apollocurrency.smc.contract.vm.ExecutionLog;
+import com.apollocurrency.smc.contract.vm.ResultValue;
+import com.apollocurrency.smc.data.type.Address;
 import com.apollocurrency.smc.polyglot.Version;
 
 import java.util.List;
@@ -23,6 +28,8 @@ public interface SmcContractService {
      * @return the list of ASR module names.
      */
     List<String> getAsrModules(String language, Version version, String type);
+
+    List<ResultValue> processAllViewMethods(Address contractAddress, List<ContractMethod> members, ExecutionLog executionLog);
 
     /**
      * Returns the list of inherited ASR modules.
@@ -44,4 +51,20 @@ public interface SmcContractService {
      */
     AplContractSpec loadAsrModuleSpec(String asrModuleName, String language, Version version);
 
+    /**
+     * Load the contract specification of the specified contract address.
+     *
+     * @param contractAddress the given contract
+     * @return the contract specification
+     */
+    ContractSpecResponse loadContractSpecification(Address contractAddress);
+
+    /**
+     * Loads the contract specification by the given address
+     * or returns null if the given address doesn't correspond the smart contract
+     *
+     * @param address given contract address
+     * @return loaded smart contract specification or throw {@link com.apollocurrency.smc.contract.AddressNotFoundException}
+     */
+    AplContractSpec loadAsrModuleSpec(Address address);
 }

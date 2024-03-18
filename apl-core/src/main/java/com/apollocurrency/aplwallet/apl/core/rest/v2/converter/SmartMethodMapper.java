@@ -21,7 +21,6 @@ public class SmartMethodMapper implements Converter<ContractMethod, SmartMethod>
     public SmartMethod apply(ContractMethod dto) {
         var modelBuilder = SmartMethod.builder()
             .name(dto.getFunction())
-            .name(dto.getFunction())
             .value(BigInteger.ZERO);
         if (dto.getInput() != null) {
             modelBuilder.args(String.join(",", dto.getInput()));

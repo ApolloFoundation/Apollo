@@ -18,6 +18,7 @@ import com.apollocurrency.aplwallet.apl.core.service.fulltext.FullTextConfig;
 import com.apollocurrency.aplwallet.apl.core.service.fulltext.FullTextConfigImpl;
 import com.apollocurrency.aplwallet.apl.core.service.state.DerivedDbTablesRegistryImpl;
 import com.apollocurrency.aplwallet.apl.core.service.state.DerivedTablesRegistry;
+import com.apollocurrency.aplwallet.apl.core.service.state.smc.ContractQuery;
 import com.apollocurrency.aplwallet.apl.core.transaction.TransactionType;
 import com.apollocurrency.aplwallet.apl.core.transaction.TransactionTypeFactory;
 import com.apollocurrency.aplwallet.apl.core.transaction.messages.SmcPublishContractAttachment;
@@ -26,6 +27,7 @@ import com.apollocurrency.aplwallet.apl.extension.DbExtension;
 import com.apollocurrency.aplwallet.apl.testutil.DbUtils;
 import com.apollocurrency.aplwallet.apl.testutil.EntityProducer;
 import com.apollocurrency.aplwallet.apl.util.Convert2;
+import com.apollocurrency.aplwallet.apl.util.api.PositiveRange;
 import com.apollocurrency.aplwallet.apl.util.db.TransactionalDataSource;
 import com.apollocurrency.aplwallet.apl.util.exception.AplException;
 import com.apollocurrency.aplwallet.apl.util.injectable.PropertiesHolder;
@@ -183,7 +185,14 @@ class SmcContractTableTest extends DbContainerBaseTest {
         when(attachment.getFuelPrice()).thenReturn(BigInteger.ONE);
 
         //WHEN
-        return table.getContractsByFilter(address, null, owner, name, null, null, status, height, from, to);
+        return table.getContractsByFilter(ContractQuery.builder()
+            .address(address)
+            .owner(owner)
+            .name(name)
+            .status(status)
+            .height(height)
+            .paging(new PositiveRange(from, to))
+            .build());
     }
 
     @Test

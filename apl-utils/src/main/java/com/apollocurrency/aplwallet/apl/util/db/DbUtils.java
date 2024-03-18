@@ -19,6 +19,7 @@
 
 package com.apollocurrency.aplwallet.apl.util.db;
 
+import com.apollocurrency.aplwallet.apl.util.api.PositiveRange;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.slf4j.Logger;
@@ -35,6 +36,7 @@ import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Types;
+import java.util.Objects;
 import java.util.Optional;
 
 import static org.slf4j.LoggerFactory.getLogger;
@@ -234,6 +236,10 @@ public final class DbUtils {
             to - from + 1 : 0;
     }
 
+    public static String limitsClause(PositiveRange paging) {
+        return limitsClause(paging.from(), paging.to());
+    }
+
     public static String limitsClause(int from, int to) {
         int limit = calculateLimit(from, to);
         if (limit > 0 && from > 0) {
@@ -251,6 +257,10 @@ public final class DbUtils {
         }
     }
 
+    public static int setLimits(int index, PreparedStatement pstmt, PositiveRange paging) throws SQLException {
+        return setLimits(index, pstmt, paging.from(), paging.to());
+    }
+
     public static int setLimits(int index, PreparedStatement pstmt, int from, int to) throws SQLException {
         int limit = calculateLimit(from, to);
         if (limit > 0) {
@@ -260,6 +270,11 @@ public final class DbUtils {
             pstmt.setInt(index++, from);
         }
         return index;
+    }
+
+    public static String escapeLikePattern(String pattern) {
+        Objects.requireNonNull(pattern, "pattern");
+        return pattern.replace("%", "\\%").replace("_", "\\_") + "%";
     }
 
 }
