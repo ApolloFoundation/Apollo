@@ -18,6 +18,7 @@ import com.apollocurrency.aplwallet.apl.util.StringUtils;
 import com.apollocurrency.aplwallet.apl.util.cdi.AplContainer;
 import com.apollocurrency.aplwallet.apl.util.cdi.AplContainerBuilder;
 import com.apollocurrency.aplwallet.apl.util.db.MariaDbProcess;
+import com.apollocurrency.aplwallet.apl.core.db.JdbiTransactionalInterceptor;
 import com.apollocurrency.aplwallet.apl.util.env.EnvironmentVariables;
 import com.apollocurrency.aplwallet.apl.util.env.PosixExitCodes;
 import com.apollocurrency.aplwallet.apl.util.env.RuntimeEnvironment;
@@ -289,13 +290,13 @@ public class Apollo {
 
 //Configure CDI Container builder and start CDI container. From now all things must go CDI way
         AplContainerBuilder aplContainerBuilder = AplContainer.builder().containerId("MAIN-APL-CDI")
+            .beanClasses(JdbiTransactionalInterceptor.class)
             // do not use recursive scan because it violates the restriction to
             // deploy one bean for all deployment archives
             // Recursive scan will trigger base synthetic archive to load JdbiTransactionalInterceptor, which was already loaded by apl-core archive
             // See https://docs.jboss.org/cdi/spec/2.0.EDR2/cdi-spec.html#se_bootstrap for more details
             // we already have it in beans.xml in core
             .annotatedDiscoveryMode();
-
         //!!!!!!!!!!!!!!
         //TODO:  turn it on periodically in development process to check CDI errors
         // Enable for development only, see http://weld.cdi-spec.org/news/2015/11/10/weld-probe-jmx/

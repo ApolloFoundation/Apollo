@@ -15,15 +15,17 @@
  */
 
 /*
- * Copyright © 2018 Apollo Foundation
+ * Copyright © 2018-2021 Apollo Foundation
  */
 
-package com.apollocurrency.aplwallet.apl.core.peer;
+package com.apollocurrency.aplwallet.apl.core.dao.appdata;
 
 import com.apollocurrency.aplwallet.apl.core.db.DatabaseManager;
+import com.apollocurrency.aplwallet.apl.util.db.TransactionalDataSource;
+import com.apollocurrency.aplwallet.apl.core.entity.appdata.PeerEntity;
+import com.apollocurrency.aplwallet.apl.core.peer.Peer;
 import com.apollocurrency.aplwallet.apl.util.annotation.DatabaseSpecificDml;
 import com.apollocurrency.aplwallet.apl.util.annotation.DmlMarker;
-import com.apollocurrency.aplwallet.apl.util.db.TransactionalDataSource;
 
 import jakarta.inject.Inject;
 import jakarta.inject.Singleton;
@@ -36,23 +38,32 @@ import java.util.Collection;
 import java.util.List;
 
 @Singleton
-public class PeerDb {
+public class PeerDao {
 
     private final DatabaseManager databaseManager;
 
     @Inject
-    public PeerDb(DatabaseManager databaseManagerParam) {
+    public PeerDao(DatabaseManager databaseManagerParam) {
         databaseManager = databaseManagerParam;
     }
 
-    public List<Entry> loadPeers() {
-        List<Entry> peers = new ArrayList<>();
+
+    public List<PeerEntity> loadPeers() {
+        List<PeerEntity> peers = new ArrayList<>();
+
         TransactionalDataSource dataSource = databaseManager.getDataSource();
         try (Connection con = dataSource.getConnection();
              PreparedStatement pstmt = con.prepareStatement("SELECT * FROM peer");
              ResultSet rs = pstmt.executeQuery()) {
             while (rs.next()) {
-                peers.add(new Entry(rs.getString("address"), rs.getLong("services"), rs.getInt("last_updated")));
+                peers.add(new PeerEntity(
+                        rs.getString("address"),
+                        rs.getLong("services"),
+                        rs.getInt("last_updated"),
+                        rs.getString("x509pem"),
+                        rs.getString("ip_and_port")
+                       )
+                );
             }
         } catch (SQLException e) {
             throw new RuntimeException(e.toString(), e);
@@ -60,7 +71,9 @@ public class PeerDb {
         return peers;
     }
 
-    public void deletePeer(Entry peer) {
+
+    public void deletePeer(PeerEntity peer) {
+
         TransactionalDataSource dataSource = databaseManager.getDataSource();
         try (Connection con = dataSource.getConnection()) {
             PreparedStatement pstmt = con.prepareStatement("DELETE FROM peer WHERE address = ?");
@@ -71,11 +84,13 @@ public class PeerDb {
         }
     }
 
-    public void deletePeers(Collection<Entry> peers) {
+
+    public void deletePeers(Collection<PeerEntity> peers) {
+
         TransactionalDataSource dataSource = databaseManager.getDataSource();
         try (Connection con = dataSource.getConnection();
              PreparedStatement pstmt = con.prepareStatement("DELETE FROM peer WHERE address = ?")) {
-            for (Entry peer : peers) {
+            for (PeerEntity peer : peers) {
                 pstmt.setString(1, peer.getAddress());
                 pstmt.executeUpdate();
             }
@@ -84,18 +99,20 @@ public class PeerDb {
         }
     }
 
-    public void updatePeers(Collection<Entry> peers) {
+    public void updatePeers(Collection<PeerEntity> peers) {
+
         TransactionalDataSource dataSource = databaseManager.getDataSource();
         dataSource.begin();
         try (Connection con = dataSource.getConnection();
              @DatabaseSpecificDml(DmlMarker.MERGE)
+
              PreparedStatement pstmt = con.prepareStatement("INSERT INTO peer "
                  + "(address, services, last_updated) "
                  + "VALUES(?, ?, ?) "
                  + "ON DUPLICATE KEY UPDATE "
                  + "address = VALUES(address), services = VALUES(services), last_updated = VALUES(last_updated)")
         ) {
-            for (Entry peer : peers) {
+            for (PeerEntity peer : peers) {
                 pstmt.setString(1, peer.getAddress());
                 pstmt.setLong(2, peer.getServices());
                 pstmt.setInt(3, peer.getLastUpdated());
@@ -108,7 +125,9 @@ public class PeerDb {
         }
     }
 
-    public void updatePeer(PeerImpl peer) {
+
+    public void updatePeer(Peer peer) {
+
         TransactionalDataSource dataSource = databaseManager.getDataSource();
         dataSource.begin();
         try (Connection con = dataSource.getConnection();
@@ -128,46 +147,4 @@ public class PeerDb {
         }
     }
 
-    static class Entry {
-        private final String address;
-        private final long services;
-        private final int lastUpdated;
-
-        Entry(String address, long services, int lastUpdated) {
-            this.address = address;
-            this.services = services;
-            this.lastUpdated = lastUpdated;
-        }
-
-        public String getAddress() {
-            return address;
-        }
-
-        public long getServices() {
-            return services;
-        }
-
-        public int getLastUpdated() {
-            return lastUpdated;
-        }
-
-        @Override
-        public int hashCode() {
-            return address.hashCode();
-        }
-
-        @Override
-        public boolean equals(Object obj) {
-            return (obj != null && (obj instanceof Entry) && address.equals(((Entry) obj).address));
-        }
-
-        @Override
-        public String toString() {
-            return "PeerEntry{" +
-                "address='" + address + '\'' +
-                ", services=" + services +
-                ", lastUpdated=" + lastUpdated +
-                '}';
-        }
-    }
 }

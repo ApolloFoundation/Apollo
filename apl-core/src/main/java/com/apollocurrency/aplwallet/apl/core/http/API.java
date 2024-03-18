@@ -68,7 +68,6 @@ import org.eclipse.jetty.websocket.servlet.WebSocketUpgradeFilter;
 import org.jboss.resteasy.plugins.server.servlet.HttpServletDispatcher;
 import org.jboss.resteasy.plugins.server.servlet.ResteasyContextParameters;
 import org.jboss.weld.environment.servlet.Listener;
-import org.slf4j.Logger;
 
 import jakarta.inject.Inject;
 import jakarta.inject.Singleton;
@@ -88,8 +87,6 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 import java.util.StringJoiner;
-
-import static org.slf4j.LoggerFactory.getLogger;
 
 @Singleton
 @Slf4j

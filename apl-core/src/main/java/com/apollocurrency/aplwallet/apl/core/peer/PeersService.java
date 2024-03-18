@@ -28,6 +28,8 @@ import com.apollocurrency.aplwallet.apl.core.app.runnable.limiter.TimeLimiterSer
 import com.apollocurrency.aplwallet.apl.core.model.Block;
 import com.apollocurrency.aplwallet.apl.core.model.Transaction;
 import com.apollocurrency.aplwallet.apl.core.chainid.BlockchainConfig;
+import com.apollocurrency.aplwallet.apl.core.dao.appdata.PeerDao;
+import com.apollocurrency.aplwallet.apl.core.entity.appdata.PeerEntity;
 import com.apollocurrency.aplwallet.apl.core.http.API;
 import com.apollocurrency.aplwallet.apl.core.http.APIEnum;
 import com.apollocurrency.aplwallet.apl.core.rest.converter.BlockConverter;
@@ -39,6 +41,7 @@ import com.apollocurrency.aplwallet.apl.core.service.blockchain.Blockchain;
 import com.apollocurrency.aplwallet.apl.core.service.blockchain.BlockchainProcessor;
 import com.apollocurrency.aplwallet.apl.core.service.state.account.AccountService;
 import com.apollocurrency.aplwallet.apl.crypto.Convert;
+import com.apollocurrency.aplwallet.apl.security.id.IdentityService;
 import com.apollocurrency.aplwallet.apl.util.Constants;
 import com.apollocurrency.aplwallet.apl.util.Filter;
 import com.apollocurrency.aplwallet.apl.util.JSON;
@@ -56,6 +59,8 @@ import com.apollocurrency.aplwallet.apl.util.task.TaskDispatcher;
 import com.apollocurrency.aplwallet.apl.util.task.Tasks;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.datatype.jsonorg.JsonOrgModule;
+import io.firstbridge.identity.cert.ExtCert;
+import io.firstbridge.identity.utils.Hex;
 import lombok.Getter;
 import lombok.extern.slf4j.Slf4j;
 import org.json.simple.JSONObject;
@@ -66,6 +71,7 @@ import org.slf4j.LoggerFactory;
 import jakarta.enterprise.inject.spi.CDI;
 import jakarta.inject.Inject;
 import jakarta.inject.Singleton;
+import java.nio.ByteBuffer;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
@@ -98,7 +104,7 @@ public class PeersService {
     private static final Version MAX_VERSION = Constants.VERSION;
     private static final int sendTransactionsBatchSize = 200;
     private final static String BACKGROUND_SERVICE_NAME = "PeersService";
-    public static int DEFAULT_CONNECT_TIMEOUT = 2000; //2s default websocket connect timeout
+    public static final int DEFAULT_CONNECT_TIMEOUT = 2000; //2s default websocket connect timeout
     public static int connectTimeout = DEFAULT_CONNECT_TIMEOUT;
     public static boolean getMorePeers;
     //TODO:  hardcode in Constants and use from there
@@ -118,8 +124,8 @@ public class PeersService {
     static boolean isGzipEnabled;
     static int minNumberOfKnownPeers;
     static boolean enableHallmarkProtection;
-    static boolean usePeersDb;
-    static boolean savePeers;
+    boolean usePeersDb;
+    boolean savePeers;
     static boolean cjdnsOnly;
     private static String myHallmark;
     private static int maxNumberOfInboundConnections;
@@ -128,7 +134,6 @@ public class PeersService {
     private static int pushThreshold;
     private static int pullThreshold;
     private static int sendToPeersLimit;
-    private static volatile JSONObject myPeerInfo;
     public final ExecutorService peersExecutorService = new QueuedThreadPool(2, 15, "PeersExecutorService");
     public final boolean isLightClient;
     @Getter
@@ -163,9 +168,13 @@ public class PeersService {
     private BlockchainProcessor blockchainProcessor;
     private final TimeService timeService;
     private final UnconfirmedTransactionConverter transactionConverter;
+    private final IdentityService identityService;
+    @Getter
+    private final PeerDao peerDao;
     private final BlockConverter blockConverter;
+    private ObjectMapper mapper;
+
 //    private final ExecutorService txSendingDispatcher;
-    private final PeerDb peerDb;
 
     @Inject
     public PeersService(PropertiesHolder propertiesHolder,
@@ -178,7 +187,8 @@ public class PeersService {
                         AccountService accountService,
                         UnconfirmedTransactionConverterCreator txConverterCreator,
                         BlockConverterCreator blockConverterCreator,
-                        PeerDb peerDb) {
+                        IdentityService identityService,
+                        PeerDao peerDao) {
         this.propertiesHolder = propertiesHolder;
         this.blockchainConfig = blockchainConfig;
         this.blockchain = blockchain;
@@ -187,14 +197,22 @@ public class PeersService {
         this.peerHttpServer = peerHttpServer;
         this.timeLimiterService = timeLimiterService;
         this.accountService = accountService;
-        this.transactionConverter = txConverterCreator.create(false);
+        this.identityService = identityService;
+        this.peerDao = peerDao;
         this.blockConverter = blockConverterCreator.create(true, false, false);
-        this.peerDb = peerDb;
+        this.transactionConverter = txConverterCreator.create(false);
+//        this.transactionConverter.setPriv(false);
+//        this.blockConverter.setPriv(false);
+//        this.blockConverter.setAddTransactions(true);
         int asyncTxSendingPoolSize = propertiesHolder.getIntProperty("apl.maxAsyncPeerSendingPoolSize", 30);
 //        this.txSendingDispatcher = new ThreadPoolExecutor(5, asyncTxSendingPoolSize, 10_000, TimeUnit.MILLISECONDS, new ArrayBlockingQueue<>(asyncTxSendingPoolSize), new NamedThreadFactory("P2PTxSendingPool", true));
 
         this.sendingService = new TimeTraceDecoratedThreadPoolExecutor(10, asyncTxSendingPoolSize, 10_000, TimeUnit.MILLISECONDS, new LinkedBlockingDeque<>(1000), new NamedThreadFactory("PeersSendingService"));
         isLightClient = propertiesHolder.isLightClient();
+        //configure object mapper for PeerInfo
+        mapper = new ObjectMapper();
+        mapper.registerModule(new JsonOrgModule());
+
     }
 
     private BlockchainProcessor lookupBlockchainProcessor() {
@@ -282,27 +300,26 @@ public class PeersService {
             LOG.info("Using a proxy, will not create outbound websockets.");
         }
 
-        fillMyPeerInfo();
+        //NodeID feature
+        if(!identityService.loadMyIdentity()){
+            log.error("Can not load or generate this node identity certificate or key");
+        }
+
+        if(!identityService.loadTrustedCaCerts()){
+            log.error("Can not load trusted CA certificates, node ID verification is impossible");
+        }
 
         addListener(peer -> peersExecutorService.submit(() -> {
             if (peer.getAnnouncedAddress() != null && !peer.isBlacklisted()) {
                 try {
-                    this.peerDb.updatePeer((PeerImpl) peer);
+                    peerDao.updatePeer(peer);
                 } catch (RuntimeException e) {
                     LOG.error("Unable to update peer database", e);
                 }
             }
         }), PeersService.Event.CHANGED_SERVICES);
 
-        // moved to Weld Event
-        /* Account.addListener(account -> connectablePeers.values().forEach(peer -> {
-            if (peer.getHallmark() != null && peer.getHallmark().getAccountId() == account.getId()) {
-                listeners.notify(peer, Event.WEIGHT);
-            }
-        }), AccountEventType.BALANCE);*/
-
         configureBackgroundTasks();
-
         peerHttpServer.start();
     }
 
@@ -346,8 +363,8 @@ public class PeersService {
         }
     }
 
-    private void fillMyPeerInfo() {
-        myPeerInfo = new JSONObject();
+    private JSONObject fillMyPeerInfo() {
+        JSONObject myPeerInfo = new JSONObject();
         PeerInfo pi = new PeerInfo();
         LOG.debug("Start filling 'MyPeerInfo'...");
         List<Peer.Service> servicesList = new ArrayList<>();
@@ -419,12 +436,22 @@ public class PeersService {
         pi.setServices(Long.toUnsignedString(services));
         myServices = Collections.unmodifiableList(servicesList);
 
-        ObjectMapper mapper = new ObjectMapper();
-        mapper.registerModule(new JsonOrgModule());
+        ExtCert myId = identityService.getThisNodeIdHandler().getExtCert();
+        if(myId!=null){
+            pi.setX509_cert(myId.getCertPEM());
+        }
+//NodeId feature
+        pi.setEpochTime(timeService.getEpochTime());
+        ByteBuffer bb = ByteBuffer.allocate(Integer.SIZE);
+        bb.putInt(pi.getEpochTime());
+        byte[] signature = identityService.getThisNodeIdHandler().sign(bb.array());
+        pi.setEpochTimeSigantureHex(Hex.encode(signature));
+
         myPeerInfo = mapper.convertValue(pi, JSONObject.class);
-        LOG.debug("My peer info:\n" + myPeerInfo.toJSONString());
+        LOG.trace("My peer info:\n" + myPeerInfo.toJSONString());
         myPI = pi;
-        LOG.debug("Finished filling 'MyPeerInfo'");
+        LOG.trace("Finished filling 'MyPeerInfo'");
+        return myPeerInfo;
     }
 
     public PeerInfo getMyPeerInfo() {
@@ -624,7 +651,7 @@ public class PeersService {
         //if it is not resolvable
         PeerAddress apa = resolveAnnouncedAddress(announcedAddress);
         peer = new PeerImpl(actualAddr, apa, blockchainConfig, blockchain, timeService, peerHttpServer.getPeerServlet(),
-            this, timeLimiterService.acquireLimiter("P2PTransport"), accountService);
+            this, timeLimiterService.acquireLimiter("P2PTransport"), accountService, identityService);
         listeners.notify(peer, Event.NEW_PEER);
         if (apa != null) {
             connectablePeers.put(apa.getAddrWithPort(), peer);
@@ -634,13 +661,14 @@ public class PeersService {
         return peer;
     }
 
-    public void setAnnouncedAddress(PeerImpl peer, String newAnnouncedAddress) {
+    public boolean setAnnouncedAddress(Peer peer, String newAnnouncedAddress) {
         if (StringUtils.isBlank(newAnnouncedAddress)) {
             LOG.debug("newAnnouncedAddress is empty for host: {}, ignoring", peer.getHostWithPort());
         }
         PeerAddress newPa = resolveAnnouncedAddress(newAnnouncedAddress);
-        if (newPa == null) {
-            return;
+        if (newPa == null || !newPa.isPublic()) {
+            log.debug("Peer {}  announced wrong or not public address: {}", peer.getHostWithPort(), newAnnouncedAddress);
+            return false;
         }
         String oldAnnouncedAddr = peer.getAnnouncedAddress();
         Peer oldPeer = null;
@@ -652,17 +680,20 @@ public class PeersService {
             if (newPa.compareTo(oldPa) != 0) {
                 LOG.debug("Removing old announced address {} for peer {}:{}", oldPa, oldPeer.getHost(), oldPeer.getPort());
 
-                peer.setAnnouncedAddress(newAnnouncedAddress);
+                peer.setAnnouncedAddress(newPa.getAddrWithPort());
                 oldPeer = removePeer(oldPeer);
                 if (oldPeer != null) {
                     notifyListeners(oldPeer, Event.REMOVE);
                 }
             }
         }
+        return true;
     }
 
-    public boolean addPeer(Peer peer, String newAnnouncedAddress) {
-        setAnnouncedAddress((PeerImpl) peer, newAnnouncedAddress.toLowerCase());
+    public boolean addPeer(Peer peer, String announcedAddress) {
+        if(setAnnouncedAddress(peer, announcedAddress.toLowerCase())){
+            return false;
+        }
         return addPeer(peer);
     }
 
@@ -670,7 +701,7 @@ public class PeersService {
 
         if (peer != null && peer.getAnnouncedAddress() != null) {
             // put new or replace previous
-            connectablePeers.put(peer.getAnnouncedAddress(), peer);
+            connectablePeers.put(peer.getAnnouncedAddress(),  peer);
             listeners.notify(peer, Event.NEW_PEER);
             return true;
         }
@@ -701,8 +732,10 @@ public class PeersService {
     public Peer removePeer(Peer peer) {
         Peer p = null;
         if (peer.getAnnouncedAddress() != null) {
-            PeerDb.Entry entry = new PeerDb.Entry(peer.getAnnouncedAddress(), 0, 0);
-            this.peerDb.deletePeer(entry);
+
+            PeerEntity entry = new PeerEntity(peer.getIdentity(), 0, 0,null,peer.getHostWithPort());
+            peerDao.deletePeer(entry);
+
             if (connectablePeers.containsKey(peer.getAnnouncedAddress())) {
                 p = connectablePeers.remove(peer.getAnnouncedAddress());
             }
@@ -912,8 +945,9 @@ public class PeersService {
             ? BlockchainState.FORK
             : BlockchainState.UP_TO_DATE;
         if (state != currentBlockchainState) {
-            JSONObject json = new JSONObject(myPeerInfo);
+            JSONObject json = new JSONObject(fillMyPeerInfo());
             json.put("blockchainState", state.ordinal());
+
             myPeerInfoResponse = JSON.prepare(json);
             json.put("requestType", "getInfo");
             myPeerInfoRequest = JSON.prepareRequest(json);
@@ -936,8 +970,8 @@ public class PeersService {
         return currentBlockchainState;
     }
 
-    public PeerDb getPeerDb() {
-        return peerDb;
+    public PeerDao getPeerDb() {
+        return peerDao;
     }
 
     public enum Event {

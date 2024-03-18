@@ -40,3 +40,4 @@ nbactions.xml
 **/swagger-codegen-cli-*.jar
 **/.swagger-codegen
 /apl-api2/src/gen/
+/apollo-mariadb

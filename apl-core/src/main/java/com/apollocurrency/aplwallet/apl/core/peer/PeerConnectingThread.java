@@ -90,7 +90,7 @@ class PeerConnectingThread implements Runnable {
                                 && PeersService.enableHallmarkProtection
                                 && peer.getWeight() == 0
                                 && peersService.hasTooManyOutboundConnections()) {
-                                LOG.debug("Too many outbound connections, deactivating peer {}", peer.getHost());
+                                LOG.debug("Too many outbound connections, deactivating peer {}", peer.getHostWithPort());
                                 peer.deactivate("Too many outbound connections");
                             }
                             return null;

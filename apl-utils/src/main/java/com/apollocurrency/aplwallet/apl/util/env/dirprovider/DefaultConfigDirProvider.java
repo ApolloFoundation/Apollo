@@ -18,6 +18,28 @@ import java.util.UUID;
  * Config dir provider which provide default config files locations
  */
 public class DefaultConfigDirProvider implements ConfigDirProvider {
+
+    /**
+     * Chain IDs ow known networks from 0 (mainnet) to 3rd testnet }
+     */
+    protected static final String[] CHAIN_IDS = {
+        "b5d7b697-f359-4ce5-a619-fa34b6fb01a5", //main net
+        "a2e9b946-290b-48b6-9985-dc2e5a5860a1", //test net 1
+        "2f2b6149-d29e-41ca-8c0d-f3343f5540c6", //test net 2
+        "3fecf3bd-86a3-436b-a1d6-41eefc0bd1c6" //test net 3
+    };
+
+    /**
+     * Deprecated names of configuration directories for known networks. Should
+     * be replaced later by chainID
+     */
+    protected static final String[] CONF_DIRS = {
+        "conf", //main net
+        "conf-tn1", //test net 1
+        "conf-tn2", //test net 2
+        "conf-tn3" //test net 3
+    };
+
     /**
      * Know network ID's including alias index and config-specific dir
      */
@@ -32,6 +54,9 @@ public class DefaultConfigDirProvider implements ConfigDirProvider {
     protected String applicationName;
     protected boolean isService;
     protected volatile ChainSpec chainSpec;
+    protected volatile String partialUuid;
+    protected volatile UUID chainUuid;
+    protected int netIndex;
 
     /**
      * Constructs config dir provider
@@ -51,7 +76,7 @@ public class DefaultConfigDirProvider implements ConfigDirProvider {
         this.isService = isService;
 
         Optional<ChainSpec> byIndex = CHAINS.getByIndex(netIdx);
-        if (StringUtils.isBlank(uuidOrPart) && byIndex.isEmpty()){
+        if (StringUtils.isBlank(uuidOrPart) && byIndex.isEmpty()) {
             this.chainSpec = CHAINS.getMainnet(); //default to main net if no params
             return;
         }
@@ -60,8 +85,33 @@ public class DefaultConfigDirProvider implements ConfigDirProvider {
                 "only one parameter: netIdx= " + netIdx + ", uuidOrPart " + uuidOrPart
             );
         }
-        if (StringUtils.isNotBlank(uuidOrPart)) {
+        if (StringUtils.isNotBlank(uuidOrPart) && byIndex.isEmpty()) {
             this.chainSpec = CHAINS.findByChainId(uuidOrPart).orElse(ChainSpec.createExternal(uuidOrPart));
+            int netIdxToAssign;
+            if (netIdx > CONF_DIRS.length - 1) {
+                System.err.println("Net index " + netIdx + " is greater than last known.");
+                netIdxToAssign = CONF_DIRS.length - 1;
+                System.err.println("Net index now is last one: " + netIdx);
+            } else {
+                netIdxToAssign = netIdx;
+            }
+
+            if (netIdx >= 0) {
+                chainUuid = UUID.fromString(CHAIN_IDS[netIdx]);
+            }
+
+            //find in known networks
+            if (uuidOrPart != null && !uuidOrPart.isEmpty()) {
+                for (int i = 0; i < CHAIN_IDS.length; i++) {
+                    String id = CHAIN_IDS[i];
+                    if (id.startsWith(uuidOrPart.toLowerCase())) {
+                        netIdxToAssign = i;
+                        chainUuid = UUID.fromString(id);
+                        break;
+                    }
+                }
+            }
+            this.netIndex = netIdxToAssign;
         } else {
             this.chainSpec = byIndex.get();
         }
@@ -117,6 +167,9 @@ public class DefaultConfigDirProvider implements ConfigDirProvider {
 
     @Override
     public String getChainIdPart() {
+        if ( chainUuid != null && (partialUuid == null || partialUuid.isEmpty())) {
+           partialUuid = chainUuid.toString().substring(0,6);
+        }
         return chainSpec.getChainIdShortened();
     }
 

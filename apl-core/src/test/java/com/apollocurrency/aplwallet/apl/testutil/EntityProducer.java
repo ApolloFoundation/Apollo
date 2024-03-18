@@ -32,6 +32,18 @@ public class EntityProducer {
         final PeerState state = active ? PeerState.CONNECTED : PeerState.NON_CONNECTED;
 
         Peer peer = new Peer() {
+            
+            @Override
+            public String getIdentity() {
+               return getHostWithPort();
+            }
+
+            @Override
+            public String getX509pem() {
+                return null;
+            }
+            
+            
             @Override
             public int compareTo(Peer o) {
                 return 0;
@@ -228,11 +240,6 @@ public class EntityProducer {
             }
 
             @Override
-            public boolean isTrusted() {
-                return false;
-            }
-
-            @Override
             public PeerTrustLevel getTrustLevel() {
                 return PeerTrustLevel.NOT_TRUSTED;
             }
@@ -276,17 +283,11 @@ public class EntityProducer {
             public void setLastUpdated(int time) {
 
             }
-
+            
             @Override
-            public boolean isInboundSocket() {
-                return false;
+            public void setAnnouncedAddress(String addr){
+    
             }
-
-            @Override
-            public boolean isOutboundSocket() {
-                return false;
-            }
-
         };
         return peer;
     }

@@ -23,7 +23,7 @@ public class ConfigDirProviderTest {
         = System.getProperty("user.home") + File.separator + "." + APPLICATION_NAME + File.separator + "conf";
 
     public static final String INSTALLATION_CONFIG_DIR = getInstallationConfigDir();
-    public static final String SYSTEM_CONFIG_DIR = "/etc/" + APPLICATION_NAME + "/conf";
+    public static final String SYSTEM_CONFIG_DIR = "/etc/" + APPLICATION_NAME + File.separator + "conf";
 
     private static String getInstallationConfigDir() {
         try {

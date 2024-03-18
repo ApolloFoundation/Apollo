@@ -15,7 +15,7 @@
  */
 
 /*
- * Copyright © 2018 Apollo Foundation
+ * Copyright © 2018-2021 Apollo Foundation
  */
 
 package com.apollocurrency.aplwallet.apl.core.peer;
@@ -31,6 +31,14 @@ import java.util.Set;
 import java.util.UUID;
 
 public interface Peer extends Comparable<Peer> {
+    /** max time difference allowed between this and remote node to
+     * check siganture of epoch time
+     */
+    int MAX_TIME_DIFF = 2;
+    /**
+     * @return ID of peer. It is UID field of X.509 certificate
+     */
+    String getIdentity();
 
     boolean providesService(Service service);
 
@@ -43,6 +51,8 @@ public interface Peer extends Comparable<Peer> {
     String getHostWithPort();
 
     String getAnnouncedAddress();
+
+    void setAnnouncedAddress(String addr);
 
     PeerState getState();
 
@@ -94,10 +104,6 @@ public interface Peer extends Comparable<Peer> {
 
     boolean isOutbound();
 
-    boolean isInboundSocket();
-
-    boolean isOutboundSocket();
-
     boolean isOpenAPI();
 
     boolean isApiConnectable();
@@ -116,8 +122,6 @@ public interface Peer extends Comparable<Peer> {
 
     <T> T send(BaseP2PRequest request, JsonReqRespParser<T> parser) throws PeerNotConnectedException;
 
-    boolean isTrusted();
-
     PeerTrustLevel getTrustLevel();
 
     void sendAsync(BaseP2PRequest request);
@@ -133,6 +137,8 @@ public interface Peer extends Comparable<Peer> {
     void setServices(long code);
 
     void setLastUpdated(int time);
+
+    String getX509pem();
 
     enum Service {
         HALLMARK(1),                    // Hallmarked node

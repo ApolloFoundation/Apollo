@@ -3,9 +3,11 @@
  */
 package com.apollocurrency.aplwallet.apl.core.peer;
 
+import com.apollocurrency.aplwallet.apl.core.dao.appdata.PeerDao;
 import com.apollocurrency.aplwallet.api.p2p.request.AddPeersRequest;
 import com.apollocurrency.aplwallet.api.p2p.request.GetPeersRequest;
 import com.apollocurrency.aplwallet.api.p2p.response.GetPeersResponse;
+import com.apollocurrency.aplwallet.apl.core.entity.appdata.PeerEntity;
 import com.apollocurrency.aplwallet.apl.core.peer.parser.GetPeersResponseParser;
 import com.apollocurrency.aplwallet.apl.core.service.appdata.TimeService;
 import lombok.extern.slf4j.Slf4j;
@@ -30,18 +32,12 @@ class GetMorePeersThread implements Runnable {
     private final PeersService peersService;
     private final GetPeersRequest getPeersRequest;
     private volatile boolean updatedPeer;
-    private final PeerDb peerDb;
-
+    private final PeerDao peerDao;
 
     public GetMorePeersThread(TimeService timeService, PeersService peersService) {
         this.timeService = timeService;
         this.peersService = peersService;
-        this.peerDb = peersService.getPeerDb();
-        if (this.peerDb == null) {
-            String error = "ERROR, the peerDb instance was not initialized inside peerService";
-            log.error(error);
-            throw new RuntimeException(error);
-        }
+        this.peerDao = peersService.getPeerDao();
         getPeersRequest = new GetPeersRequest(peersService.blockchainConfig.getChain().getChainId());
     }
 
@@ -83,7 +79,7 @@ class GetMorePeersThread implements Runnable {
                             }
                         }
                     }
-                    if (PeersService.savePeers && updatedPeer) {
+                    if (peersService.savePeers && updatedPeer) {
                         updateSavedPeers();
                         updatedPeer = false;
                     }
@@ -123,14 +119,14 @@ class GetMorePeersThread implements Runnable {
         //
         // Load the current database entries and map announced address to database entry
         //
-        List<PeerDb.Entry> oldPeers = this.peerDb.loadPeers();
-        Map<String, PeerDb.Entry> oldMap = new HashMap<>(oldPeers.size());
+        List<PeerEntity> oldPeers = peerDao.loadPeers();
+        Map<String, PeerEntity> oldMap = new HashMap<>(oldPeers.size());
         oldPeers.forEach((entry) -> oldMap.put(entry.getAddress(), entry));
         //
         // Create the current peer map (note that there can be duplicate peer entries with
         // the same announced address)
         //
-        Map<String, PeerDb.Entry> currentPeers = new HashMap<>();
+        Map<String, PeerEntity> currentPeers = new HashMap<>();
         UUID chainId = peersService.blockchainConfig.getChain().getChainId();
         peersService.getPeers(
             peer -> peer.getAnnouncedAddress() != null
@@ -138,20 +134,20 @@ class GetMorePeersThread implements Runnable {
                 && chainId.equals(peer.getChainId())
                 && now - peer.getLastUpdated() < 7 * 24 * 3600
         ).forEach((peer) -> {
-            currentPeers.put(peer.getAnnouncedAddress(), new PeerDb.Entry(peer.getAnnouncedAddress(), peer.getServices(), peer.getLastUpdated()));
+            currentPeers.put(peer.getIdentity(), new PeerEntity(peer.getAnnouncedAddress(), peer.getServices(), peer.getLastUpdated(),peer.getX509pem(),peer.getHostWithPort()));
         });
         //
         // Build toDelete and toUpdate lists
         //
-        List<PeerDb.Entry> toDelete = new ArrayList<>(oldPeers.size());
+        List<PeerEntity> toDelete = new ArrayList<>(oldPeers.size());
         oldPeers.forEach((entry) -> {
             if (currentPeers.get(entry.getAddress()) == null) {
                 toDelete.add(entry);
             }
         });
-        List<PeerDb.Entry> toUpdate = new ArrayList<>(currentPeers.size());
+        List<PeerEntity> toUpdate = new ArrayList<>(currentPeers.size());
         currentPeers.values().forEach((entry) -> {
-            PeerDb.Entry oldEntry = oldMap.get(entry.getAddress());
+            PeerEntity oldEntry = oldMap.get(entry.getAddress());
             if (oldEntry == null || entry.getLastUpdated() - oldEntry.getLastUpdated() > 24 * 3600) {
                 toUpdate.add(entry);
             }
@@ -167,8 +163,8 @@ class GetMorePeersThread implements Runnable {
         //
 
         try {
-            this.peerDb.deletePeers(toDelete);
-            this.peerDb.updatePeers(toUpdate);
+            peerDao.deletePeers(toDelete);
+            peerDao.updatePeers(toUpdate);
         } catch (Exception e) {
             throw e;
         }

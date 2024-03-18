@@ -30,6 +30,18 @@
       <artifactId>apl-api2</artifactId>
       <version>${project.version}</version>
     </dependency>
+
+    <!-- EXT BOM DEPENDENCIES -->
+    <dependency>
+      <groupId>io.firstbridge</groupId>
+      <artifactId>fb-identity</artifactId>
+    </dependency>
+
+    <dependency>
+      <groupId>ch.qos.logback</groupId>
+      <artifactId>logback-classic</artifactId>
+    </dependency>
+
     <dependency>
       <groupId>com.apollocurrency</groupId>
       <artifactId>apl-db-updater</artifactId>
@@ -60,11 +72,6 @@
       <version>${smc-lib.version}</version>
     </dependency>
 
-    <!-- EXT BOM DEPENDENCIES -->
-    <dependency>
-      <groupId>ch.qos.logback</groupId>
-      <artifactId>logback-classic</artifactId>
-    </dependency>
     <dependency>
       <groupId>org.slf4j</groupId>
       <artifactId>slf4j-api</artifactId>

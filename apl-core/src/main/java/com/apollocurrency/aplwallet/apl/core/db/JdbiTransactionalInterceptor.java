@@ -8,6 +8,7 @@ import com.apollocurrency.aplwallet.apl.util.cdi.Transactional;
 import com.apollocurrency.aplwallet.apl.util.cdi.transaction.JdbiHandleFactory;
 import org.slf4j.Logger;
 
+import jakarta.annotation.Priority;
 import jakarta.inject.Inject;
 import jakarta.interceptor.AroundInvoke;
 import jakarta.interceptor.Interceptor;
@@ -21,6 +22,7 @@ import static org.slf4j.LoggerFactory.getLogger;
  */
 @Transactional
 @Interceptor
+@Priority(100)
 public class JdbiTransactionalInterceptor {
     private static final Logger log = getLogger(JdbiHandleFactory.class);
 
