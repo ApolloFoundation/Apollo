@@ -1,6 +1,6 @@
 #!/bin/sh
 # Define versions
-if [ -z "${1}" ] ; then
+if [ -z "${1}" ]; then
     NEW_VERSION=1.48.0
 else
     NEW_VERSION=$1
@@ -15,15 +15,19 @@ cd apl-bom || exit
 ./mvnw versions:set -DnewVersion=${NEW_VERSION}
 cd ..
 
-# TODO: Prettify this block.
-# set verions in Constants.java (application hardcoded version)
-CONST_PATH=apl-utils/src/main/java/com/apollocurrency/aplwallet/apl/util/Constants.java
-echo "Changing Constants in $CONST_PATH"
-VER_STR="VERSION"
-sed -i -e "s/\ VERSION.*/ VERSION = new Version\(\"$NEW_VERSION\"\);/g" ${CONST_PATH}
-PKG_PATH=apl-exec/packaging/pkg-apollo-blockchain.json
-echo "Changing pkg-apollo-blockchain.json"
-sed -i -e "s/\ \"version\".*/ \"version\": \"$NEW_VERSION\",/g" ${PKG_PATH}
+# set versions in Constants.java (application hardcoded version)
+CONST_PATH="apl-utils/src/main/java/com/apollocurrency/aplwallet/apl/util/Constants.java"
+PKG_PATH="apl-exec/packaging/pkg-apollo-blockchain.json"
+
+echo "Updating Constants.java: $CONST_PATH"
+sed -i -E \
+  "s/(VERSION[[:space:]]*=[[:space:]]*new Version\().*(\);)/\1\"$NEW_VERSION\"\2/" \
+  "$CONST_PATH"
+
+echo "Updating package file: $PKG_PATH"
+sed -i -E \
+  "s/(\"version\"[[:space:]]*:[[:space:]]*\").*(\",)/\1$NEW_VERSION\2/" \
+  "$PKG_PATH"
 
 README_PATH=README.md
 echo "Changing README.md..."
